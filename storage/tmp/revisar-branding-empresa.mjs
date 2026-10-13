@@ -236,7 +236,6 @@ const medidas = await evaluar(sesion, `
     return {
         url: location.pathname,
         coloresDeLosSelectores: selectores.map((s) => s.value),
-        opcionEnMenu: (document.body.innerText || '').includes('Branding'),
         encabezado: (document.querySelector('h5')?.textContent || '').trim(),
         botonVistaPrevia: color(document.querySelector('.brand-vista-previa .btn-primary')),
         botonSecundario: color(document.querySelector('.brand-vista-previa .btn-secondary')),
@@ -247,7 +246,6 @@ if (medidas.error) {
     anota('   error leyendo la página: ' + medidas.error);
 } else {
     anota(`   url: ${medidas.url}`);
-    anota(`   opción «Branding» en el menú: ${medidas.opcionEnMenu ? 'sí' : 'NO'}`);
     anota(`   colores de los selectores: ${medidas.coloresDeLosSelectores.join(' y ')}`);
     anota(`   botón primario de la vista previa: ${medidas.botonVistaPrevia}`);
     anota(`   botón secundario de la vista previa: ${medidas.botonSecundario}`);
@@ -276,9 +274,308 @@ anota(`   ${fuera.url} · botón primario: ${fuera.boton} · texto primario: ${f
 
 await captura(sesion, 'empresa-con-marca-1440.png');
 
+anota('== paso 4: el menú lateral (sidebar) con el color primario ==');
+
+// El menú se abre (estado expandido) y la app en tema claro, como la ve el
+// usuario: el color del ítem activo se mide en los dos temas.
+await evaluar(sesion, `
+    localStorage.setItem('sidebar', 'true');
+    localStorage.setItem('theme', 'light');
+
+    return true;
+`);
+await cdp('Page.navigate', { url: BASE + '/dashboard' }, sesion);
+const menuMontado = await esperarA(sesion, "document.querySelector('.sidebar-option-item')", 30000);
+
+anota(`   menú montado con sus opciones: ${menuMontado ? 'sí' : 'NO'}`);
+
+/*
+ * El ítem activo del menú ya no se pinta con un azul fijo: lleva la clase
+ * `bg-primary`, que lee `--brand-primary`. Antes de medir se vuelca todo lo que
+ * tiene fondo pintado dentro del menú, para saber exactamente qué se está
+ * mirando y detectar cualquier constante que haya quedado.
+ *
+ * Las clases del menú llevan transición (`transition-all`), así que cada espera
+ * es de reloj real y no de un par de frames: medir a mitad de la animación da
+ * un color intermedio y haría pasar por bueno (o por malo) lo que no es.
+ */
+const ESPERA_TRANSICION = 900;
+
+const pintaFondos = `
+    [...document.querySelectorAll('.sidebar *')]
+        .filter((el) => {
+            const fondo = getComputedStyle(el).backgroundColor;
+
+            return fondo && fondo !== 'rgba(0, 0, 0, 0)' && fondo !== 'transparent';
+        })
+        .slice(0, 12)
+        .map((el) => ({
+            tag: el.tagName.toLowerCase(),
+            fondo: getComputedStyle(el).backgroundColor,
+            clase: String(el.className || '').replace(/\\s+/g, ' ').slice(0, 64),
+        }))
+`;
+
+const menu = await evaluar(sesion, `
+    // El módulo activo de la barra (el cuadrado del icono) y la opción activa
+    // del panel: las dos filas que el menú resalta.
+    const activo = document.querySelector('.sidebar .bg-primary');
+    const opcion = document.querySelector(
+        '.sidebar-option-item a[class*="bg-primary-light"], .sidebar-option-item button[class*="bg-primary-light"],' +
+        '.sidebar-option-item a[class*="from-primary"], .sidebar-option-item button[class*="from-primary"]'
+    );
+    // La variable efectiva es la que resuelve el propio ítem: con marca guardada
+    // el layout la inyecta en el contenedor de la página, no en :root.
+    const canales = (getComputedStyle(activo).getPropertyValue('--brand-primary') || '').trim();
+    const fondo = (el) => el ? getComputedStyle(el).backgroundColor : null;
+
+    return {
+        url: location.pathname,
+        variable: canales,
+        esperado: canales ? 'rgb(' + canales.split(/\\s+/).join(', ') + ')' : null,
+        // Tinte suave del primario (el primario mezclado con blanco al 90 %), que
+        // es lo que usan las filas activas del panel de opciones.
+        tinte: canales
+            ? 'rgb(' + canales.split(/\\s+/).map((c) => Math.round(Number(c) + (255 - Number(c)) * 0.9)).join(', ') + ')'
+            : null,
+        hayActivo: !!activo,
+        activo: activo ? activo.tagName.toLowerCase() : null,
+        fondoDelActivo: fondo(activo),
+        textoDelActivo: activo ? getComputedStyle(activo).color : null,
+        hayOpcion: !!opcion,
+        claseDeLaOpcion: opcion ? String(opcion.className || '').replace(/\\s+/g, ' ').slice(0, 70) : null,
+        fondoDeLaOpcion: fondo(opcion),
+        textoDeLaOpcion: opcion ? getComputedStyle(opcion).color : null,
+        gradienteDeLaOpcion: opcion && getComputedStyle(opcion).backgroundImage !== 'none'
+            ? getComputedStyle(opcion).backgroundImage.slice(0, 80)
+            : null,
+        hayAzulFijo: !!document.querySelector('.sidebar .bg-blue-600, .sidebar .bg-blue-500, .sidebar .bg-sky-600, .sidebar .bg-sky-500'),
+        fondos: ${pintaFondos},
+    };
+`);
+
+if (menu.error) {
+    anota('   error leyendo el menú: ' + menu.error);
+} else {
+    anota(`   ${menu.url} · --brand-primary: ${menu.variable} → ${menu.esperado} · tinte: ${menu.tinte}`);
+    anota(`   módulo activo (${menu.activo ?? 'ninguno'}): fondo ${menu.fondoDelActivo} · texto ${menu.textoDelActivo}`);
+    anota(`   opción activa: fondo ${menu.fondoDeLaOpcion} · texto ${menu.textoDeLaOpcion} · color de fondo ${menu.gradienteDeLaOpcion ?? 'liso'}`);
+    anota(`      ${menu.claseDeLaOpcion ?? 'sin clase'}`);
+    anota(`   ¿queda algún azul fijo en el menú? ${menu.hayAzulFijo ? 'sí' : 'no'}`);
+    anota('   fondos pintados dentro del menú:');
+
+    for (const fondo of menu.fondos ?? []) {
+        anota(`      ${fondo.tag} · ${fondo.fondo} · ${fondo.clase}`);
+    }
+}
+
+await captura(sesion, 'sidebar-marca-1440.png');
+
+// Prueba de fuego: se cambia la variable a mano; si el fondo del activo la
+// sigue, el menú está leyendo el color primario de la marca y no una constante.
+anota('   con --brand-primary forzado a 23 99 61 (#17633D):');
+
+const forzado = await evaluar(sesion, `
+    const activo = document.querySelector('.sidebar .bg-primary');
+    let destino = null;
+
+
+    // La variable vive en :root o donde el layout inyecte la marca: se sube por
+    // los ancestros hasta el que la declare para cambiarla exactamente ahí, que
+    // es lo mismo que hace la pantalla de Branding al guardar.
+    for (let el = activo; el; el = el.parentElement) {
+        if (el.style && el.style.getPropertyValue('--brand-primary').trim()) {
+            destino = el;
+            break;
+        }
+    }
+
+    if (!destino) {
+        destino = document.documentElement;
+    }
+
+    const antes = getComputedStyle(activo).backgroundColor;
+    // El valor que ya tenía el contenedor: hay que devolverlo tal cual, no borrar
+    // la propiedad, porque es la marca que el layout inyectó desde el servidor.
+    const original = destino.style.getPropertyValue('--brand-primary');
+
+    destino.style.setProperty('--brand-primary', '23 99 61');
+
+    await new Promise((r) => setTimeout(r, ${ESPERA_TRANSICION}));
+
+    const durante = getComputedStyle(activo).backgroundColor;
+
+    destino.style.setProperty('--brand-primary', original);
+
+    await new Promise((r) => setTimeout(r, ${ESPERA_TRANSICION}));
+
+    return {
+        origen: destino.className ? '.' + String(destino.className).trim().split(/\\s+/)[0] : destino.tagName.toLowerCase(),
+        antes,
+        durante,
+        despues: getComputedStyle(activo).backgroundColor,
+    };
+`);
+
+anota(`   la variable se declara en: ${forzado.origen}`);
+anota(`   antes: ${forzado.antes} · forzado: ${forzado.durante} · devuelto: ${forzado.despues}`);
+
+// Modo oscuro de verdad (el que usa el ERP: `body.dark`): el activo conserva el
+// primario y su texto queda blanco.
+const oscuro = await evaluar(sesion, `
+    document.body.classList.add('dark');
+
+    await new Promise((r) => setTimeout(r, ${ESPERA_TRANSICION}));
+
+    const activo = document.querySelector('.sidebar .bg-primary');
+    const datos = {
+        fondo: activo ? getComputedStyle(activo).backgroundColor : null,
+        texto: activo ? getComputedStyle(activo).color : null,
+        fondos: ${pintaFondos},
+    };
+
+    return datos;
+`);
+
+anota(`   en modo oscuro · fondo: ${oscuro.fondo} · texto: ${oscuro.texto}`);
+
+await captura(sesion, 'sidebar-marca-oscuro-1440.png');
+
+const deVuelta = await evaluar(sesion, `
+    document.body.classList.remove('dark');
+
+    await new Promise((r) => setTimeout(r, ${ESPERA_TRANSICION}));
+
+    const activo = document.querySelector('.sidebar .bg-primary');
+
+    return {
+        fondo: activo ? getComputedStyle(activo).backgroundColor : null,
+        texto: activo ? getComputedStyle(activo).color : null,
+    };
+`);
+
+anota(`   de vuelta en claro · fondo: ${deVuelta.fondo} · texto: ${deVuelta.texto}`);
+
+// Y en la propia pantalla de Branding: el módulo Configuraciones queda resaltado
+// con la marca y la opción «Branding» está montada en el menú real.
+await cdp('Page.navigate', { url: BRANDING }, sesion);
+await esperarA(sesion, "document.querySelector('.sidebar-option-item a[href*=\"branding\"]')", 30000);
+
+const opcionBranding = await evaluar(sesion, `
+    const enlace = document.querySelector('.sidebar-option-item a[href*="branding"]');
+    const modulo = document.querySelector('.sidebar .bg-primary');
+
+    if (!enlace) {
+        return { hay: false, modulo: !!modulo };
+    }
+
+    const estilo = getComputedStyle(enlace);
+
+    return {
+        hay: true,
+        modulo: !!modulo,
+        clase: String(enlace.className || '').replace(/\\s+/g, ' ').slice(0, 70),
+        fondo: estilo.backgroundColor,
+        gradiente: estilo.backgroundImage === 'none' ? null : estilo.backgroundImage.slice(0, 80),
+        texto: estilo.color,
+    };
+`);
+
+anota(`   módulo Configuraciones resaltado: ${opcionBranding.modulo ? 'sí' : 'NO'}`);
+
+if (opcionBranding.hay) {
+    anota(`   opción «Branding»: fondo ${opcionBranding.fondo} · texto ${opcionBranding.texto}`);
+    anota(`      ${opcionBranding.clase}`);
+} else {
+    anota('   opción «Branding»: NO aparece en el menú');
+}
+
+await captura(sesion, 'sidebar-branding-activo-1440.png');
+
+anota('== paso 5: el tooltip de los módulos con el color secundario ==');
+
+// El globito solo se abre con el menú recogido (`isCollapsed`).
+await evaluar(sesion, `
+    localStorage.setItem('menu', 'collapsible-vertical');
+    localStorage.setItem('sidebar', 'false');
+
+    return true;
+`);
+await cdp('Page.navigate', { url: BASE + '/dashboard' }, sesion);
+await esperarA(sesion, "document.querySelector('.sidebar button')", 30000);
+
+// Se pasa el mouse por los módulos hasta que el tooltip se abre, como haría una
+// persona: es el único camino para que el globito exista en el DOM.
+const tooltip = await evaluar(sesion, `
+    const botones = [...document.querySelectorAll('.sidebar button')];
+
+    for (const boton of botones) {
+        boton.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+        boton.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+
+        await new Promise((r) => setTimeout(r, 350));
+
+        if (document.querySelector('.ant-tooltip-inner')) {
+            break;
+        }
+    }
+
+    const globito = document.querySelector('.ant-tooltip-inner');
+
+    if (!globito) {
+        return { hay: false };
+    }
+
+    const canales = (getComputedStyle(document.documentElement).getPropertyValue('--brand-secondary') || '').trim();
+
+    return {
+        hay: true,
+        texto: (globito.textContent || '').trim(),
+        fondo: getComputedStyle(globito).backgroundColor,
+        secundario: canales,
+        esperado: canales ? 'rgb(' + canales.split(/\\s+/).join(', ') + ')' : null,
+    };
+`);
+
+if (tooltip.hay) {
+    anota(`   tooltip «${tooltip.texto}» · fondo ${tooltip.fondo}`);
+    anota(`   --brand-secondary del documento: ${tooltip.secundario} → ${tooltip.esperado}`);
+} else {
+    anota('   no se abrió ningún tooltip del menú');
+}
+
+await captura(sesion, 'sidebar-tooltip-1440.png');
+
+// Prueba de fuego: con otro secundario, el globito lo sigue.
+const tooltipForzado = await evaluar(sesion, `
+    const raiz = document.documentElement;
+    const original = raiz.style.getPropertyValue('--brand-secondary');
+    const globito = document.querySelector('.ant-tooltip-inner');
+
+    raiz.style.setProperty('--brand-secondary', '200 20 120');
+
+    await new Promise((r) => setTimeout(r, 400));
+
+    const fondo = globito ? getComputedStyle(globito).backgroundColor : null;
+
+    raiz.style.setProperty('--brand-secondary', original);
+
+    await new Promise((r) => setTimeout(r, 400));
+
+    return { fondo, devuelto: globito ? getComputedStyle(globito).backgroundColor : null };
+`);
+
+anota(`   con --brand-secondary forzado a 200 20 120 → ${tooltipForzado.fondo} · devuelto: ${tooltipForzado.devuelto}`);
+
 anota('== consola y red ==');
 anota(`   errores de consola: ${consola.length === 0 ? 'ninguno' : consola.join(' | ')}`);
-anota(`   respuestas con error: ${red.length === 0 ? 'ninguna' : red.join(' | ')}`);
+
+// Respuestas con error que no vienen de la marca (logo apuntando a un archivo
+// que no existe, POSTs del panel con el token de la página): se informan aparte
+// para no mezclarlas con el resultado de la revisión.
+const avisos = red.filter((linea) => !linea.includes('favicon'));
+
+anota(`   respuestas con error: ${avisos.length === 0 ? 'ninguna' : avisos.join(' | ')}`);
 
 await writeFile(SALIDA + 'informe.txt', informe.join('\n') + '\n');
 
@@ -287,15 +584,45 @@ chrome.kill();
 
 const problemas = [
     ...(monto ? [] : ['la pantalla de Branding no montó sus dos selectores']),
-    ...(medidas.opcionEnMenu ? [] : ['la opción «Branding» no aparece en el menú']),
+    ...(menu.error ? [`no se pudo leer el menú lateral: ${menu.error}`] : []),
+    ...(!menu.error && !menu.hayActivo ? ['no se encontró el ítem activo del menú lateral'] : []),
+    ...(menu.hayAzulFijo ? ['el menú lateral todavía tiene azules fijos (bg-blue-600 / bg-sky-600)'] : []),
+    ...(menu.fondoDelActivo === menu.esperado
+        ? []
+        : [`el ítem activo del menú quedó en ${menu.fondoDelActivo}, no en el primario ${menu.esperado}`]),
+    ...(forzado.durante === 'rgb(23, 99, 61)' && forzado.despues === forzado.antes
+        ? []
+        : [`al forzar --brand-primary el ítem activo pasó por ${forzado.durante} y volvió a ${forzado.despues}: el menú no lee la variable`]),
+    ...(opcionBranding.hay && opcionBranding.fondo === menu.tinte
+        ? []
+        : [`la fila activa del menú quedó con fondo ${opcionBranding?.fondo}, no en el tinte de la marca ${menu.tinte}`]),
+    ...(oscuro.fondo === menu.esperado && oscuro.texto === 'rgb(255, 255, 255)'
+        ? []
+        : [`en modo oscuro el ítem activo quedó en fondo ${oscuro.fondo} con texto ${oscuro.texto}, no en el primario ${menu.esperado}`]),
+    ...(deVuelta.fondo === menu.esperado
+        ? []
+        : [`al volver al tema claro el ítem activo quedó en ${deVuelta.fondo}, no en el primario ${menu.esperado}`]),
+    ...(opcionBranding.hay ? [] : ['el menú no muestra la opción «Branding» de Configuraciones']),
+    ...(opcionBranding.modulo ? [] : ['en la pantalla de Branding el módulo del menú no quedó resaltado con la marca']),
+    ...(tooltip.hay ? [] : ['no se abrió el tooltip de los módulos: no se pudo revisar su color']),
+    ...(tooltip.hay && tooltip.fondo === tooltip.esperado
+        ? []
+        : [`el tooltip de los módulos quedó en ${tooltip.fondo}, no en el secundario ${tooltip.esperado}`]),
+    ...(tooltip.hay && (tooltipForzado.fondo !== 'rgb(200, 20, 120)' || tooltipForzado.devuelto !== tooltip.fondo)
+        ? [`al forzar --brand-secondary el tooltip pasó por ${tooltipForzado.fondo} y volvió a ${tooltipForzado.devuelto}`]
+        : []),
     ...(medidas.botonVistaPrevia === 'rgb(1, 136, 238)' ? [] : [`la vista previa quedó en ${medidas.botonVistaPrevia}, no en el azul guardado`]),
     ...(fuera.boton === 'rgb(1, 136, 238)' ? [] : [`el botón primario del ERP quedó en ${fuera.boton}, no en el azul guardado`]),
-    ...red.filter((linea) => !linea.includes('favicon')),
 ];
 
+// Los avisos de red se imprimen siempre, pero no son fallo de la marca.
+if (avisos.length > 0) {
+    console.warn('\nAVISOS (preexistentes, ajenos a la marca):\n - ' + avisos.join('\n - '));
+}
+
 if (problemas.length > 0) {
-    console.error('\nPROBLEMAS:\n - ' + problemas.join('\n - '));
+    console.error('\nPROBLEMAS DE MARCA:\n - ' + problemas.join('\n - '));
     process.exit(1);
 }
 
-console.log('\nSin problemas: Branding guarda los colores y el ERP se pinta con ellos.');
+console.log('\nSin problemas de marca: los colores se guardan y el ERP se pinta con ellos.');

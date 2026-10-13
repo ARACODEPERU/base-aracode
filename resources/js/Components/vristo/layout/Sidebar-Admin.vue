@@ -418,31 +418,44 @@
     const isOptionActive = (option) => activeOption.value === option?.text;
     const isOptionExpanded = (option) => expandedSections.value === option?.text && !isOptionActive(option);
 
+    /*
+     * Clases del enlace de una opción del menú.
+     *
+     * Las ramas son excluyentes a propósito: el fondo de la fila activa lleva la
+     * marca y no puede convivir con el fondo base (`bg-white/70` en claro,
+     * `bg-slate-800/80` en oscuro) en la misma lista de clases. Cuando convivían,
+     * ganaba el fondo base y el estado activo se quedaba sin su color.
+     */
     const optionLinkClasses = (option) => {
         if (isDashboardOption(option)) {
             return [
                 'border bg-gradient-to-br shadow-sm',
                 isOptionActive(option)
-                    ? 'border-sky-400 from-sky-600 via-cyan-600 to-blue-700 text-white shadow-lg shadow-sky-300/40 dark:border-sky-500 dark:shadow-sky-950/60'
-                    : 'border-sky-200/80 from-white via-sky-50 to-cyan-50 text-sky-800 shadow-sky-100/80 hover:border-sky-300 hover:shadow-md hover:shadow-sky-100 dark:border-sky-900/60 dark:from-slate-800 dark:via-slate-800 dark:to-sky-950/60 dark:text-sky-100 dark:shadow-sky-950/30 dark:hover:border-sky-700',
+                    ? 'border-primary from-primary via-primary to-primary/90 text-white shadow-lg shadow-primary/30 dark:border-primary'
+                    : 'border-primary/25 from-white via-primary-light to-primary-light text-primary shadow-primary/10 hover:border-primary/50 hover:shadow-md hover:shadow-primary/20 dark:border-primary/30 dark:from-slate-800 dark:via-slate-800 dark:to-primary/15 dark:text-white dark:shadow-primary/20 dark:hover:border-primary/60',
             ];
         }
 
-        return {
-            'border-blue-200 bg-blue-50 text-blue-800 shadow-sm shadow-blue-100 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-100 dark:shadow-blue-950/30': isOptionActive(option),
-            'border-orange-200 bg-orange-50 text-orange-800 shadow-sm shadow-orange-100 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-100 dark:shadow-orange-950/30': isOptionExpanded(option),
-        };
+        if (isOptionActive(option)) {
+            return 'border-primary/40 bg-primary-light text-primary shadow-sm shadow-primary/15 dark:border-primary/40 dark:bg-primary/20 dark:text-white dark:shadow-primary/20';
+        }
+
+        if (isOptionExpanded(option)) {
+            return 'border-orange-200 bg-orange-50 text-orange-800 shadow-sm shadow-orange-100 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-100 dark:shadow-orange-950/30';
+        }
+
+        return 'bg-white/70 dark:bg-slate-800/80';
     };
 
     const optionIconBoxClasses = (option) => {
         if (isDashboardOption(option)) {
             return isOptionActive(option)
                 ? 'bg-white/20 text-white shadow-sm'
-                : 'bg-sky-100 text-sky-600 shadow-sm shadow-sky-100/70 dark:bg-sky-900/60 dark:text-sky-300';
+                : 'bg-primary-light text-primary shadow-sm shadow-primary/15 dark:bg-primary/20 dark:text-white';
         }
 
         return isOptionActive(option)
-            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+            ? 'bg-primary/15 text-primary dark:bg-primary/25 dark:text-white'
             : 'bg-slate-100 text-slate-500 group-hover:bg-orange-100 group-hover:text-orange-600 dark:bg-slate-700 dark:text-slate-300 dark:group-hover:bg-orange-900/50 dark:group-hover:text-orange-300';
     };
 
@@ -450,7 +463,7 @@
         if (isDashboardOption(option)) {
             return isOptionActive(option)
                 ? 'text-white'
-                : 'text-sky-600 dark:text-sky-300';
+                : 'text-primary dark:text-white';
         }
 
         return 'text-current';
@@ -460,11 +473,11 @@
         if (isDashboardOption(option)) {
             return isOptionActive(option)
                 ? 'text-white'
-                : 'text-sky-800 dark:text-sky-100';
+                : 'text-primary dark:text-white';
         }
 
         if (isOptionActive(option)) {
-            return 'text-blue-800 dark:text-blue-100';
+            return 'text-primary dark:text-white';
         }
 
         return 'text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white';
@@ -473,7 +486,7 @@
     const dashboardBadgeClasses = (option) => {
         return isOptionActive(option)
             ? 'bg-white/20 text-white'
-            : 'bg-sky-100 text-sky-700 dark:bg-sky-900/70 dark:text-sky-200';
+            : 'bg-primary-light text-primary dark:bg-primary/20 dark:text-white';
     };
 
     const isNewBadge = (badge) => {
@@ -490,7 +503,14 @@
 
     const badgeBaseClasses = 'ml-2 inline-flex shrink-0 items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none tracking-[0.08em]';
 
-    const colorTooltip = 'purple';
+    /*
+     * Color de los tooltips de los módulos: el secundario de la marca.
+     *
+     * Se pasa la variable y no un valor fijo para que el globito siga a la
+     * identidad del cliente; el layout publica `--brand-secondary` en `:root`
+     * porque ant-design-vue monta el tooltip fuera del contenedor de la página.
+     */
+    const colorTooltip = 'rgb(var(--brand-secondary))';
     const fontTitleTooltip = 'font-bold text-gray-200';
 
 </script>
@@ -504,9 +524,9 @@
             <div id="divSiempreVisible" class="bg-white dark:bg-slate-800 h-full flex overflow-hidden">
                 <!-- BOTONES MODULOS -->
                 <div
-                    class="flex flex-col w-[70px] min-w-[70px] items-center bg-blue-50 dark:bg-slate-700 border-r border-slate-200/50 dark:border-slate-600/50 pt-4 pb-2.5 h-full z-10"
+                    class="flex flex-col w-[70px] min-w-[70px] items-center bg-primary-light dark:bg-slate-700 border-r border-slate-200/50 dark:border-slate-600/50 pt-4 pb-2.5 h-full z-10"
                 >
-                    <div class="mb-6 flex h-10 w-10 flex items-center justify-center rounded-xl bg-blue-50 text-white shadow-sm dark:bg-blue-700 ">
+                    <div class="mb-6 flex h-10 w-10 items-center justify-center rounded-xl bg-primary-light text-white shadow-sm dark:bg-primary/30 ">
                         <Link :href="route('dashboard')" class="text-center">
                             <template v-if="store.theme === 'light' || store.theme === 'system'">
                                 <img v-if="$page.props.company.isotipo == '/img/isotipo.png'" class="w-8 h-8" :src="xasset+$page.props.company.isotipo" alt="" />
@@ -548,12 +568,12 @@
                                                     @mouseleave="hideModuleTooltip(menu.text)"
                                                     @focus="showModuleTooltip(menu.text)"
                                                     @blur="hideModuleTooltip(menu.text)"
-                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
-                                                    :class="activeModule === menu.text ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
+                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-primary-light dark:hover:bg-primary/20 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-primary/25 dark:hover:shadow-primary/20"
+                                                    :class="activeModule === menu.text ? 'bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/30' : ''"
                                                 >
                                                     <font-awesome-icon
                                                         :icon="menu.icom"
-                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
+                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-300 group-hover:text-primary dark:group-hover:text-primary transition-colors'"
                                                     />
                                                     <!-- Badge indicador activo -->
                                                     <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white dark:border-gray-800"></div>
@@ -586,12 +606,12 @@
                                                     @mouseleave="hideModuleTooltip(menu.text)"
                                                     @focus="showModuleTooltip(menu.text)"
                                                     @blur="hideModuleTooltip(menu.text)"
-                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
-                                                    :class="activeModule === menu.text ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
+                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-primary-light dark:hover:bg-primary/20 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-primary/25 dark:hover:shadow-primary/20"
+                                                    :class="activeModule === menu.text ? 'bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/30' : ''"
                                                 >
                                                     <font-awesome-icon
                                                         :icon="menu.icom"
-                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
+                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-300 group-hover:text-primary dark:group-hover:text-primary transition-colors'"
                                                     />
                                                     <!-- Badge indicador activo -->
                                                     <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white dark:border-gray-800"></div>
@@ -625,12 +645,12 @@
                                                     @mouseleave="hideModuleTooltip(menu.text)"
                                                     @focus="showModuleTooltip(menu.text)"
                                                     @blur="hideModuleTooltip(menu.text)"
-                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
-                                                    :class="activeModule === menu.text ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
+                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-primary-light dark:hover:bg-primary/20 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-primary/25 dark:hover:shadow-primary/20"
+                                                    :class="activeModule === menu.text ? 'bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/30' : ''"
                                                 >
                                                     <font-awesome-icon
                                                         :icon="menu.icom"
-                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
+                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-300 group-hover:text-primary dark:group-hover:text-primary transition-colors'"
                                                     />
                                                     <!-- Badge indicador activo -->
                                                     <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white dark:border-gray-800"></div>
@@ -647,7 +667,7 @@
                         <!-- Settings -->
                         <!-- <button
                             @click="handleModuleClick({text: 'settings', icon: 'ri-settings-3-line'})"
-                            class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
+                            class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-primary-light dark:hover:bg-primary/20 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-primary/25 dark:hover:shadow-primary/20"
                             :class="activeModule === 'settings' ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' : ''"
                         >
                             <i :class="activeModule === 'settings' ? 'text-white' : 'ri-settings-3-line text-xl text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"></i>
@@ -657,10 +677,10 @@
                         <!-- Avatar alineado con el footer -->
                         <Link
                             :href="route('profile.edit')"
-                            class="group relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105 hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30"
-                            :class="activeModule === 'profile' ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
+                            class="group relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105 hover:shadow-primary/25 dark:hover:shadow-primary/20"
+                            :class="activeModule === 'profile' ? 'bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/30' : ''"
                         >
-                            <div class="h-10 w-10 rounded-full ring-2 ring-blue-200/50 dark:ring-blue-700/50 overflow-hidden bg-blue-100 dark:bg-blue-800 p-0.5">
+                            <div class="h-10 w-10 rounded-full ring-2 ring-primary/30 dark:ring-primary/40 overflow-hidden bg-primary-light dark:bg-primary/20 p-0.5">
                                 <img v-if="$page.props.auth.user.avatar" class="rounded-full" :src="getImage($page.props.auth.user.avatar)" alt="" />
                                 <img v-else :src="`https://ui-avatars.com/api/?name=${$page.props.auth.user.name}&size=150&rounded=true`" class="rounded-full" :alt="$page.props.auth.user.name"/>
                             </div>
@@ -675,7 +695,7 @@
                     <div class="border-b border-slate-200/70 px-4 pb-4 pt-5 dark:border-slate-700/60">
                         <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Modulo activo</p>
                         <div class="mt-2 flex items-center gap-3">
-                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-300/50 dark:bg-blue-700 dark:shadow-blue-950/50">
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm shadow-primary/30">
                                 <font-awesome-icon v-if="moduleSelected.icom" :icon="moduleSelected.icom" class="text-sm" />
                             </div>
                             <div class="min-w-0">
@@ -702,7 +722,7 @@
                              siendo del control. -->
                         <div
                             v-if="editor.active"
-                            class="pointer-events-none mb-3 rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-2 text-[11px] leading-relaxed text-blue-700 select-none dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200"
+                            class="pointer-events-none mb-3 rounded-xl border border-primary/30 bg-primary-light/70 px-3 py-2 text-[11px] leading-relaxed text-primary select-none dark:border-primary/40 dark:bg-primary/15 dark:text-white"
                         >
                             Modo editor activo: pasa el mouse por una opción y usa el engrane para elegir qué roles
                             pueden verla. Las filas con 🔒 no son accesibles con tu rol y se muestran solo para
@@ -732,7 +752,7 @@
                                 <template v-if="isExpandableOption(option)">
                                     <button
                                         @click="handleOptionClick(option.text, true)"
-                                        class="group w-full rounded-xl border border-transparent bg-white/70 px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-orange-200 hover:bg-orange-50 hover:shadow-orange-100/70 dark:bg-slate-800/80 dark:shadow-slate-950/20 dark:hover:border-orange-900/60 dark:hover:bg-orange-950/30"
+                                        class="group w-full rounded-xl border border-transparent px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-orange-200 hover:bg-orange-50 hover:shadow-orange-100/70 dark:shadow-slate-950/20 dark:hover:border-orange-900/60 dark:hover:bg-orange-950/30"
                                         :class="optionLinkClasses(option)"
                                     >
                                         <div class="flex items-center justify-between gap-3">
@@ -774,7 +794,7 @@
                                     <Link
                                         :href="option.route"
                                         @click="handleOptionClick(option.text)"
-                                        class="group relative block w-full overflow-hidden rounded-xl border border-transparent bg-white/70 px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-orange-200 hover:bg-orange-50 hover:shadow-orange-100/70 dark:bg-slate-800/80 dark:shadow-slate-950/20 dark:hover:border-orange-900/60 dark:hover:bg-orange-950/30"
+                                        class="group relative block w-full overflow-hidden rounded-xl border border-transparent px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-orange-200 hover:bg-orange-50 hover:shadow-orange-100/70 dark:shadow-slate-950/20 dark:hover:border-orange-900/60 dark:hover:bg-orange-950/30"
                                         :class="optionLinkClasses(option)"
                                     >
                                         <div class="relative flex items-center justify-between gap-3">
@@ -813,7 +833,7 @@
                                                 <div
                                                     v-if="isDashboardOption(option)"
                                                     class="hidden h-7 w-1.5 rounded-full sm:block"
-                                                    :class="isOptionActive(option) ? 'bg-white/60' : 'bg-sky-300 dark:bg-sky-700'"
+                                                    :class="isOptionActive(option) ? 'bg-white/60' : 'bg-primary/30 dark:bg-primary/50'"
                                                 ></div>
                                             </div>
                                         </div>
@@ -840,13 +860,13 @@
                                                 class="block cursor-pointer rounded-lg px-3 py-2 text-sm text-slate-600 transition-all duration-200 hover:bg-orange-50 hover:text-orange-700 dark:text-slate-300 dark:hover:bg-orange-950/30 dark:hover:text-orange-200"
                                                 :style="{ transitionDelay: `${Math.min(subIndex * 35, 140)}ms` }"
                                                 :class="{
-                                                    'bg-blue-50 text-blue-700 shadow-sm shadow-blue-100/50 dark:bg-blue-950/50 dark:text-blue-100 dark:shadow-blue-950/40': activeSubOption === subOption.text
+                                                    'bg-primary-light text-primary shadow-sm shadow-primary/15 dark:bg-primary/20 dark:text-white dark:shadow-primary/20': activeSubOption === subOption.text
                                                 }">
                                             <div class="flex items-center justify-between gap-2">
                                                 <div class="flex min-w-0 items-center space-x-3">
                                                     <div
                                                         class="h-2 w-2 flex-shrink-0 rounded-full"
-                                                        :class="activeSubOption === subOption.text ? 'bg-blue-500 dark:bg-blue-300' : 'bg-slate-300 dark:bg-slate-600'"
+                                                        :class="activeSubOption === subOption.text ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'"
                                                     ></div>
                                                     <span class="text-slate-700 dark:text-slate-200 leading-tight break-words">{{ subOption.text }}</span>
                                                 </div>
@@ -865,7 +885,7 @@
                                                         <div class="max-w-[300px] text-sm" v-html="subOption.info?.content"></div>
                                                     </template>
                                                     <span
-                                                        class="ml-1 inline-flex h-5 w-5 shrink-0 cursor-help items-center justify-center rounded-full border border-slate-300 text-[10px] font-bold text-slate-400 transition-colors hover:border-blue-400 hover:text-blue-600 dark:border-slate-600 dark:text-slate-500 dark:hover:border-blue-500 dark:hover:text-blue-400"
+                                                        class="ml-1 inline-flex h-5 w-5 shrink-0 cursor-help items-center justify-center rounded-full border border-slate-300 text-[10px] font-bold text-slate-400 transition-colors hover:border-primary/50 hover:text-primary dark:border-slate-600 dark:text-slate-500 dark:hover:border-primary dark:hover:text-primary"
                                                         @click.stop.prevent
                                                     >ⓘ</span>
                                                 </Popover>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { ref, computed, onMounted } from 'vue';
+    import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue';
     //import Sidebar from '@/Components/vristo/layout/Sidebar.vue';
     import Header from '@/Components/vristo/layout/Header.vue';
     import Footer from '@/Components/vristo/layout/Footer.vue';
@@ -33,6 +33,52 @@
             secondary: companyData?.brand_secondary,
         })
     );
+
+    /** Variables de marca que publica el layout (las mismas de resources/css/app.css). */
+    const VARIABLES_DE_MARCA = [
+        '--brand-primary',
+        '--brand-primary-light',
+        '--brand-secondary',
+        '--brand-secondary-light',
+    ];
+
+    /*
+     * Las variables se inyectan en el contenedor de la página (`marcaEstilo`) y,
+     * además, en el documento. ant-design-vue monta sus portales —tooltips,
+     * modales, desplegables— fuera de este contenedor, así que sin publicarlas en
+     * `:root` esos elementos no verían la marca y quedarían con colores fijos.
+     *
+     * Sin color guardado no se escribe nada: siguen valiendo los valores de
+     * fábrica que declara resources/css/app.css sobre `:root`.
+     */
+    watchEffect(() => {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        const variables = marcaEstilo.value;
+        const raiz = document.documentElement;
+
+        for (const nombre of VARIABLES_DE_MARCA) {
+            if (variables[nombre]) {
+                raiz.style.setProperty(nombre, variables[nombre]);
+            } else {
+                raiz.style.removeProperty(nombre);
+            }
+        }
+    });
+
+    // Al salir del layout (cerrar sesión, por ejemplo) no se deja la marca pegada
+    // en el documento: otro layout pintaría con los colores de la empresa anterior.
+    onUnmounted(() => {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        for (const nombre of VARIABLES_DE_MARCA) {
+            document.documentElement.style.removeProperty(nombre);
+        }
+    });
 
 
     onMounted(() => {

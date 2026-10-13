@@ -109,6 +109,28 @@ test('el layout aplica la marca guardada a todo el ERP', () => {
     assert.match(layout, /:style="marcaEstilo"/, 'El layout dejó de inyectar las variables en el contenedor principal.');
 });
 
+test('el layout publica la marca en el documento para los portales', () => {
+    // Los tooltips, modales y desplegables de ant-design-vue se montan fuera del
+    // contenedor de la página: sin las variables en `:root` quedarían con colores
+    // fijos y el globito del menú, por ejemplo, no tomaría el color secundario.
+    assert.match(
+        layout,
+        /const VARIABLES_DE_MARCA = \[[\s\S]*?'--brand-secondary',[\s\S]*?\];/,
+        'El layout dejó de publicar la lista de variables de marca en el documento.'
+    );
+    assert.match(layout, /document\.documentElement/, 'El layout dejó de apuntar al documento para publicar la marca.');
+    assert.match(
+        layout,
+        /\.style\.setProperty\(nombre, variables\[nombre\]\)/,
+        'El layout dejó de escribir las variables de marca en :root.'
+    );
+    assert.match(
+        layout,
+        /\.style\.removeProperty\(nombre\)/,
+        'El layout dejó de limpiar la marca al salir: otro layout heredaría los colores de la empresa anterior.'
+    );
+});
+
 test('los colores de fábrica de la vista coinciden con app.css', () => {
     const canalesDeFabrica = (propiedad) => {
         const encontrado = new RegExp(`--brand-${propiedad}:\\s*([\\d ]+);`).exec(appCss);
