@@ -23,7 +23,8 @@ import {
     faLayerGroup,
     faBell,
     faQrcode,
-    faMoneyBillWave
+    faMoneyBillWave,
+    faSliders
 
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -515,6 +516,28 @@ const colegioGroup = {
                         <li>⏱️ <span>La entrada se marca como asistencia o tardanza según la jornada.</span></li>
                         <li>🚪 <span>La salida se registra aparte y es opcional.</span></li>
                         <li>📄 <span>No confundir con la asistencia de aula que registra el docente.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
+        },
+        {
+            route: route('aca_school_sms_parameters'),
+            status: false,
+            text: 'Parámetros SMS',
+            icom: faSliders,
+            permissions: 'aca_school_sms_configuracion',
+            info: {
+                title: 'Parametros / SMS',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Avisos por SMS al padre o apoderado cuando el alumno entra o sale del colegio:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>🔌 <span>Credenciales propias de SMSGate (URL, usuario y contraseña).</span></li>
+                        <li>🔔 <span>Interruptor general y avisos por entrada, salida, tardanza o salida anticipada.</span></li>
+                        <li>✍️ <span>Mensajes editables con variables como {alumno}, {hora} y {colegio}.</span></li>
+                        <li>🧪 <span>Vista previa y SMS de prueba.</span></li>
                     </ul>
                 `,
                 placement: 'right'

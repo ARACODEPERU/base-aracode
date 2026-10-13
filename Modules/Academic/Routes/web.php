@@ -38,6 +38,7 @@ use Modules\Academic\Http\Controllers\AcaSchoolController;
 use Modules\Academic\Http\Controllers\AcaSchoolEnrollmentController;
 use Modules\Academic\Http\Controllers\AcaSchoolFeeController;
 use Modules\Academic\Http\Controllers\AcaSchoolGateController;
+use Modules\Academic\Http\Controllers\AcaSmsParametersController;
 use Modules\Academic\Http\Controllers\AcaSchoolScheduleController;
 use Modules\Academic\Http\Controllers\AcaSchoolStudentController;
 use Modules\Academic\Http\Controllers\AcaSchoolStructureController;
@@ -1014,6 +1015,23 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->get('school/gate/day', [AcaSchoolGateController::class, 'day'])->name('aca_school_gate_day');
     Route::middleware(['middleware' => 'permission:aca_school_porteria_reporte'])
         ->get('school/gate/report', [AcaSchoolGateController::class, 'report'])->name('aca_school_gate_report');
+
+    /*
+     * Parametros / SMS del colegio: canal propio de los avisos de asistencia
+     * (URL, usuario y contrasena de SMSGate, interruptores por evento y las
+     * plantillas del mensaje). Es distinto del canal de las campanas de
+     * especializacion que configura la pantalla de Notificaciones.
+     */
+    Route::middleware(['middleware' => 'permission:aca_school_sms_configuracion'])->group(function () {
+        Route::get('school/sms', [AcaSmsParametersController::class, 'index'])
+            ->name('aca_school_sms_parameters');
+        Route::post('school/sms/update', [AcaSmsParametersController::class, 'update'])
+            ->name('aca_school_sms_parameters_update');
+        Route::post('school/sms/preview', [AcaSmsParametersController::class, 'preview'])
+            ->name('aca_school_sms_parameters_preview');
+        Route::post('school/sms/test', [AcaSmsParametersController::class, 'test'])
+            ->name('aca_school_sms_parameters_test');
+    });
 
     // Registro de evaluacion por competencias CNEB (formato SIAGIE)
     Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])

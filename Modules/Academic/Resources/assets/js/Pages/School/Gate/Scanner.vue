@@ -153,7 +153,12 @@ const handleSuccess = (response, icon) => {
         result: response.result,
     };
 
-    const detail = [response.student, response.section, response.time].filter(Boolean).join(' · ');
+    // Si el canal de avisos está activo, el toast confirma a cuántos apoderados
+    // se les encoló el SMS de la entrada o la salida.
+    const notified = Number(response.notices_queued || 0) > 0
+        ? `Aviso SMS a ${response.notices_queued} apoderado(s)`
+        : null;
+    const detail = [response.student, response.section, response.time, notified].filter(Boolean).join(' · ');
 
     if (response.result === 'duplicate') {
         toast(icon, 'Ya registrado', response.message);
