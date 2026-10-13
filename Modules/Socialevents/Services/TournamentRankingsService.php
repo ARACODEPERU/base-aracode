@@ -28,6 +28,62 @@ class TournamentRankingsService
         return $this->suspensionService->getPlayerIdsHiddenFromRankings($editionId);
     }
     /**
+     * Posición registrada de un jugador: ¿es arquero?
+     *
+     * En la base conviven variantes ("Arquero", "Guardameta", "Portero") y hay
+     * jugadores sin posición, por eso se comparan varias formas en vez de un
+     * valor exacto.
+     */
+    private function isKeeperPosition(?string $position): bool
+    {
+        $position = mb_strtolower(trim((string) $position));
+
+        if ($position === '') {
+            return false;
+        }
+
+        foreach (['arquero', 'portero', 'guardameta', 'golero', 'goalkeeper'] as $needle) {
+            if (str_contains($position, $needle)) {
+                return true;
+            }
+        }
+
+        return in_array($position, ['gk', 'arq', 'arquero/a'], true);
+    }
+
+    /**
+     * IDs de los jugadores que cuentan como arqueros en la edición.
+     *
+     * Antes la separación era "tiene atajadas": así un arquero sin atajadas
+     * caía en la lista de jugadores de campo y cualquier jugador de campo que
+     * atajara una vez aparecía como arquero. Ahora manda la posición registrada
+     * del jugador y, cuando la plantilla no la tiene cargada, el detalle de
+     * atajadas (quien atajó jugó de arquero).
+     *
+     * @return array<int,int>
+     */
+    private function goalkeeperPlayerIds(int $editionId): array
+    {
+        $registered = EventEditionTeamPlayer::query()
+            ->where('edition_id', $editionId)
+            ->get(['person_id', 'position'])
+            ->filter(fn (EventEditionTeamPlayer $player) => $this->isKeeperPosition($player->position))
+            ->pluck('person_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        // Respaldo para plantillas sin posición cargada: quien atajó es arquero.
+        $saved = EventEditionMatchPlayerStat::query()
+            ->where('saves', '>', 0)
+            ->whereHas('match', fn ($q) => $q->where('edition_id', $editionId))
+            ->pluck('player_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        return array_values(array_unique(array_merge($registered, $saved)));
+    }
+
+    /**
      * Ranking de jugadores de campo (misma fórmula que la landing).
      */
     public function topPlayers(int $editionId, ?int $limit = null): Collection
@@ -36,6 +92,7 @@ class TournamentRankingsService
         $weights = config('socialevents.rankings.players', []);
 
         $excludedPlayers = $this->getExcludedPlayerIds($editionId);
+        $keeperIds = $this->goalkeeperPlayerIds($editionId);
 
         $playerStats = EventEditionMatchPlayerStat::with(['player.person', 'match'])
             ->whereHas('match', fn ($q) => $q->where('edition_id', $editionId))
@@ -49,7 +106,9 @@ class TournamentRankingsService
         $players = [];
 
         foreach ($playerStats as $stat) {
-            if ($stat->saves > 0) {
+            // El partido de un arquero no entra al ranking de jugadores de campo:
+            // su lugar es la lista de arqueros.
+            if (in_array((int) $stat->player_id, $keeperIds, true)) {
                 continue;
             }
 
@@ -93,6 +152,7 @@ class TournamentRankingsService
         $weights = config('socialevents.rankings.goalkeepers', []);
 
         $excludedPlayers = $this->getExcludedPlayerIds($editionId);
+        $keeperIds = $this->goalkeeperPlayerIds($editionId);
 
         $playerStats = EventEditionMatchPlayerStat::with(['player.person', 'match'])
             ->whereHas('match', fn ($q) => $q->where('edition_id', $editionId))
@@ -106,7 +166,10 @@ class TournamentRankingsService
         $goalkeepers = [];
 
         foreach ($playerStats as $stat) {
-            if ($stat->saves == 0) {
+            // El arquero se reconoce por su posición registrada (y por el
+            // detalle de atajadas cuando no hay posición): un partido sin
+            // atajadas sigue siendo suyo, cuenta su valla invicta y su MVP.
+            if (! in_array((int) $stat->player_id, $keeperIds, true)) {
                 continue;
             }
 
@@ -269,16 +332,19 @@ class TournamentRankingsService
             return null;
         }
 
-        // Misma regla que los rankings: los partidos jugados como arquero no
-        // entran al ranking de jugadores de campo, y viceversa. Así el detalle
-        // explica exactamente el puntaje que muestra la tarjeta.
-        $stats = $stats->filter(function (EventEditionMatchPlayerStat $stat) use ($category) {
+        // Misma regla que los rankings: un arquero (por su posición registrada,
+        // o por el detalle de atajadas) no entra al ranking de jugadores de
+        // campo, y viceversa. Así el detalle explica exactamente el puntaje que
+        // muestra la tarjeta.
+        $isKeeper = in_array((int) $playerId, $this->goalkeeperPlayerIds($editionId), true);
+
+        $stats = $stats->filter(function (EventEditionMatchPlayerStat $stat) use ($category, $isKeeper) {
             if ($category === 'goalkeeper') {
-                return (int) $stat->saves > 0;
+                return $isKeeper;
             }
 
             if ($category === 'player') {
-                return (int) $stat->saves === 0;
+                return ! $isKeeper;
             }
 
             return true;

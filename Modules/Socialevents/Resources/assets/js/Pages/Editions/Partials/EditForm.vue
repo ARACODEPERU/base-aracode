@@ -76,6 +76,14 @@
         inscription_fee: props.edicion.inscription_fee,
         min_players_per_team: props.edicion.min_players_per_team,
         max_players_per_team: props.edicion.max_players_per_team,
+        // Tiempos del torneo (configurables; estos son solo el preset inicial)
+        regular_half_minutes: props.edicion.regular_half_minutes ?? 20,
+        regular_halves: props.edicion.regular_halves ?? 2,
+        extra_half_minutes: props.edicion.extra_half_minutes ?? 10,
+        extra_halves: props.edicion.extra_halves ?? 2,
+        extra_time_enabled: !!props.edicion.extra_time_enabled,
+        max_substitutions: props.edicion.max_substitutions ?? null,
+        extra_substitution_enabled: props.edicion.extra_substitution_enabled ?? true,
         prize_details: props.edicion.prize_details,
         details: props.edicion.details,
         status: props.edicion.status,
@@ -372,6 +380,48 @@
                             <InputLabel for="max_players_per_team" value="Cantidad jugadores por equipo" class="mb-1" />
                             <input v-model="form.max_players_per_team" id="max_players_per_team" class="form-input text-right" v-maska="'###'" placeholder="___" maxlength="3" type="text" />
                             <InputError :message="form.errors.max_players_per_team" class="mt-2" />
+                        </div>
+                        <div class="col-span-3">
+                            <h4 class="text-lg font-bold mt-6 mb-2">Tiempos del torneo</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Los minutos por tiempo son configurables. La prórroga es opcional y solo aplica en fases de
+                                eliminación directa; si no la habilitas, un empate es un resultado válido.
+                            </p>
+                        </div>
+                        <div>
+                            <InputLabel for="regular_half_minutes" value="Minutos por tiempo *" class="mb-1" />
+                            <input v-model="form.regular_half_minutes" id="regular_half_minutes" class="form-input text-right" v-maska="'###'" placeholder="20" maxlength="3" type="text" />
+                            <InputError :message="form.errors.regular_half_minutes" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="regular_halves" value="Cantidad de tiempos *" class="mb-1" />
+                            <input v-model="form.regular_halves" id="regular_halves" class="form-input text-right" v-maska="'#'" placeholder="2" maxlength="1" type="text" />
+                            <InputError :message="form.errors.regular_halves" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="extra_half_minutes" value="Minutos por tiempo suplementario" class="mb-1" />
+                            <input v-model="form.extra_half_minutes" id="extra_half_minutes" class="form-input text-right" v-maska="'##'" placeholder="10" maxlength="2" type="text" />
+                            <InputError :message="form.errors.extra_half_minutes" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="extra_halves" value="Cantidad de tiempos suplementarios" class="mb-1" />
+                            <input v-model="form.extra_halves" id="extra_halves" class="form-input text-right" v-maska="'#'" placeholder="2" maxlength="1" type="text" />
+                            <InputError :message="form.errors.extra_halves" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="max_substitutions" value="Límite de cambios (solo aviso)" class="mb-1" />
+                            <input v-model="form.max_substitutions" id="max_substitutions" class="form-input text-right" v-maska="'##'" placeholder="Sin límite" maxlength="2" type="text" />
+                            <InputError :message="form.errors.max_substitutions" class="mt-2" />
+                        </div>
+                        <div class="sm:col-span-3 flex flex-wrap items-center gap-6">
+                            <div class="flex items-center gap-3">
+                                <input v-model="form.extra_time_enabled" id="extra_time_enabled" type="checkbox" class="form-checkbox" />
+                                <InputLabel for="extra_time_enabled" value="Habilitar prórroga (eliminación directa)" />
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <input v-model="form.extra_substitution_enabled" id="extra_substitution_enabled" type="checkbox" class="form-checkbox" />
+                                <InputLabel for="extra_substitution_enabled" value="Cambio extra durante la prórroga" />
+                            </div>
                         </div>
                         <div class="col-span-3">
                             <h4 class="text-lg font-bold mt-6 mb-2">Premios</h4>

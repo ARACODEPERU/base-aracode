@@ -30,6 +30,14 @@ class EventEdition extends Model
         'min_players_per_team',
         'max_players_per_team',
         'prize_details',
+        // Tiempos del torneo (configurables, los defaults son solo un preset)
+        'regular_half_minutes',
+        'regular_halves',
+        'extra_half_minutes',
+        'extra_halves',
+        'extra_time_enabled',
+        'max_substitutions',
+        'extra_substitution_enabled',
         // ---------------------------------
         'path_database_file',
         'name_database_file',
@@ -52,6 +60,13 @@ class EventEdition extends Model
     protected $casts = [
         'landing_published' => 'boolean',
         'mobile_enabled' => 'boolean',
+        'regular_half_minutes' => 'integer',
+        'regular_halves' => 'integer',
+        'extra_half_minutes' => 'integer',
+        'extra_halves' => 'integer',
+        'extra_time_enabled' => 'boolean',
+        'max_substitutions' => 'integer',
+        'extra_substitution_enabled' => 'boolean',
         'app_downloads' => 'integer',
         'branding' => 'array',
         'inscription_fee' => 'decimal:2',

@@ -12,6 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // MODIFY ... ENUM es exclusivo de MySQL: en sqlite (suite de tests, con
+        // la tabla recién creada desde cero) el estado ya admite cualquier texto.
+        if (! $this->supportsEnumModify()) {
+            return;
+        }
+
         DB::statement("
             ALTER TABLE event_edition_matches
             MODIFY status ENUM('pending', 'live', 'finished', 'cancelled', 'walk_over', 'closed', 'no_points')
@@ -21,10 +27,19 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (! $this->supportsEnumModify()) {
+            return;
+        }
+
         DB::statement("
             ALTER TABLE event_edition_matches
             MODIFY status ENUM('pending', 'live', 'finished', 'cancelled', 'walk_over', 'closed')
             NOT NULL DEFAULT 'pending'
         ");
+    }
+
+    private function supportsEnumModify(): bool
+    {
+        return DB::connection()->getDriverName() === 'mysql';
     }
 };

@@ -29,7 +29,8 @@ class PlayerStatsApiController extends Controller
             SUM(assists) as total_assists,
             SUM(saves) as total_saves,
             SUM(is_mvp) as total_mvp,
-            SUM(clean_sheet) as total_clean_sheet
+            SUM(clean_sheet) as total_clean_sheet,
+            SUM(minutes_played) as total_minutes
         ')
         ->whereHas('match', function ($query) use ($editionId) {
             $query->where('edition_id', $editionId);
@@ -48,6 +49,9 @@ class PlayerStatsApiController extends Controller
                 break;
             case 'cleansheet':
                 $stats = $stats->orderByDesc('total_clean_sheet');
+                break;
+            case 'minutes':
+                $stats = $stats->orderByDesc('total_minutes');
                 break;
             default:
                 $stats = $stats->orderByDesc('total_goals');
@@ -74,6 +78,7 @@ class PlayerStatsApiController extends Controller
                 'saves' => (int) $stat->total_saves,
                 'mvp' => (int) $stat->total_mvp,
                 'clean_sheet' => (int) $stat->total_clean_sheet,
+                'minutes_played' => (int) $stat->total_minutes,
             ];
         });
 

@@ -33,7 +33,10 @@ class KardexController extends Controller
                 'local_sales.id AS local_id',
                 'local_sales.description AS local_names'
             )
-            ->selectRaw('CONVERT(SUM(kardexes.quantity), SIGNED INTEGER) AS kardex_stock')
+            // El stock se suma como decimal. El CONVERT(..., SIGNED INTEGER) que
+            // se usaba antes redondeaba la suma a entero (126.75 se mostraba como
+            // 127, o 0.5 como 1) y ademas solo existe en MySQL.
+            ->selectRaw('SUM(kardexes.quantity) AS kardex_stock')
             ->groupBy(
                 'products.id',
                 'local_sales.description',
@@ -58,7 +61,22 @@ class KardexController extends Controller
             $query->where('kardexes.local_id', $local_id);
         }
 
-        $kardexes = $query->paginate(20)->withQueryString();
+        // Cantidad de registros por pagina elegida en la vista (con respaldo en
+        // 20 si llega un valor fuera de la lista permitida).
+        $perPage = (int) request()->input('per_page', 20);
+        if (! in_array($perPage, [10, 20, 50, 100], true)) {
+            $perPage = 20;
+        }
+
+        $kardexes = $query->paginate($perPage)
+            ->withQueryString()
+            ->through(function ($row) {
+                // SUM() devuelve una cadena decimal; se normaliza a numero para
+                // que la vista reciba un valor listo para mostrar.
+                $row->kardex_stock = (float) $row->kardex_stock;
+
+                return $row;
+            });
 
         return Inertia::render('Kardex/List', [
             'establishments' => $establishments,

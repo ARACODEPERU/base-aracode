@@ -11,6 +11,7 @@
     import 'flatpickr/dist/flatpickr.css';
     import { Spanish } from "flatpickr/dist/l10n/es.js"
     import IconBallSoccer from '@/Components/vristo/icon/icon-ball-soccer.vue';
+    import IconNotesEdit from '@/Components/vristo/icon/icon-notes-edit.vue';
     import { ref, computed } from 'vue';
 
     const props = defineProps({
@@ -111,6 +112,12 @@
     // Función para determinar si el partido es par o impar para la curva del conector
     const isEven = (index) => index % 2 === 0;
 
+    // El acta se registra en su propia vista (espacio para goles con tiempo,
+    // tipo y asistencia, cambios y minutos) y desde ahí se vuelve al fixture.
+    const openMatchScoreView = (match) => {
+        router.visit(route('even_ediciones_partido_resultado', [props.edition.id, match.id]));
+    };
+
     const downloadPdfSheet = async (match) => {
         try {
             const response = await axios.get(route('even_ediciones_fixtures_pdf_sheet', [match.edition_id, match.id]));
@@ -159,12 +166,20 @@
                                         <span class="truncate pr-2">{{ match.equipovisitante?.short_name || match.placeholder_a || 'TBD' }}</span>
                                         <span class="text-slate-700 dark:text-slate-300 font-mono">{{ match.score_a ?? '-' }}</span>
                                     </div>
-                                    <div class="absolute top-1 right-1 z-30">
+                                    <div class="absolute top-1 right-1 z-30 flex items-center gap-1 bg-white/80 dark:bg-zinc-700/80 rounded-lg">
+                                        <button
+                                            v-can="'even_ediciones_partido_resultado'"
+                                            @click.stop="openMatchScoreView(match)"
+                                            v-tippy="{content: 'Registrar resultados del partido', placement: 'bottom'}"
+                                            class="p-1 hover:bg-green-100 rounded-lg transition dark:hover:bg-green-900/30 no-export"
+                                        >
+                                            <IconNotesEdit class="w-4 h-4 text-green-600" />
+                                        </button>
                                         <button
                                             v-can="'even_ediciones_fixtures'"
                                             @click.stop="downloadPdfSheet(match)"
                                             v-tippy="{content: 'Ficha Partido', placement: 'bottom'}"
-                                            class="p-1 hover:bg-gray-200 rounded-lg transition dark:hover:bg-zinc-700 no-export bg-white/80 dark:bg-zinc-700/80"
+                                            class="p-1 hover:bg-gray-200 rounded-lg transition dark:hover:bg-zinc-700 no-export"
                                         >
                                             <svg class="w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 512 512">
                                                 <path d="M128 0C92.7 0 64 28.7 64 64l0 96 64 0 0-96 226.7 0L384 93.3l0 66.7 64 0 0-80c0-17-6.7-33.3-18.7-45.3L354.7 18.7C342.7 6.7 326.5 0 309.3 0L128 0zM384 352l0-32 0-32 0-160L256 128l0 96c0 17.7-14.3 32-32 32l-96 0 0 96 0 32 0 32 256 0zm-256 96l256 0c35.3 0 64-28.7 64-64l0-128c0-35.3-28.7-64-64-64l-64 0 0-64L128 0 64 0C28.7 0 0 28.7 0 64L0 384c0 35.3 28.7 64 64 64l64 0z"/>

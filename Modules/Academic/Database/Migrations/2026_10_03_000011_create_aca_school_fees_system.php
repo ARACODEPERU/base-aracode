@@ -102,13 +102,16 @@ return new class extends Migration
 
         // FK diferida: charges.payment_schedule_id -> payment_schedules (tabla creada arriba)
         if (Schema::hasTable('aca_school_charges') && Schema::hasTable('aca_school_payment_schedules')) {
-            $fkExists = (bool) DB::selectOne(
-                "SELECT COUNT(*) AS total FROM information_schema.KEY_COLUMN_USAGE
-                 WHERE TABLE_SCHEMA = DATABASE()
-                   AND TABLE_NAME = 'aca_school_charges'
-                   AND COLUMN_NAME = 'payment_schedule_id'
-                   AND REFERENCED_TABLE_NAME = 'aca_school_payment_schedules'"
-            )->total;
+            // information_schema es exclusivo de MySQL y SQLite no permite añadir
+            // una FK con ALTER TABLE: fuera de MySQL se da por existente y no se toca.
+            $fkExists = DB::connection()->getDriverName() !== 'mysql'
+                || (bool) DB::selectOne(
+                    "SELECT COUNT(*) AS total FROM information_schema.KEY_COLUMN_USAGE
+                     WHERE TABLE_SCHEMA = DATABASE()
+                       AND TABLE_NAME = 'aca_school_charges'
+                       AND COLUMN_NAME = 'payment_schedule_id'
+                       AND REFERENCED_TABLE_NAME = 'aca_school_payment_schedules'"
+                )->total;
 
             if (! $fkExists) {
                 Schema::table('aca_school_charges', function (Blueprint $table) {
