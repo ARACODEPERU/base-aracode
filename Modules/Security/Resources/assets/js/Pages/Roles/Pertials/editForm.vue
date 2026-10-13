@@ -7,10 +7,19 @@
     import TextInput from '@/Components/TextInput.vue';
     import Keypad from '@/Components/Keypad.vue';
     import swal from 'sweetalert';
-    import { ref } from 'vue';
+    import { computed, ref } from 'vue';
     import VueCollapsible from 'vue-height-collapsible/vue3';
     import iconCaretDown from '@/Components/vristo/icon/icon-caret-down.vue';
     import iconFolder from '@/Components/vristo/icon/icon-folder.vue';
+    import iconSearch from '@/Components/vristo/icon/icon-search.vue';
+    import {
+        contarPermisos,
+        contarPorEstado,
+        filtrarPermisos,
+        ESTADO_HABILITADOS,
+        ESTADO_SIN_HABILITADOS,
+        ESTADO_TODOS,
+    } from '@/utils/filtrarPermisos';
 
     const treeview1 = ref([]);
     const toggleTreeview1 = (name) => {
@@ -55,6 +64,35 @@
         });
     };
 
+    // Texto escrito en el buscador; el filtrado se hace solo en el frontend
+    const search = ref('');
+    const searchTerm = computed(() => search.value.trim());
+
+    // Filtro de los botones: todos, solo los habilitados o solo los que faltan
+    const estadoFiltro = ref(ESTADO_TODOS);
+    const cambiarEstado = (estado) => {
+        // Volver a pulsar el mismo botón quita el filtro
+        estadoFiltro.value = estadoFiltro.value === estado ? ESTADO_TODOS : estado;
+    };
+
+    // Carpetas filtradas solo por el buscador: de aquí salen los números de los botones
+    const soloPorTexto = computed(() => filtrarPermisos(props.sorted, search.value));
+    const conteos = computed(() => contarPorEstado(soloPorTexto.value, form.permissions));
+
+    // Carpetas con los permisos que coinciden con la búsqueda y el filtro de estado
+    const filteredSorted = computed(() =>
+        filtrarPermisos(soloPorTexto.value, '', estadoFiltro.value, form.permissions)
+    );
+
+    // Total de permisos encontrados en todas las carpetas de los módulos
+    const totalEncontrados = computed(() => contarPermisos(filteredSorted.value));
+
+    // Hay búsqueda o filtro de estado activo
+    const hayFiltro = computed(() => searchTerm.value !== '' || estadoFiltro.value !== ESTADO_TODOS);
+
+    // Con búsqueda o filtro, las carpetas con coincidencias se muestran abiertas
+    const isRowOpen = (row) => hayFiltro.value || treeview1.value.includes(row.modulo_id);
+
     const selectAllCheckbox = (event) => {
         if(event.target.checked){
             const allPermissions = props.permissions;
@@ -68,6 +106,57 @@
 </script>
 
 <template>
+    <!--
+        Barra del buscador y los dos filtros de estado: queda centrada y fija
+        arriba para no perderse de vista en una lista larga de permisos.
+    -->
+    <div
+        class="sticky top-0 z-30 mb-6 border-b border-gray-200/80 bg-white/95 px-2 py-3 backdrop-blur dark:border-gray-700/60 dark:bg-[#0e1726]/95"
+    >
+        <div class="flex flex-col items-center gap-3">
+            <div class="relative w-full max-w-md">
+                <input
+                    v-model="search"
+                    type="text"
+                    id="permisos-search"
+                    class="block w-full p-2 pr-9 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    placeholder="Buscar permiso"
+                >
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <icon-search class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-2">
+                <button
+                    type="button"
+                    id="filtro-habilitados"
+                    :aria-pressed="estadoFiltro === ESTADO_HABILITADOS"
+                    title="Ver solo los permisos habilitados para este rol. Pulsa de nuevo para ver todos."
+                    class="px-4 py-2 text-xs font-medium uppercase rounded border transition duration-150 ease-in-out"
+                    :class="estadoFiltro === ESTADO_HABILITADOS
+                        ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                        : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600'"
+                    @click="cambiarEstado(ESTADO_HABILITADOS)"
+                >
+                    Habilitados ({{ conteos.habilitados }})
+                </button>
+                <button
+                    type="button"
+                    id="filtro-sin-habilitados"
+                    :aria-pressed="estadoFiltro === ESTADO_SIN_HABILITADOS"
+                    title="Ver solo los permisos que este rol no tiene habilitados. Pulsa de nuevo para ver todos."
+                    class="px-4 py-2 text-xs font-medium uppercase rounded border transition duration-150 ease-in-out"
+                    :class="estadoFiltro === ESTADO_SIN_HABILITADOS
+                        ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                        : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600'"
+                    @click="cambiarEstado(ESTADO_SIN_HABILITADOS)"
+                >
+                    No habilitados ({{ conteos.sinHabilitados }})
+                </button>
+            </div>
+        </div>
+    </div>
+
     <FormSection @submitted="updateRol">
         <template #title>
             Roles Detalles
@@ -91,23 +180,28 @@
                 <InputError :message="form.errors.name" class="mt-2" />
             </div>
             <div class="col-span-6">
-                <div class="flex items-center mb-6">
-                    <input @change="selectAllCheckbox($event)" id="checkboxAll" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="checkboxAll" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-                        Todos
-                    </label>
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                    <div class="flex items-center">
+                        <input @change="selectAllCheckbox($event)" id="checkboxAll" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                        <label for="checkboxAll" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                            Todos
+                        </label>
+                    </div>
+                    <p v-if="hayFiltro && totalEncontrados > 0" class="text-sm text-gray-500 dark:text-gray-400">
+                        {{ totalEncontrados }} permiso(s) encontrado(s)
+                    </p>
                 </div>
                 <ul class="font-semibold">
-                    <li v-for="(row, index) in sorted" class="py-[5px]">
+                    <li v-for="(row, index) in filteredSorted" class="py-[5px]">
                         <button type="button" @click="toggleTreeview1(row.modulo_id)">
                             <icon-caret-down
                                 class="w-5 h-5 text-primary inline relative -top-1 ltr:mr-2 rtl:ml-2"
-                                :class="{ 'rotate-180': treeview1.includes(row.modulo_id) }"
+                                :class="{ 'rotate-180': !isRowOpen(row) }"
                             />
                             <icon-folder class="text-primary inline relative -top-1 ltr:mr-2 rtl:ml-2" />
                             {{ row.modulo_description }}
                         </button>
-                        <vue-collapsible :isOpen="treeview1.includes(row.modulo_id)">
+                        <vue-collapsible :isOpen="isRowOpen(row)">
                             <ul class="mt-2 ltr:pl-14 rtl:pr-14">
                                 <li class="py-[5px]">
                                     <div v-if="row.permissions && row.permissions.length > 0">
@@ -126,6 +220,9 @@
                         </vue-collapsible>
                     </li>
                 </ul>
+                <p v-if="hayFiltro && filteredSorted.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
+                    No se encontraron permisos con este filtro.
+                </p>
             </div>
         </template>
 

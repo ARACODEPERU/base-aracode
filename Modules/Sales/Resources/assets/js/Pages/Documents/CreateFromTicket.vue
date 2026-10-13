@@ -480,7 +480,7 @@
                             <div class="text-3xl font-bold mb-1">
                                 <img style="width: 242px;height: 53.2333px;" class="inline-block h-auto ltr:mr-2 rtl:ml-2" :src="asetUrl+'storage/'+company.logo">
                             </div>
-                            <p class="text-sm">Ancash, Chimbote<br>{{ company.fiscal_address }}</p>
+                            <p class="text-sm"><template v-if="company.city">{{ company.city }}<br></template>{{ company.fiscal_address }}</p>
                         </div>
                         <div style="width: 180px;" class="text-4xl uppercase font-bold">
                             <select @change="getSeriesByDocumentType" v-model="formDocument.sale_documenttype_id" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
