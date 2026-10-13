@@ -3,8 +3,10 @@
 namespace Modules\CRM\Http\Controllers\Concerns;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Models\Role;
 
 /**
  * Permite que los administradores operen el chat "como" un usuario con rol
@@ -44,6 +46,34 @@ trait ResuelveIdentidadAsistente
     }
 
     /**
+     * Usuarios que tienen alguno de los roles indicados.
+     *
+     * El rol Asistente lo crea cada instalacion cuando arma su equipo de
+     * atencion, asi que puede no existir todavia. Spatie lanza RoleDoesNotExist
+     * al consultarlo y la pantalla que solo queria avisar de que no hay
+     * asistentes se caia con un error 500: aqui se consulta unicamente por los
+     * roles que existen de verdad.
+     */
+    protected function usuariosConRol(string|array $roles): Builder
+    {
+        $existentes = collect((array) $roles)
+            ->filter(fn (string $nombre) => Role::query()
+                ->where('name', $nombre)
+                ->where('guard_name', 'web')
+                ->exists())
+            ->values()
+            ->all();
+
+        if ($existentes === []) {
+            // Sin roles que consultar se devuelve una consulta vacia para que
+            // quien llama siga encadenando with(), where() o pluck().
+            return User::query()->whereRaw('1 = 0');
+        }
+
+        return User::query()->role($existentes);
+    }
+
+    /**
      * Usuario con rol Asistente que se esta suplantando en este request.
      */
     protected function asistenteSuplantado(Request $request): ?User
@@ -59,10 +89,9 @@ trait ResuelveIdentidadAsistente
             abort(403, 'No tienes permiso para ver el chat como un asistente.');
         }
 
-        $asistente = User::query()
+        $asistente = $this->usuariosConRol('Asistente')
             ->when($userId, fn ($query) => $query->where('id', $userId))
             ->when($personId, fn ($query) => $query->where('person_id', $personId))
-            ->role('Asistente')
             ->first();
 
         if (! $asistente) {
@@ -94,8 +123,7 @@ trait ResuelveIdentidadAsistente
      */
     protected function usuariosNotificadosAdicionales(): array
     {
-        return User::query()
-            ->role(['admin', 'Administrador'])
+        return $this->usuariosConRol(['admin', 'Administrador'])
             ->pluck('id')
             ->all();
     }

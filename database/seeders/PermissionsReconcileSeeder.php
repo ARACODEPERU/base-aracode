@@ -70,6 +70,11 @@ class PermissionsReconcileSeeder extends Seeder
             'roles'  => ['admin', 'Administrador'],
         ],
         [
+            'name'   => 'crm_chatbot',
+            'module' => 'M008',
+            'roles'  => ['admin', 'Administrador'],
+        ],
+        [
             'name'   => 'invo_documento_anular',
             'module' => 'M002',
             'roles'  => ['admin', 'Administrador'],

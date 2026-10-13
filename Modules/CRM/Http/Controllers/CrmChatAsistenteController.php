@@ -4,9 +4,9 @@ namespace Modules\CRM\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Parameter;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Modules\CRM\Http\Controllers\Concerns\ResuelveIdentidadAsistente;
 
 /**
  * Vista de chat para admin/Administrador: se elige un asistente y desde ahi se
@@ -14,11 +14,15 @@ use Inertia\Inertia;
  */
 class CrmChatAsistenteController extends Controller
 {
+    use ResuelveIdentidadAsistente;
+
     public function index(Request $request)
     {
-        $asistentes = User::query()
+        // El rol Asistente puede no existir todavia en la instalacion: se consulta
+        // con el trait, que tolera su ausencia y deja que la vista avise en lugar
+        // de responder con un error 500.
+        $asistentes = $this->usuariosConRol('Asistente')
             ->with('person')
-            ->role('Asistente')
             ->get()
             ->filter(fn ($user) => $user->person)
             ->map(fn ($user) => [
