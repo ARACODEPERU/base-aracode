@@ -325,8 +325,9 @@ y *feedback* sonoro antes de tener la respuesta para ganar los ~100 ms de red.
   asistencia que marcó el docente.
 - Motivo obligatorio para la salida anticipada, con aviso al apoderado.
 - Modo kiosco (pantalla completa, sin menú) + PWA instalable en la tablet fija de la puerta.
-- Aviso por SMS al apoderado cuando el alumno no ha registrado entrada a cierta hora
-  (el módulo SMSGate ya existe).
+- **Aviso por SMS al apoderado en la entrada y la salida: hecho ✅** (ver §14). El canal SMSGate
+  propio del colegio ya envía al padre o apoderado. Queda pendiente la alerta por *ausencia*
+  (alumno que todavía no registra entrada a cierta hora).
 
 **Fase 3 — Endurecimiento**
 - Payload firmado (`ACA1.<base64>` con HMAC) para que un alumno no pueda imprimir el código de
@@ -446,6 +447,29 @@ por la puerta en menos de un minuto de cómputo, contra los 5 minutos del objeti
 
 La medición **no incluye el viaje de red** (es tiempo de servidor) ni el tiempo del operador
 alcanzando el carné, que son los que dominan en la puerta real.
+
+### Avisos al apoderado por SMS (hecho ✅)
+
+El paso por la puerta avisa al padre o apoderado. El canal tiene credenciales propias de SMSGate
+(no comparte las de las campañas de especialización ni las de Salud) y se configura desde
+**Académico > Colegio > Parámetros SMS** (parametros SC-00020 a SC-00031).
+
+| Ruta | Nombre | Permiso |
+| --- | --- | --- |
+| `GET academic/school/sms` | `aca_school_sms_parameters` | `aca_school_sms_configuracion` |
+| `POST academic/school/sms/update` | `aca_school_sms_parameters_update` | `aca_school_sms_configuracion` |
+| `POST academic/school/sms/preview` | `aca_school_sms_parameters_preview` | `aca_school_sms_configuracion` |
+| `POST academic/school/sms/test` | `aca_school_sms_parameters_test` | `aca_school_sms_configuracion` |
+
+- **Encolado sin frenar la puerta**: el escaneo solo deja la entrega en
+  `aca_school_notice_deliveries` y encola `SendSchoolGateNotice`; el envío real sale por la cola
+  (`php artisan queue:work`). El escaneo nunca falla por SMS.
+- **Idempotencia**: la clave única (asistencia, evento, destinatario) evita repetir el aviso aunque
+  el alumno vuelva a pasar por la puerta el mismo día.
+- **Interruptores**: general (SC-00023), entrada (SC-00024), salida (SC-00025), tardanza (SC-00026),
+  salida anticipada (SC-00027), solo al apoderado principal (SC-00030) y límite diario (SC-00031).
+  Las plantillas (SC-00028 y SC-00029) admiten `{alumno}`, `{apoderado}`, `{colegio}`, `{seccion}`,
+  `{fecha}`, `{hora}` y `{estado}`.
 
 ### Pendiente de verificar
 

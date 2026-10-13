@@ -5,6 +5,7 @@ namespace Modules\Academic\Services;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Modules\Academic\Entities\AcaSchoolAttendance;
 use Modules\Academic\Entities\AcaSchoolEnrollment;
 use Modules\Academic\Entities\AcaSchoolGateAttendance;
@@ -34,8 +35,10 @@ class GateScanService
     public const RESULT_NO_ENROLLMENT = 'no_enrollment';
     public const RESULT_ERROR = 'error';
 
-    public function __construct(private SchoolContextService $context)
-    {
+    public function __construct(
+        private SchoolContextService $context,
+        private SchoolGateNoticeService $notices
+    ) {
     }
 
     /**
@@ -247,9 +250,13 @@ class GateScanService
 
         $gate = $gate->fresh(['student.person', 'section.grade.level']);
 
+        // Aviso al apoderado: se encola en la cola para no detener la puerta.
+        $noticesQueued = $this->queueNotices($gate, AcaSchoolGateAttendance::EVENT_ENTRADA);
+
         return $this->response(self::RESULT_OK, $gate, [
             'duplicate' => false,
             'message' => 'Entrada registrada'.($entryStatus === AcaSchoolGateAttendance::ENTRY_TARDANZA ? ' con tardanza' : '').'.',
+            'notices_queued' => $noticesQueued,
             'counters' => $this->counters($schoolId, $at->toDateString()),
         ]);
     }
@@ -301,10 +308,16 @@ class GateScanService
             ? 'Salida registrada antes de la hora oficial.'
             : 'Salida registrada.';
 
-        return $this->response(self::RESULT_OK, $gate->fresh(['student.person', 'section.grade.level']), [
+        $gate = $gate->fresh(['student.person', 'section.grade.level']);
+
+        // Aviso al apoderado: se encola en la cola para no detener la puerta.
+        $noticesQueued = $this->queueNotices($gate, AcaSchoolGateAttendance::EVENT_SALIDA);
+
+        return $this->response(self::RESULT_OK, $gate, [
             'duplicate' => false,
             'message' => $message,
             'early_exit' => $earlyExit,
+            'notices_queued' => $noticesQueued,
             'counters' => $this->counters($schoolId, $at->toDateString()),
         ]);
     }
@@ -450,6 +463,7 @@ class GateScanService
             'exit_time' => AcaSchoolGateAttendance::shortTime($gate?->exit_at),
             'mode' => $gate?->last_event,
             'duplicate' => false,
+            'notices_queued' => 0,
             'message' => '',
         ], $extra);
     }
@@ -467,6 +481,7 @@ class GateScanService
             'time' => null,
             'mode' => null,
             'duplicate' => false,
+            'notices_queued' => 0,
             'message' => $message,
             'counters' => null,
         ];
@@ -497,5 +512,26 @@ class GateScanService
         }
 
         return trim(($section->grade?->name ?? '').' '.$section->name);
+    }
+
+    /**
+     * Encola los avisos de asistencia al apoderado del evento recién registrado.
+     *
+     * Nunca lanza: un problema de configuración o de SMSGate no puede romper el
+     * escaneo en la puerta. Devuelve cuántos avisos quedaron encolados.
+     */
+    private function queueNotices(AcaSchoolGateAttendance $gate, string $event): int
+    {
+        try {
+            return $this->notices->notify($gate, $event);
+        } catch (\Throwable $exception) {
+            Log::warning('No se pudo encolar el aviso de asistencia al apoderado', [
+                'gate_attendance_id' => $gate->id,
+                'event' => $event,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return 0;
+        }
     }
 }

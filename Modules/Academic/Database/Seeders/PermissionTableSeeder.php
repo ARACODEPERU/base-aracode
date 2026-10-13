@@ -135,6 +135,8 @@ class PermissionTableSeeder extends Seeder
         // Porteria: asistencia institucional escaneando el QR del carné.
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_porteria_escaner']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_porteria_reporte']));
+        // Parametros / SMS: canal propio de los avisos de asistencia al apoderado.
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_sms_configuracion']));
 
         foreach ($permissions as $permission) {
 
@@ -175,6 +177,7 @@ class PermissionTableSeeder extends Seeder
         $administrador->givePermissionTo('aca_smsgate_configuracion');
         $administrador->givePermissionTo('aca_school_porteria_escaner');
         $administrador->givePermissionTo('aca_school_porteria_reporte');
+        $administrador->givePermissionTo('aca_school_sms_configuracion');
 
         // Rol dedicado del equipo de la puerta: solo escanea, no ve notas,
         // cobros ni matriculas. Es con el que entra la tablet de la porteria.

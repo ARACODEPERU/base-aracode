@@ -37,6 +37,7 @@ use Modules\Academic\Entities\AcaStudentCoursesInterest;
 use Modules\CMS\Entities\CmsLanding;
 use Modules\Socialevents\Entities\EvenEvent;
 use App\Models\Parameter;
+use App\Support\PaginaPrincipal;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
@@ -70,9 +71,14 @@ class WebPageController extends Controller
 
     public function index(Request $request)
     {
-        $pagina = Parameter::where('parameter_code', 'PW00001')->value('value_default');
+        // Portada publicada en la raíz del dominio: la elige el parámetro
+        // PW00001 desde Parámetros y el catálogo de portadas disponibles vive en
+        // config/pagina_principal.php (ver App\Support\PaginaPrincipal).
+        $portada = PaginaPrincipal::seleccionada();
 
-        if ($pagina === '2') {
+        // La portada de torneos es la única que necesita datos de la base de
+        // datos; las demás se renderizan solas.
+        if ($portada === PaginaPrincipal::TORNEOS) {
             $eventos = EvenEvent::whereHas('editions', function ($q) {
                 $q->where('landing_published', true);
             })->with(['editions' => function ($q) {
@@ -85,10 +91,10 @@ class WebPageController extends Controller
                 $evento->editions->loadCount('equipos');
             });
 
-            return view('aracode.pages.torneos', compact('eventos'));
+            return view(PaginaPrincipal::vista($portada), compact('eventos'));
         }
 
-        return view('aracode.pages.home');
+        return view(PaginaPrincipal::vista($portada));
     }
 
     public function academy()

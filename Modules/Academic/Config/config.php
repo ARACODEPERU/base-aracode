@@ -85,4 +85,50 @@ return [
          * (integrationhub.telegram), para no duplicar el parametro del sistema.
          */
     ],
+
+    /*
+     * Avisos de asistencia del colegio (porteria): cuando el alumno registra
+     * su entrada o su salida escaneando el QR del carné, el sistema avisa al
+     * padre o apoderado por SMS.
+     *
+     * El canal es propio del modulo escolar: usa credenciales de SMSGate
+     * distintas a las de las campanas de especializacion (SC-00003/04/05) y a
+     * las de Salud (SC-00006/07/08). Se administran desde Academico >
+     * Parametros / SMS (parametros SC-00020 a SC-00031) y solo envia cuando el
+     * interruptor general (SC-00023) esta encendido.
+     */
+    'school_notices' => [
+        'smsgate' => [
+            // Parametro del sistema con la URL del servidor de SMSGate.
+            'url_parameter' => env('ACA_SCHOOL_SMS_URL_PARAMETER', 'SC-00020'),
+            // Parametro del sistema con el usuario de la cuenta.
+            'username_parameter' => env('ACA_SCHOOL_SMS_USERNAME_PARAMETER', 'SC-00021'),
+            // Parametro del sistema con la contrasena de la cuenta.
+            'password_parameter' => env('ACA_SCHOOL_SMS_PASSWORD_PARAMETER', 'SC-00022'),
+            // Parametro del sistema con el interruptor general del canal.
+            'enabled_parameter' => env('ACA_SCHOOL_SMS_ENABLED_PARAMETER', 'SC-00023'),
+            // Interruptores por evento (entrada, salida, tardanza y salida anticipada).
+            'entry_parameter' => env('ACA_SCHOOL_SMS_ENTRY_PARAMETER', 'SC-00024'),
+            'exit_parameter' => env('ACA_SCHOOL_SMS_EXIT_PARAMETER', 'SC-00025'),
+            'late_parameter' => env('ACA_SCHOOL_SMS_LATE_PARAMETER', 'SC-00026'),
+            'early_exit_parameter' => env('ACA_SCHOOL_SMS_EARLY_EXIT_PARAMETER', 'SC-00027'),
+            // Plantillas editables del texto de cada evento.
+            'entry_message_parameter' => env('ACA_SCHOOL_SMS_ENTRY_MESSAGE_PARAMETER', 'SC-00028'),
+            'exit_message_parameter' => env('ACA_SCHOOL_SMS_EXIT_MESSAGE_PARAMETER', 'SC-00029'),
+            // Avisar solo al apoderado principal.
+            'primary_only_parameter' => env('ACA_SCHOOL_SMS_PRIMARY_ONLY_PARAMETER', 'SC-00030'),
+            // Maximo de avisos por alumno y dia (0 = sin limite).
+            'daily_limit_parameter' => env('ACA_SCHOOL_SMS_DAILY_LIMIT_PARAMETER', 'SC-00031'),
+            // URL por defecto: la que usa la aplicacion movil de SMSGate.
+            'default_url' => env('SMSGATE_URL', 'https://api.sms-gate.app/mobile/v1'),
+            // Textos por defecto si la plantilla queda vacia.
+            'default_entry_message' => 'Estimado(a) {apoderado}: le informamos que {alumno} registró su INGRESO al colegio {colegio} el {fecha} a las {hora} ({estado}).',
+            'default_exit_message' => 'Estimado(a) {apoderado}: le informamos que {alumno} registró su SALIDA del colegio {colegio} el {fecha} a las {hora} ({estado}).',
+            // Ruta del API externo de envio, sobre la URL base normalizada.
+            'messages_path' => env('SMSGATE_MESSAGES_PATH', '/3rdparty/v1/messages'),
+            // Codigo de pais que se antepone a los numeros guardados sin el.
+            'country_code' => env('SMSGATE_COUNTRY_CODE', '51'),
+            'timeout' => (int) env('ACA_SCHOOL_SMS_TIMEOUT', 30),
+        ],
+    ],
 ];

@@ -23,7 +23,8 @@ import {
     faLayerGroup,
     faBell,
     faQrcode,
-    faMoneyBillWave
+    faMoneyBillWave,
+    faSliders
 
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -232,6 +233,14 @@ const colegioGroup = {
         'aca_school_listado',
         'aca_school_horario_listado',
         'aca_school_horario_docente',
+        // Permisos escolares que NO vienen del paquete de administracion: se
+        // conceden sueltos a roles concretos (Portero = solo escaner, y
+        // Administrador = escaner + reporte + parametros SMS). Sin listarlos
+        // aqui, el grupo Colegio se ocultaba para esos usuarios y con el sus
+        // pantallas, aunque el backend si las autorizara.
+        'aca_school_porteria_escaner',
+        'aca_school_porteria_reporte',
+        'aca_school_sms_configuracion',
     ],
     items: [
         {
@@ -521,6 +530,28 @@ const colegioGroup = {
             },
         },
         {
+            route: route('aca_school_sms_parameters'),
+            status: false,
+            text: 'Parámetros SMS',
+            icom: faSliders,
+            permissions: 'aca_school_sms_configuracion',
+            info: {
+                title: 'Parametros / SMS',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Avisos por SMS al padre o apoderado cuando el alumno entra o sale del colegio:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>🔌 <span>Credenciales propias de SMSGate (URL, usuario y contraseña).</span></li>
+                        <li>🔔 <span>Interruptor general y avisos por entrada, salida, tardanza o salida anticipada.</span></li>
+                        <li>✍️ <span>Mensajes editables con variables como {alumno}, {hora} y {colegio}.</span></li>
+                        <li>🧪 <span>Vista previa y SMS de prueba.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
+        },
+        {
             route: route('aca_school_enrollments_list'),
             status: false,
             text: 'Cobros',
@@ -665,7 +696,17 @@ const menuAcademic = {
     text: "Académico",
     icom: faGraduationCap,
     route: 'module',
-    permissions: "aca_dashboard",
+    // Lista con semantica OR: entra quien tenga el permiso general del modulo
+    // o cualquiera de los permisos escolares sueltos. El rol Portero solo
+    // tiene 'aca_school_porteria_escaner', asi que con el permiso unico
+    // 'aca_dashboard' el modulo entero desaparecia del rail y no habia forma
+    // de llegar a la pantalla de escaneo (el backend si lo autoriza).
+    permissions: [
+        'aca_dashboard',
+        'aca_school_porteria_escaner',
+        'aca_school_porteria_reporte',
+        'aca_school_sms_configuracion',
+    ],
     items: academicItems,
 };
 
