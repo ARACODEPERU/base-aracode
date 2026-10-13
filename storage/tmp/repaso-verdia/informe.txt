@@ -1,0 +1,34 @@
+== Escaparate · 1440 px (claro) ==
+  desborde lateral: 0 px · fuera de la ventana: ninguno
+  estructura: {"pasillos":9,"populares":4,"ofertas":4,"pestanas":7,"primeraPestana":4,"necesidades":4,"bandas":3,"diapositivas":3,"puntos":3,"titulosPiezas":["Naranjas de jugo","Tomate italiano","Huevos de campo","Café tostado en grano"]}
+  slider tras «siguiente»: {"activa":1,"puntoActivo":1}
+  pestañas: «Naranjas de jugo» → «Huevos de campo | Yogur natural con frutas | Queso semiduro al corte»
+  sugerencias del buscador: ["Pan de campo integral","Café tostado en grano"]
+  carrito tras añadir uno: {"cuenta":"1","panel":"cerrado"}
+  panel de canasta: {"abierto":true,"lineas":1,"total":"S/ 5.90"}
+  tema oscuro: {"tema":"oscuro","guardado":"\"oscuro\"","pulsado":"true","etiqueta":"Cambiar a modo claro"}
+== Catálogo · 1440 px ==
+  desborde lateral: 0 px · fuera de la ventana: ninguno
+  sin filtros: {"productos":21,"filtros":14,"resumen":"21 productos en toda la tienda · precios y existencias ficticios"}
+  filtro panadería: {"productos":["Pan de campo integral","Hogaza artesana","Croissants de mantequilla"],"url":"?rubro=panaderia"}
+  necesidad ahorro: {"productos":["Naranjas de jugo","Fresas del valle","Tomate italiano","Judías verdes","Filete de res","Salsa de tomate casera"],"url":"?necesidad=ahorro"}
+  orden por precio: {"montos":["S/ 2.80","S/ 3.50","S/ 3.90","S/ 4.20"],"url":"?orden=precio-asc"}
+  estado vacío: {"piezas":0,"mensaje":"No encontramos productos con esa búsqueda. Prueba con otra palabra o quita los filtros."}
+  enlace con filtro: {"productos":["Huevos de campo","Yogur natural con frutas","Queso semiduro al corte"],"activo":"Lácteos y huevos"}
+== Ficha de producto · 1440 px ==
+  ficha de «cafe»: {"titulo":"Café tostado en grano — VERDIA Market · Demostración de plantilla","nombre":"Café tostado en grano","rubro":"Abarrotes","precio":"S/ 24.90","presentacion":"500 g · bolsa","foto":"img/p-cafe.webp","relacionados":2}
+  ficha de «filete» (oferta): {"nombre":"Filete de res","antes":"S/ 39.90Ahorras S/ 7.00","insignia":"Oferta de demostración","boton":"filete"}
+== Canasta · 1440 px ==
+  canasta vacía: {"vacia":true,"pie":"oculto"}
+  canasta con tres productos: {"lineas":3,"unidades":"4","subtotal":"S/ 59.20","total":"S/ 59.20","cuenta":"4"}
+  tras subir el pan a 2: {"unidades":"5","subtotal":"S/ 65.70"}
+  pedido sin datos: {"error":"Falta completar el pedido de prueba:Escribe un nombre de al menos tres letras.Es","recibo":"oculto"}
+  pedido de prueba: {"visible":true,"aviso":true,"total":"Total de referencia: S/ 65.70"}
+== Escaparate · 390 px (móvil) ==
+  desborde lateral: 0 px · fuera de la ventana: button., button., button., button.
+  áreas táctiles: {"punto":[44,44],"interruptor":[44,44],"menu":[44,44],"canasta":[44,52],"pasillosVisibles":"none"}
+  menú móvil: {"clase":"pasillos esta-abierto","visible":"block","expandido":"true"}
+== Enlaces internos ==
+  18 enlaces revisados · rotos: ninguno
+
+Sin errores de consola ni peticiones fallidas.

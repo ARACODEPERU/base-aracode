@@ -299,6 +299,43 @@ return [
             'actualizada' => '2026-10-12',
         ],
 
+        // Supermercado en línea: la segunda tienda del banco. Vive en el mismo
+        // formato (`tienda`) y la misma categoría (`comercio`) que Tienda en
+        // línea, pero con identidad, estructura y demostración propias: pasillos
+        // de supermercado, ofertas con precio anterior y canasta con simulación
+        // de pedido. La subcategoría «Supermercados y minimarkets» del encargo no
+        // existe en el catálogo y no se crea una nueva: el catálogo tiene una
+        // sola categoría de comercio y las etiquetas de esta plantilla son las
+        // que hacen que el buscador la encuentre por «supermercado» o
+        // «minimarket».
+        'supermercado-online-verdia' => [
+            'nombre' => 'Supermercado Online — VERDIA Market',
+            'categoria' => 'comercio',
+            'tipo' => 'tienda',
+            'etiquetas' => ['supermercado', 'minimarket', 'abarrotes', 'frutas y verduras', 'tienda de alimentos', 'ecommerce', 'canasta'],
+            'resumen' => 'Tienda de supermercado con buscador de productos, filtros por pasillo y por necesidad, ofertas del día, ficha de producto y canasta que simula el pedido.',
+            'incluye' => [
+                'Diseño «supermercado de barrio contemporáneo»: marfil de fondo, superficies blancas, verde bosque de la marca para la acción y naranja reservado a las ofertas',
+                'Aviso de demostración en la cabecera y en el pie: marca, productos, precios, promociones y contacto ficticios',
+                'Hero a pantalla completa con slider de tres fotos, tarjetas de sugerencia y controles con flechas y puntos',
+                'Modo claro y oscuro con interruptor, recordado entre las cuatro páginas de la tienda',
+                'Buscador de productos con sugerencias mientras se escribe, disponible en la cabecera de todas las páginas',
+                'Nueve pasillos (frutas y verduras, lácteos y huevos, carnes y pescados, panadería, abarrotes, bebidas, snacks, limpieza y cuidado personal)',
+                'Veintiún productos de demostración con presentación, precio de referencia y precio anterior cuando corresponde',
+                'Catálogo con filtros por pasillo y por necesidad, búsqueda por nombre, orden por precio o nombre y el filtro guardado en la URL',
+                'Secciones de productos populares, ofertas del día con etiqueta estática, lo más vendido con pestañas que cambian los productos y compra por necesidad',
+                'Ficha de producto con precio anterior, ahorro, datos de entrega y productos del mismo pasillo',
+                'Canasta guardada en el navegador con cantidades, subtotales, total y simulación de pedido que no cobra ni envía nada',
+                'Estados vacíos en el catálogo y en la canasta, boletín con validación de correo y bloque de confianza sin certificados inventados',
+            ],
+            'tecnologias' => ['HTML5', 'CSS3', 'JavaScript'],
+            'imagen' => 'themes/plantillas/images/supermercado-online-verdia.jpg',
+            'demo' => 'supermercado-online-verdia',
+            'destacada' => false,
+            'publicada' => true,
+            'actualizada' => '2026-10-13',
+        ],
+
     ],
 
 ];

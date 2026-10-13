@@ -17,6 +17,9 @@ $slugs = [
     'academia-cursos',
     'estudio-contable',
     'inmobiliaria-propiedades',
+    'portafolio-creativo',
+    'tienda-online',
+    'supermercado-online-verdia',
 ];
 
 $columnas = 2;

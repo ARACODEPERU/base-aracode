@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Tema claro / oscuro.
+
+    Se aplica aquí, antes de pintar nada, por dos razones: al recargar en oscuro
+    no se ve el destello claro, y el interruptor y los controles del slider
+    quedan ocultos hasta que haya JavaScript.
+
+    Sin nada guardado la tienda arranca en claro, aunque el sistema del visitante
+    esté en oscuro: el modo oscuro solo se pone si lo pide.
+-->
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('supermercado-online-verdia-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    })();
+</script>
+
+<!--
+    Demostración de la plantilla «Supermercado Online — VERDIA Market» del Banco
+    de Plantillas Web de ARACODE.
+
+    Es un proyecto web independiente: no comparte CSS, JavaScript, componentes ni
+    estructura con el sitio corporativo ni con el catálogo. Sus archivos viven
+    todos en esta carpeta (css/, js/, img/) y las rutas son relativas, así que la
+    carpeta se puede copiar a cualquier servidor sin cambiar una línea.
+
+    El diseño es propio y no repite el de ninguna otra demo del banco (regla de
+    diferenciación): **supermercado de barrio contemporáneo**. Marfil de fondo,
+    superficies blancas, verde bosque de la marca para la acción y naranja
+    reservado a las ofertas, esquinas suaves y mucha foto de producto fresca. La
+    marca, los productos, los precios, el código de bienvenida, el teléfono y la
+    dirección son ficticios y están declarados como tales en la barra superior y
+    en el pie.
+
+    Lo que sí repite, porque es el contrato del banco y no su piel: hero a
+    pantalla completa con slider de tres fotos, interruptor de tema, prueba
+    social de la propia plantilla, precios de referencia y aviso de demostración.
+
+    noindex: la página que se indexa es la ficha de la plantilla en el catálogo;
+    la demo existe para verla funcionando.
+-->
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Demostración de la plantilla Supermercado Online: tienda VERDIA Market con buscador de productos, filtros por pasillo, ofertas del día, carrito de prueba y simulación de pedido.">
+
+<title>VERDIA Market — Supermercado en línea · Demostración de plantilla</title>
+
+<link rel="preload" as="image" href="img/portada-cesta.webp">
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=\u0027http://www.w3.org/2000/svg\u0027 viewBox=\u00270 0 100 100\u0027><rect width=\u0027100\u0027 height=\u0027100\u0027 rx=\u002728\u0027 fill=\u0027%2317633D\u0027/><path d=\u0027M50 20c15 5 24 16 24 30 0 14-10 24-24 30-14-6-24-16-24-30 0-14 9-25 24-30Z\u0027 fill=\u0027%23EAF4E7\u0027/><path d=\u0027M50 24c12 5 19 14 19 26 0 12-8 21-19 26-11-5-19-14-19-26 0-12 7-21 19-26Z\u0027 fill=\u0027%2355A85B\u0027/></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<!--
+    Aviso de demostración: es lo primero que se lee y también está en el pie. Ni
+    este texto ni el resto de la página prometen servicios reales.
+-->
+<div class="aviso-demo" data-aviso>
+    <div class="aviso-demo__interior">
+        <p class="aviso-demo__texto"><strong>Demostración de plantilla.</strong> VERDIA Market es una marca ficticia: los productos, precios, promociones, datos de contacto y pedidos son de ejemplo.</p>
+        <button class="aviso-demo__cerrar" type="button" data-aviso-cerrar aria-label="Cerrar el aviso de demostración">×</button>
+    </div>
+</div>
+
+<!-- Barra informativa: mensaje comercial de ejemplo, sin promesas de servicio real. -->
+<div class="barra">
+    <div class="barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h13v10H4zM17 10h3l1 3v4h-4"/><circle cx="8" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>
+            Productos frescos y ofertas para todos los días · entrega de ejemplo en 24 h
+        </p>
+        <ul class="barra__enlaces">
+            <li><a href="tienda.html">Catálogo completo</a></li>
+            <li><a href="tienda.html?necesidad=ahorro">Ofertas de la semana</a></li>
+            <li><a href="canasta.html">Mi canasta</a></li>
+        </ul>
+    </div>
+</div>
+
+<header class="cabecera">
+    <div class="cabecera__principal">
+        <a class="marca" href="index.html">
+            <img class="marca__logo" src="img/logo.svg" alt="" width="40" height="40">
+            <span>
+                <span class="marca__nombre">VERDIA Market</span>
+                <span class="marca__lema">Supermercado en línea</span>
+            </span>
+        </a>
+
+        <!-- Buscador: filtra el catálogo completo y sugiere productos mientras se escribe. -->
+        <form class="buscador" role="search" data-buscador>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+            <label class="oculto" for="buscar-portada">Buscar productos</label>
+            <input id="buscar-portada" type="search" name="q" placeholder="¿Qué necesitas hoy? Prueba «pan», «huevos» o «fresas»" autocomplete="off">
+            <button type="submit">Buscar</button>
+            <ul class="buscador__sugerencias" data-sugerencias hidden></ul>
+        </form>
+
+        <div class="cuenta">
+            <button class="menu-movil" type="button" data-menu-boton aria-expanded="false" aria-controls="pasillos-menu" aria-label="Abrir los pasillos">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+            <a class="icono-boton icono-boton--secundario" href="tienda.html">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 5h16l-1.6 9.5H6.2L4 5Zm0 0-.8-1.6H1.5"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="17" cy="18.5" r="1.5"/></svg>
+                <span>Pasillos</span>
+            </a>
+            <a class="icono-boton icono-boton--secundario" href="tienda.html?necesidad=ahorro">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.3-7.5-9.4A4.1 4.1 0 0 1 12 8.4a4.1 4.1 0 0 1 7.5 2.7c0 5.1-7.5 9.4-7.5 9.4Z"/></svg>
+                <span>Favoritos</span>
+            </a>
+            <a class="icono-boton icono-boton--secundario" href="canasta.html">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20c.6-3.7 3.6-5.9 7.2-5.9s6.6 2.2 7.2 5.9"/></svg>
+                <span>Mi cuenta</span>
+            </a>
+            <button class="icono-boton" type="button" data-canasta-abrir>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 5h2.2l2.4 10.5h10.2L20 7.5H6"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>
+                <span>Canasta</span>
+                <span class="icono-boton__cuenta esta-vacia" data-canasta-cuenta>0</span>
+            </button>
+            <!-- Interruptor de tema: los dos iconos están siempre en el DOM y el CSS
+                 muestra el del modo al que se va (luna en claro, sol en oscuro). -->
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false" aria-label="Cambiar a modo oscuro">
+                <svg class="tema-switch__icono tema-switch__icono--luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M20 13.4A8.2 8.2 0 0 1 10.6 4a8.4 8.4 0 1 0 9.4 9.4Z"/></svg>
+                <svg class="tema-switch__icono tema-switch__icono--sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2.2M12 19v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.8 12H5M19 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Navegación de pasillos: cada enlace filtra el catálogo por su categoría. -->
+    <nav class="pasillos" id="pasillos-menu" data-menu aria-label="Pasillos de la tienda">
+        <div class="pasillos__interior">
+            <a class="esta-activo" href="tienda.html">Todo</a>
+            <a href="tienda.html?rubro=frutas">Frutas y verduras</a>
+            <a href="tienda.html?rubro=lacteos">Lácteos y huevos</a>
+            <a href="tienda.html?rubro=carnes">Carnes y pescados</a>
+            <a href="tienda.html?rubro=panaderia">Panadería</a>
+            <a href="tienda.html?rubro=abarrotes">Abarrotes</a>
+            <a href="tienda.html?rubro=bebidas">Bebidas</a>
+            <a href="tienda.html?rubro=snacks">Snacks</a>
+            <a href="tienda.html?rubro=limpieza">Limpieza</a>
+            <a href="tienda.html?rubro=cuidado">Cuidado personal</a>
+            <a class="destacado" href="tienda.html?necesidad=ahorro">Ofertas</a>
+        </div>
+    </nav>
+</header>
+
+<main id="contenido">
+
+    <!--
+        PORTADA: hero a pantalla completa con slider de tres fotos. El texto va a
+        un lado y la imagen al otro, sin superponerse: el velo verde oscuro solo
+        cubre la mitad izquierda para que el titular se lea siempre.
+    -->
+    <section class="portada" data-carrusel tabindex="0" role="group" aria-roledescription="carrusel" aria-label="Fotos de la tienda">
+        <ul class="portada__fondo">
+            <li class="portada__diapositiva" data-activa data-diapositiva>
+                <img src="img/portada-cesta.webp" alt="Cesta de compra con verduras y frutas frescas" width="1280" height="800" fetchpriority="high" decoding="async">
+            </li>
+            <li class="portada__diapositiva" data-diapositiva>
+                <img src="img/portada-mercado.webp" alt="Puesto de mercado con hortalizas de la estación" width="1280" height="800" loading="lazy" decoding="async">
+            </li>
+            <li class="portada__diapositiva" data-diapositiva>
+                <img src="img/portada-pan.webp" alt="Panadero mostrando una hogaza de pan recién horneada" width="1280" height="800" loading="lazy" decoding="async">
+            </li>
+        </ul>
+
+        <div class="portada__velo"></div>
+
+        <div class="portada__contenido">
+            <div class="portada__copy">
+                <p class="portada__etiqueta">Compra por pasillos · recoge en tienda o recibe en casa</p>
+                <h1>Todo lo que necesitas, más fresco y más cerca</h1>
+                <p class="portada__texto">Armamos la compra de la semana en minutos: la despensa, la fruta y lo de la lonchera en un mismo pedido, con los precios a la vista y sin colas.</p>
+
+                <div class="portada__acciones">
+                    <a class="boton boton--principal" href="tienda.html">Explorar productos</a>
+                    <a class="boton boton--claro" href="tienda.html?necesidad=ahorro">Ver ofertas</a>
+                </div>
+            </div>
+
+            <!-- Miniaturas de ejemplo: llevan a la ficha y al pasillo del producto. -->
+            <div class="portada__tarjetas" aria-label="Sugerencias de la semana">
+                <a class="portada__tarjeta" href="producto.html?p=naranjas">
+                    <img src="img/p-naranjas.webp" alt="" width="52" height="52" loading="lazy">
+                    <span><strong>Naranjas de jugo</strong><small>1 kg · esta semana</small></span>
+                    <em>S/ 5.90</em>
+                </a>
+                <a class="portada__tarjeta" href="producto.html?p=pan">
+                    <img src="img/p-pan.webp" alt="" width="52" height="52" loading="lazy">
+                    <span><strong>Pan de campo</strong><small>800 g · horneado hoy</small></span>
+                    <em>S/ 6.50</em>
+                </a>
+                <a class="portada__tarjeta" href="producto.html?p=huevos">
+                    <img src="img/p-huevos.webp" alt="" width="52" height="52" loading="lazy">
+                    <span><strong>Huevos de campo</strong><small>docena</small></span>
+                    <em>S/ 9.90</em>
+                </a>
+            </div>
+        </div>
+
+        <!-- Controles del slider: se ven solo con JavaScript (html.js) para no dejar botones muertos. -->
+        <div class="portada__controles">
+            <button class="carrusel__flecha" type="button" data-carrusel-anterior aria-label="Foto anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14.5 6 8.5 12l6 6"/></svg>
+            </button>
+            <ul class="carrusel__puntos">
+                <li><button class="carrusel__punto esta-activo" type="button" data-carrusel-punto="0" aria-current="true" aria-label="Ver la foto 1 de 3"></button></li>
+                <li><button class="carrusel__punto" type="button" data-carrusel-punto="1" aria-current="false" aria-label="Ver la foto 2 de 3"></button></li>
+                <li><button class="carrusel__punto" type="button" data-carrusel-punto="2" aria-current="false" aria-label="Ver la foto 3 de 3"></button></li>
+            </ul>
+            <button class="carrusel__flecha" type="button" data-carrusel-siguiente aria-label="Foto siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg>
+            </button>
+        </div>
+    </section>
+
+    <!-- BENEFICIOS: características de la plantilla demostrativa, no servicios contratados. -->
+    <section class="seccion">
+        <div class="contenedor">
+            <div class="beneficios">
+                <article class="beneficio" data-aparece>
+                    <span class="beneficio__icono">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 8h16l-1.6 10H5.6L4 8Zm2.5 0 2-4h11l2 4"/></svg>
+                    </span>
+                    <strong>Variedad de productos</strong>
+                    <p>Nueve pasillos y más de mil ochocientos productos de demostración en un mismo sitio.</p>
+                </article>
+                <article class="beneficio" data-aparece>
+                    <span class="beneficio__icono">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M13 3 5 13.5h5L9.5 21l8.5-11h-5L13 3Z"/></svg>
+                    </span>
+                    <strong>Compra fácil y rápida</strong>
+                    <p>Buscador con sugerencias, filtros por pasillo y una canasta que recuerda lo elegido.</p>
+                </article>
+                <article class="beneficio" data-aparece>
+                    <span class="beneficio__icono">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 16V7h11v9M14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>
+                    </span>
+                    <strong>Opciones de entrega</strong>
+                    <p>Recojo en tienda o entrega a domicilio, con franjas horarias de ejemplo.</p>
+                </article>
+                <article class="beneficio" data-aparece>
+                    <span class="beneficio__icono">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M12 3.5 19 6v6c0 4-3 7-7 8.5C8 19 5 16 5 12V6l7-2.5Z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg>
+                    </span>
+                    <strong>Compra segura</strong>
+                    <p>Cuenta con historial de pedidos y comprobantes guardados, listos para reclamar.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- CATEGORÍAS DESTACADAS: las nueve tarjetas se pintan desde js/datos.js. -->
+    <section class="seccion seccion--marfil" id="pasillos">
+        <div class="contenedor">
+            <div class="seccion__cabecera">
+                <div>
+                    <h2>Compra por pasillo</h2>
+                    <p>Los mismos pasillos de la tienda de barrio, ordenados para que la compra de la semana no se te escape nada.</p>
+                </div>
+                <a class="seccion__enlace" href="tienda.html">Ver todo el catálogo</a>
+            </div>
+
+            <div class="rubros" data-rubros></div>
+        </div>
+    </section>
+
+    <!-- BANNERS PROMOCIONALES: tres piezas distintas, con su propia foto y su llamada. -->
+    <section class="seccion">
+        <div class="contenedor">
+            <div class="seccion__cabecera">
+                <div>
+                    <h2>Lo que conviene esta semana</h2>
+                    <p>Tres selecciones de ejemplo. Ninguna promoción de esta demostración es real ni tiene fecha de vencimiento.</p>
+                </div>
+                <span class="sello-demo">Precios y promociones ficticios</span>
+            </div>
+
+            <div class="bandas">
+                <article class="banda" data-aparece>
+                    <img src="img/banda-frescos.webp" alt="Surtido de frutas y verduras frescas sobre una mesa" width="1200" height="800" loading="lazy">
+                    <div class="banda__cuerpo">
+                        <small>Frescos del día</small>
+                        <h3>Fruta y verdura que se ve recién cortada</h3>
+                        <p>Lo que entra cada mañana al mostrador, listo para la lonchera y la ensalada de la cena.</p>
+                        <a class="boton boton--principal" href="tienda.html?rubro=frutas">Ver frutas y verduras</a>
+                    </div>
+                </article>
+
+                <article class="banda" data-aparece>
+                    <img src="img/banda-abarrotes.webp" alt="Tarros de miel y conservas alineados en un puesto de mercado" width="1200" height="800" loading="lazy">
+                    <div class="banda__cuerpo">
+                        <small>Despensa de fondo</small>
+                        <h3>Productos esenciales para la semana</h3>
+                        <p>Abarrotes, conservas y café: lo que se termina justo cuando empieza la semana.</p>
+                        <a class="boton boton--principal" href="tienda.html?rubro=abarrotes">Ver abarrotes</a>
+                    </div>
+                </article>
+
+                <article class="banda banda--alto" data-aparece>
+                    <img src="img/banda-saludable.webp" alt="Plato con verduras, huevos y aguacate servido sobre la mesa" width="1200" height="800" loading="lazy">
+                    <div class="banda__cuerpo">
+                        <small>Natural y saludable</small>
+                        <h3>Opciones frescas para comer mejor</h3>
+                        <p>Granos enteros, fruta de estación y lácteos para armar comidas simples en menos de media hora.</p>
+                        <a class="boton boton--principal" href="tienda.html?necesidad=saludable">Ver opciones naturales</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRODUCTOS POPULARES: cuatro productos destacados del catálogo. -->
+    <section class="seccion seccion--suave" id="populares">
+        <div class="contenedor">
+            <div class="seccion__cabecera">
+                <div>
+                    <h2>Productos populares</h2>
+                    <p>Precios de referencia con la presentación a la vista. Las existencias y los descuentos son ficticios.</p>
+                </div>
+                <a class="seccion__enlace" href="tienda.html">Ver más productos</a>
+            </div>
+
+            <div class="piezas" data-populares></div>
+        </div>
+    </section>
+
+    <!-- OFERTAS DEL DÍA: etiqueta estática, sin cuenta atrás ni urgencia inventada. -->
+    <section class="seccion" id="ofertas">
+        <div class="contenedor">
+            <div class="seccion__cabecera">
+                <div>
+                    <h2>Ofertas del día</h2>
+                    <p>Precio anterior tachado y precio actual, como en la pizarra de la tienda. Son ofertas de demostración: no hay promoción vigente.</p>
+                </div>
+                <span class="sello-demo">Oferta de demostración</span>
+            </div>
+
+            <div class="piezas" data-ofertas></div>
+        </div>
+    </section>
+
+    <!-- BENEFICIO DE BIENVENIDA: código ficticio y acción que lleva al catálogo. -->
+    <section class="seccion seccion--marfil">
+        <div class="contenedor">
+            <div class="bienvenida" data-aparece>
+                <img src="img/bienvenida.webp" alt="Desayuno con fruta trozada, avena y huevos sobre la mesa" width="1280" height="720" loading="lazy">
+                <div class="bienvenida__cuerpo">
+                    <h2>Tu próxima compra empieza con algo bueno</h2>
+                    <p class="bienvenida__nota">Simula el beneficio de primera compra de la tienda: el código se aplica al confirmar el pedido en la versión real.</p>
+                    <p class="bienvenida__codigo">VERDIA10</p>
+                    <p class="bienvenida__nota">Código de demostración · no otorga ningún descuento real.</p>
+                    <a class="boton boton--naranja" href="tienda.html?necesidad=ahorro">Empezar la compra</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- LO MÁS VENDIDO: las pestañas cambian de verdad los productos mostrados. -->
+    <section class="seccion">
+        <div class="contenedor">
+            <div class="seccion__cabecera">
+                <div>
+                    <h2>Lo más vendido</h2>
+                    <p>Cambia de pasillo con las pestañas. La demostración no muestra ventas, valoraciones ni testimonios: serían datos inventados.</p>
+                </div>
+            </div>
+
+            <div class="grupos" role="tablist" aria-label="Pasillos de lo más vendido" data-grupos></div>
+            <div class="piezas" data-grupos-panel></div>
+        </div>
+    </section>
+
+    <!-- COMPRA POR NECESIDADES: cada tarjeta filtra el catálogo a su selección. -->
+    <section class="seccion seccion--suave">
+        <div class="contenedor">
+            <div class="seccion__cabecera">
+                <div>
+                    <h2>Compra por necesidad</h2>
+                    <p>Cuatro formas de llegar a lo mismo: una cena rápida, comer mejor, gastar menos o surtir la casa.</p>
+                </div>
+            </div>
+
+            <div class="necesidades" data-necesidades></div>
+        </div>
+    </section>
+
+    <!-- CONFIANZA: bloque editorial sobre la variedad y la calidad, sin certificados ni cifras inventadas. -->
+    <section class="seccion">
+        <div class="contenedor">
+            <div class="confianza">
+                <div class="confianza__texto">
+                    <h2>La compra del día empieza en el mostrador</h2>
+                    <p>Elegir la fruta una por una, cortar la carne al momento y hornear el pan temprano son cosas de barrio que una tienda en línea puede seguir haciendo. Esta plantilla está pensada para eso: mostrar el producto antes que el precio y explicar la variedad sin promesas que no se pueden cumplir.</p>
+                    <p>Los textos, las fotos y los precios de esta demostración son de ejemplo. En la tienda real, aquí va la historia del negocio, sus productores y lo que quiere que se sepa de su mostrador.</p>
+
+                    <ul class="confianza__lista">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>
+                            <span>Filtros por pasillo para que el cliente llegue en dos toques a lo que busca.</span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>
+                            <span>Ficha de producto con presentación, precio anterior y detalle de conservación.</span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>
+                            <span>Canasta que sobrevive a la recarga y total que se puede revisar antes de confirmar.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="confianza__fotos">
+                    <img src="img/confianza-puesto.webp" alt="Vendedora eligiendo fruta en un puesto de mercado" width="1000" height="667" loading="lazy">
+                    <img src="img/confianza-mercado.webp" alt="Pasillo de un mercado de barrio con puestos de verdura" width="1000" height="667" loading="lazy">
+                    <img src="img/rubro-limpieza.webp" alt="Estante de la tienda con productos de limpieza ordenados" width="800" height="600" loading="lazy">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BOLETÍN: valida el correo y avisa de que la demostración no envía ni guarda nada. -->
+    <section class="seccion seccion--marfil">
+        <div class="contenedor">
+            <div class="boletin">
+                <div>
+                    <h2>Novedades y ofertas por correo</h2>
+                    <p>Cuéntale a tus clientes qué entra cada semana. En la demostración el formulario solo valida el formato: no se envía ni se almacena ningún correo.</p>
+                    <p class="boletin__mensaje" data-boletin-mensaje role="status" aria-live="polite"></p>
+                </div>
+
+                <form class="boletin__formulario" data-boletin novalidate>
+                    <label class="oculto" for="boletin-correo">Correo electrónico</label>
+                    <input id="boletin-correo" type="email" name="correo" placeholder="tucorreo@ejemplo.com" autocomplete="email" required>
+                    <button class="boton boton--principal" type="submit">Recibir novedades</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor">
+        <div class="pie__rejilla">
+            <div>
+                <div class="pie__marca">
+                    <img src="img/logo.svg" alt="" width="44" height="44">
+                    <span>
+                        <strong>VERDIA Market</strong>
+                        <small>Marca ficticia de demostración</small>
+                    </span>
+                </div>
+                <p>Plantilla de supermercado en línea con buscador de productos, filtros por pasillo, ofertas y canasta de prueba.</p>
+                <p class="pie__aviso">VERDIA Market es una demostración de plantilla de ARACODE Smart Solutions. Los productos, precios, promociones, datos de contacto, políticas y pedidos son ficticios: no se ejecuta ningún cobro ni se envían pedidos.</p>
+            </div>
+
+            <div>
+                <h3>Tienda</h3>
+                <ul>
+                    <li><a href="tienda.html">Catálogo completo</a></li>
+                    <li><a href="tienda.html?necesidad=ahorro">Ofertas de demostración</a></li>
+                    <li><a href="tienda.html?necesidad=comidas-rapidas">Comidas rápidas</a></li>
+                    <li><a href="canasta.html">Mi canasta</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Pasillos</h3>
+                <ul>
+                    <li><a href="tienda.html?rubro=frutas">Frutas y verduras</a></li>
+                    <li><a href="tienda.html?rubro=lacteos">Lácteos y huevos</a></li>
+                    <li><a href="tienda.html?rubro=panaderia">Panadería</a></li>
+                    <li><a href="tienda.html?rubro=limpieza">Limpieza del hogar</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Información de ejemplo</h3>
+                <ul>
+                    <li>Dirección ficticia: Av. Los Fresnos 245, Nuevo Chimbote</li>
+                    <li>Teléfono ficticio: (043) 000 000</li>
+                    <li>Correo ficticio: hola@verdiamarket.pe</li>
+                    <li>Atención de ejemplo: lunes a domingo, 7:00 a 22:00</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pie__legal">
+            <p>© <span data-anio>2026</span> VERDIA Market (marca ficticia) · Demostración de plantilla de ARACODE Smart Solutions.</p>
+            <p>Políticas de ejemplo: envíos, cambios y privacidad se redactan al publicar la tienda real.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Panel lateral de la canasta: se abre desde el icono del carrito en toda la tienda. -->
+<aside class="panel" data-canasta-panel hidden aria-label="Canasta de la demostración">
+    <div class="panel__cabecera">
+        <h2>Tu canasta</h2>
+        <button class="panel__cerrar" type="button" data-canasta-cerrar aria-label="Cerrar la canasta">×</button>
+    </div>
+
+    <div class="panel__cuerpo">
+        <p class="canasta-vacia" data-canasta-vacia>La canasta está vacía. Añade productos desde el <a href="tienda.html">catálogo</a>; se guardan solo en tu navegador.</p>
+        <ul class="lista-lineas" data-canasta-lista></ul>
+    </div>
+
+    <div class="panel__pie" data-canasta-pie hidden>
+        <p class="panel__total"><span>Subtotal de prueba</span><strong data-canasta-total>S/ 0.00</strong></p>
+        <p class="bienvenida__nota">Precios ficticios, sin IGV. La demostración no cobra ni envía pedidos.</p>
+        <a class="boton boton--principal" href="canasta.html">Revisar la canasta</a>
+    </div>
+</aside>
+
+<noscript>
+    <p class="contenedor" style="padding:1.5rem 1.25rem;color:#68736B">La demostración arma el catálogo, el carrito y los filtros con JavaScript. Actívalo para ver la tienda completa; los textos y las fotos se leen igual sin él.</p>
+</noscript>
+
+<script src="js/datos.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

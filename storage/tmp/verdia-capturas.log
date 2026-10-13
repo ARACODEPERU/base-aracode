@@ -1,0 +1,319 @@
+[Tue Oct 13 16:37:10 2026] PHP 8.2.12 Development Server (http://127.0.0.1:8098) started
+[Tue Oct 13 16:37:12 2026] 127.0.0.1:58967 Accepted
+[Tue Oct 13 16:37:12 2026] 127.0.0.1:58967 [200]: GET /repaso-verdia/01-portada.png
+[Tue Oct 13 16:37:12 2026] 127.0.0.1:58967 Closing
+[Tue Oct 13 16:37:24 2026] 127.0.0.1:64701 Accepted
+[Tue Oct 13 16:37:24 2026] 127.0.0.1:64701 [200]: GET /repaso-verdia/01-portada.png
+[Tue Oct 13 16:37:24 2026] 127.0.0.1:64701 Closing
+[Tue Oct 13 16:37:39 2026] 127.0.0.1:64714 Accepted
+[Tue Oct 13 16:37:39 2026] 127.0.0.1:64714 [200]: GET /repaso-verdia/02-pasillos.png
+[Tue Oct 13 16:37:40 2026] 127.0.0.1:64714 Closing
+[Tue Oct 13 16:37:41 2026] 127.0.0.1:64724 Accepted
+[Tue Oct 13 16:37:41 2026] 127.0.0.1:64724 [404]: GET /favicon.ico - No such file or directory
+[Tue Oct 13 16:37:41 2026] 127.0.0.1:64724 Closing
+[Tue Oct 13 16:38:13 2026] 127.0.0.1:50455 Accepted
+[Tue Oct 13 16:38:13 2026] 127.0.0.1:50455 [200]: GET /repaso-verdia/14-movil-pasillos.png
+[Tue Oct 13 16:38:13 2026] 127.0.0.1:50455 Closing
+[Tue Oct 13 16:39:03 2026] 127.0.0.1:50937 Accepted
+[Tue Oct 13 16:39:03 2026] 127.0.0.1:50937 [200]: GET /repaso-verdia/hoja.html
+[Tue Oct 13 16:39:03 2026] 127.0.0.1:50937 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50945 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50945 [200]: GET /repaso-verdia/hoja.html
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50945 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50946 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50947 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50948 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50949 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50950 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50951 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50946 [404]: GET /repaso-verdia/repaso-verdia/01-portada.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50946 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50947 [404]: GET /repaso-verdia/repaso-verdia/02-pasillos.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50948 [404]: GET /repaso-verdia/repaso-verdia/03-populares.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50949 [404]: GET /repaso-verdia/repaso-verdia/04-ofertas.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50947 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50950 [404]: GET /repaso-verdia/repaso-verdia/05-panel-canasta.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50951 [404]: GET /repaso-verdia/repaso-verdia/06-oscuro.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50948 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50949 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50952 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50950 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50951 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50952 [404]: GET /repaso-verdia/repaso-verdia/07-catalogo-vacio.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50952 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50953 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50953 [404]: GET /repaso-verdia/repaso-verdia/08-catalogo-lacteos.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50954 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50953 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50955 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50956 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50957 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50954 [404]: GET /repaso-verdia/repaso-verdia/09-ficha-cafe.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50958 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50954 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50955 [404]: GET /repaso-verdia/repaso-verdia/10-canasta-vacia.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50956 [404]: GET /repaso-verdia/repaso-verdia/11-canasta-llena.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50957 [404]: GET /repaso-verdia/repaso-verdia/12-recibo.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50955 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50958 [404]: GET /repaso-verdia/repaso-verdia/13-movil-portada.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50956 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50957 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50959 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50958 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50960 Accepted
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50959 [404]: GET /repaso-verdia/repaso-verdia/14-movil-pasillos.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50959 Closing
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50960 [404]: GET /repaso-verdia/repaso-verdia/15-movil-menu.png - No such file or directory
+[Tue Oct 13 16:39:13 2026] 127.0.0.1:50960 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54579 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54579 [200]: GET /repaso-verdia/hoja.html
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54579 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54580 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54581 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54582 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54583 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54584 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54580 [404]: GET /repaso-verdia/repaso-verdia/01-portada.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54580 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54581 [404]: GET /repaso-verdia/repaso-verdia/02-pasillos.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54581 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54585 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54582 [404]: GET /repaso-verdia/repaso-verdia/03-populares.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54583 [404]: GET /repaso-verdia/repaso-verdia/04-ofertas.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54582 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54584 [404]: GET /repaso-verdia/repaso-verdia/05-panel-canasta.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54583 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54585 [404]: GET /repaso-verdia/repaso-verdia/06-oscuro.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54584 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54585 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54586 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54587 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54586 [404]: GET /repaso-verdia/repaso-verdia/07-catalogo-vacio.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54586 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54588 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54587 [404]: GET /repaso-verdia/repaso-verdia/08-catalogo-lacteos.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54587 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54589 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54590 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54591 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54588 [404]: GET /repaso-verdia/repaso-verdia/09-ficha-cafe.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54589 [404]: GET /repaso-verdia/repaso-verdia/10-canasta-vacia.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54588 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54590 [404]: GET /repaso-verdia/repaso-verdia/11-canasta-llena.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54589 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54591 [404]: GET /repaso-verdia/repaso-verdia/12-recibo.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54590 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54591 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54592 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54593 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54592 [404]: GET /repaso-verdia/repaso-verdia/13-movil-portada.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54593 [404]: GET /repaso-verdia/repaso-verdia/14-movil-pasillos.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54592 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54594 Accepted
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54593 Closing
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54594 [404]: GET /repaso-verdia/repaso-verdia/15-movil-menu.png - No such file or directory
+[Tue Oct 13 16:39:44 2026] 127.0.0.1:54594 Closing
+[Tue Oct 13 16:39:45 2026] 127.0.0.1:54606 Accepted
+[Tue Oct 13 16:39:45 2026] 127.0.0.1:54606 [404]: GET /favicon.ico - No such file or directory
+[Tue Oct 13 16:39:45 2026] 127.0.0.1:54606 Closing
+[Tue Oct 13 16:40:40 2026] 127.0.0.1:52164 Accepted
+[Tue Oct 13 16:40:40 2026] 127.0.0.1:52164 [200]: GET /repaso-verdia/01-portada.png
+[Tue Oct 13 16:40:40 2026] 127.0.0.1:52164 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52209 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52209 [404]: GET /favicon.ico - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52209 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52217 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52217 [200]: GET /repaso-verdia/hoja.html
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52217 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52219 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52219 [200]: GET /repaso-verdia/hoja.html
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52219 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52257 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52258 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52259 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52260 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52261 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52262 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52257 [404]: GET /repaso-verdia/repaso-verdia/01-portada.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52258 [404]: GET /repaso-verdia/repaso-verdia/02-pasillos.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52257 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52259 [404]: GET /repaso-verdia/repaso-verdia/03-populares.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52260 [404]: GET /repaso-verdia/repaso-verdia/04-ofertas.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52261 [404]: GET /repaso-verdia/repaso-verdia/05-panel-canasta.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52258 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52262 [404]: GET /repaso-verdia/repaso-verdia/06-oscuro.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52259 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52260 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52261 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52262 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52263 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52264 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52265 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52266 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52267 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52268 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52263 [404]: GET /repaso-verdia/repaso-verdia/01-portada.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52264 [404]: GET /repaso-verdia/repaso-verdia/02-pasillos.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52263 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52265 [404]: GET /repaso-verdia/repaso-verdia/03-populares.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52266 [404]: GET /repaso-verdia/repaso-verdia/04-ofertas.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52267 [404]: GET /repaso-verdia/repaso-verdia/05-panel-canasta.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52268 [404]: GET /repaso-verdia/repaso-verdia/06-oscuro.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52264 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52265 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52266 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52267 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52268 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52275 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52276 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52277 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52278 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52279 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52280 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52275 [404]: GET /repaso-verdia/repaso-verdia/07-catalogo-vacio.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52276 [404]: GET /repaso-verdia/repaso-verdia/08-catalogo-lacteos.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52277 [404]: GET /repaso-verdia/repaso-verdia/09-ficha-cafe.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52278 [404]: GET /repaso-verdia/repaso-verdia/10-canasta-vacia.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52279 [404]: GET /repaso-verdia/repaso-verdia/11-canasta-llena.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52280 [404]: GET /repaso-verdia/repaso-verdia/12-recibo.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52275 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52276 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52277 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52278 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52279 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52280 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52283 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52284 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52285 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52286 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52287 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52288 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52283 [404]: GET /repaso-verdia/repaso-verdia/14-movil-pasillos.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52284 [404]: GET /repaso-verdia/repaso-verdia/13-movil-portada.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52285 [404]: GET /repaso-verdia/repaso-verdia/07-catalogo-vacio.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52283 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52286 [404]: GET /repaso-verdia/repaso-verdia/08-catalogo-lacteos.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52287 [404]: GET /repaso-verdia/repaso-verdia/09-ficha-cafe.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52288 [404]: GET /repaso-verdia/repaso-verdia/10-canasta-vacia.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52284 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52285 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52286 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52287 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52288 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52289 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52290 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52291 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52292 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52293 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52289 [404]: GET /repaso-verdia/repaso-verdia/11-canasta-llena.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52289 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52290 [404]: GET /repaso-verdia/repaso-verdia/12-recibo.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52291 [404]: GET /repaso-verdia/repaso-verdia/14-movil-pasillos.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52292 [404]: GET /repaso-verdia/repaso-verdia/13-movil-portada.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52293 [404]: GET /repaso-verdia/repaso-verdia/15-movil-menu.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52290 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52291 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52292 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52293 Closing
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52294 Accepted
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52294 [404]: GET /repaso-verdia/repaso-verdia/15-movil-menu.png - No such file or directory
+[Tue Oct 13 16:40:58 2026] 127.0.0.1:52294 Closing
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49436 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49436 [200]: GET /repaso-verdia/hoja.html
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49436 Closing
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49437 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49437 [200]: GET /repaso-verdia/hoja.html
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49437 Closing
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49491 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49492 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49493 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49494 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49495 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49497 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49491 [404]: GET /repaso-verdia/repaso-verdia/01-portada.jpg - No such file or directory
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49491 Closing
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49492 [404]: GET /repaso-verdia/repaso-verdia/02-pasillos.jpg - No such file or directory
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49493 [404]: GET /repaso-verdia/repaso-verdia/03-populares.jpg - No such file or directory
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49494 [404]: GET /repaso-verdia/repaso-verdia/04-ofertas.jpg - No such file or directory
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49495 [404]: GET /repaso-verdia/repaso-verdia/05-panel-canasta.jpg - No such file or directory
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49497 [404]: GET /repaso-verdia/repaso-verdia/06-oscuro.jpg - No such file or directory
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49492 Closing
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49493 Closing
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49494 Closing
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49495 Closing
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49497 Closing
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49498 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49499 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49500 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49501 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49502 Accepted
+[Tue Oct 13 17:03:41 2026] 127.0.0.1:49503 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49498 [404]: GET /repaso-verdia/repaso-verdia/01-portada.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49499 [404]: GET /repaso-verdia/repaso-verdia/02-pasillos.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49500 [404]: GET /repaso-verdia/repaso-verdia/03-populares.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49501 [404]: GET /repaso-verdia/repaso-verdia/04-ofertas.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49502 [404]: GET /repaso-verdia/repaso-verdia/05-panel-canasta.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49498 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49503 [404]: GET /repaso-verdia/repaso-verdia/06-oscuro.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49499 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49500 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49501 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49502 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49503 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49504 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49505 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49506 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49507 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49508 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49509 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49504 [404]: GET /repaso-verdia/repaso-verdia/07-catalogo-vacio.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49505 [404]: GET /repaso-verdia/repaso-verdia/08-catalogo-lacteos.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49506 [404]: GET /repaso-verdia/repaso-verdia/09-ficha-cafe.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49507 [404]: GET /repaso-verdia/repaso-verdia/14-movil-pasillos.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49508 [404]: GET /repaso-verdia/repaso-verdia/13-movil-portada.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49509 [404]: GET /repaso-verdia/repaso-verdia/10-canasta-vacia.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49504 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49505 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49506 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49507 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49508 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49509 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49510 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49511 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49512 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49513 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49514 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49515 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49510 [404]: GET /repaso-verdia/repaso-verdia/07-catalogo-vacio.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49511 [404]: GET /repaso-verdia/repaso-verdia/14-movil-pasillos.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49512 [404]: GET /repaso-verdia/repaso-verdia/08-catalogo-lacteos.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49513 [404]: GET /repaso-verdia/repaso-verdia/09-ficha-cafe.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49514 [404]: GET /repaso-verdia/repaso-verdia/13-movil-portada.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49510 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49515 [404]: GET /repaso-verdia/repaso-verdia/10-canasta-vacia.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49511 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49512 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49513 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49514 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49515 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49516 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49516 [404]: GET /repaso-verdia/repaso-verdia/11-canasta-llena.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49516 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49517 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49518 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49517 [404]: GET /repaso-verdia/repaso-verdia/12-recibo.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49518 [404]: GET /repaso-verdia/repaso-verdia/15-movil-menu.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49517 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49518 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49519 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49519 [404]: GET /repaso-verdia/repaso-verdia/11-canasta-llena.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49519 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49520 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49522 Accepted
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49520 [404]: GET /repaso-verdia/repaso-verdia/12-recibo.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49522 [404]: GET /repaso-verdia/repaso-verdia/15-movil-menu.jpg - No such file or directory
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49520 Closing
+[Tue Oct 13 17:03:42 2026] 127.0.0.1:49522 Closing
+[Tue Oct 13 17:03:43 2026] 127.0.0.1:49530 Accepted
+[Tue Oct 13 17:03:43 2026] 127.0.0.1:49530 [404]: GET /favicon.ico - No such file or directory
+[Tue Oct 13 17:03:43 2026] 127.0.0.1:49530 Closing
