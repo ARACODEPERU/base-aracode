@@ -19,9 +19,10 @@ use Tests\TestCase;
 |
 | Estas pruebas fijan esas reglas: la imagen es la protagonista (franja propia +
 | texto alternativo, y siempre antes del bloque de texto), el resumen va por la
-| frase corta y las dos páginas usan la misma rejilla. La parte puramente
-| visual —tamaño, proporción— se comprueba en webpage-v2.css y con la revisión
-| en Chrome.
+| frase corta, las dos páginas usan la misma rejilla y la franja no recorta el
+| diseño. La parte visual que no cabe aquí —medidas y aspecto— se comprueba
+| contra webpage-v2.css y con la revisión en Chrome
+| (storage/tmp/revisar-tarjetas-ecosistema.mjs).
 |
 */
 
@@ -124,6 +125,59 @@ it('presenta las tarjetas con la rejilla del home: tres por fila', function () {
     // `md`, con la misma separación.
     expect($catalogo)->toBe($portada);
     expect($catalogo)->toContain('lg:grid-cols-3');
+});
+
+it('reserva en la franja el alto exacto de la imagen', function (string $ruta) {
+    // La franja no lleva una proporción fija: cada tarjeta reserva la de su
+    // propio archivo, así que el diseño queda pegado a los bordes de la franja
+    // —sin banda de relleno— y la tarjeta no salta cuando la imagen termina de
+    // cargar. La proporción la mide App\Support\ProporcionImagen.
+    foreach (tarjetasProducto($this->get($ruta)->getContent()) as $tarjeta) {
+        if (str_contains($tarjeta, 'ara-product-card--plano')) {
+            // Los servicios no tienen imagen: su franja es el degradado.
+            continue;
+        }
+
+        preg_match('#<img\b[^>]*\bsrc="([^"]+)"#', $tarjeta, $src);
+        preg_match('#--ara-product-media-ratio:\s*(\d+)\s*/\s*(\d+)#', $tarjeta, $ratio);
+
+        expect($src)->not->toBeEmpty('La tarjeta del producto no publica su imagen');
+        expect($ratio)->not->toBeEmpty('La franja no reserva la proporción de su imagen');
+
+        $medidas = getimagesize(public_path(parse_url($src[1], PHP_URL_PATH)));
+
+        expect([$ratio[1], $ratio[2]])->toBe([(string) $medidas[0], (string) $medidas[1]]);
+    }
+})->with(['/', '/soluciones']);
+
+it('no recorta el diseño del producto en su franja', function () {
+    // Los diseños del ecosistema no comparten proporción —s1, s3 y s4 son
+    // cuadrados (1:1) y s2 es panorámico (2:1)—, así que una franja de
+    // proporción fija solo puede enseñarlos enteros ajustándolos dentro: con
+    // `cover` se perdía el 44 % del alto de los cuadrados y los laterales del
+    // panorámico.
+    //
+    // Se miran las DOS copias de la hoja: la de resources es el original y la de
+    // public la que carga el navegador. Si la regla viviera solo en una, en
+    // producción el diseño seguiría recortándose.
+    foreach (['css/webpage-v2.css', '../resources/css/webpage-v2.css'] as $hoja) {
+        $css = file_get_contents(public_path($hoja));
+
+        preg_match('#\.ara-product-card \.ara-product-media img \{(?<cuerpo>[^}]*)\}#', $css, $regla);
+
+        expect($regla)->not->toBeEmpty('No se encontró la regla de la imagen de la tarjeta');
+
+        expect($regla['cuerpo'])->toContain('object-fit: contain')
+            ->and($regla['cuerpo'])->not->toContain('object-fit: cover');
+
+        // Y al pasar el ratón la imagen no se amplía: dentro de una franja que
+        // ajusta el diseño, un `scale` lo recortaría otra vez por los cuatro
+        // lados —justo lo que se acaba de corregir—.
+        preg_match('#\.ara-product-card:hover \.ara-product-media img \{(?<cuerpo>[^}]*)\}#', $css, $realce);
+
+        expect($realce)->not->toBeEmpty('No se encontró el realce de la imagen al pasar el ratón');
+        expect($realce['cuerpo'])->not->toContain('scale');
+    }
 });
 
 it('incorpora los servicios al mismo esquema, con su franja y sin imagen', function () {

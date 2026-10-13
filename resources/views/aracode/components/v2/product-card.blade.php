@@ -1,10 +1,15 @@
 {{--
     Tarjeta de producto del catálogo (/soluciones y home)
     ---------------------------------------------------------------------------
-    La imagen diseñada del producto es lo que se ve primero: va arriba, entera,
+    La imagen diseñada del producto es lo que se ve primero: va arriba, ENTERA,
     con su proporción reservada por CSS (sin saltos al cargar) y sin ningún velo
     encima. Debajo, sobre el navy de la tarjeta, va la información escaneable:
     categoría, nombre, el resumen y el enlace.
+
+    "Entera" es literal: los diseños del ecosistema no comparten proporción
+    (cuadrados y uno panorámico) y la franja no recorta ninguno —`object-fit:
+    contain`—. Lo que sobra de franja lo rellena el propio diseño desenfocado,
+    que es la URL que viaja en `--ara-product-media-bg`.
 
     Antes la imagen era el fondo de TODA la tarjeta y dos degradados navy la
     cubrían para que el texto se leyera: el diseño apenas se apreciaba.
@@ -16,8 +21,9 @@
     vez repetían lo mismo y alargaban la tarjeta.
 
     Propiedades:
-    - `image`: URL de la imagen diseñada del producto. La proporción la fija
-      `.ara-product-card` en webpage-v2.css (16/9; 3/2 en móvil).
+    - `image`: URL de la imagen diseñada del producto. La proporción de la franja
+      la fija `.ara-product-card` en webpage-v2.css (4/3; 3/2 en móvil), pero el
+      diseño que llega no se recorta: se ajusta dentro (`contain`).
     - `description`: frase corta del producto. Se pinta como párrafo en la
       tarjeta compacta y es el texto alternativo de la imagen cuando no se pasa
       `imageAlt`.
@@ -49,11 +55,27 @@
     // La tarjeta compacta resume con la frase corta, no con la lista: si se
     // pasaran las dos cosas se pintarían dos veces lo mismo.
     $features = $compacta ? [] : $features;
+
+    // El alto de la franja sale del archivo: la tarjeta reserva exactamente la
+    // proporción de su imagen, así que la franja queda pegada al diseño —sin
+    // banda de relleno— y sin salto al cargarla. Si no se puede medir (una URL
+    // externa, o un archivo que no está en esta copia), la franja se queda con
+    // la proporción por defecto de la hoja y `object-fit: contain` evita el
+    // recorte; ahí sí asoma el relleno desenfocado.
+    $proporcionFranja = $image ? \App\Support\ProporcionImagen::de($image) : null;
+
+    $estiloFranja = $image
+        ? "--ara-product-media-bg: url('{$image}')".($proporcionFranja ? "; --ara-product-media-ratio: {$proporcionFranja}" : '')
+        : null;
 @endphp
 
 <article class="ara-product-card {{ $compacta ? 'ara-product-card--compacta' : '' }} reveal reveal-delay-{{ $delay }}">
     @if ($image)
-        <div class="ara-product-media">
+        {{-- La franja se ve entera (`object-fit: contain` en webpage-v2.css) y
+             mide lo que mide el diseño: la proporción viaja en
+             `--ara-product-media-ratio` y la URL, para el relleno de respaldo,
+             en `--ara-product-media-bg`. --}}
+        <div class="ara-product-media" @if ($estiloFranja) style="{{ $estiloFranja }}" @endif>
             <img src="{{ $image }}" alt="{{ $textoAlternativo }}" loading="lazy" decoding="async">
 
             @if ($badge)

@@ -83,7 +83,7 @@
                     :href="$sitiosProducto['kapta']"
                     :nuevaPestana="true"
                     image="{{ asset('themes/webpage/images/misc/s1.jpg') }}"
-                    badge="Plataforma SaaS"
+                    {{-- badge="Plataforma SaaS" --}}
                     :delay="1"
                     :compacta="true"
                 />
@@ -97,19 +97,8 @@
                     :href="$sitiosProducto['kirafact']"
                     :nuevaPestana="true"
                     image="{{ asset('themes/webpage/images/misc/s2.jpg') }}"
-                    badge="SUNAT"
+                    {{-- badge="SUNAT" --}}
                     :delay="2"
-                    :compacta="true"
-                />
-
-                {{-- Desarrollo --}}
-                <x-v2.product-card
-                    title="Desarrollo a Medida"
-                    description="Creamos soluciones de software personalizadas para las necesidades específicas de tu empresa."
-                    :href="route('solucion_desarrollo')"
-                    image="{{ asset('themes/webpage/images/misc/s3.jpg') }}"
-                    badge="Personalizado"
-                    :delay="3"
                     :compacta="true"
                 />
 
@@ -119,9 +108,20 @@
                     description="Plataforma para organizar torneos de fútbol: fixture automático, posiciones y estadísticas en tiempo real."
                     :href="$sitiosProducto['pichanguero']"
                     :nuevaPestana="true"
-                    image="{{ asset('themes/webpage/images/misc/s4.webp') }}"
-                    badge="App móvil"
+                    image="{{ asset('themes/webpage/images/misc/s3.jpg') }}"
+                    {{-- badge="App móvil" --}}
                     :delay="4"
+                    :compacta="true"
+                />
+
+                {{-- Desarrollo --}}
+                <x-v2.product-card
+                    title="Desarrollo a Medida"
+                    description="Creamos soluciones de software personalizadas para las necesidades específicas de tu empresa."
+                    :href="route('solucion_desarrollo')"
+                    image="{{ asset('themes/webpage/images/misc/s4.webp') }}"
+                    {{-- badge="Personalizado" --}}
+                    :delay="3"
                     :compacta="true"
                 />
 

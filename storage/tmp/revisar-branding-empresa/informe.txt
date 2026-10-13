@@ -1,0 +1,3 @@
+== paso 1: iniciar sesión ==
+   sesión iniciada: NO
+   la página se quedó en: /login

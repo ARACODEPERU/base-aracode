@@ -5,8 +5,11 @@
  * el home: las siete tarjetas (cuatro productos y tres servicios) con la tarjeta
  * compacta, tres por fila a 1440 px, dos a 800 y una a 390, sin listas de
  * prestaciones, sin errores de consola, sin peticiones fallidas y sin desbordes.
- * Además mide el recorte de la franja de imagen (la caja es 16/9 y los diseños
- * son cuadrados) para poder reportarlo con números.
+ * Además comprueba que la franja de imagen no recorte el diseño: los del
+ * ecosistema son cuadrados (1:1) o panorámicos (2:1) y la franja es 4/3, así que
+ * lo único que puede dejarlos enteros es `object-fit: contain`. Se mide el
+ * ajuste real que aplica Chrome y la proporción que ocupa el diseño dentro de la
+ * franja, para poder reportarlo con números.
  *
  * No usa ninguna librería: el WebSocket es el de Node y el protocolo de
  * DevTools se habla a mano, igual que en storage/tmp/revisar-paginas-web.mjs.
@@ -198,9 +201,25 @@ async function medirEcosistema(sessionId) {
             filas: new Set(alturas).size,
             ancho: Math.round(primeraTarjeta.width),
             alto: Math.round(primeraTarjeta.height),
-            // Recorte de la franja: caja 16/9 frente al diseño real (cuadrado).
+            // Franja frente al diseño real: con «contain» el diseño entra entero
+            // y estos dos números solo describen cuánto relleno queda.
             ratioCaja: caja ? +(caja.width / caja.height).toFixed(3) : null,
             ratioNatural: imagen?.naturalWidth ? +(imagen.naturalWidth / imagen.naturalHeight).toFixed(3) : null,
+            // El ajuste que aplica Chrome: tiene que ser «contain» en las cuatro
+            // imágenes para que ningún diseño se recorte.
+            ajustes: conImagen.map((t) => getComputedStyle(t.querySelector('img')).objectFit),
+            // Píxeles que sobran entre la franja y el diseño ya ajustado dentro.
+            // La franja se mide desde el archivo, así que tiene que ser 0: es el
+            // «el espacio de la imagen está pegado a su alto».
+            sobrantes: conImagen.map((t) => {
+                const caja = t.querySelector('.ara-product-media').getBoundingClientRect();
+                const img = t.querySelector('img');
+                const proporcion = img.naturalWidth / img.naturalHeight;
+
+                if (!proporcion) return -1;
+
+                return Math.round(caja.height - Math.min(caja.height, caja.width / proporcion));
+            }),
             botonDentro: cta ? cta.getBoundingClientRect().bottom <= rTarjeta.bottom + 1 : null,
             // Dónde empieza la sección del ecosistema: sirve para recortar su
             // captura sin adivinar la altura del hero.
@@ -236,23 +255,14 @@ const datos = await medirEcosistema(soluciones);
 anota('== /soluciones · tarjetas del ecosistema, 1440 px ==');
 anota(`   tarjetas: ${datos.total} (${datos.plano} servicios con franja sin imagen) · compactas: ${datos.compactas} · con frase: ${datos.conFrase} · con lista: ${datos.conLista}`);
 anota(`   filas: ${datos.filas} · en la primera: ${datos.primeraFila} · medida de la tarjeta: ${datos.ancho} × ${datos.alto} px`);
-anota(`   imágenes cargadas: ${datos.imagenesCargadas} de ${datos.conImagen} · franja ${datos.ratioCaja} frente al diseño ${datos.ratioNatural} (recorte de alto: ${recorte(datos)}% )`);
+anota(`   imágenes cargadas: ${datos.imagenesCargadas} de ${datos.conImagen} · franja ${datos.ratioCaja} frente al diseño ${datos.ratioNatural} · ajuste: ${[...new Set(datos.ajustes)].join(', ')}`);
+anota(`   alto que sobra sobre el diseño en cada tarjeta: ${datos.sobrantes.join(', ')} px`);
 anota(`   botón dentro de la tarjeta: ${datos.botonDentro ? 'sí' : 'NO'} · elementos fuera del ancho: ${datos.tuboDesborde}`);
 
 await captura(soluciones, 'soluciones-1440.png');
 await captura(soluciones, 'soluciones-rejilla-1440.png', {
     x: 0, y: datos.seccion.y, width: 1440, height: datos.seccion.alto,
 });
-
-function recorte(d) {
-    if (!d.ratioCaja || !d.ratioNatural) return '—';
-
-    // Con `object-fit: cover`, la franja más panorámica que el diseño recorta
-    // alto: se conserva el ancho y se pierde (1 − ratioNatural/ratioCaja).
-    return d.ratioCaja >= d.ratioNatural
-        ? (100 * (1 - d.ratioNatural / d.ratioCaja)).toFixed(1)
-        : (100 * (1 - d.ratioCaja / d.ratioNatural)).toFixed(1);
-}
 
 const tablet = await abrir(800, 900, SOLUCIONES);
 const datosTablet = await medirEcosistema(tablet);
@@ -302,6 +312,8 @@ const problemas = [
     ...(datos.conLista === 0 ? [] : ['alguna tarjeta de /soluciones sigue pintando la lista de prestaciones']),
     ...(datos.plano === 3 ? [] : ['los tres servicios no llevan su franja sin imagen']),
     ...(datos.imagenesCargadas === 4 && datos.conImagen === 4 ? [] : ['alguna imagen de producto no carga']),
+    ...(datos.ajustes.length > 0 && datos.ajustes.every((a) => a === 'contain') ? [] : ['algún diseño de producto se está recortando en su franja']),
+    ...(datos.sobrantes.every((s) => s >= 0 && s <= 1) ? [] : [`la franja no está pegada al alto de la imagen (sobra ${datos.sobrantes.join('/')} px)`]),
     ...(datos.filas === 3 && datos.primeraFila === 3 ? [] : ['/soluciones no pone tres tarjetas por fila a 1440 px']),
     ...(datosTablet.primeraFila === 2 ? [] : ['/soluciones no pone dos tarjetas por fila a 800 px']),
     ...(datosMovil.primeraFila === 1 ? [] : ['/soluciones no apila las tarjetas a 390 px']),

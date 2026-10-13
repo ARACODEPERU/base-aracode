@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BrandingController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
@@ -100,6 +101,17 @@ Route::middleware('auth')->group(function () {
         'company/show',
         [CompanyController::class, 'show']
     )->name('company_show');
+
+    // Colores de marca de la instalación (Configuraciones → Branding).
+    Route::get(
+        'branding/show',
+        [BrandingController::class, 'show']
+    )->name('branding_show');
+
+    Route::post(
+        'branding/update',
+        [BrandingController::class, 'update']
+    )->name('branding_update');
 
     Route::post(
         'company/update_create',

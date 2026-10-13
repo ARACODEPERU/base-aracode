@@ -433,11 +433,14 @@ body {
    del 60 % al 92 % y otro del 55 %) la cubrían para que el texto se pudiera
    leer: el diseño apenas se apreciaba y todo se leía mal.
 
-   Para cambiar la proporción de las imágenes basta esta variable: los diseños
-   del ecosistema se preparan en 16/9 (1600 × 900 px como mínimo).
+   El ALTO de la franja lo pone la imagen de cada producto: la tarjeta le pasa
+   su proporción en `--ara-product-media-ratio` (la mide ProporcionImagen, en
+   app/Support) y así la franja queda pegada al diseño, sin banda de relleno y
+   sin salto al cargarla. Esta variable es la que se usa cuando no hay imagen
+   —los servicios— o cuando la proporción no se puede medir.
    ============================================= */
 .ara-product-card {
-    --ara-product-media-ratio: 16 / 9;
+    --ara-product-media-ratio: 4 / 3;
 
     position: relative;
     display: flex;
@@ -456,7 +459,20 @@ body {
     box-shadow: 0 20px 55px rgba(1, 136, 238, 0.18);
 }
 
-/* --- Imagen del producto --- */
+/* --- Imagen del producto ---
+   El diseño se ve ENTERO. Los diseños del ecosistema no comparten proporción
+   —s1, s3 y s4 son cuadrados (1:1) y s2 es panorámico (2:1)—, así que una
+   franja de proporción fija solo puede enseñarlos todos recortando: con
+   `cover`, la franja 16/9 de antes se comía el 44 % del alto de los cuadrados y
+   los laterales del panorámico (ese recorte lo medía, en números,
+   storage/tmp/revisar-tarjetas-ecosistema.mjs). Con `contain` entra el diseño
+   completo, sin tocar el archivo; y las franjas que sobran las rellena el
+   propio diseño desenfocado (el `::before`), no un navy vacío.
+
+   Y el relleno tampoco es el caso normal: cuando la proporción se mide bien, la
+   franja mide exactamente la imagen y no sobra nada. El relleno está para el
+   respaldo (imagen que no se puede medir) y para las franjas de los servicios,
+   que ya llevan su degradado. */
 .ara-product-card .ara-product-media {
     position: relative;
     aspect-ratio: var(--ara-product-media-ratio);
@@ -465,17 +481,47 @@ body {
     flex-shrink: 0;
 }
 
+/* Relleno de las franjas sobrantes: el mismo diseño, ampliado y desenfocado,
+   detrás de la imagen. Solo se ve cuando la franja NO mide como su imagen (no
+   se pudo medir el archivo), y sin él ese hueco quedaría en navy liso, que se
+   leería como un descuadre. La URL entra por `--ara-product-media-bg`, que pone
+   la tarjeta; sin imagen (la variante de servicios) no llega y no se pinta. */
+.ara-product-card .ara-product-media::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--ara-product-media-bg, none);
+    background-size: cover;
+    background-position: center;
+    filter: blur(16px);
+    /* El desenfoque aclara los bordes: se amplía para que no asome el corte. */
+    transform: scale(1.12);
+    opacity: 0.55;
+    transition: opacity 0.4s ease;
+}
+
 .ara-product-card .ara-product-media img {
+    /* Por encima del relleno desenfocado. */
+    position: relative;
+    z-index: 1;
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     object-position: center;
-    transition: transform 0.6s ease;
+    transition: filter 0.4s ease;
 }
 
+/* Foco al pasar el ratón. Antes la imagen se ampliaba (`scale`) y con `contain`
+   esa ampliación volvía a recortar el diseño por los cuatro lados —lo que se
+   acaba de corregir—. Ahora se ilumina, y el relleno gana presencia: se nota el
+   foco sin comerse un píxel del diseño. */
 .ara-product-card:hover .ara-product-media img {
-    transform: scale(1.03);
+    filter: brightness(1.07) saturate(1.05);
+}
+
+.ara-product-card:hover .ara-product-media::before {
+    opacity: 0.75;
 }
 
 /* Categoría sobre la imagen. Fondo sólido a propósito: los .ara-badge son
@@ -597,6 +643,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Los servicios no llevan diseño que rellenar: la franja ya es el degradado. */
+.ara-product-card--plano .ara-product-media::before {
+    content: none;
 }
 
 .ara-product-card--plano .ara-product-media--azul {

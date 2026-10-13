@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Branding: color de fábrica de la marca (los tonos originales del ERP).
+   Cada instalación o pantalla puede redefinir estas variables en su propio
+   alcance para pintar el sistema con los colores corporativos del cliente. */
+:root {
+    --brand-primary: 67 97 238; /* #4361ee */
+    --brand-primary-light: 234 241 255; /* #eaf1ff */
+    --brand-secondary: 128 93 202; /* #805dca */
+    --brand-secondary-light: 235 228 247; /* #ebe4f7 */
+}
