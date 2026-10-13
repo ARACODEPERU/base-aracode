@@ -63,6 +63,9 @@ class SeedPermissionsUsersTableSeeder extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'cms_mensajes_contacto']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'cms_mensajes_contacto_ver']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'cms_mensajes_contacto_editar']));
+        // Borrar un mensaje del buzon (basura de spam). Va aparte de editar: se
+        // puede dar y quitar sin tocar el resto del modulo.
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_mensajes_contacto_eliminar']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'cms_blog_suscriptores']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'cms_blog_suscriptores_exportar']));
 

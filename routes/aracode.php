@@ -42,7 +42,12 @@ Route::get('/soluciones/facturacion', fn () => redirect()->route('solucion_factu
 // Empresa y Contacto
 Route::get('/empresa', [WebPageController::class, 'empresa'])->name('empresa');
 Route::get('/contacto', [WebPageController::class, 'contacto'])->name('contacto');
-Route::post('/contacto', [WebPageController::class, 'contactoStore'])->name('contacto_store');
+// El límite de envíos por IP («contacto», definido en RouteServiceProvider)
+// vale para el formulario de /contacto y para el modal de asesoría, que es el
+// mismo destino: el segundo envío de un bot ya cuenta.
+Route::post('/contacto', [WebPageController::class, 'contactoStore'])
+    ->middleware('throttle:contacto')
+    ->name('contacto_store');
 Route::post('/blog/subscribe', [WebPageController::class, 'blogSubscriberStore'])->name('blog.subscribe');
 
 // Blog

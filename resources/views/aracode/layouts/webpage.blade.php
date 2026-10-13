@@ -243,6 +243,9 @@
         </svg>
     </a>
 
+    {{-- Modal de asesoría: lo abren los botones «Solicitar Asesoría» del sitio. --}}
+    @include('aracode.components.v2.asesoria-modal')
+
     @stack('scripts')
 </body>
 </html>

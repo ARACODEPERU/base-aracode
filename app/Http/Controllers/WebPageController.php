@@ -43,6 +43,15 @@ use Spatie\Permission\Models\Role;
 
 class WebPageController extends Controller
 {
+    /**
+     * Campo trampa del formulario de contacto: viaja oculto en el modal de
+     * asesoría y en la página de /contacto, así que ninguna persona lo rellena.
+     * Solo lo completan los bots que rellenan todo lo que encuentran.
+     */
+    private const CAMPO_TRAMPA = 'website';
+
+    private const MENSAJE_EXITO = '¡Mensaje enviado correctamente! Nos pondremos en contacto contigo pronto.';
+
     protected $listcard;
 
     public function __construct()
@@ -1265,6 +1274,22 @@ class WebPageController extends Controller
 
     public function contactoStore(Request $request)
     {
+        // Trampa antispam: si el campo oculto llega con contenido, el envío es de
+        // un bot. Se responde con el mismo éxito que un envío bueno —para no
+        // enseñarle dónde está la trampa— pero no se guarda ni se avisa por
+        // correo. Que el campo FALTE no es sospechoso: hay envíos legítimos, sin
+        // JavaScript, que no lo traen, y descartarlos en silencio sería perder
+        // clientes por una regla demasiado ambiciosa.
+        if (filled($request->input(self::CAMPO_TRAMPA))) {
+            \Log::warning('Contacto: envío descartado por el campo trampa', [
+                'campo' => self::CAMPO_TRAMPA,
+                'ip' => $request->ip(),
+                'email' => (string) $request->input('email'),
+            ]);
+
+            return $this->respuestaDeContactoCorrecto($request);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
@@ -1313,11 +1338,7 @@ class WebPageController extends Controller
                 ]);
             }
 
-            if ($request->expectsJson()) {
-                return response()->json(['success' => true, 'message' => '¡Mensaje enviado correctamente! Nos pondremos en contacto contigo pronto.']);
-            }
-            return redirect()->route('contacto')
-                ->with('success', '¡Mensaje enviado correctamente! Nos pondremos en contacto contigo pronto.');
+            return $this->respuestaDeContactoCorrecto($request);
         } catch (\Throwable $e) {
             \Log::error('Contacto: no se pudo guardar el mensaje del formulario web: ' . $e->getMessage(), [
                 'exception' => $e,
@@ -1329,6 +1350,20 @@ class WebPageController extends Controller
             return redirect()->route('contacto')
                 ->with('error', 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.');
         }
+    }
+
+    /**
+     * Respuesta de un envío aceptado, en JSON para el modal y la página (los dos
+     * envían por fetch) o como redirección cuando el navegador no ejecuta
+     * JavaScript.
+     */
+    private function respuestaDeContactoCorrecto(Request $request)
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => self::MENSAJE_EXITO]);
+        }
+
+        return redirect()->route('contacto')->with('success', self::MENSAJE_EXITO);
     }
 
     /**

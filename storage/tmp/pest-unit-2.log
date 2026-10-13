@@ -1,0 +1,400 @@
+
+  [30;43;1m WARN [39;49;22m Your XML configuration validates against a deprecated schema. Migrate your XML configuration using "--migrate-configuration"!
+
+   PASS  Tests\Unit\CatalogoPlantillasTest
+  ✓ it resuelve el catálogo y los nombres de categoría sin recursión                                             1.15s  
+  ✓ it devuelve la ficha de una plantilla publicada y null para una que no existe                                0.71s  
+  ✓ it resuelve la demostración dentro de public/demos                                                           0.67s  
+  ✓ it publica el catálogo con una tarjeta por plantilla publicada                                               0.88s  
+  ✓ it filtra por categoría y por búsqueda sin romper la página                                                  0.77s  
+  ✓ it responde 200 en la ficha publicada y 404 en la que no existe                                              0.75s  
+  ✓ it marca el formato de cada plantilla y lo pinta en la tarjeta                                               0.78s  
+  ✓ it explica el formato en la ficha, no solo lo nombra                                                         0.70s  
+  ✓ it encuentra las plantillas por su formato desde el buscador                                                 0.82s  
+  ✓ it compila su hoja de estilos sin declarar clases del sitio                                                  0.87s  
+  ✓ it solo publica la demostración de las plantillas que la tienen de verdad                                    0.79s  
+  ✓ it no deja enlaces internos rotos en una demo de varias páginas                                              0.76s  
+  ✓ it abre cada demostración publicada con un hero o slider a pantalla completa                                 1.48s  
+  ✓ it deja el slider del hero utilizable a mano, con teclado y sin JavaScript                                   0.73s  
+  ✓ it trae el interruptor de tema claro / oscuro en toda demostración publicada                                 0.77s  
+  ✓ it abre la demostración con un 302 a su carpeta y 404 si todavía no está                                     0.72s  
+  ✓ it publica la captura 16/10 de cada demostración y deja el mosaico solo donde no hay demo                    1.03s  
+  ✓ it comparte la captura como imagen social de la ficha, con la frase de la propia ficha                       0.79s  
+
+   PASS  Tests\Unit\CatalogoProductosTest
+  ✓ it pone la franja de la imagen antes que el texto, con su texto alternativo with ('/soluciones', 7)          0.77s  
+  ✓ it pone la franja de la imagen antes que el texto, con su texto alternativo with ('/', 3)                    0.74s  
+  ✓ it usa la misma tarjeta compacta en la portada y en el catálogo with ('/soluciones', 7)                      0.73s  
+  ✓ it usa la misma tarjeta compacta en la portada y en el catálogo with ('/', 3)                                0.80s  
+  ✓ it resume el producto con la frase corta, visible y como texto alternativo with ('/', 'Plataforma SaaS para… 0.75s  
+  ✓ it resume el producto con la frase corta, visible y como texto alternativo with ('/soluciones', 'Plataforma… 0.76s  
+  ✓ it presenta las tarjetas con la rejilla del home: tres por fila                                              0.80s  
+  ✓ it incorpora los servicios al mismo esquema, con su franja y sin imagen                                      0.73s  
+
+   PASS  Tests\Unit\Database\DedupeSunatCurrencyTypesMigrationTest
+  ✓ deja una sola fila por moneda                                                                                0.78s  
+  ✓ conserva la descripcion mas baja cuando las filas difieren                                                   0.81s  
+  ✓ el indice unico impide volver a duplicar                                                                     0.75s  
+  ✓ la reversion quita el indice unico                                                                           0.77s  
+
+   PASS  Tests\Unit\Database\EnvExampleFileTest
+  ✓ es un dotenv valido para phpdotenv                                                                           0.74s  
+  ✓ todas sus lineas son asignaciones o comentarios                                                              0.88s  
+  ✓ declara las claves que necesita una instalacion nueva                                                        0.86s  
+
+   PASS  Tests\Unit\Database\FreshInstallSeederTest
+  ✓ database seeder ejecuta los seeders de modulos en orden                                                      0.85s  
+  ✓ una instalacion nueva deja modulos roles y permisos asignados                                               26.26s  
+  ✓ los permisos que solo creaban migraciones quedan asignados                                                  25.58s  
+  ✓ sembrar dos veces no duplica ni falla                                                                       70.57s  
+
+   FAIL  Tests\Unit\Database\PermissionCatalogConsistencyTest
+  ⨯ todo permiso que solo crean las migraciones esta en el catalogo                                              0.89s  
+  ✓ el catalogo no tiene entradas duplicadas ni sin modulo                                                       0.59s  
+
+   PASS  Tests\Unit\ExampleTest
+  ✓ that true is true
+
+   PASS  Tests\Unit\FichasProductoSeoTest
+  ✓ it mantiene las tres fichas publicadas con canónica propia with ('kapta')                                    0.58s  
+  ✓ it mantiene las tres fichas publicadas con canónica propia with ('kirafact')                                 0.60s  
+  ✓ it mantiene las tres fichas publicadas con canónica propia with ('pichanguero')                              0.62s  
+  ✓ it publica un solo SoftwareApplication que apunta al sitio del producto with ('kapta')                       0.60s  
+  ✓ it publica un solo SoftwareApplication que apunta al sitio del producto with ('kirafact')                    0.57s  
+  ✓ it publica un solo SoftwareApplication que apunta al sitio del producto with ('pichanguero')                 0.62s  
+  ✓ it no publica importes ni compite por las consultas del producto with ('kapta')                              0.72s  
+  ✓ it no publica importes ni compite por las consultas del producto with ('kirafact')                           0.62s  
+  ✓ it no publica importes ni compite por las consultas del producto with ('pichanguero')                        0.63s  
+  ✓ it enlaza al sitio oficial y a su página de planes o descargas with ('kapta')                                0.87s  
+  ✓ it enlaza al sitio oficial y a su página de planes o descargas with ('kirafact')                             0.78s  
+  ✓ it enlaza al sitio oficial y a su página de planes o descargas with ('pichanguero')                          0.89s  
+  ✓ it sigue redirigiendo con 301 las URLs antiguas que apuntan a cada ficha with ('/e-learning', '/kapta')      0.64s  
+  ✓ it sigue redirigiendo con 301 las URLs antiguas que apuntan a cada ficha with ('/sitios-webs', '/kapta')     0.70s  
+  ✓ it sigue redirigiendo con 301 las URLs antiguas que apuntan a cada ficha with ('/facturador', '/kirafact')   0.80s  
+  ✓ it sigue redirigiendo con 301 las URLs antiguas que apuntan a cada ficha with ('/soluciones/kapta', '/kapta… 0.77s  
+  ✓ it sigue redirigiendo con 301 las URLs antiguas que apuntan a cada ficha with ('/soluciones/facturacion', '… 0.69s  
+
+   PASS  Tests\Unit\FormularioAsesoriaTest
+  ✓ it guarda la solicitud del modal en el buzón que lista /cms/contact-messages                                 1.03s  
+  ✓ it devuelve los errores en JSON y no guarda nada                                                             0.72s  
+  ✓ it publica el modal en las páginas del sitio, con el formulario y sus botones with ('/', 4)                  0.86s  
+  ✓ it publica el modal en las páginas del sitio, con el formulario y sus botones with ('/soluciones', 4)        0.61s  
+  ✓ it publica el modal en las páginas del sitio, con el formulario y sus botones with ('/paginas-web', 4)       0.60s  
+  ✓ it pinta la misma lista de servicios que la página de contacto                                               0.59s  
+  ✓ it manda a Google el token que pide el modal antes de enviar                                                 0.67s  
+  ✓ it no toca el buzón cuando el captcha que envía el modal está vacío                                          0.58s  
+
+   PASS  Tests\Unit\ImagenArticuloBlogTest
+  ✓ it publica la imagen destacada sin recortarla                                                                0.60s  
+
+   PASS  Tests\Unit\Modules\Academic\Services\OpenAiAssistantServiceTest
+  ✓ sends prompt to responses api and returns text                                                               0.59s  
+  ✓ resolves api key from system parameter                                                                       0.61s  
+  ✓ chains conversation with previous response id                                                                0.61s  
+  ✓ retries without history when previous response expired                                                       0.65s  
+  ✓ surfaces openai error message when key is invalid                                                            0.63s  
+  ✓ throws clear error when parameter and env key are missing                                                    0.69s  
+  ✓ censor text uses fresh context without previous response id                                                  0.66s  
+  ✓ correct text returns corrected text with fresh context                                                       0.62s  
+  ✓ correct text spelling mode only asks for spelling                                                            0.61s  
+  ✓ sanitizes invisible characters from api key                                                                  0.63s  
+
+   PASS  Tests\Unit\Modules\Academic\Services\TelegramStudentAccountTest
+  ✓ un documento desconocido no resuelve a nadie                                                                 0.62s  
+  ✓ un correo que no pertenece a la persona no resuelve                                                          0.61s  
+  ✓ el correo se compara sin distinguir mayusculas                                                               0.60s  
+  ✓ solo lista los cursos de pago vigentes con matricula activa                                                  0.62s  
+  ✓ una suscripcion vigente se informa sin premium                                                               0.60s  
+  ✓ una suscripcion premium vip se marca como tal                                                                0.58s  
+  ✓ una suscripcion vencida no cuenta                                                                            0.60s  
+  ✓ los certificados se listan sin enlace de descarga                                                            0.66s  
+  ✓ una persona que no es alumno existe pero sin datos                                                           0.58s  
+
+   PASS  Tests\Unit\Modules\Academic\Services\TelegramStudentDirectoryTest
+  ✓ un documento desconocido no resuelve a nadie                                                                 0.59s  
+  ✓ la matricula activa en un programa de especializacion registra                                               0.57s  
+  ✓ una matricula inactiva o de otro tipo de curso no cuenta                                                     0.57s  
+  ✓ una suscripcion vigente por fechas basta                                                                     0.63s  
+  ✓ una suscripcion vencida no basta                                                                             0.59s  
+  ✓ el estado activo de la suscripcion tambien basta                                                             0.57s  
+  ✓ una persona que no es alumno existe pero sin acceso                                                          0.57s  
+  ✓ el documento se compara sin distinguir mayusculas                                                            0.57s  
+  ✓ el nombre cae al nombre completo cuando falta el corto                                                       0.57s  
+  ✓ los programas no se repiten                                                                                  0.57s  
+
+   PASS  Tests\Unit\Modules\Academic\TelegramStudentRegistrationFlowTest
+  ✓ el padron academico esta vinculado al webhook                                                                0.62s  
+  ✓ un alumno matriculado se registra escribiendo su documento                                                   0.63s  
+  ✓ un documento que no esta matriculado no registra nada                                                        0.61s  
+
+   PASS  Tests\Unit\Modules\Commercial\NegotiationForceDeleteTest
+  ✓ el admin elimina una negociacion aprobada con su contrasena                                                  0.63s  
+  ✓ el admin elimina una negociacion confirmada que antes estaba bloqueada                                       0.60s  
+  ✓ la contrasena incorrecta no elimina la negociacion                                                           0.58s  
+  ✓ el borrado sensible sin contrasena no pasa                                                                   0.62s  
+  ✓ un vendedor no puede forzar el borrado de una negociacion confirmada                                         0.58s  
+  ✓ un vendedor no puede eliminar la negociacion de otro asesor                                                  0.58s  
+  ✓ el asesor que creo la negociacion la elimina con su contrasena                                               0.60s  
+  ✓ un estado anterior al confirmado se elimina sin contrasena                                                   0.59s  
+
+   PASS  Tests\Unit\Modules\Health\DoctorGoogleCalendarServiceTest
+  ✓ el doctor sin cuenta no tiene agenda activa                                                                  0.58s  
+  ✓ el token se guarda cifrado y nunca sale en el estado                                                         0.58s  
+  ✓ un calendario no puede quedar enlazado a dos doctores                                                        0.57s  
+  ✓ la busqueda por calendario solo devuelve cuentas activas                                                     0.57s  
+  ✓ desenlazar revoca el permiso y borra la cuenta                                                               0.63s  
+  ✓ el resultado del envio queda registrado y se limpia al funcionar                                             0.60s  
+  ✓ las opciones tienen valores por defecto y acotan los minutos                                                 0.60s  
+
+   PASS  Tests\Unit\Modules\Health\GoogleCalendarRedirectUriTest
+  ✓ una url https sirve                                                                                          0.58s  
+  ✓ http en un dominio propio se detecta y se explica                                                            0.58s  
+  ✓ localhost y loopback son la excepcion que google admite                                                      0.58s  
+  ✓ el boton probar conexion reporta este problema                                                               0.58s  
+
+   PASS  Tests\Unit\Modules\Integrationhub\IntegrationhubCronExpressionTest
+  ✓ valida expresiones de cinco campos                                                                           0.56s  
+  ✓ is due con pasos rangos y listas                                                                             0.57s  
+  ✓ el domingo es 0 y 7                                                                                          0.56s  
+  ✓ dia del mes y dia semana se combinan con and                                                                 0.57s  
+  ✓ next run date salta al siguiente disparo                                                                     0.56s  
+  ✓ next run date resuelve expresiones raras en milisegundos                                                     0.56s  
+  ✓ next run date con expresion invalida es null                                                                 0.56s  
+
+   PASS  Tests\Unit\Modules\Integrationhub\IntegrationhubSchedulerTest
+  ✓ despacha solo las programaciones vencidas                                                                    0.62s  
+  ✓ dos corridas en el mismo minuto no despachan dos veces                                                       0.57s  
+  ✓ una programacion nunca ejecutada se alinea sin despachar                                                     0.58s  
+  ✓ una ejecucion perdida se despacha una vez y se realinea                                                      0.57s  
+  ✓ una integracion apagada no se encola                                                                         0.58s  
+  ✓ deja una senal de vida para saber si el scheduler esta vivo                                                  0.58s  
+
+   PASS  Tests\Unit\Modules\Integrationhub\RunIntegrationScheduleJobTest
+  ✓ ejecuta el endpoint con las variables del borrador y marca exito                                             0.58s  
+  ✓ un fallo del endpoint se relanza y deja el motivo                                                            0.57s  
+  ✓ sin endpoints activos la programacion falla                                                                  0.57s  
+  ✓ al agotarse los reintentos se registra en la bitacora de errores                                             0.57s  
+  ✓ una programacion inactiva no se ejecuta                                                                      0.58s  
+  ✓ module api ejecuta la ruta interna del modulo                                                                0.58s  
+  ✓ module api con respuesta de error es un fallo                                                                0.58s  
+  ✓ module api con ruta inexistente es un fallo                                                                  0.59s  
+
+   PASS  Tests\Unit\Modules\Integrationhub\TelegramBotIntegrationMigrationTest
+  ✓ crea la integracion con sus endpoints y field maps                                                           0.63s  
+  ✓ crea el parametro del token y las tablas del bot                                                             0.64s  
+  ✓ retira las columnas del registro con codigo                                                                  0.62s  
+  ✓ repetir las migraciones no duplica nada                                                                      0.63s  
+  ✓ repetir la migracion del formato respeta lo configurado                                                      0.63s  
+  ✓ repetir la migracion respeta el token configurado                                                            0.62s  
+
+   PASS  Tests\Unit\Modules\Integrationhub\TelegramBotServiceTest
+  ✓ sin token el bot no esta configurado                                                                         0.62s  
+  ✓ con token esta configurado y el secreto se deriva del token                                                  0.68s  
+  ✓ send message inyecta el token en la ruta y el texto en el body                                               0.74s  
+  ✓ sin token no se puede enviar                                                                                 0.75s  
+  ✓ telegram con ok false lanza excepcion                                                                        0.75s  
+  ✓ un error http lanza excepcion                                                                                0.62s  
+  ✓ arma el enlace unico de registro con el usuario del bot                                                      0.60s  
+  ✓ publica los comandos del bot                                                                                 0.59s  
+  ✓ send formatted conserva el html y reintenta en texto plano                                                   0.60s  
+  ✓ send formatted en texto plano no reintenta                                                                   0.59s  
+  ✓ registra el webhook con el secreto derivado                                                                  0.60s  
+  ✓ la url del webhook apunta a la ruta publica                                                                  0.59s  
+
+   PASS  Tests\Unit\Modules\Integrationhub\TelegramHtmlTest
+  ✓ en modo html escapa simbolos y conserva etiquetas                                                            0.57s  
+  ✓ no duplica las entidades ya escritas                                                                         0.58s  
+  ✓ escapa el href de un enlace                                                                                  0.58s  
+  ✓ conserva emojis y saltos de linea                                                                            0.57s  
+  ✓ descarta etiquetas que telegram no entiende                                                                  0.57s  
+  ✓ en modo texto no se interpreta ninguna etiqueta                                                              0.56s  
+
+   PASS  Tests\Unit\Modules\Integrationhub\TelegramMessageServiceTest
+  ✓ todos los mensajes del catalogo tienen texto de fabrica                                                      0.60s  
+  ✓ reemplaza las variables del mensaje                                                                          0.59s  
+  ✓ una linea con variable vacia no se envia                                                                     0.60s  
+  ✓ la plantilla de las campanas usa el curso y el tiempo del formulario                                         0.58s  
+  ✓ sin tiempo la linea del tiempo desaparece                                                                    0.60s  
+  ✓ una variable desconocida queda escrita                                                                       0.62s  
+  ✓ guardar un texto reemplaza el de fabrica                                                                     0.61s  
+  ✓ un texto vacio vuelve al de fabrica                                                                          0.58s  
+  ✓ restaurar devuelve el texto de fabrica                                                                       0.59s  
+  ✓ restaurar todos borra los reemplazos                                                                         0.59s  
+  ✓ el formato sale de la configuracion                                                                          0.60s  
+  ✓ el catalogo marca los textos modificados                                                                     0.59s  
+  ✓ un codigo desconocido no se puede guardar                                                                    0.64s  
+
+   PASS  Tests\Unit\Modules\Integrationhub\TelegramRegistrationServiceTest
+  ✓ abre una sesion de registro con vigencia                                                                     0.64s  
+  ✓ volver a empezar reinicia la sesion                                                                          0.64s  
+  ✓ una sesion vencida se descarta                                                                               0.62s  
+  ✓ cuenta los intentos y tiene un tope                                                                          0.63s  
+  ✓ cerrar la sesion la elimina                                                                                  0.61s  
+  ✓ attach guarda el chat de la persona                                                                          0.60s  
+  ✓ un chat no puede quedar en dos personas                                                                      0.62s  
+  ✓ una persona que vuelve a registrarse reemplaza su chat                                                       0.61s  
+  ✓ attach exige persona y chat                                                                                  0.61s  
+  ✓ la baja marca el contacto como inactivo                                                                      0.63s  
+  ✓ solo los contactos activos con chat estan suscritos                                                          0.62s  
+
+   PASS  Tests\Unit\Modules\Integrationhub\TelegramWebhookControllerTest
+  ✓ un secreto invalido no procesa el mensaje                                                                    0.62s  
+  ✓ start abre el registro y pide el documento                                                                   0.60s  
+  ✓ start ignora cualquier texto que venga despues                                                               0.59s  
+  ✓ el documento del padron registra el chat                                                                     0.60s  
+  ✓ quien solo tiene suscripcion tambien se registra                                                             0.59s  
+  ✓ un documento desconocido se reintenta y no registra                                                          0.60s  
+  ✓ un texto que no parece documento tambien cuenta                                                              0.61s  
+  ✓ tras cinco intentos se cierra la conversacion                                                                0.62s  
+  ✓ una persona sin programa ni suscripcion no se registra                                                       0.61s  
+  ✓ start en un chat ya registrado menciona al titular                                                           0.62s  
+  ✓ el bot usa el texto configurado por el administrador                                                         0.59s  
+  ✓ un texto suelto sin sesion recibe un recordatorio corto                                                      0.59s  
+  ✓ ayuda explica como registrarse                                                                               0.61s  
+  ✓ sin padron disponible el registro avisa y cierra la sesion                                                   0.61s  
+  ✓ baja apaga el contacto y cierra la conversacion                                                              0.61s  
+  ✓ baja de un chat no registrado lo indica                                                                      0.60s  
+  ✓ sin token configurado el webhook no hace nada                                                                0.59s  
+  ✓ chatid devuelve el identificador del chat                                                                    0.59s  
+  ✓ la consulta de cursos pide correo y documento y lista                                                        0.60s  
+  ✓ la consulta avisa cuando los datos no coinciden                                                              0.61s  
+  ✓ un correo invalido cuenta intento                                                                            0.60s  
+  ✓ tras cinco intentos se cierra la consulta                                                                    0.62s  
+  ✓ la consulta informa la suscripcion sin especializacion                                                       0.60s  
+  ✓ la consulta informa la suscripcion premium vip                                                               0.60s  
+  ✓ certificados lista sin descarga y manda a la plataforma                                                      0.60s  
+  ✓ start menciona todas las opciones del bot                                                                    0.60s  
+  ✓ sin padron de consulta el bot avisa                                                                          0.61s  
+
+   PASS  Tests\Unit\Modules\Integrationhub\TelegramWebhookRegisterMigrationTest
+  ✓ sin token no registra nada y no falla                                                                        0.61s  
+  ✓ con token registra la url publica y publica los comandos                                                     0.59s  
+  ✓ un error de telegram no tumba la migracion                                                                   0.61s  
+  ✓ repetir la migracion no duplica la integracion                                                               0.59s  
+
+   PASS  Tests\Unit\Modules\Security\ErrorAlertServiceTest
+  ✓ encola la alerta cuando hay error y destinatarios activos                                                    0.58s  
+  ✓ no encola si las alertas estan desactivadas                                                                  0.57s  
+  ✓ no encola si no hay destinatarios activos                                                                    0.57s  
+  ✓ no encola por debajo del umbral                                                                              0.56s  
+  ✓ el umbral configurable puede subir a critical                                                                0.56s  
+  ✓ deduplica la misma huella                                                                                    0.57s  
+  ✓ ignora los logs internos de las alertas                                                                      0.57s  
+  ✓ la vista previa no deja variables sin reemplazar                                                             0.56s  
+  ✓ el envio de prueba llega solo a destinatarios activos                                                        0.59s  
+  ✓ el envio de prueba reporta los fallos por destinatario                                                       0.57s  
+
+   PASS  Tests\Unit\Modules\Security\PermissionActionsTest
+  ✓ reconoce la accion de cada sufijo                                                                            0.58s  
+  ✓ un permiso de seccion sin sufijo es ver                                                                      0.56s  
+  ✓ el prefijo quita el sufijo de accion                                                                         0.56s  
+  ✓ cada accion tiene etiqueta y verbo                                                                           0.57s  
+
+   PASS  Tests\Unit\Modules\Security\PermissionPanelTest
+  ✓ agrupa los permisos hermanos por accion                                                                      0.59s  
+  ✓ ofrece una pestana por accion con el permiso que las rutas exigen                                            0.58s  
+  ✓ al editar la accion del elemento manda su propio permiso                                                     0.58s  
+  ✓ un elemento cuyo permiso no existe todavia se puede configurar                                               0.58s  
+  ✓ refleja el borrador de la sesion de edicion                                                                  0.60s  
+
+   PASS  Tests\Unit\Modules\Security\SecurityAlertControllerTest
+  ✓ registra un destinatario                                                                                     0.58s  
+  ✓ rechaza un chat id con formato invalido                                                                      0.57s  
+  ✓ rechaza un chat id duplicado                                                                                 0.58s  
+  ✓ actualiza un destinatario                                                                                    0.59s  
+  ✓ elimina un destinatario                                                                                      0.56s  
+  ✓ guarda los ajustes                                                                                           0.58s  
+  ✓ el envio de prueba falla si el bot no esta configurado                                                       0.58s  
+  ✓ el envio de prueba falla sin destinatarios                                                                   0.58s  
+  ✓ el envio de prueba entrega a los destinatarios                                                               0.57s  
+  ✓ las rutas de alertas exigen el permiso                                                                       0.57s  
+
+   PASS  Tests\Unit\Modules\Security\SendSecurityErrorAlertJobTest
+  ✓ entrega el mensaje a cada chat                                                                               0.59s  
+  ✓ aisla el fallo de un chat sin perder a los demas                                                             0.57s  
+  ✓ no envia nada con una lista vacia                                                                            0.56s  
+
+   PASS  Tests\Unit\Modules\Security\SuperEditorEndpointsTest
+  ✓ el admin entra sin contrasena                                                                                0.59s  
+  ✓ no se puede aplicar un borrador sin contrasena                                                               0.60s  
+  ✓ un usuario sin el rol admin no puede entrar                                                                  0.59s  
+  ✓ los endpoints del editor exigen una sesion de edicion activa                                                 0.59s  
+  ✓ el ciclo completo cambia los permisos del rol y su efecto real                                               0.64s  
+  ✓ salir sin editar no cambia ningun permiso ni pide contrasena                                                 0.58s  
+  ✓ salir con contrasena incorrecta deja el borrador sin aplicar y la sesion abierta                             0.60s  
+  ✓ salir descartando no aplica el borrador                                                                      0.60s  
+  ✓ retirar del borrador los cambios de un elemento                                                              0.59s  
+  ✓ no se puede quitar un permiso protegido del rol admin                                                        0.59s  
+  ✓ la sesion expirada cierra el modo y descarta el borrador                                                     0.60s  
+  ✓ se puede crear desde el panel un permiso que todavia no existe                                               0.60s  
+  ✓ cerrar sesion en la aplicacion cierra el modo y descarta el borrador                                         0.60s  
+  ✓ el historial del modo es consultable solo por el admin                                                       0.62s  
+
+   PASS  Tests\Unit\Modules\Security\SuperEditorModeTest
+  ✓ el rol no autorizado no puede entrar                                                                         0.59s  
+  ✓ el endpoint del editor rechaza a quien no es admin                                                           0.57s  
+  ✓ entrar no pide contrasena                                                                                    0.58s  
+  ✓ aplicar un borrador con cambios exige contrasena                                                             0.58s  
+  ✓ salir sin cambios no pide contrasena                                                                         0.59s  
+  ✓ sin sesion de edicion activa el endpoint responde 409                                                        0.57s  
+  ✓ el borrador no toca los permisos hasta salir                                                                 0.60s  
+  ✓ al salir se audita cada cambio con su etiqueta                                                               0.58s  
+  ✓ quitar un permiso se aplica al salir                                                                         0.59s  
+  ✓ salir sin editar no cambia ningun permiso                                                                    0.59s  
+  ✓ salir con contrasena incorrecta no aplica nada                                                               0.60s  
+  ✓ salir descartando no aplica nada                                                                             0.58s  
+  ✓ volver al estado original deja de ser un cambio                                                              0.58s  
+  ✓ la sesion expirada descarta el borrador                                                                      0.59s  
+  ✓ abrir una sesion nueva descarta la anterior                                                                  0.58s  
+  ✓ no se puede quitar del rol admin un permiso protegido                                                        0.57s  
+  ✓ el permiso protegido tambien se bloquea al aplicar                                                           0.59s  
+  ✓ el estado compartido no activa el modo sin sesion                                                            0.57s  
+  ✓ el estado compartido dice que permisos tienen borrador                                                       0.59s  
+  ✓ un usuario que no es admin no puede usar el modo                                                             0.58s  
+
+   PASS  Tests\Unit\ServicioPaginasWebTest
+  ✓ it vende el año como diez mensualidades, para que «dos meses gratis» sea cierto                              0.59s  
+  ✓ it formatea los importes como se leen en la web                                                              0.57s  
+  ✓ it le da un plan a cada formato del catálogo, y al revés                                                     0.57s  
+  ✓ it responde la página del servicio, canónica de sí misma y con los tres planes                               0.58s  
+  ✓ it no promete el panel de autogestión mientras no exista                                                     0.57s  
+  ✓ it enlaza al servicio desde el catálogo y desde la ficha, con el precio del formato                          0.59s  
+  ✓ it presenta el servicio en el ecosistema de /soluciones, con su precio de entrada                            0.58s  
+  ✓ it inscribe la página del servicio en el mapa del sitio                                                      0.57s  
+
+   PASS  Tests\Unit\SitiosProductoTest
+  ✓ it resuelve una ruta relativa contra el host actual                                                          0.57s  
+  ✓ it respeta la URL absoluta el día que el producto tenga dominio propio                                       0.56s  
+  ✓ it devuelve null en vez de un enlace roto cuando la página no existe                                         0.56s  
+  ✓ it expone los datos publicados de cada producto                                                              0.56s  
+  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Database\PermissionCatalogConsistencyTest > todo permiso que solo crean las migraciones esta e…   
+  Estos permisos solo existen por migración y quedarían sin rol en una instalación nueva. Agrégalos a PermissionsReconcileSeeder::ORPHANS: comm_configuracion_editar, comm_configuracion_ver
+Failed asserting that two arrays are identical.
+--- Expected
++++ Actual
+@@ @@
+-Array &0 []
++Array &0 [
++    0 => 'comm_configuracion_editar',
++    1 => 'comm_configuracion_ver',
++]
+
+  at tests\Unit\Database\PermissionCatalogConsistencyTest.php:38
+     34▕         $catalog = array_column(PermissionsReconcileSeeder::ORPHANS, 'name');
+     35▕ 
+     36▕         $missing = array_values(array_diff($onlyMigrations, $catalog));
+     37▕ 
+  ➜  38▕         $this->assertSame(
+     39▕             [],
+     40▕             $missing,
+     41▕             'Estos permisos solo existen por migración y quedarían sin rol en una instalación nueva. '
+     42▕             .'Agrégalos a PermissionsReconcileSeeder::ORPHANS: '.implode(', ', $missing)
+
+  1   tests\Unit\Database\PermissionCatalogConsistencyTest.php:38
+
+
+  Tests:    1 failed, 294 passed (2441 assertions)
+  Duration: 306.47s
+
+exit=1

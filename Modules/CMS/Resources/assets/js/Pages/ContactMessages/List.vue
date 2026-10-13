@@ -4,7 +4,7 @@ import { useForm } from "@inertiajs/vue3";
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 import ModalLargeX from '@/Components/ModalLargeX.vue';
-import { faTimes, faEye, faCheck, faReply, faClock, faPaperPlane, faEnvelope, faPhone, faBuilding, faTag, faCalendarAlt, faArrowLeft, faExternalLinkAlt } from "@fortawesome/free-solid-svg-icons";
+import { faTimes, faEye, faCheck, faReply, faClock, faPaperPlane, faEnvelope, faPhone, faBuilding, faTag, faCalendarAlt, faArrowLeft, faExternalLinkAlt, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import Keypad from '@/Components/Keypad.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import FlatPickr from 'vue-flatpickr-component';
@@ -25,6 +25,13 @@ const props = defineProps({
     filters: {
         type: Object,
         default: () => ({})
+    },
+    // Lo calcula el controlador con el mismo permiso que exige la ruta de
+    // borrado, asi que refleja tambien el permiso directo de una persona
+    // concreta y no solo lo que trae su rol.
+    canDelete: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -177,6 +184,54 @@ const goTo = (params = {}) => {
         { preserveState: true, preserveScroll: true, replace: true }
     );
 };
+
+// Borrar un mensaje del buzon (spam, sobre todo). El permiso se comprueba otra
+// vez en el servidor: si no lo tiene, la peticion responde 403 y aqui se ve el
+// aviso, aunque el boton no deberia estar a la vista.
+const destroyMessage = (message) => {
+    Swal2.fire({
+        title: '¿Eliminar este mensaje?',
+        // `text` y no `html`: el nombre y el email vienen del formulario publico
+        // y el spam suele traer etiquetas dentro.
+        text: `Se eliminará el mensaje de ${message.name} (${message.email}). Esta acción no se puede deshacer.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+            return axios.delete(route('cms_contact_messages_destroy', message.id), {
+                headers: { Accept: 'application/json' },
+            }).then((res) => {
+                if (!res.data.success) {
+                    Swal2.showValidationMessage(res.data.message);
+                }
+                return res;
+            }).catch((error) => {
+                Swal2.showValidationMessage(
+                    error?.response?.data?.message || 'No se pudo eliminar el mensaje.'
+                );
+            });
+        },
+        allowOutsideClick: () => !Swal2.isLoading(),
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal2.fire({
+                icon: 'success',
+                title: 'Mensaje eliminado',
+                text: 'El registro ya no está en el buzón.',
+                timer: 2400,
+                showConfirmButton: false,
+            });
+
+            // Vuelve al listado con los mismos filtros y la misma página, ya sin
+            // el mensaje: los contadores de arriba también se recalculan.
+            goTo();
+        }
+    });
+};
 </script>
 
 <template>
@@ -317,6 +372,13 @@ const goTo = (params = {}) => {
                                                         title="Responder"
                                                         class="text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:outline-none focus:ring-emerald-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:bg-emerald-600 dark:hover:bg-emerald-700">
                                                     <font-awesome-icon :icon="faReply" />
+                                                </button>
+                                                <button v-if="canDelete"
+                                                        type="button"
+                                                        @click="destroyMessage(message)"
+                                                        title="Eliminar"
+                                                        class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:bg-red-600 dark:hover:bg-red-700">
+                                                    <font-awesome-icon :icon="faTrashAlt" />
                                                 </button>
                                             </div>
                                         </td>
