@@ -433,11 +433,14 @@ body {
    del 60 % al 92 % y otro del 55 %) la cubrían para que el texto se pudiera
    leer: el diseño apenas se apreciaba y todo se leía mal.
 
-   Para cambiar la proporción de las imágenes basta esta variable: los diseños
-   del ecosistema se preparan en 16/9 (1600 × 900 px como mínimo).
+   El ALTO de la franja lo pone la imagen de cada producto: la tarjeta le pasa
+   su proporción en `--ara-product-media-ratio` (la mide ProporcionImagen, en
+   app/Support) y así la franja queda pegada al diseño, sin banda de relleno y
+   sin salto al cargarla. Esta variable es la que se usa cuando no hay imagen
+   —los servicios— o cuando la proporción no se puede medir.
    ============================================= */
 .ara-product-card {
-    --ara-product-media-ratio: 16 / 9;
+    --ara-product-media-ratio: 4 / 3;
 
     position: relative;
     display: flex;
@@ -456,7 +459,20 @@ body {
     box-shadow: 0 20px 55px rgba(1, 136, 238, 0.18);
 }
 
-/* --- Imagen del producto --- */
+/* --- Imagen del producto ---
+   El diseño se ve ENTERO. Los diseños del ecosistema no comparten proporción
+   —s1, s3 y s4 son cuadrados (1:1) y s2 es panorámico (2:1)—, así que una
+   franja de proporción fija solo puede enseñarlos todos recortando: con
+   `cover`, la franja 16/9 de antes se comía el 44 % del alto de los cuadrados y
+   los laterales del panorámico (ese recorte lo medía, en números,
+   storage/tmp/revisar-tarjetas-ecosistema.mjs). Con `contain` entra el diseño
+   completo, sin tocar el archivo; y las franjas que sobran las rellena el
+   propio diseño desenfocado (el `::before`), no un navy vacío.
+
+   Y el relleno tampoco es el caso normal: cuando la proporción se mide bien, la
+   franja mide exactamente la imagen y no sobra nada. El relleno está para el
+   respaldo (imagen que no se puede medir) y para las franjas de los servicios,
+   que ya llevan su degradado. */
 .ara-product-card .ara-product-media {
     position: relative;
     aspect-ratio: var(--ara-product-media-ratio);
@@ -465,17 +481,47 @@ body {
     flex-shrink: 0;
 }
 
+/* Relleno de las franjas sobrantes: el mismo diseño, ampliado y desenfocado,
+   detrás de la imagen. Solo se ve cuando la franja NO mide como su imagen (no
+   se pudo medir el archivo), y sin él ese hueco quedaría en navy liso, que se
+   leería como un descuadre. La URL entra por `--ara-product-media-bg`, que pone
+   la tarjeta; sin imagen (la variante de servicios) no llega y no se pinta. */
+.ara-product-card .ara-product-media::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--ara-product-media-bg, none);
+    background-size: cover;
+    background-position: center;
+    filter: blur(16px);
+    /* El desenfoque aclara los bordes: se amplía para que no asome el corte. */
+    transform: scale(1.12);
+    opacity: 0.55;
+    transition: opacity 0.4s ease;
+}
+
 .ara-product-card .ara-product-media img {
+    /* Por encima del relleno desenfocado. */
+    position: relative;
+    z-index: 1;
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     object-position: center;
-    transition: transform 0.6s ease;
+    transition: filter 0.4s ease;
 }
 
+/* Foco al pasar el ratón. Antes la imagen se ampliaba (`scale`) y con `contain`
+   esa ampliación volvía a recortar el diseño por los cuatro lados —lo que se
+   acaba de corregir—. Ahora se ilumina, y el relleno gana presencia: se nota el
+   foco sin comerse un píxel del diseño. */
 .ara-product-card:hover .ara-product-media img {
-    transform: scale(1.03);
+    filter: brightness(1.07) saturate(1.05);
+}
+
+.ara-product-card:hover .ara-product-media::before {
+    opacity: 0.75;
 }
 
 /* Categoría sobre la imagen. Fondo sólido a propósito: los .ara-badge son
@@ -597,6 +643,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Los servicios no llevan diseño que rellenar: la franja ya es el degradado. */
+.ara-product-card--plano .ara-product-media::before {
+    content: none;
 }
 
 .ara-product-card--plano .ara-product-media--azul {
@@ -807,6 +858,260 @@ body {
 .ara-textarea {
     resize: vertical;
     min-height: 120px;
+}
+
+/* =============================================
+   Trampa antispam
+   ---------------------------------------------------------------
+   El campo «website» del formulario de contacto (el modal de asesoría y la
+   página /contacto). Se saca de la pantalla en vez de usar display:none: hay
+   bots que ignoran los campos con type="hidden" y los que no se ven, pero
+   siguen rellenando los que están en el HTML. Nunca debe ser alcanzable con
+   el teclado (lleva tabindex="-1" en el HTML).
+   ============================================= */
+.ara-trampa {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* =============================================
+   Modal de asesoría
+   ---------------------------------------------------------------
+   El formulario de /contacto, pero sin salir de la página: los botones
+   «Solicitar Asesoría» (ver components/v2/asesoria-modal.blade.php) lo abren
+   encima del contenido. Los campos son los mismos .ara-input, así que el
+   formulario se ve igual dentro del modal que en su página, y el panel se
+   desplaza por dentro cuando no cabe en la pantalla.
+   ============================================= */
+.ara-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+/* El atributo `hidden` manda: sin esta regla lo taparía el display del modal y
+   quedaría siempre abierto. */
+.ara-modal[hidden] {
+    display: none;
+}
+
+.ara-modal-fondo {
+    position: absolute;
+    inset: 0;
+    background: rgba(6, 14, 45, 0.75);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+.ara-modal-ventana {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 32rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    padding: 2rem;
+    border-radius: 1.5rem;
+    background: #ffffff;
+    box-shadow: 0 30px 80px rgba(6, 14, 45, 0.45);
+    animation: ara-modal-entrada 0.25s ease;
+}
+
+@keyframes ara-modal-entrada {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ara-modal-cerrar {
+    position: absolute;
+    top: 0.9rem;
+    right: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    color: #64748B;
+    background: rgba(100, 116, 139, 0.1);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ara-modal-cerrar:hover {
+    color: #0F172A;
+    background: rgba(100, 116, 139, 0.2);
+}
+
+.ara-modal-cerrar svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.ara-modal-titulo {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    line-height: 1.25;
+    font-weight: 700;
+    color: #0A1740;
+}
+
+.ara-modal-ayuda {
+    margin: 0 0 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: #64748B;
+}
+
+.ara-modal-campos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.ara-modal-ancho {
+    grid-column: 1 / -1;
+}
+
+.ara-modal-etiqueta {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.ara-modal-error {
+    margin: 1rem 0 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid #FECACA;
+    border-radius: 0.75rem;
+    background: #FEF2F2;
+    color: #B91C1C;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.ara-modal-error[hidden] {
+    display: none;
+}
+
+.ara-modal-error p {
+    margin: 0.35rem 0 0;
+}
+
+.ara-modal-captcha {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.ara-modal-enviar {
+    width: 100%;
+    justify-content: center;
+    margin-top: 1.25rem;
+}
+
+.ara-modal-enviar-icono {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.ara-modal-exito {
+    padding-top: 1rem;
+    text-align: center;
+}
+
+.ara-modal-exito[hidden] {
+    display: none;
+}
+
+.ara-modal-exito svg {
+    width: 3.5rem;
+    height: 3.5rem;
+    margin: 0 auto 1rem;
+    color: #4EAE33;
+}
+
+.ara-modal-exito h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    color: #0A1740;
+}
+
+.ara-modal-exito p {
+    margin: 0 0 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: #64748B;
+}
+
+/* Modo oscuro: el panel sigue al tema del sitio. Los .ara-input ya traen su
+   propia versión oscura, así que aquí solo se oscurece el marco y los textos. */
+.dark .ara-modal-ventana {
+    background: #0F172A;
+}
+
+.dark .ara-modal-titulo,
+.dark .ara-modal-exito h3 {
+    color: #F1F5F9;
+}
+
+.dark .ara-modal-ayuda,
+.dark .ara-modal-exito p {
+    color: #94A3B8;
+}
+
+.dark .ara-modal-etiqueta {
+    color: #CBD5E1;
+}
+
+.dark .ara-modal-cerrar {
+    color: #CBD5E1;
+    background: rgba(148, 163, 184, 0.14);
+}
+
+.dark .ara-modal-cerrar:hover {
+    color: #FFFFFF;
+    background: rgba(148, 163, 184, 0.24);
+}
+
+.dark .ara-modal-error {
+    border-color: #7F1D1D;
+    background: rgba(127, 29, 29, 0.25);
+    color: #FCA5A5;
+}
+
+/* En pantallas estrechas los campos se apilan: el panel mide 32rem y dos
+   columnas dejarían los campos demasiado juntos. */
+@media (max-width: 640px) {
+    .ara-modal {
+        padding: 0.75rem;
+    }
+
+    .ara-modal-ventana {
+        padding: 1.5rem 1.25rem;
+        max-height: calc(100vh - 1.5rem);
+    }
+
+    .ara-modal-campos {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 /* =============================================

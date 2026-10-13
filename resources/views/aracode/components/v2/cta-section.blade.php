@@ -17,7 +17,9 @@
         </p>
         
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 reveal reveal-delay-2">
-            <a href="{{ $buttonHref ?? route('contacto') }}" class="ara-btn ara-btn-primary ara-btn-lg">
+            {{-- Si el botón lleva al formulario de contacto, abre el modal de
+                 asesoría; con un destino propio se navega como siempre. --}}
+            <a href="{{ $buttonHref ?? route('contacto') }}" @if (! $buttonHref) data-asesoria @endif class="ara-btn ara-btn-primary ara-btn-lg">
                 {{ $buttonText }}
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>

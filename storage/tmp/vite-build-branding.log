@@ -1,0 +1,22 @@
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+Deprecation [legacy-js-api]: The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
+
+More info: https://sass-lang.com/d/legacy-js-api
+file:///C:/laragon/www/base-aracode/tailwind.config.js:1
+const defaultTheme = require("tailwindcss/defaultTheme");
+                     ^
+
+ReferenceError: require is not defined
+    at file:///C:/laragon/www/base-aracode/tailwind.config.js:1:22
+    at ModuleJobSync.runSync (node:internal/modules/esm/module_job:395:35)
+    at ModuleLoader.importSyncForRequire (node:internal/modules/esm/loader:329:47)
+    at loadESMFromCJS (node:internal/modules/cjs/loader:1414:24)
+    at Module._compile (node:internal/modules/cjs/loader:1547:5)
+    at Object..js (node:internal/modules/cjs/loader:1677:16)
+    at Module.load (node:internal/modules/cjs/loader:1318:32)
+    at Function._load (node:internal/modules/cjs/loader:1128:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:219:24)
+
+Node.js v22.12.0

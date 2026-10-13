@@ -1,0 +1,16 @@
+== /login, tema con el que entra el visitante ==
+   oscuro: sí · logo resuelto: http://base-aracode.test/storage/uploads/company/1723091574306.png
+== /login en modo oscuro ==
+   oscuro: sí
+   logo resuelto: http://base-aracode.test/img/logo176x32_negativo.png
+   logo negativo cargado: sí (5667×1251)
+   tamaño en pantalla: 280×62 px · filtro: drop-shadow(rgba(34, 211, 238, 0.15) 0px 8px 24px)
+   fondo del marco del logo: rgba(0, 0, 0, 0)
+== /login en modo claro ==
+   oscuro: no · logo resuelto: http://base-aracode.test/img/logo176x32.png
+   fondo del marco del logo: rgba(255, 255, 255, 0.92)
+== /login en modo oscuro, 390 px ==
+   oscuro: sí · logo cargado: sí · tamaño: 280×62 px
+== consola y red ==
+   errores de consola: ninguno
+   respuestas con error: 404 http://base-aracode.test/storage/uploads/company/1723091574359.png | 404 http://base-aracode.test/storage/uploads/company/1779555693951.png

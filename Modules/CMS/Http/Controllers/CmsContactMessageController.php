@@ -56,6 +56,13 @@ class CmsContactMessageController extends Controller
             'messages' => $messages,
             'stats' => $stats,
             'filters' => $request->all(['search', 'status', 'dates']),
+            // El boton de borrar se pinta solo si el guard lo permitiria: se
+            // pregunta por el MISMO permiso que exige la ruta, y `can()` lo
+            // resuelve como el middleware —rol, permiso directo de la persona o
+            // Super Editor—, asi que el boton no le aparece a quien recibiria
+            // un 403. Leerlo de `auth.permissions` de Inertia no serviria: ese
+            // arreglo solo lleva los permisos heredados del rol.
+            'canDelete' => (bool) $request->user()?->can('cms_mensajes_contacto_eliminar'),
         ]);
     }
 
@@ -140,5 +147,36 @@ class CmsContactMessageController extends Controller
         }
 
         return back()->with('success', 'Respuesta enviada a ' . $contactMessage->email . '.');
+    }
+
+    /**
+     * Elimina el mensaje del buzon (lo que se usa para el spam).
+     *
+     * Quien puede llegar aqui lo decide el middleware de la ruta
+     * (`permission:cms_mensajes_contacto_eliminar`), no el boton: el listado
+     * llama por axios y espera JSON, y un formulario normal vuelve al listado
+     * con el aviso en la sesion.
+     */
+    public function destroy(Request $request, $id)
+    {
+        $contactMessage = ContactMessage::findOrFail($id);
+
+        // Queda registrado quien borro que: un mensaje del buzon puede ser el
+        // reclamo de un cliente y conviene poder reconstruir que se elimino.
+        Log::warning('Contacto: mensaje eliminado desde el CMS', [
+            'id' => $contactMessage->id,
+            'email' => $contactMessage->email,
+            'user_id' => $request->user()?->id,
+        ]);
+
+        $contactMessage->delete();
+
+        $aviso = 'Mensaje eliminado correctamente.';
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => $aviso]);
+        }
+
+        return back()->with('success', $aviso);
     }
 }

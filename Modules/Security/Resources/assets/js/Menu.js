@@ -1,6 +1,7 @@
 import {
     faGear,
     faBuilding,
+    faPalette,
     faDiamond,
     faBookmark,
     faLockOpen,
@@ -22,6 +23,13 @@ const menuConfig = {
             status: false,
             icom: faBuilding,
             text: "Empresa",
+            permissions: "empresa",
+        },
+        {
+            route: route("branding_show"),
+            status: false,
+            icom: faPalette,
+            text: "Branding",
             permissions: "empresa",
         },
         {

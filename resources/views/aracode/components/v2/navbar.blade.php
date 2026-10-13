@@ -31,7 +31,7 @@
                     </svg>
                 </button>
 
-                <a href="{{ route('contacto') }}" class="ara-btn ara-btn-primary ara-btn-sm">
+                <a href="{{ route('contacto') }}" data-asesoria class="ara-btn ara-btn-primary ara-btn-sm">
                     Solicitar Asesoría
                 </a>
             </div>
@@ -70,7 +70,7 @@
     <a href="{{ route('blog_principal') }}" class="nav-link {{ request()->routeIs('blog_*') ? 'active' : '' }}">Blog</a>
     <a href="{{ route('contacto') }}" class="nav-link {{ request()->routeIs('contacto') ? 'active' : '' }}">Contacto</a>
     <div class="mt-8">
-        <a href="{{ route('contacto') }}" class="ara-btn ara-btn-primary w-full">
+        <a href="{{ route('contacto') }}" data-asesoria class="ara-btn ara-btn-primary w-full">
             Solicitar Asesoría
         </a>
     </div>

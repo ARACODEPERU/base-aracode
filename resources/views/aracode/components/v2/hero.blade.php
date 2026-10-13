@@ -28,7 +28,9 @@
 
             {{-- CTAs --}}
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 reveal reveal-delay-3">
-                <a href="{{ route('contacto') }}" class="ara-btn ara-btn-primary ara-btn-lg">
+                {{-- Abre el modal de asesoría (ver components/v2/asesoria-modal.blade.php).
+                     El enlace se conserva para cuando el JavaScript no cargue. --}}
+                <a href="{{ route('contacto') }}" data-asesoria class="ara-btn ara-btn-primary ara-btn-lg">
                     Solicitar Asesoría
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>

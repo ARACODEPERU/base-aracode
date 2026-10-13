@@ -59,6 +59,16 @@
 
                     <form id="contactForm" action="{{ route('contacto_store') }}" method="POST" class="space-y-6">
                         @csrf
+
+                        {{-- Misma trampa antispam que el modal de asesoría: el
+                             destino es el mismo, así que el controlador la lee igual.
+                             Va oculta y sin foco, así que solo la rellenan los bots. --}}
+                        <div class="ara-trampa" aria-hidden="true">
+                            <label for="contactoSitioWeb">Sitio web</label>
+                            <input type="text" id="contactoSitioWeb" name="website" tabindex="-1"
+                                   autocomplete="off" class="ara-input" value="">
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-ara-slate-700 mb-2">Nombre *</label>

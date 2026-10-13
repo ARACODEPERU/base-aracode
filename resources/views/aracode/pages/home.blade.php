@@ -20,9 +20,9 @@
                         $clients = ['erios', 'brise', 'iprase', 'cpa', 'horizonte', 'orbe', 'cprod', 'jrrss', 'zoelife', 'celmovil', 'cap', 'kentha'];
                     @endphp
                     @foreach($clients as $client)
-                        <img 
-                            src="{{ asset('themes/webpage/images/customers/' . $client . '.png') }}" 
-                            alt="Cliente {{ ucfirst($client) }}" 
+                        <img
+                            src="{{ asset('themes/webpage/images/customers/' . $client . '.png') }}"
+                            alt="Cliente {{ ucfirst($client) }}"
                             class="ara-client-logo h-10 md:h-12 object-contain"
                             loading="lazy"
                         >
@@ -119,7 +119,7 @@
                     description="Plataforma SaaS para gestión y formación educativa."
                     :href="route('solucion_kapta')"
                     image="{{ asset('themes/webpage/images/misc/s1.jpg') }}"
-                    badge="Plataforma SaaS"
+                    {{-- badge="Plataforma SaaS" --}}
                     :delay="1"
                     :compacta="true"
                 />
@@ -131,7 +131,7 @@
                     description="Facturación electrónica y gestión comercial para empresas."
                     :href="route('solucion_facturacion')"
                     image="{{ asset('themes/webpage/images/misc/s2.jpg') }}"
-                    badge="SUNAT"
+                    {{-- badge="SUNAT" --}}
                     :delay="2"
                     :compacta="true"
                 />
@@ -141,8 +141,8 @@
                     title="Pichanguero"
                     description="Plataforma para organizar torneos de fútbol: fixture, posiciones y estadísticas."
                     :href="route('solucion_pichanguero')"
-                    image="{{ asset('themes/webpage/images/misc/s4.webp') }}"
-                    badge="App móvil"
+                    image="{{ asset('themes/webpage/images/misc/s3.jpg') }}"
+                    {{-- badge="App móvil" --}}
                     :delay="3"
                     :compacta="true"
                 />
@@ -154,7 +154,7 @@
     <section class="py-20 lg:py-28 bg-ara-navy relative overflow-hidden">
         <div class="absolute top-0 right-0 w-96 h-96 bg-ara-blue/10 rounded-full filter blur-3xl pointer-events-none"></div>
         <div class="absolute bottom-0 left-0 w-64 h-64 bg-ara-green/10 rounded-full filter blur-3xl pointer-events-none"></div>
-        
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                 <div>
@@ -199,9 +199,9 @@
                 <div class="hidden lg:block">
                     <div class="relative">
                         <div class="absolute inset-0 bg-gradient-to-r from-ara-blue/20 to-ara-green/20 rounded-2xl transform rotate-3"></div>
-                        <img 
-                            src="{{ asset('themes/webpage/images/about.jpg') }}" 
-                            alt="ARACODE Smart Solutions" 
+                        <img
+                            src="{{ asset('themes/webpage/images/about.jpg') }}"
+                            alt="ARACODE Smart Solutions"
                             class="relative rounded-2xl shadow-2xl w-full object-cover"
                             loading="lazy"
                         >

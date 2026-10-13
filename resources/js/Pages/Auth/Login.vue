@@ -143,10 +143,18 @@
     };
 
     const companyLogoUrl = computed(() => {
+        // En oscuro va el LOGO NEGATIVO: sobre el navy del panel se lee, y al
+        // ser un PNG con transparencia no arrastra el recuadro blanco que traía
+        // `logo_dark` —el archivo que se sube suele ser un JPG con fondo claro—.
+        // Se prefiere el negativo de la empresa y, si no lo tiene, su logo para
+        // fondo oscuro; el nombre de la propiedad iba escrito con un error
+        // (`logo_degative`), así que la empresa nunca llegaba a aportarlo.
         if (store.isDarkMode) {
             return (
-                resolveCompanyAsset(company?.logo_degative, defaultCompanyAssets.logo_dark)
+                resolveCompanyAsset(company?.logo_negative)
+                || resolveCompanyAsset(company?.logo_dark)
                 || resolveCompanyAsset(company?.isotipo_dark)
+                || resolveCompanyAsset(null, defaultCompanyAssets.logo_negative)
                 || `${baseUrl}themes/vristo/images/auth/logo-white.svg`
             );
         }

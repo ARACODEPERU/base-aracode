@@ -1,7 +1,12 @@
-const defaultTheme = require("tailwindcss/defaultTheme");
+// El proyecto es ESM (`type: module` en package.json) y Tailwind 3.4 carga su
+// config con `require` antes de caer a jiti: en Node 22 ese camino revienta
+// (`require is not defined`) y el servidor de Vite no puede compilar el CSS.
+// Con `export default` el archivo lo cargan igual `require(esm)`, jiti y el CLI.
+import plugin from 'tailwindcss/plugin';
+import forms from '@tailwindcss/forms';
+import typography from '@tailwindcss/typography';
 
 /** @type {import('tailwindcss').Config} */
-const plugin = require('tailwindcss/plugin');
 
 const rotateX = plugin(function ({ addUtilities }) {
     addUtilities({
@@ -10,7 +15,7 @@ const rotateX = plugin(function ({ addUtilities }) {
         },
     });
 });
-module.exports = {
+export default {
     content: [
         "./vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php",
         "./storage/framework/views/*.php",
@@ -49,15 +54,18 @@ module.exports = {
         extend: {
             colors: {
                 /* Admin / Existing palette */
+                // Piloto de branding: los tokens de marca leen variables CSS, así
+                // que se pueden redefinir por pantalla o por instalación sin tocar
+                // los componentes. El valor de fábrica vive en resources/css/app.css.
                 primary: {
-                    DEFAULT: '#4361ee',
-                    light: '#eaf1ff',
-                    'dark-light': 'rgba(67,97,238,.15)',
+                    DEFAULT: 'rgb(var(--brand-primary) / <alpha-value>)',
+                    light: 'rgb(var(--brand-primary-light) / <alpha-value>)',
+                    'dark-light': 'rgb(var(--brand-primary) / 0.15)',
                 },
                 secondary: {
-                    DEFAULT: '#805dca',
-                    light: '#ebe4f7',
-                    'dark-light': 'rgb(128 93 202 / 15%)',
+                    DEFAULT: 'rgb(var(--brand-secondary) / <alpha-value>)',
+                    light: 'rgb(var(--brand-secondary-light) / <alpha-value>)',
+                    'dark-light': 'rgb(var(--brand-secondary) / 0.15)',
                 },
                 success: {
                     DEFAULT: '#00ab55',
@@ -201,10 +209,10 @@ module.exports = {
         },
     },
     plugins: [
-        require('@tailwindcss/forms')({
+        forms({
             strategy: 'class',
         }),
-        require('@tailwindcss/typography'),
+        typography,
         rotateX,
     ],
 };

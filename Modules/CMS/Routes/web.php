@@ -112,6 +112,11 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('cms')->gro
         ->put('contact-messages/{id}', [CmsContactMessageController::class, 'update'])->name('cms_contact_messages_update');
     Route::middleware(['permission:cms_mensajes_contacto_editar'])
         ->post('contact-messages/{id}/reply', [CmsContactMessageController::class, 'reply'])->name('cms_contact_messages_reply');
+    // Borrado del mensaje. Permiso propio (`cms_mensajes_contacto_eliminar`),
+    // aparte de ver y editar: es el boton con el que se limpia el spam, y el
+    // que decide de verdad quien puede usarlo es este middleware, no el boton.
+    Route::middleware(['permission:cms_mensajes_contacto_eliminar'])
+        ->delete('contact-messages/{id}', [CmsContactMessageController::class, 'destroy'])->name('cms_contact_messages_destroy');
 
     // Blog Subscribers (nueva versión Inertia)
     Route::middleware(['permission:cms_blog_suscriptores'])
