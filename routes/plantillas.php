@@ -14,6 +14,13 @@ use Illuminate\Support\Facades\Route;
 |   /plantillas            catálogo: categorías, buscador y filtros por GET
 |   /plantillas/{slug}     ficha de la plantilla
 |   /demo/{slug}           abre la demostración (302 a /demos/<slug>/)
+|   /paginas-web           el servicio: los planes con que se publica una
+|                          plantilla (mensual o anual), con su propia URL
+|                          para poder posicionarla y recibir enlaces
+|
+| /paginas-web va a nivel de raíz y no colgando de /plantillas: el comodín
+| `/plantillas/{slug}` se registra antes y se comería cualquier página hija
+| (respondería 404 «no existe esa plantilla»).
 |
 | Vive en su propio archivo, y no dentro de routes/aracode.php, para no tocar
 | las rutas del sitio corporativo ni arriesgar un choque de nombres.
@@ -36,3 +43,7 @@ Route::get('/plantillas/{slug}', [PlantillasController::class, 'ficha'])
 Route::get('/demo/{slug}', [PlantillasController::class, 'demo'])
     ->where('slug', '[a-z0-9-]+')
     ->name('plantillas.demo');
+
+// El nombre empieza por plantillas.* a propósito: el enlace del navbar se marca
+// activo con routeIs('plantillas.*') y el servicio es parte de esa sección.
+Route::get('/paginas-web', [PlantillasController::class, 'paginasWeb'])->name('plantillas.paginas_web');

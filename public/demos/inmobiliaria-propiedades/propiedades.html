@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('inmobiliaria-propiedades-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado: se queda en claro. */
+        }
+    })();
+</script>
+
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Ocho departamentos y casas en venta y alquiler en Miraflores, San Isidro, Barranco, Surco, San Borja y La Molina, con filtros por distrito, tipo, dormitorios y precio.">
+<meta name="theme-color" content="#12161B">
+
+<title>Propiedades en venta y alquiler — Alameda Propiedades</title>
+
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato barra__dato--horario">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+            Oficina: lunes a viernes de 9:00 a 19:00 · sábados de 10:00 a 14:00
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+5100000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (01) 000 0000
+            </a>
+
+            <ul class="redes" aria-label="Redes sociales de Alameda Propiedades">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de Alameda Propiedades">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de Alameda Propiedades">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de Alameda Propiedades">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de Alameda Propiedades">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="index.html" aria-label="Alameda Propiedades, inicio">
+            <span class="marca__sello" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V6.5L12 3l8 3.5V20"/><path d="M4 20h16"/><path d="M9.5 20v-5.5h5V20"/><path d="M8.5 9h2M13.5 9h2M8.5 12h2M13.5 12h2"/></svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Alameda</strong>
+                <span>Propiedades</span>
+            </span>
+        </a>
+
+        <div class="cabecera__acciones">
+            <nav class="menu" id="menu-principal" aria-label="Principal">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="propiedades.html" aria-current="page">Propiedades</a></li>
+                    <li><a href="vende-tu-propiedad.html">Vende tu propiedad</a></li>
+                    <li><a href="contacto.html" class="menu__contacto">Agenda una visita</a></li>
+                </ul>
+            </nav>
+
+            <a class="favoritos-boton" href="propiedades.html?favoritos=1" aria-label="Ver mis propiedades guardadas">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                <span class="favoritos-boton__conteo" data-favoritos-conteo hidden>0</span>
+            </a>
+
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false"
+                    aria-label="Cambiar a modo oscuro" title="Cambiar a modo oscuro">
+                <span class="tema-switch__icono tema-switch__icono--luna" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.7A8.6 8.6 0 0 1 9.3 3.5a8.6 8.6 0 1 0 11.2 11.2z"/></svg>
+                </span>
+                <span class="tema-switch__icono tema-switch__icono--sol" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+                </span>
+            </button>
+
+            <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+                <span class="sr-solo menu-boton__etiqueta">Abrir menú</span>
+                <svg class="menu-boton__abrir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                <svg class="menu-boton__cerrar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main id="contenido">
+
+<section class="encabezado">
+    <div class="contenedor">
+        <ul class="migas">
+            <li><a href="index.html">Inicio</a></li>
+            <li>Propiedades</li>
+        </ul>
+        <p class="kicker">Inmuebles publicados</p>
+        <h1>Ocho propiedades, todas visitadas</h1>
+        <p class="encabezado__meta">
+            <span>Actualizado: 11 de octubre de 2026</span>
+            <span>Venta desde S/ 445 000</span>
+            <span>Alquiler desde S/ 1 850 / mes</span>
+        </p>
+    </div>
+</section>
+
+<section class="seccion" aria-labelledby="titulo-listado">
+    <div class="contenedor">
+        <h2 class="sr-solo" id="titulo-listado">Listado de propiedades</h2>
+
+        <div class="filtros">
+            <div class="filtros__linea">
+                <label class="campo">
+                    <span class="campo__nombre">Buscar por texto</span>
+                    <input type="search" placeholder="Miraflores, cocina equipada, terraza…" data-filtro="texto">
+                </label>
+
+                <label class="campo">
+                    <span class="campo__nombre">Distrito</span>
+                    <select data-filtro="distrito">
+                        <option value="">Todos los distritos</option>
+                        <option value="miraflores">Miraflores</option>
+                        <option value="san-isidro">San Isidro</option>
+                        <option value="barranco">Barranco</option>
+                        <option value="surco">Surco</option>
+                        <option value="san-borja">San Borja</option>
+                        <option value="la-molina">La Molina</option>
+                    </select>
+                </label>
+
+                <label class="campo">
+                    <span class="campo__nombre">Tipo</span>
+                    <select data-filtro="tipo">
+                        <option value="">Departamento o casa</option>
+                        <option value="departamento">Departamento</option>
+                        <option value="casa">Casa</option>
+                    </select>
+                </label>
+
+                <label class="campo">
+                    <span class="campo__nombre">Dormitorios</span>
+                    <select data-filtro="dormitorios">
+                        <option value="">Los que sean</option>
+                        <option value="1">1 dormitorio</option>
+                        <option value="2">2 dormitorios</option>
+                        <option value="3">3 dormitorios</option>
+                        <option value="4+">4 o más</option>
+                    </select>
+                </label>
+
+                <label class="campo">
+                    <span class="campo__nombre">Precio máximo</span>
+                    <select data-filtro="precio">
+                        <option value="">Cualquier precio</option>
+                        <optgroup label="Alquiler mensual">
+                            <option value="1500">Hasta S/ 1 500</option>
+                            <option value="2500">Hasta S/ 2 500</option>
+                            <option value="4000">Hasta S/ 4 000</option>
+                        </optgroup>
+                        <optgroup label="Precio de venta">
+                            <option value="500000">Hasta S/ 500 000</option>
+                            <option value="700000">Hasta S/ 700 000</option>
+                            <option value="1000000">Hasta S/ 1 000 000</option>
+                            <option value="1500000">Hasta S/ 1 500 000</option>
+                        </optgroup>
+                    </select>
+                </label>
+
+                <label class="campo">
+                    <span class="campo__nombre">Ordenar por</span>
+                    <select data-filtro="orden">
+                        <option value="">Destacadas primero</option>
+                        <option value="precio-asc">Precio, de menor a mayor</option>
+                        <option value="precio-desc">Precio, de mayor a menor</option>
+                        <option value="area">Área, de mayor a menor</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="filtros__pie">
+                <div class="filtros__chips" role="group" aria-label="Filtrar por operación">
+                    <button class="chip" type="button" data-operacion-filtro="todas" aria-pressed="true">Todas</button>
+                    <button class="chip" type="button" data-operacion-filtro="venta" aria-pressed="false">En venta</button>
+                    <button class="chip" type="button" data-operacion-filtro="alquiler" aria-pressed="false">En alquiler</button>
+                </div>
+
+                <div class="filtros__acciones">
+                    <p class="filtros__resumen" data-resumen aria-live="polite">8 propiedades encontradas</p>
+                    <button class="chip" type="button" data-solo-favoritos aria-pressed="false">Solo mis favoritos</button>
+                    <button class="boton boton--grafito" type="button" data-limpiar>Limpiar filtros</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="rejilla-propiedades" data-listado>
+            <article class="propiedad" data-propiedad data-codigo="AL-2401" data-operacion="venta" data-distrito="miraflores" data-tipo="departamento" data-dormitorios="3" data-area="120" data-precio="690000" data-busqueda="departamento en miraflores con tres dormitorios y cocina equipada">
+                <p class="propiedad__cinta">
+                    <span class="etiqueta etiqueta--venta">Venta</span>
+                    <span>AL-2401</span>
+                </p>
+                <div class="propiedad__foto">
+                    <img src="img/comedor.webp" alt="Mesa de centro y sillones junto a un ventanal panorámico" width="1200" height="800" loading="lazy">
+                    <p class="propiedad__sello">S/ 690 000</p>
+                    <button class="favorito" type="button" data-favorito="AL-2401" data-etiqueta="Departamento en Miraflores" aria-pressed="false" aria-label="Guardar en favoritos: departamento en Miraflores">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                    </button>
+                </div>
+                <div class="propiedad__cuerpo">
+                    <ul class="propiedad__datos">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M6 10V7h12v3"/></svg>3 dorm.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 12h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2ZM7 12V6.5h4.5V12"/></svg>2 baños</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h16v5M4 9h16v11H4zM9 20v-5h6v5"/></svg>120 m²</li>
+                    </ul>
+                    <h3 class="propiedad__nombre"><a href="propiedad-los-alisos.html">Departamento en Miraflores</a></h3>
+                    <p class="propiedad__lugar">Av. Los Alisos · Miraflores</p>
+                    <div class="propiedad__pie">
+                        <span class="propiedad__codigo">6.º piso · 1 cochera</span>
+                        <a class="enlace-mas" href="propiedad-los-alisos.html">Ver ficha</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="propiedad" data-propiedad data-codigo="AL-2402" data-operacion="venta" data-distrito="san-isidro" data-tipo="departamento" data-dormitorios="2" data-area="95" data-precio="585000" data-busqueda="departamento en san isidro con dos dormitorios y comedor luminoso">
+                <p class="propiedad__cinta">
+                    <span class="etiqueta etiqueta--venta">Venta</span>
+                    <span>AL-2402</span>
+                </p>
+                <div class="propiedad__foto">
+                    <img src="img/comedor-luminoso.webp" alt="Comedor con mesa redonda en un ambiente luminoso" width="900" height="600" loading="lazy">
+                    <p class="propiedad__sello">S/ 585 000</p>
+                    <button class="favorito" type="button" data-favorito="AL-2402" data-etiqueta="Departamento en San Isidro" aria-pressed="false" aria-label="Guardar en favoritos: departamento en San Isidro">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                    </button>
+                </div>
+                <div class="propiedad__cuerpo">
+                    <ul class="propiedad__datos">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M6 10V7h12v3"/></svg>2 dorm.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 12h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2ZM7 12V6.5h4.5V12"/></svg>2 baños</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h16v5M4 9h16v11H4zM9 20v-5h6v5"/></svg>95 m²</li>
+                    </ul>
+                    <h3 class="propiedad__nombre">Departamento en San Isidro</h3>
+                    <p class="propiedad__lugar">Calle Bulevar · San Isidro</p>
+                    <div class="propiedad__pie">
+                        <span class="propiedad__codigo">4.º piso · con ascensor</span>
+                        <a class="enlace-mas" href="contacto.html?propiedad=AL-2402">Pedir visita</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="propiedad" data-propiedad data-codigo="AL-2403" data-operacion="venta" data-distrito="barranco" data-tipo="departamento" data-dormitorios="2" data-area="88" data-precio="445000" data-busqueda="departamento en barranco con dos dormitorios y ventanal">
+                <p class="propiedad__cinta">
+                    <span class="etiqueta etiqueta--venta">Venta</span>
+                    <span>AL-2403</span>
+                </p>
+                <div class="propiedad__foto">
+                    <img src="img/dormitorio-ventanal.webp" alt="Dormitorio con ventanales amplios" width="900" height="600" loading="lazy">
+                    <p class="propiedad__sello">S/ 445 000</p>
+                    <button class="favorito" type="button" data-favorito="AL-2403" data-etiqueta="Departamento en Barranco" aria-pressed="false" aria-label="Guardar en favoritos: departamento en Barranco">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                    </button>
+                </div>
+                <div class="propiedad__cuerpo">
+                    <ul class="propiedad__datos">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M6 10V7h12v3"/></svg>2 dorm.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 12h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2ZM7 12V6.5h4.5V12"/></svg>1 baño</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h16v5M4 9h16v11H4zM9 20v-5h6v5"/></svg>88 m²</li>
+                    </ul>
+                    <h3 class="propiedad__nombre">Departamento en Barranco</h3>
+                    <p class="propiedad__lugar">Jr. Unión · Barranco</p>
+                    <div class="propiedad__pie">
+                        <span class="propiedad__codigo">3.º piso · sin cochera</span>
+                        <a class="enlace-mas" href="contacto.html?propiedad=AL-2403">Pedir visita</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="propiedad" data-propiedad data-codigo="AL-2404" data-operacion="venta" data-distrito="surco" data-tipo="departamento" data-dormitorios="3" data-area="105" data-precio="520000" data-busqueda="departamento en surco con tres dormitorios y ventana amplia">
+                <p class="propiedad__cinta">
+                    <span class="etiqueta etiqueta--venta">Venta</span>
+                    <span>AL-2404</span>
+                </p>
+                <div class="propiedad__foto">
+                    <img src="img/ventana.webp" alt="Ventana de dormitorio abierta hacia la calle" width="900" height="600" loading="lazy">
+                    <p class="propiedad__sello">S/ 520 000</p>
+                    <button class="favorito" type="button" data-favorito="AL-2404" data-etiqueta="Departamento en Surco" aria-pressed="false" aria-label="Guardar en favoritos: departamento en Surco">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                    </button>
+                </div>
+                <div class="propiedad__cuerpo">
+                    <ul class="propiedad__datos">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M6 10V7h12v3"/></svg>3 dorm.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 12h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2ZM7 12V6.5h4.5V12"/></svg>2 baños</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h16v5M4 9h16v11H4zM9 20v-5h6v5"/></svg>105 m²</li>
+                    </ul>
+                    <h3 class="propiedad__nombre">Departamento en Surco</h3>
+                    <p class="propiedad__lugar">Av. Caminos del Inca · Surco</p>
+                    <div class="propiedad__pie">
+                        <span class="propiedad__codigo">2.º piso · 1 cochera</span>
+                        <a class="enlace-mas" href="contacto.html?propiedad=AL-2404">Pedir visita</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="propiedad" data-propiedad data-codigo="AL-2405" data-operacion="venta" data-distrito="la-molina" data-tipo="casa" data-dormitorios="4" data-area="240" data-precio="1250000" data-busqueda="casa en la molina con cuatro dormitorios y jardín">
+                <p class="propiedad__cinta">
+                    <span class="etiqueta etiqueta--venta">Venta</span>
+                    <span>AL-2405</span>
+                </p>
+                <div class="propiedad__foto">
+                    <img src="img/casa-blanca.webp" alt="Fachada blanca de una casa" width="900" height="600" loading="lazy">
+                    <p class="propiedad__sello">S/ 1 250 000</p>
+                    <button class="favorito" type="button" data-favorito="AL-2405" data-etiqueta="Casa en La Molina" aria-pressed="false" aria-label="Guardar en favoritos: casa en La Molina">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                    </button>
+                </div>
+                <div class="propiedad__cuerpo">
+                    <ul class="propiedad__datos">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M6 10V7h12v3"/></svg>4 dorm.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 12h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2ZM7 12V6.5h4.5V12"/></svg>4 baños</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h16v5M4 9h16v11H4zM9 20v-5h6v5"/></svg>240 m²</li>
+                    </ul>
+                    <h3 class="propiedad__nombre">Casa en La Molina</h3>
+                    <p class="propiedad__lugar">Calle Los Nogales · La Molina</p>
+                    <div class="propiedad__pie">
+                        <span class="propiedad__codigo">3 pisos · 2 cocheras</span>
+                        <a class="enlace-mas" href="contacto.html?propiedad=AL-2405">Pedir visita</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="propiedad" data-propiedad data-codigo="AL-2406" data-operacion="venta" data-distrito="san-borja" data-tipo="casa" data-dormitorios="3" data-area="185" data-precio="980000" data-busqueda="casa en san borja con tres dormitorios y techo de tejas">
+                <p class="propiedad__cinta">
+                    <span class="etiqueta etiqueta--venta">Venta</span>
+                    <span>AL-2406</span>
+                </p>
+                <div class="propiedad__foto">
+                    <img src="img/casa-tejado.webp" alt="Casa antigua con techo de tejas" width="900" height="600" loading="lazy">
+                    <p class="propiedad__sello">S/ 980 000</p>
+                    <button class="favorito" type="button" data-favorito="AL-2406" data-etiqueta="Casa en San Borja" aria-pressed="false" aria-label="Guardar en favoritos: casa en San Borja">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                    </button>
+                </div>
+                <div class="propiedad__cuerpo">
+                    <ul class="propiedad__datos">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M6 10V7h12v3"/></svg>3 dorm.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 12h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2ZM7 12V6.5h4.5V12"/></svg>3 baños</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h16v5M4 9h16v11H4zM9 20v-5h6v5"/></svg>185 m²</li>
+                    </ul>
+                    <h3 class="propiedad__nombre">Casa en San Borja</h3>
+                    <p class="propiedad__lugar">Av. Aviación · San Borja</p>
+                    <div class="propiedad__pie">
+                        <span class="propiedad__codigo">2 pisos · 2 cocheras</span>
+                        <a class="enlace-mas" href="contacto.html?propiedad=AL-2406">Pedir visita</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="propiedad" data-propiedad data-codigo="AL-2407" data-operacion="alquiler" data-distrito="miraflores" data-tipo="departamento" data-dormitorios="2" data-area="96" data-precio="2900" data-busqueda="departamento en alquiler en miraflores con dos dormitorios y sala con sofá">
+                <p class="propiedad__cinta">
+                    <span class="etiqueta etiqueta--alquiler">Alquiler</span>
+                    <span>AL-2407</span>
+                </p>
+                <div class="propiedad__foto">
+                    <img src="img/sala-cozy.webp" alt="Sala acogedora con sofá" width="900" height="600" loading="lazy">
+                    <p class="propiedad__sello">S/ 2 900 <small>/ mes</small></p>
+                    <button class="favorito" type="button" data-favorito="AL-2407" data-etiqueta="Departamento en alquiler en Miraflores" aria-pressed="false" aria-label="Guardar en favoritos: departamento en alquiler en Miraflores">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                    </button>
+                </div>
+                <div class="propiedad__cuerpo">
+                    <ul class="propiedad__datos">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M6 10V7h12v3"/></svg>2 dorm.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 12h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2ZM7 12V6.5h4.5V12"/></svg>2 baños</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h16v5M4 9h16v11H4zM9 20v-5h6v5"/></svg>96 m²</li>
+                    </ul>
+                    <h3 class="propiedad__nombre">Departamento en alquiler en Miraflores</h3>
+                    <p class="propiedad__lugar">Av. Los Alisos · Miraflores</p>
+                    <div class="propiedad__pie">
+                        <span class="propiedad__codigo">5.º piso · amoblado</span>
+                        <a class="enlace-mas" href="contacto.html?propiedad=AL-2407">Pedir visita</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="propiedad" data-propiedad data-codigo="AL-2408" data-operacion="alquiler" data-distrito="barranco" data-tipo="departamento" data-dormitorios="1" data-area="62" data-precio="1850" data-busqueda="departamento en alquiler en barranco de un dormitorio con cocina">
+                <p class="propiedad__cinta">
+                    <span class="etiqueta etiqueta--alquiler">Alquiler</span>
+                    <span>AL-2408</span>
+                </p>
+                <div class="propiedad__foto">
+                    <img src="img/cocina-pequena.webp" alt="Cocina de departamento con muebles bajos" width="900" height="600" loading="lazy">
+                    <p class="propiedad__sello">S/ 1 850 <small>/ mes</small></p>
+                    <button class="favorito" type="button" data-favorito="AL-2408" data-etiqueta="Departamento en alquiler en Barranco" aria-pressed="false" aria-label="Guardar en favoritos: departamento en alquiler en Barranco">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                    </button>
+                </div>
+                <div class="propiedad__cuerpo">
+                    <ul class="propiedad__datos">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M6 10V7h12v3"/></svg>1 dorm.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 12h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2ZM7 12V6.5h4.5V12"/></svg>1 baño</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h16v5M4 9h16v11H4zM9 20v-5h6v5"/></svg>62 m²</li>
+                    </ul>
+                    <h3 class="propiedad__nombre">Departamento en alquiler en Barranco</h3>
+                    <p class="propiedad__lugar">Jr. Unión · Barranco</p>
+                    <div class="propiedad__pie">
+                        <span class="propiedad__codigo">2.º piso · sin cochera</span>
+                        <a class="enlace-mas" href="contacto.html?propiedad=AL-2408">Pedir visita</a>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <div class="listado__vacio" data-vacio>
+            <h3>No hay propiedades con esos filtros</h3>
+            <p>Prueba con menos condiciones: quita el precio máximo o el distrito. Si buscas algo que no está publicado, escríbenos: la mitad de las operaciones se cierran antes de publicarse.</p>
+            <p><button class="boton" type="button" data-limpiar>Limpiar filtros</button></p>
+        </div>
+
+        <div class="listado__pie" data-listado-pie>
+            <p class="filtros__resumen">Los inmuebles se publican con el informe de la visita. Ninguna ficha de esta demo es real.</p>
+            <a class="boton boton--grafito" href="https://wa.me/51900000000?text=Hola%2C%20busco%20una%20propiedad%20que%20no%20veo%20publicada" target="_blank" rel="noopener">Buscar con un asesor</a>
+        </div>
+    </div>
+</section>
+
+<section class="seccion seccion--grave" aria-labelledby="titulo-ayuda">
+    <div class="contenedor">
+        <div class="seccion__cabecera js-revela">
+            <div>
+                <p class="kicker">Después del filtro</p>
+                <h2 id="titulo-ayuda">Tres dudas que aparecen justo aquí</h2>
+            </div>
+        </div>
+
+        <div class="preguntas js-revela">
+            <details class="pregunta" open>
+                <summary>¿Los precios publicados se negocian?</summary>
+                <div class="pregunta__cuerpo">
+                    <p>En venta, el precio publicado es el del encargo y se negocia en la oferta formal, no antes de la visita. En alquiler, el precio y el mes de garantía se acuerdan al firmar el contrato.</p>
+                </div>
+            </details>
+
+            <details class="pregunta">
+                <summary>¿Qué pasa cuando pulso «Pedir visita»?</summary>
+                <div class="pregunta__cuerpo">
+                    <p>Se abre el formulario de contacto con el código del inmueble ya elegido. En la demo el formulario no envía nada: avisa de que los datos son de ejemplo.</p>
+                </div>
+            </details>
+
+            <details class="pregunta">
+                <summary>¿Puedo guardar propiedades para después?</summary>
+                <div class="pregunta__cuerpo">
+                    <p>Sí. El corazón de cada ficha guarda el inmueble en este navegador (no en un servidor) y el botón del contador de la cabecera abre el listado filtrado por tus favoritos.</p>
+                </div>
+            </details>
+        </div>
+    </div>
+</section>
+
+<section class="cierre" aria-labelledby="titulo-cierre">
+    <div class="contenedor cierre__interior">
+        <div>
+            <p class="kicker kicker--claro">¿No aparece?</p>
+            <h2 id="titulo-cierre">Cuéntanos qué buscas y te avisamos al publicarse</h2>
+            <p>Guardamos tu búsqueda con el asesor del distrito y te escribimos solo cuando aparezca algo que encaje.</p>
+        </div>
+        <div class="cierre__acciones">
+            <a class="boton" href="contacto.html">Escribir al equipo</a>
+            <a class="boton boton--linea" href="vende-tu-propiedad.html">Quiero vender</a>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor">
+        <div class="pie__rejilla">
+            <div>
+                <div class="pie__marca">
+                    <span class="marca__sello" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V6.5L12 3l8 3.5V20"/><path d="M4 20h16"/><path d="M9.5 20v-5.5h5V20"/></svg>
+                    </span>
+                    <span class="marca__texto">
+                        <strong>Alameda</strong>
+                        <span>Propiedades</span>
+                    </span>
+                </div>
+                <p class="pie__nota">Inmobiliaria con oficina en Miraflores. Publicamos fichas verificadas, acompañamos la visita y cobramos al cerrar la operación.</p>
+                <ul class="redes" aria-label="Redes sociales de Alameda Propiedades">
+                    <li>
+                        <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de Alameda Propiedades">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de Alameda Propiedades">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de Alameda Propiedades">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de Alameda Propiedades">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div>
+                <h2>Propiedades</h2>
+                <ul class="pie__enlaces">
+                    <li><a href="propiedades.html">Todas las propiedades</a></li>
+                    <li><a href="propiedades.html?operacion=venta">En venta</a></li>
+                    <li><a href="propiedades.html?operacion=alquiler">En alquiler</a></li>
+                    <li><a href="propiedad-los-alisos.html">Ficha destacada</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h2>Distritos</h2>
+                <ul class="pie__enlaces">
+                    <li><a href="propiedades.html?distrito=miraflores">Miraflores</a></li>
+                    <li><a href="propiedades.html?distrito=san-isidro">San Isidro</a></li>
+                    <li><a href="propiedades.html?distrito=barranco">Barranco</a></li>
+                    <li><a href="propiedades.html?distrito=surco">Surco</a></li>
+                    <li><a href="propiedades.html?distrito=san-borja">San Borja</a></li>
+                    <li><a href="propiedades.html?distrito=la-molina">La Molina</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h2>Oficina</h2>
+                <ul class="pie__enlaces">
+                    <li>Av. José Larco 345, of. 802, Miraflores</li>
+                    <li><a href="tel:+5100000000">(01) 000 0000</a></li>
+                    <li><a href="mailto:hola@alamedapropiedades.pe">hola@alamedapropiedades.pe</a></li>
+                    <li>Lunes a viernes de 9:00 a 19:00</li>
+                    <li><a href="contacto.html">Agenda una visita</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pie__legal">
+            <p>© 2026 Alameda Propiedades · Datos de ejemplo</p>
+            <p>Demostración del Banco de Plantillas Web de ARACODE</p>
+        </div>
+    </div>
+</footer>
+
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informaci%C3%B3n%20de%20una%20propiedad" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp a Alameda Propiedades">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js"></script>
+</body>
+</html>

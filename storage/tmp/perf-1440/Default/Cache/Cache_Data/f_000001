@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Tema claro / oscuro.
+
+    Se aplica aquí, antes de pintar nada, por dos razones: al recargar en oscuro
+    no se ve el destello claro y las cosas que no funcionan sin JavaScript (el
+    interruptor y los controles del slider) quedan ocultas hasta que haya JS.
+
+    Sin nada guardado el estudio arranca en claro, aunque el sistema del
+    visitante esté en oscuro: el modo oscuro solo se pone si lo pide.
+-->
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('portafolio-creativo-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    })();
+</script>
+
+<!--
+    Demostración de la plantilla «Portafolio Creativo» del Banco de Plantillas
+    Web de ARACODE.
+
+    Es un proyecto web independiente: no comparte CSS, JavaScript, componentes ni
+    estructura con el sitio corporativo ni con el catálogo. Sus archivos viven
+    todos en esta carpeta (css/, js/, img/) y las rutas son relativas, así que la
+    carpeta se puede copiar a cualquier servidor o a su propio subdominio sin
+    cambiar una línea.
+
+    El diseño es propio y no repite el de ninguna otra demo del banco (regla de
+    diferenciación): **pliego de taller**. Papel frío y tinta casi negra con un
+    solo acento magenta, titulares en sans muy pesada y cuerpo en serif —al revés
+    que el expediente contable—, etiquetas en monoespaciada, retícula de 12
+    columnas dibujada como filetes, esquinas rectas y cero sombras: el hover no
+    levanta la pieza, la pinta.
+
+    Lo que sí repite, porque es el contrato del banco y no su piel: hero a
+    pantalla completa con slider de tres fotos, WhatsApp y ubicación con plano,
+    prueba social, precios de referencia, redes sociales, anclas de sección y el
+    interruptor de tema claro / oscuro. La lista obligatoria está en
+    docs/BANCO_PLANTILLAS.md.
+
+    noindex: la página que se indexa es la ficha de la plantilla en el catálogo;
+    la demo existe para verla funcionando.
+
+    Los datos (dirección, teléfonos, precios, proyectos, testimonios) son
+    inventados y están marcados en el HTML para que se reemplacen en un solo paso.
+-->
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Demostración de la plantilla Portafolio Creativo: índice de proyectos, tarifas de referencia, planes, opiniones, ubicación del estudio y formulario de contacto.">
+
+<title>Mesa Norte — Estudio de diseño y fotografía · Demostración de plantilla</title>
+
+<link rel="preload" as="image" href="img/mural.webp">
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%2317171a'/><rect x='18' y='26' width='64' height='12' fill='%23d6006e'/><rect x='18' y='46' width='44' height='12' fill='%23f1f0ec'/><rect x='18' y='66' width='54' height='8' fill='%23f1f0ec'/></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<!--
+    DATOS DE LA DEMO: dirección, teléfonos, correo y redes se repiten en la barra
+    superior, el pie y las secciones. En un sitio real salen de la ficha del
+    negocio, no del HTML.
+-->
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+            Estudio abierto de lunes a viernes, 10:00 a 19:00
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+51900000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (01) 000 0000
+            </a>
+
+            <!-- Redes sociales: en la demo apuntan a la plataforma; en el sitio
+                 real van a los perfiles del estudio (ver CREDITOS.md). -->
+            <ul class="redes" aria-label="Redes sociales del estudio">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram del estudio">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook del estudio">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok del estudio">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp del estudio">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="#inicio" aria-label="Mesa Norte, inicio">
+            <span class="marca__bloque" aria-hidden="true"></span>
+            <span class="marca__texto">
+                <strong>Mesa Norte</strong>
+                <span>estudio gráfico</span>
+            </span>
+        </a>
+
+        <!-- A la derecha de la marca: el menú, el interruptor de tema y el
+             botón que despliega el menú en móvil. -->
+        <div class="cabecera__acciones">
+            <nav class="menu" id="menu-principal" aria-label="Principal">
+                <ul>
+                    <li><a href="#proyectos">Proyectos</a></li>
+                    <li><a href="#servicios">Servicios</a></li>
+                    <li><a href="#proceso">Proceso</a></li>
+                    <li><a href="#planes">Planes</a></li>
+                    <li><a href="#opiniones">Opiniones</a></li>
+                    <li><a href="#visitanos">Visítanos</a></li>
+                    <li>
+                        <a class="menu__cta" href="https://wa.me/51900000000?text=Hola%2C%20tengo%20un%20proyecto%20para%20el%20estudio" target="_blank" rel="noopener">Escribir al estudio</a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!--
+                Interruptor de tema claro / oscuro.
+
+                Cambia el atributo data-tema del <html> y recuerda la elección;
+                los colores los pone el CSS y el icono que se ve es el del modo
+                al que se va (luna en claro, sol en oscuro). El texto del botón
+                lo deja en consonancia el script del sitio, para quien lo use con
+                lector de pantalla. Sin JavaScript no se muestra.
+            -->
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false"
+                    aria-label="Cambiar a modo oscuro" title="Cambiar a modo oscuro">
+                <span class="tema-switch__icono tema-switch__icono--luna" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.7A8.6 8.6 0 0 1 9.3 3.5a8.6 8.6 0 1 0 11.2 11.2z"/></svg>
+                </span>
+                <span class="tema-switch__icono tema-switch__icono--sol" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+                </span>
+            </button>
+
+            <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+                <span class="sr-solo">Abrir menú</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <path d="M4 7h16M4 12h16M4 17h16"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main id="contenido">
+
+    <!-- ===================== PORTADA ===================== -->
+
+    <!-- Hero a pantalla completa con slider de fondo: las tres fotos del taller
+         se turnan solas y también con las flechas, los puntos, el teclado o el
+         dedo. Sin JavaScript se ve la primera y el texto se lee completo:
+         ninguna información vive solo en la foto. -->
+    <section class="portada" id="inicio" data-carrusel>
+        <div class="portada__fondo">
+            <ul class="portada__pista">
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/mural.webp" width="1280" height="720" fetchpriority="high" decoding="async"
+                         alt="Fachada pintada con bloques de color y un banco delante, en la calle">
+                </li>
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/pliego.webp" width="1024" height="576" loading="lazy" decoding="async"
+                         alt="Pared forrada de láminas y carteles impresos, con una persona sentada al pie">
+                </li>
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/taller.webp" width="1280" height="720" loading="lazy" decoding="async"
+                         alt="Manos aplicando pintura con aerosol sobre una plantilla de cartón en el taller">
+                </li>
+            </ul>
+
+            <!-- Velo: sin él, un texto claro sobre una foto clara no se lee. -->
+            <span class="portada__velo" aria-hidden="true"></span>
+        </div>
+
+        <div class="contenedor portada__contenido">
+            <div class="portada__texto revelar">
+                <p class="sello sello--oscuro">Estudio de diseño y fotografía · Barranco, Lima</p>
+
+                <h1>Diseñamos lo que la marca muestra</h1>
+
+                <p class="portada__lead">
+                    Identidad, libros, carteles, murales y fotografía de producto. Un estudio chico,
+                    con presupuesto por escrito antes de bocetar y archivos abiertos al entregar.
+                </p>
+
+                <div class="portada__acciones">
+                    <a class="boton boton--principal" href="#proyectos">
+                        Ver los proyectos
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
+                    <a class="boton boton--borde-claro" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20un%20presupuesto%20del%20estudio" target="_blank" rel="noopener">Pedir presupuesto</a>
+                </div>
+
+                <ul class="portada__garantias">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Presupuesto por escrito antes de empezar
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Entregamos los archivos abiertos
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Dos rondas de ajustes incluidas
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Ficha del estudio sobre la foto: es el dato que más se pregunta
+                 antes de escribir por WhatsApp. -->
+            <div class="portada__ficha revelar">
+                <span class="portada__ficha-titulo">Mesa de trabajo</span>
+                <strong>Lun a vie · 10:00 — 19:00</strong>
+                <span>Respondemos en menos de 24 horas</span>
+            </div>
+        </div>
+
+        <!-- Cinta de servicios: da movimiento a la portada sin tapar la foto ni
+             el texto. Se detiene con prefers-reduced-motion. -->
+        <div class="cinta" aria-hidden="true">
+            <div class="cinta__pista">
+                <span>Identidad</span><span aria-hidden="true">/</span>
+                <span>Editorial</span><span aria-hidden="true">/</span>
+                <span>Cartelería</span><span aria-hidden="true">/</span>
+                <span>Mural</span><span aria-hidden="true">/</span>
+                <span>Fotografía</span><span aria-hidden="true">/</span>
+                <span>Identidad</span><span aria-hidden="true">/</span>
+                <span>Editorial</span><span aria-hidden="true">/</span>
+                <span>Cartelería</span><span aria-hidden="true">/</span>
+                <span>Mural</span><span aria-hidden="true">/</span>
+                <span>Fotografía</span><span aria-hidden="true">/</span>
+            </div>
+        </div>
+
+        <!-- Controles del slider en una sola pastilla: en escritorio flota abajo
+             a la derecha y en móvil baja debajo del texto, sin taparlo. -->
+        <div class="portada__controles">
+            <button class="carrusel__flecha" type="button" data-carrusel-anterior aria-label="Foto anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <div class="carrusel__puntos" role="group" aria-label="Elegir foto del taller">
+                <button class="carrusel__punto" type="button" data-carrusel-punto="0" aria-label="Ver la primera foto" aria-current="true"></button>
+                <button class="carrusel__punto" type="button" data-carrusel-punto="1" aria-label="Ver la segunda foto"></button>
+                <button class="carrusel__punto" type="button" data-carrusel-punto="2" aria-label="Ver la tercera foto"></button>
+            </div>
+            <button class="carrusel__flecha" type="button" data-carrusel-siguiente aria-label="Foto siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+        </div>
+    </section>
+
+    <!-- Cifras de confianza: en su propia banda, para que el hero quede a
+         pantalla completa sin números encima de la foto. -->
+    <div class="banda-cifras">
+        <div class="contenedor">
+            <dl class="cifras">
+                <div>
+                    <dt>Proyectos entregados</dt>
+                    <dd><span data-contador="148" data-prefijo="+">+0</span></dd>
+                </div>
+                <div>
+                    <dt>Años de estudio</dt>
+                    <dd><span data-contador="9">0</span></dd>
+                </div>
+                <div>
+                    <dt>Marcas acompañadas por año</dt>
+                    <dd><span data-contador="12">0</span></dd>
+                </div>
+                <div>
+                    <dt>Valoración de clientes</dt>
+                    <dd><span data-contador="48" data-divisor="10">0</span><span class="cifras__de">/5</span></dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- ===================== PROYECTOS ===================== -->
+
+    <!-- Los proyectos no van en tarjetas sino en un índice numerado, como el
+         sumario de un catálogo: cada fila se lee entera y la pieza aparece
+         cuando se pasa el ratón (o se enfoca con el teclado). En móvil la pieza
+         se ve dentro de la fila. -->
+    <section class="seccion" id="proyectos">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="seccion__numero" aria-hidden="true">01</p>
+                <p class="sello sello--claro">Proyectos</p>
+                <h2>Seis piezas que se pueden ver de cerca</h2>
+                <p class="seccion__intro">
+                    Cada ficha dice qué se hizo, para quién y en cuánto tiempo. Filtra por tipo de
+                    trabajo si buscas algo parecido a lo tuyo.
+                </p>
+            </header>
+
+            <div class="filtros revelar" role="group" aria-label="Filtrar proyectos por tipo">
+                <button class="filtros__boton filtros__boton--activo" type="button" data-filtro="todo" aria-pressed="true">Todo</button>
+                <button class="filtros__boton" type="button" data-filtro="identidad" aria-pressed="false">Identidad</button>
+                <button class="filtros__boton" type="button" data-filtro="editorial" aria-pressed="false">Editorial</button>
+                <button class="filtros__boton" type="button" data-filtro="carteleria" aria-pressed="false">Cartelería</button>
+                <button class="filtros__boton" type="button" data-filtro="mural" aria-pressed="false">Mural</button>
+                <button class="filtros__boton" type="button" data-filtro="ilustracion" aria-pressed="false">Ilustración</button>
+            </div>
+
+            <ol class="indice" id="indice-proyectos">
+                <li class="indice__fila revelar" data-tipo="identidad">
+                    <span class="indice__numero">01</span>
+                    <div class="indice__datos">
+                        <h3 class="indice__titulo">Identidad urbana · Nosara Bikes</h3>
+                        <p class="indice__meta">Logotipo, rótulo y aplicaciones de taller · 2026</p>
+                        <p class="indice__alcance">
+                            Partimos del nombre y terminamos pintando el rótulo en la fachada:
+                            una marca que se lee de lejos y aguanta la calle.
+                        </p>
+                    </div>
+                    <figure class="indice__pieza">
+                        <img src="img/marca.webp" width="1000" height="750" loading="lazy" decoding="async"
+                             alt="Rótulo de marca sobre una pared azul con una bicicleta apoyada delante">
+                    </figure>
+                </li>
+
+                <li class="indice__fila revelar" data-tipo="editorial">
+                    <span class="indice__numero">02</span>
+                    <div class="indice__datos">
+                        <h3 class="indice__titulo">Revista Captura, edición 12</h3>
+                        <p class="indice__meta">Diseño editorial y dirección de arte · 2026</p>
+                        <p class="indice__alcance">
+                            Retícula de doce columnas, tipografía a dos voces y un reportaje gráfico
+                            que abre a doble página.
+                        </p>
+                    </div>
+                    <figure class="indice__pieza">
+                        <img src="img/editorial.webp" width="1000" height="750" loading="lazy" decoding="async"
+                             alt="Revista abierta mostrando un reportaje gráfico a doble página">
+                    </figure>
+                </li>
+
+                <li class="indice__fila revelar" data-tipo="carteleria">
+                    <span class="indice__numero">03</span>
+                    <div class="indice__datos">
+                        <h3 class="indice__titulo">Carteles del festival de Barranco</h3>
+                        <p class="indice__meta">Serie de ocho carteles y papelería · 2025</p>
+                        <p class="indice__alcance">
+                            Ocho carteles impresos en papel reciclado, pensados para pegarse uno
+                            sobre otro: el muro quedó como una obra en capas.
+                        </p>
+                    </div>
+                    <figure class="indice__pieza">
+                        <img src="img/cartel.webp" width="1000" height="750" loading="lazy" decoding="async"
+                             alt="Carteles rasgados y superpuestos formando un collage en la pared">
+                    </figure>
+                </li>
+
+                <li class="indice__fila revelar" data-tipo="mural">
+                    <span class="indice__numero">04</span>
+                    <div class="indice__datos">
+                        <h3 class="indice__titulo">Mural del mercado de Surquillo</h3>
+                        <p class="indice__meta">Mural de 34 m² y señalética interna · 2025</p>
+                        <p class="indice__alcance">
+                            Bloques de color que ordenan las entradas del mercado y una paleta que
+                            aguanta el sol de la tarde sin perder el tono.
+                        </p>
+                    </div>
+                    <figure class="indice__pieza">
+                        <img src="img/mural-rosa.webp" width="1000" height="750" loading="lazy" decoding="async"
+                             alt="Mural rosa y azul a medio pintar, con la pistola y el brazo del muralista">
+                    </figure>
+                </li>
+
+                <li class="indice__fila revelar" data-tipo="ilustracion">
+                    <span class="indice__numero">05</span>
+                    <div class="indice__datos">
+                        <h3 class="indice__titulo">Colección Flora · ilustración</h3>
+                        <p class="indice__meta">Doce láminas en acuarela y sus etiquetas · 2025</p>
+                        <p class="indice__alcance">
+                            Ilustración original en acuarela para una línea de productos: cada
+                            lámina se escaneó a tamaño real y se preparó para impresión.
+                        </p>
+                    </div>
+                    <figure class="indice__pieza">
+                        <img src="img/ilustracion.webp" width="1000" height="750" loading="lazy" decoding="async"
+                             alt="Mesa de ilustración con acuarelas, pinceles y una lámina de flores">
+                    </figure>
+                </li>
+
+                <li class="indice__fila revelar" data-tipo="editorial">
+                    <span class="indice__numero">06</span>
+                    <div class="indice__datos">
+                        <h3 class="indice__titulo">Memoria 2025 · edición de arte</h3>
+                        <p class="indice__meta">Libro de 96 páginas y encuadernación en tapa dura · 2025</p>
+                        <p class="indice__alcance">
+                            Papel ahuesado, estampación en dorado sobre el lomo y un cuadernillo
+                            final con los planos de la obra.
+                        </p>
+                    </div>
+                    <figure class="indice__pieza">
+                        <img src="img/encuadernacion.webp" width="1000" height="750" loading="lazy" decoding="async"
+                             alt="Manos trabajando el lomo de un libro con herramientas sobre el banco">
+                    </figure>
+                </li>
+            </ol>
+
+            <p class="indice__nota revelar" id="indice-vacio" hidden>
+                No hay proyectos de ese tipo todavía. Prueba con «Todo».
+            </p>
+        </div>
+    </section>
+
+    <!-- ===================== SERVICIOS Y TARIFAS ===================== -->
+
+    <section class="seccion seccion--pizarra" id="servicios">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="seccion__numero" aria-hidden="true">02</p>
+                <p class="sello sello--oscuro">Servicios</p>
+                <h2>Tarifa de trabajos del taller</h2>
+                <p class="seccion__intro">
+                    Precios de referencia para que sepas en qué rango te mueves antes de escribirnos.
+                    El presupuesto final depende del alcance y te lo mandamos por escrito.
+                </p>
+            </header>
+
+            <!-- Tabla con desplazamiento propio en el celular: apretar las
+                 columnas sería peor que deslizarlas. -->
+            <div class="tabla-scroll revelar">
+                <table class="tarifa">
+                    <caption>Tarifas referenciales en soles, sin IGV, actualizadas en 2026.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Trabajo</th>
+                            <th scope="col">Qué incluye</th>
+                            <th scope="col">Desde</th>
+                            <th scope="col">Plazo</th>
+                            <th scope="col"><span class="sr-solo">Presupuesto</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">Identidad y logotipo</th>
+                            <td>Investigación, tres rutas, logotipo final y aplicaciones básicas</td>
+                            <td class="tarifa__precio">S/ 1 200</td>
+                            <td>2 a 3 semanas</td>
+                            <td>
+                                <a class="boton boton--mini" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20presupuesto%20de%20identidad%20visual" target="_blank" rel="noopener">Pedir</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Manual de marca</th>
+                            <td>Usos, retícula, color, tipografía y versiones para imprenta y pantalla</td>
+                            <td class="tarifa__precio">S/ 900</td>
+                            <td>2 semanas</td>
+                            <td>
+                                <a class="boton boton--mini" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20un%20manual%20de%20marca" target="_blank" rel="noopener">Pedir</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Diseño editorial</th>
+                            <td>Libro, revista o memoria: retícula, maquetación y archivos para imprenta</td>
+                            <td class="tarifa__precio">S/ 1 400</td>
+                            <td>3 a 4 semanas</td>
+                            <td>
+                                <a class="boton boton--mini" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20dise%C3%B1o%20editorial" target="_blank" rel="noopener">Pedir</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Cartelería y señalética</th>
+                            <td>Serie de carteles o señalización interna con planos de ubicación</td>
+                            <td class="tarifa__precio">S/ 700</td>
+                            <td>1 a 2 semanas</td>
+                            <td>
+                                <a class="boton boton--mini" href="https://wa.me/51900000000?text=Hola%2C%20necesito%20carteler%C3%ADa" target="_blank" rel="noopener">Pedir</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Fotografía de producto</th>
+                            <td>Jornada en el estudio, dirección de luz, montaje y revelado de 20 fotos</td>
+                            <td class="tarifa__precio">S/ 850</td>
+                            <td>1 día + edición</td>
+                            <td>
+                                <a class="boton boton--mini" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20fotos%20de%20producto" target="_blank" rel="noopener">Pedir</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Mural y pintura exterior</th>
+                            <td>Boceto a escala, pintura, permisos y sellado contra la intemperie</td>
+                            <td class="tarifa__precio">S/ 1 800</td>
+                            <td>Según el muro</td>
+                            <td>
+                                <a class="boton boton--mini" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20un%20mural" target="_blank" rel="noopener">Pedir</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="seccion__nota revelar">
+                ¿Tu proyecto no está en la lista? Cuéntanos qué necesitas y te decimos si es trabajo de
+                estudio o de un colega de confianza.
+            </p>
+        </div>
+    </section>
+
+    <!-- ===================== PROCESO Y ESTUDIO ===================== -->
+
+    <section class="seccion" id="proceso">
+        <div class="contenedor proceso">
+            <header class="seccion__cabecera revelar">
+                <p class="seccion__numero" aria-hidden="true">03</p>
+                <p class="sello sello--claro">Cómo trabajamos</p>
+                <h2>Cuatro pasos, sin sorpresas en la factura</h2>
+            </header>
+
+            <ol class="pasos">
+                <li class="pasos__item revelar">
+                    <span class="pasos__numero" aria-hidden="true">1</span>
+                    <h3>Escucha y encargo</h3>
+                    <p>Una reunión de una hora, en el estudio o por videollamada. Salimos con el alcance escrito y el precio cerrado.</p>
+                </li>
+                <li class="pasos__item revelar">
+                    <span class="pasos__numero" aria-hidden="true">2</span>
+                    <h3>Rutas y bocetos</h3>
+                    <p>Dos o tres rutas distintas, en boceto, con su argumento. Se elige una y se descarta el resto sin drama.</p>
+                </li>
+                <li class="pasos__item revelar">
+                    <span class="pasos__numero" aria-hidden="true">3</span>
+                    <h3>Producción</h3>
+                    <p>Diseño, corrección de color y archivos para imprenta, muro o pantalla. Dos rondas de ajustes incluidas.</p>
+                </li>
+                <li class="pasos__item revelar">
+                    <span class="pasos__numero" aria-hidden="true">4</span>
+                    <h3>Entrega y archivo</h3>
+                    <p>Entrega de abiertos, cerrados y guía de uso. Guardamos el proyecto dos años por si hay que volver.</p>
+                </li>
+            </ol>
+
+            <!-- Vertical del estudio con la cita del equipo: es la sección donde
+                 el visitante decide si le caemos bien. -->
+            <div class="estudio revelar">
+                <figure class="estudio__foto">
+                    <img src="img/estudio.webp" width="900" height="1200" loading="lazy" decoding="async"
+                         alt="Fotógrafa con la cámara en alto, de pie en un camino arbolado">
+                </figure>
+                <blockquote class="estudio__cita">
+                    <p>
+                        «No vendemos estilo: vendemos que la pieza funcione. Si el rótulo no se lee
+                        desde la vereda de enfrente, todavía no está listo.»
+                    </p>
+                    <footer>
+                        <span class="estudio__firma">N. Quispe</span>
+                        <span>Dirección de arte, Mesa Norte</span>
+                    </footer>
+                </blockquote>
+            </div>
+
+            <!-- Dos bandas del taller en paralelo: la foto sola no dice cómo se
+                 trabaja; la pared de herramientas rotuladas sí. -->
+            <div class="duo">
+                <figure class="banda revelar">
+                    <img src="img/estudio-taller.webp" width="1200" height="800" loading="lazy" decoding="async"
+                         alt="Rincón del estudio con caballete, botes de pintura y pinceles">
+                    <figcaption>
+                        El taller del estudio: caballete, botes y pinceles. Aquí se prueba la
+                        pintura antes de subirla al muro.
+                    </figcaption>
+                </figure>
+
+                <figure class="banda revelar">
+                    <img src="img/taller-detalle.webp" width="1200" height="800" loading="lazy" decoding="async"
+                         alt="Pared de herramientas rotuladas a mano en el taller">
+                    <figcaption>
+                        Cada herramienta con su rótulo. El orden del taller es la primera regla
+                        del manual de marca.
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== PLANES ===================== -->
+
+    <section class="seccion seccion--papel-2" id="planes">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="seccion__numero" aria-hidden="true">04</p>
+                <p class="sello sello--claro">Planes</p>
+                <h2>Tres formas de trabajar con el estudio</h2>
+                <p class="seccion__intro">
+                    Precios de referencia, en soles y sin IGV. El plan mensual es para marcas que
+                    necesitan piezas todas las semanas.
+                </p>
+            </header>
+
+            <ul class="planes">
+                <li class="plan revelar">
+                    <h3 class="plan__nombre">Arranque</h3>
+                    <p class="plan__precio"><span>S/ 1 900</span> pago único</p>
+                    <p class="plan__texto">Para empezar con el pie derecho: la marca básica y una sesión de fotos.</p>
+                    <ul class="plan__lista">
+                        <li>Logotipo y usos básicos</li>
+                        <li>Tarjeta y firma de correo</li>
+                        <li>10 fotos de producto reveladas</li>
+                        <li>Entrega en 3 semanas</li>
+                    </ul>
+                    <a class="boton boton--borde boton--bloque" href="https://wa.me/51900000000?text=Hola%2C%20me%20interesa%20el%20plan%20Arranque" target="_blank" rel="noopener">Quiero este plan</a>
+                </li>
+
+                <li class="plan plan--destacado revelar">
+                    <span class="plan__etiqueta">El más pedido</span>
+                    <h3 class="plan__nombre">Marca completa</h3>
+                    <p class="plan__precio"><span>S/ 4 500</span> pago único</p>
+                    <p class="plan__texto">La marca entera, del logotipo a la web, con manual para que la use cualquiera.</p>
+                    <ul class="plan__lista">
+                        <li>Identidad y manual de marca</li>
+                        <li>Papelería, rótulo y redes</li>
+                        <li>Sesión de fotos de producto</li>
+                        <li>Sitio web de 3 páginas</li>
+                        <li>Entrega en 6 semanas</li>
+                    </ul>
+                    <a class="boton boton--principal boton--bloque" href="https://wa.me/51900000000?text=Hola%2C%20me%20interesa%20el%20plan%20Marca%20completa" target="_blank" rel="noopener">Quiero este plan</a>
+                </li>
+
+                <li class="plan revelar">
+                    <h3 class="plan__nombre">Estudio mensual</h3>
+                    <p class="plan__precio"><span>S/ 2 400</span> al mes</p>
+                    <p class="plan__texto">Horas de diseño reservadas cada mes, para marcas que no paran de publicar.</p>
+                    <ul class="plan__lista">
+                        <li>30 horas de diseño al mes</li>
+                        <li>Piezas para redes y campañas</li>
+                        <li>Una sesión de fotos corta</li>
+                        <li>Reunión de avance cada quince días</li>
+                    </ul>
+                    <a class="boton boton--borde boton--bloque" href="https://wa.me/51900000000?text=Hola%2C%20me%20interesa%20el%20plan%20Estudio%20mensual" target="_blank" rel="noopener">Quiero este plan</a>
+                </li>
+            </ul>
+
+            <h3 class="comparativa__titulo revelar">Comparados punto por punto</h3>
+
+            <!-- La tabla se desplaza dentro de su contenedor en el celular: el
+                 cuerpo de la página nunca gana scroll lateral. -->
+            <div class="tabla-scroll revelar">
+                <table class="comparativa">
+                    <caption>Qué trae cada plan, punto por punto. Precios referenciales sin IGV.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Punto</th>
+                            <th scope="col">Arranque</th>
+                            <th scope="col">Marca completa</th>
+                            <th scope="col">Estudio mensual</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">Logotipo</th>
+                            <td>Sí</td>
+                            <td>Sí</td>
+                            <td>Retoque y versiones</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Manual de marca</th>
+                            <td>Resumen de una página</td>
+                            <td>Completo</td>
+                            <td>Completo</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Papelería y rótulo</th>
+                            <td>Tarjeta</td>
+                            <td>Completo</td>
+                            <td>A demanda</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Fotografía</th>
+                            <td>10 fotos</td>
+                            <td>Sesión completa</td>
+                            <td>Sesión corta al mes</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Sitio web</th>
+                            <td>No incluye</td>
+                            <td>3 páginas</td>
+                            <td>Mantenimiento de las existentes</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Horas de diseño al mes</th>
+                            <td>—</td>
+                            <td>—</td>
+                            <td>30</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Reuniones</th>
+                            <td>2</td>
+                            <td>4</td>
+                            <td>Una cada quince días</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Plazo de entrega</th>
+                            <td>3 semanas</td>
+                            <td>6 semanas</td>
+                            <td>Continuo</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== OPINIONES ===================== -->
+
+    <section class="seccion" id="opiniones">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="seccion__numero" aria-hidden="true">05</p>
+                <p class="sello sello--claro">Opiniones</p>
+                <h2>Lo que dicen quienes ya tienen su pieza</h2>
+            </header>
+
+            <ul class="notas">
+                <li class="nota revelar">
+                    <blockquote>
+                        <p>Nos devolvieron la marca con criterio. El manual lo entiende hasta el chico del taller, que es lo que necesitábamos.</p>
+                    </blockquote>
+                    <div class="nota__pie">
+                        <span class="nota__autor">R. M.</span>
+                        <span class="nota__cargo">Dueña de Nosara Bikes</span>
+                        <span class="valoracion" aria-label="Valoración: 5 de 5">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                        </span>
+                    </div>
+                </li>
+
+                <li class="nota revelar">
+                    <blockquote>
+                        <p>El libro quedó impecable: papel, tipografía y encuadernación pensados desde el principio, no al final.</p>
+                    </blockquote>
+                    <div class="nota__pie">
+                        <span class="nota__autor">L. C.</span>
+                        <span class="nota__cargo">Editora de la revista Captura</span>
+                        <span class="valoracion" aria-label="Valoración: 5 de 5">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                        </span>
+                    </div>
+                </li>
+
+                <li class="nota revelar">
+                    <blockquote>
+                        <p>Coordinaron el mural con la municipalidad y lo entregaron en la fecha. El mercado se ve otro.</p>
+                    </blockquote>
+                    <div class="nota__pie">
+                        <span class="nota__autor">J. Q.</span>
+                        <span class="nota__cargo">Gestor del mercado de Surquillo</span>
+                        <span class="valoracion" aria-label="Valoración: 4 de 5">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                            <svg class="valoracion__apagada" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.2 9.4l6.2-.7z"/></svg>
+                        </span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== UBICACIÓN ===================== -->
+
+    <section class="seccion seccion--papel-2" id="visitanos">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="seccion__numero" aria-hidden="true">06</p>
+                <p class="sello sello--claro">Visítanos</p>
+                <h2>El estudio está en Barranco</h2>
+                <p class="seccion__intro">
+                    Se puede llegar sin cita, pero si avisas te esperamos con el café listo y el
+                    proyecto sobre la mesa.
+                </p>
+            </header>
+
+            <div class="ubicacion">
+                <figure class="ubicacion__plano revelar">
+                    <img src="img/mapa.svg" width="720" height="480" loading="lazy" decoding="async"
+                         alt="Plano de la esquina del estudio: avenida Grau con el jirón Unión, el mercado, el parque y la estación de la línea 1">
+                    <figcaption>
+                        Av. Grau 320, a media cuadra del mercado de Barranco.
+                        <a class="boton boton--mini boton--mini-claro" href="https://www.google.com/maps/search/?api=1&amp;query=Av.+Grau+320%2C+Barranco%2C+Lima" target="_blank" rel="noopener">
+                            Abrir en Google Maps
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-8 8M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>
+                        </a>
+                    </figcaption>
+                </figure>
+
+                <dl class="ubicacion__datos revelar">
+                    <div>
+                        <dt>Dirección</dt>
+                        <dd>Av. Grau 320, Barranco, Lima</dd>
+                    </div>
+                    <div>
+                        <dt>Horario</dt>
+                        <dd>Lunes a viernes, 10:00 — 19:00<br>Sábados, 10:00 — 14:00</dd>
+                    </div>
+                    <div>
+                        <dt>Teléfono y WhatsApp</dt>
+                        <dd>
+                            <a href="tel:+51900000000">+51 900 000 000</a><br>
+                            <a href="https://wa.me/51900000000?text=Hola%2C%20quiero%20visitar%20el%20estudio" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Correo</dt>
+                        <dd><a href="mailto:hola@mesanorte.demo">hola@mesanorte.demo</a></dd>
+                    </div>
+                    <div>
+                        <dt>Transporte</dt>
+                        <dd>Estación Barranco de la Línea 1, a ocho minutos a pie</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CONTACTO ===================== -->
+
+    <section class="seccion" id="contacto">
+        <div class="contenedor contacto">
+            <div class="contacto__texto revelar">
+                <p class="seccion__numero" aria-hidden="true">07</p>
+                <p class="sello sello--claro">Contacto</p>
+                <h2>Cuéntanos qué tienes entre manos</h2>
+                <p>
+                    Con el formulario o por WhatsApp, como prefieras. Si el proyecto nos queda grande,
+                    te lo decimos y te pasamos el contacto de alguien que lo haga mejor.
+                </p>
+                <ul class="contacto__lista">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>
+                        <a href="mailto:hola@mesanorte.demo">hola@mesanorte.demo</a>
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                        Respondemos en menos de 24 horas hábiles
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3.5 20 8v8l-8 4.5L4 16V8z"/></svg>
+                        Reuniones en el estudio o por videollamada
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Contacto: en la demo no envía datos. -->
+            <form class="formulario revelar" id="formulario-encargo" action="#" method="post" novalidate data-demo="true">
+                <h3 class="formulario__titulo">Pedir presupuesto</h3>
+                <p class="formulario__nota">
+                    Cuatro datos y te devolvemos un rango de precio con plazo estimado.
+                </p>
+
+                <div class="campo">
+                    <label for="nombre">Nombre y apellido</label>
+                    <input id="nombre" name="nombre" type="text" autocomplete="name" required>
+                    <p class="campo__error" data-error="nombre">Escribe tu nombre completo.</p>
+                </div>
+
+                <div class="campo">
+                    <label for="correo">Correo</label>
+                    <input id="correo" name="correo" type="email" inputmode="email" autocomplete="email" placeholder="tu@correo.com" required>
+                    <p class="campo__error" data-error="correo">Escribe un correo con formato válido.</p>
+                </div>
+
+                <div class="campo-fila">
+                    <div class="campo">
+                        <label for="tipo">Tipo de proyecto</label>
+                        <select id="tipo" name="tipo" required>
+                            <option value="">Elige uno</option>
+                            <option>Identidad y logotipo</option>
+                            <option>Manual de marca</option>
+                            <option>Diseño editorial</option>
+                            <option>Cartelería y señalética</option>
+                            <option>Fotografía de producto</option>
+                            <option>Mural y pintura exterior</option>
+                            <option>Todavía no lo sé</option>
+                        </select>
+                        <p class="campo__error" data-error="tipo">Elige el tipo de proyecto.</p>
+                    </div>
+
+                    <div class="campo">
+                        <label for="presupuesto">Presupuesto aproximado</label>
+                        <select id="presupuesto" name="presupuesto" required>
+                            <option value="">Elige un rango</option>
+                            <option>Hasta S/ 1 000</option>
+                            <option>S/ 1 000 a S/ 3 000</option>
+                            <option>S/ 3 000 a S/ 6 000</option>
+                            <option>Más de S/ 6 000</option>
+                        </select>
+                        <p class="campo__error" data-error="presupuesto">Elige un rango de presupuesto.</p>
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label for="mensaje">¿Qué necesitas? <span class="campo__opcional">(opcional)</span></label>
+                    <textarea id="mensaje" name="mensaje" rows="4" placeholder="Por ejemplo: abrimos una cafetería en marzo y necesitamos marca, carta y rótulo"></textarea>
+                </div>
+
+                <label class="casilla">
+                    <input type="checkbox" name="acepto" required>
+                    <span>Acepto que el estudio me contacte para responder a este encargo.</span>
+                </label>
+                <p class="campo__error" data-error="acepto">Necesitamos tu permiso para contactarte.</p>
+
+                <button class="boton boton--principal boton--bloque" type="submit">
+                    Enviar el encargo
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+
+                <p class="formulario__aviso" id="aviso-formulario" role="status" aria-live="polite"></p>
+
+                <p class="formulario__alternativa">
+                    ¿Prefieres el chat? <a href="https://wa.me/51900000000?text=Hola%2C%20tengo%20un%20proyecto%20para%20el%20estudio" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+                </p>
+            </form>
+        </div>
+    </section>
+
+    <!-- ===================== PREGUNTAS ===================== -->
+
+    <section class="seccion seccion--papel-2" id="preguntas">
+        <div class="contenedor contenedor--angosto">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Preguntas</p>
+                <h2>Antes de escribirnos</h2>
+            </header>
+
+            <div class="preguntas">
+                <details>
+                    <summary>¿Puedo ver bocetos antes de decidir?</summary>
+                    <p>Sí. La reunión de encargo es gratuita y las rutas se presentan en boceto: se elige una y se sigue. Si ninguna convence, no se cobra esa parte.</p>
+                </details>
+                <details>
+                    <summary>¿Trabajan con clientes de fuera de Lima?</summary>
+                    <p>Sí, dos tercios del estudio lo son. La reunión va por videollamada; las piezas impresas viajan por courier y todo lo demás por correo.</p>
+                </details>
+                <details>
+                    <summary>¿Cuántas rondas de cambios incluye un trabajo?</summary>
+                    <p>Dos rondas por etapa. En la cláusula de una tercera ronda se cotiza por hora; casi nunca hace falta porque el encargo se cierra bien al principio.</p>
+                </details>
+                <details>
+                    <summary>¿Quién se queda con los archivos originales?</summary>
+                    <p>El cliente: se entregan los abiertos, los cerrados listos para imprenta y una guía de uso. El estudio guarda una copia dos años para retoques.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CIERRE ===================== -->
+
+    <section class="cierre">
+        <div class="contenedor cierre__interior">
+            <div>
+                <h2>¿Empezamos con una reunión?</h2>
+                <p>Una hora, sin compromiso, y salís con el alcance y el precio escrito. Si el proyecto no es para nosotros, también te lo decimos ahí.</p>
+            </div>
+            <div class="cierre__acciones">
+                <a class="boton boton--principal" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20coordinar%20una%20reuni%C3%B3n%20con%20el%20estudio" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    Escribir por WhatsApp
+                </a>
+                <a class="boton boton--borde-claro" href="mailto:hola@mesanorte.demo">Mandar un correo</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor pie__rejilla">
+        <div class="pie__marca">
+            <a class="marca marca--pie" href="#inicio">
+                <span class="marca__bloque" aria-hidden="true"></span>
+                <span class="marca__texto">
+                    <strong>Mesa Norte</strong>
+                    <span>estudio gráfico</span>
+                </span>
+            </a>
+
+            <p class="pie__descripcion">
+                Estudio de diseño y fotografía en Barranco. Identidad, editorial, cartelería,
+                murales y fotos de producto, con los archivos abiertos en la mano del cliente.
+            </p>
+
+            <ul class="redes redes--pie" aria-label="Redes sociales del estudio">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram del estudio">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook del estudio">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok del estudio">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp del estudio">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <nav class="pie__columna" aria-label="Proyectos">
+            <h3>Proyectos</h3>
+            <ul>
+                <li><a href="#proyectos">Identidad urbana · Nosara Bikes</a></li>
+                <li><a href="#proyectos">Revista Captura, edición 12</a></li>
+                <li><a href="#proyectos">Carteles del festival de Barranco</a></li>
+                <li><a href="#proyectos">Mural del mercado de Surquillo</a></li>
+                <li><a href="#proyectos">Memoria 2025</a></li>
+            </ul>
+        </nav>
+
+        <nav class="pie__columna" aria-label="El estudio">
+            <h3>El estudio</h3>
+            <ul>
+                <li><a href="#servicios">Servicios y tarifas</a></li>
+                <li><a href="#proceso">Cómo trabajamos</a></li>
+                <li><a href="#planes">Planes</a></li>
+                <li><a href="#opiniones">Opiniones</a></li>
+                <li><a href="#preguntas">Preguntas frecuentes</a></li>
+            </ul>
+        </nav>
+
+        <div class="pie__columna">
+            <h3>Contacto</h3>
+            <ul class="pie__contacto">
+                <li>Av. Grau 320, Barranco, Lima</li>
+                <li><a href="tel:+51900000000">+51 900 000 000</a></li>
+                <li><a href="https://wa.me/51900000000" target="_blank" rel="noopener">WhatsApp del estudio</a></li>
+                <li><a href="mailto:hola@mesanorte.demo">hola@mesanorte.demo</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="contenedor pie__legal">
+        <p>© <span id="anio">2026</span> Mesa Norte. Todos los derechos reservados.</p>
+        <p class="pie__demo">
+            Demostración de plantilla de
+            <a href="https://aracodeperu.com/plantillas" target="_blank" rel="noopener">ARACODE Smart Solutions</a>:
+            los proyectos, precios y testimonios son de ejemplo.
+        </p>
+    </div>
+</footer>
+
+<!-- Acceso permanente a WhatsApp, como en el resto de plantillas. -->
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20tengo%20un%20proyecto%20para%20el%20estudio" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+    <span class="whatsapp__anillo" aria-hidden="true"></span>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>

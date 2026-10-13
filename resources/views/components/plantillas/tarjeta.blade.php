@@ -3,8 +3,12 @@
     ---------------------------------------------------------------------------
     El bloque de arriba es la captura de la plantilla (16/10, la proporción en
     que se preparan) y el de abajo la información que se compara de un vistazo:
-    formato (landing o sitio web, con su hashtag), nombre, resumen, etiquetas y
-    los dos accesos (ficha y demostración).
+    la fila de etiquetas (formato, rubro y «Destacada»), el nombre, el resumen,
+    las palabras clave y los dos accesos (ficha y demostración).
+
+    Esa fila de etiquetas abre el cuerpo y no va encima de la captura: la
+    captura se ve entera —es lo primero que mira quien elige plantilla— y el
+    rubro queda junto al nombre, que es donde se lee.
 
     El formato va primero a propósito: una landing y un sitio web son planes
     distintos, así que el visitante tiene que reconocer de un vistazo cuál va con
@@ -36,20 +40,22 @@
             {{-- Sin captura todavía: se anuncia como tal, no se disfraza de imagen --}}
             <span class="plt-card__sin-captura">Captura en preparación</span>
         @endif
-
-        <span class="plt-card__etiqueta">{{ $plantilla['categoria_nombre'] }}</span>
-
-        @if ($plantilla['destacada'])
-            <span class="plt-card__destacada">Destacada</span>
-        @endif
     </div>
 
     <div class="plt-card__cuerpo">
-        @if ($plantilla['tipo_hashtag'] !== '')
-            <div class="plt-card__formato">
+        {{-- Formato, rubro y «Destacada», en una sola fila: es lo que se compara
+             de un vistazo antes de leer el nombre. --}}
+        <div class="plt-card__chips">
+            @if ($plantilla['tipo_hashtag'] !== '')
                 <span class="plt-tipo" title="{{ $plantilla['tipo_descripcion'] }}">{{ $plantilla['tipo_hashtag'] }}</span>
-            </div>
-        @endif
+            @endif
+
+            <span class="plt-card__etiqueta">{{ $plantilla['categoria_nombre'] }}</span>
+
+            @if ($plantilla['destacada'])
+                <span class="plt-card__destacada">Destacada</span>
+            @endif
+        </div>
 
         <h3 class="plt-card__nombre">
             <a href="{{ $urlFicha }}">{{ $plantilla['nombre'] }}</a>

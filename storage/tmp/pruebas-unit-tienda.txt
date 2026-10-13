@@ -1,0 +1,35 @@
+
+  [30;43;1m WARN [39;49;22m Your XML configuration validates against a deprecated schema. Migrate your XML configuration using "--migrate-configuration"!
+
+   PASS  Tests\Unit\CatalogoPlantillasTest
+  ✓ it resuelve el catálogo y los nombres de categoría sin recursión                                             0.99s  
+  ✓ it devuelve la ficha de una plantilla publicada y null para una que no existe                                0.64s  
+  ✓ it resuelve la demostración dentro de public/demos                                                           0.66s  
+  ✓ it publica el catálogo con una tarjeta por plantilla publicada                                               0.89s  
+  ✓ it filtra por categoría y por búsqueda sin romper la página                                                  0.91s  
+  ✓ it responde 200 en la ficha publicada y 404 en la que no existe                                              0.92s  
+  ✓ it marca el formato de cada plantilla y lo pinta en la tarjeta                                               0.97s  
+  ✓ it explica el formato en la ficha, no solo lo nombra                                                         0.92s  
+  ✓ it encuentra las plantillas por su formato desde el buscador                                                 0.89s  
+  ✓ it compila su hoja de estilos sin declarar clases del sitio                                                  0.95s  
+  ✓ it solo publica la demostración de las plantillas que la tienen de verdad                                    1.12s  
+  ✓ it no deja enlaces internos rotos en una demo de varias páginas                                              0.90s  
+  ✓ it abre cada demostración publicada con un hero o slider a pantalla completa                                 1.38s  
+  ✓ it deja el slider del hero utilizable a mano, con teclado y sin JavaScript                                   0.70s  
+  ✓ it trae el interruptor de tema claro / oscuro en toda demostración publicada                                 0.75s  
+  ✓ it abre la demostración con un 302 a su carpeta y 404 si todavía no está                                     0.78s  
+  ✓ it publica la captura 16/10 de cada demostración y deja el mosaico solo donde no hay demo                    1.01s  
+  ✓ it comparte la captura como imagen social de la ficha, con la frase de la propia ficha                       0.73s  
+
+   PASS  Tests\Unit\CatalogoProductosTest
+  ✓ it pone la imagen del producto antes que el texto, con su texto alternativo with ('/soluciones', 6)          0.70s  
+  ✓ it pone la imagen del producto antes que el texto, con su texto alternativo with ('/', 3)                    0.71s  
+  ✓ it no pinta la frase corta del producto: la imagen es la que lo presenta with ('/soluciones', 'Plataforma S… 0.77s  
+  ✓ it no pinta la frase corta del producto: la imagen es la que lo presenta with ('/', 'Plataforma SaaS para g… 0.69s  
+  ✓ it incorpora los servicios al mismo esquema, con su franja y sin imagen                                      0.70s  
+
+   PASS  Tests\Unit\Database\DedupeSunatCurrencyTypesMigrationTest
+  ✓ deja una sola fila por moneda                                                                                0.82s  
+  ✓ conserva la descripcion mas baja cuando las filas difieren                                                   0.87s  
+  ✓ el indice unico impide volver a duplicar                                                                     0.74s  
+  ✓ la reversion quita el indice unico                                                                           0.70s  

@@ -2,7 +2,7 @@
     import { useForm } from '@inertiajs/vue3';
     import { domToPng } from 'modern-screenshot'
     import Swal2 from "sweetalert2";
-    import { Link, router } from '@inertiajs/vue3';
+    import { Link, router, usePage } from '@inertiajs/vue3';
     import ModalLarge from '@/Components/ModalLarge.vue';
     import { ref, reactive, computed, watch, nextTick } from 'vue';
     import SuccessButton from '@/Components/SuccessButton.vue';
@@ -17,7 +17,6 @@
     import flatPickr from 'vue-flatpickr-component';
     import 'flatpickr/dist/flatpickr.css';
     import { Spanish } from "flatpickr/dist/l10n/es.js"
-    import ModalLargeXX from '@/Components/ModalLargeXX.vue';
     import IconMinus from '@/Components/vristo/icon/icon-minus.vue';
     import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
     import IconStar from '@/Components/vristo/icon/icon-star.vue';
@@ -28,6 +27,7 @@
     import IconImages from '@/Components/vristo/icon/icon-images.vue';
     import IconFutbol from '@/Components/vristo/icon/icon-futbol.vue';
     import IconHand from '@/Components/vristo/icon/icon-hand.vue';
+    import IconNotesEdit from '@/Components/vristo/icon/icon-notes-edit.vue';
 
 
     const props = defineProps({
@@ -206,6 +206,13 @@
         });
     };
 
+    // El registro del acta dejó de vivir en un modal del fixture: es una vista
+    // propia, con espacio para el detalle (goles con su tiempo y tipo,
+    // asistencias, cambios y minutos) y con un botón para volver al fixture.
+    const openMatchScoreView = (partido) => {
+        router.visit(route('even_ediciones_partido_resultado', [props.edition.id, partido.id]));
+    };
+
     const configFlatPickr = {
         enableTime: true,
         dateFormat: 'Y-m-d H:i',
@@ -213,108 +220,18 @@
         locale: Spanish
     };
 
-    const formScore = useForm({
-        id: null,
-        edition_id: props.edition.id,
-        price_red: props.edition.direct_red_price,
-        double_yellow: props.edition.double_yellow_price,
-        yellow: props.edition.yellow_price,
-        equipo_h_name: null,
-        equipo_a_name: null,
-        equipo_h_id: null,
-        equipo_a_id: null,
-        score_h: null,
-        score_a: null,
-        has_penalties: false,
-        penalty_rounds: 5,
-        penalties: [],
-        players_h: [],
-        players_a: []
-    });
-
-    const displayModalScore = ref(false);
     const playersh = ref([]);
     const playersa = ref([]);
 
-    const openModalScore = (partido) => {
-        formScore.id = partido.id;
+    // Permiso para registrar/corregir el acta. Se lee de los props de Inertia
+    // (los mismos que evalúa el guard de la ruta que guarda el resultado), para
+    // que el botón no dependa de cómo resuelva la directiva v-can.
+    const page = usePage();
+    const canCorrectScore = computed(() => {
+        const permissions = page.props?.auth?.permissions ?? [];
+        return permissions.includes('even_ediciones_partido_resultado');
+    });
 
-        if(partido.status == 'pending' || partido.status == 'live'){
-
-            if(partido.equipolocal && partido.equipovisitante){
-                formScore.equipo_h_name = partido.equipolocal.name;
-                formScore.equipo_a_name = partido.equipovisitante.name;
-                formScore.equipo_h_id = partido.equipolocal.id;
-                formScore.equipo_a_id = partido.equipovisitante.id;
-                formScore.score_h = partido.score_h ?? 0;
-                formScore.score_a = partido.score_a ?? 0;
-
-                // Cargar datos de penale是否 existen
-                const hasExistingPenalties = partido.penalty_rounds && partido.penalties && partido.penalties.length > 0;
-                formScore.has_penalties = hasExistingPenalties;
-                formScore.penalty_rounds = partido.penalty_rounds ?? 5;
-                formScore.penalties = partido.penalties || [];
-
-                // Función auxiliar para procesar jugadores
-                const mapPlayers = (players) => {
-                    if (!players) return [];
-
-                    return players.map(p => {
-                        // En el back pusimos 'stats' como array
-                        const s = (p.stats && p.stats.length > 0) ? p.stats[0] : {};
-
-                        // Sanciones
-                        const sanctions = p.sanctions || [];
-
-                        // 1. Detectamos si tiene Doble Amarilla (ya sea por el booleano o buscando en el array)
-                        const hasDoubleYellow = !!p.is_double_yellow || sanctions.some(s => s.type === 'double_yellow');
-
-                        // 2. Detectamos si tiene Roja Directa
-                        const hasDirectRed = sanctions.some(s => s.type === 'red');
-
-                        return {
-                            ...p,
-                            // Usamos match_role que inyectamos directamente en el back
-                            match_role: p.is_suspended ? null : (p.match_role || null),
-
-                            // Suspensión vigente (el backend inyecta is_suspended)
-                            is_suspended: !!p.is_suspended,
-                            suspension: p.suspension || null,
-
-                            // Estadísticas
-                            goals: s.goals || 0,
-                            assists: s.assists || 0,
-                            saves: s.saves || 0,
-                            is_mvp: !!s.is_mvp,
-                            minutes_played: s.minutes_played || 0,
-
-                            // Tarjetas
-                            is_double_yellow: hasDoubleYellow,
-                            // Si es doble amarilla, mostramos 2 amarillas en el contador
-                            yellow_cards: hasDoubleYellow ? 2 : sanctions.filter(s => s.type === 'yellow').length,
-                            // IMPORTANTE: La roja se marca si tiene ROJA DIRECTA o DOBLE AMARILLA
-                            red_cards: (hasDirectRed || hasDoubleYellow) ? 1 : 0,
-                        };
-                    });
-                };
-
-                playersh.value = mapPlayers(partido.equipolocal.players);
-                playersa.value = mapPlayers(partido.equipovisitante.players);
-                displayModalScore.value = true;
-            }else{
-                Swal2.fire({
-                    title: 'No puedes continuar',
-                    text: 'Todavía no has agregado los equipos para este encuentro. Completa esa información y luego podrás continuar.',
-                    icon: 'info',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
-            }
-        } else {
-            showAlertStatus(partido.status)
-        }
-
-    }
 
     const showAlertStatus = (status) => {
         const statusMessages = {
@@ -356,172 +273,6 @@
                 confirmButtonColor: '#4f46e5', // Un color índigo/azul profesional
             });
         }
-    };
-
-    const closeModalScore = () => {
-        displayModalScore.value = false;
-    }
-
-    // Funciones para manejar penales
-    const addPenalty = () => {
-        const maxPenalties = formScore.penalty_rounds * 2;
-
-        if (formScore.penalties.length >= maxPenalties) {
-            Swal2.fire({
-                title: 'Límite alcanzado',
-                text: `Has alcanzado el máximo de ${maxPenalties} patadas permitidas para ${formScore.penalty_rounds} rondas.`,
-                icon: 'warning',
-                padding: '2em',
-                customClass: 'sweet-alerts',
-            });
-            return;
-        }
-
-        // Determinar qué equipo patea en esta patada
-        const currentIndex = formScore.penalties.length;
-        const isLocalTurn = currentIndex % 2 === 0;
-
-        formScore.penalties.push({
-            team: isLocalTurn ? 'local' : 'visitor',
-            round: Math.floor(currentIndex / 2) + 1,
-            kicker: null,
-            result: 'goal',
-            goalkeeper: null,
-            kickOrder: currentIndex + 1
-        });
-    };
-
-    const removePenalty = (index) => {
-        formScore.penalties.splice(index, 1);
-        // Renumerar las patadas
-        formScore.penalties.forEach((penalty, idx) => {
-            penalty.round = Math.floor(idx / 2) + 1;
-            penalty.team = idx % 2 === 0 ? 'local' : 'visitor';
-            penalty.kickOrder = idx + 1;
-        });
-    };
-
-    const canAddMorePenalties = computed(() => {
-        return formScore.penalties.length < (formScore.penalty_rounds * 2);
-    });
-
-    const getPenaltyScore = computed(() => {
-        const penalties = formScore.penalties;
-        const penalty_h = penalties.filter(p => p.team === 'local' && p.result === 'goal').length;
-        const penalty_a = penalties.filter(p => p.team === 'visitor' && p.result === 'goal').length;
-        return { penalty_h, penalty_a };
-    });
-
-    // Resumen legible de una suspensión (para badges y errores)
-    const suspensionSummary = (suspension) => {
-        if (!suspension) return '';
-        if (suspension.type === 'definitive') return 'Suspensión definitiva';
-        if (suspension.type === 'matches') {
-            const remaining = suspension.matches_remaining;
-            return remaining != null
-                ? `Suspendido · ${remaining} partido(s) restante(s)`
-                : 'Suspendido por partidos';
-        }
-        if (suspension.type === 'date_range') {
-            return `Suspendido del ${suspension.start_date} al ${suspension.end_date}`;
-        }
-        return 'Suspendido';
-    };
-
-    const getPlayersForTeam = (team) => {
-        if (team === 'local') {
-            return playersh.value.map(p => ({
-                value: p.person?.id || p.id,
-                label: `${p.person?.full_name || p.full_name || 'Jugador'} (#${p.jersey_number})`
-            }));
-        } else {
-            return playersa.value.map(p => ({
-                value: p.person?.id || p.id,
-                label: `${p.person?.full_name || p.full_name || 'Jugador'} (#${p.jersey_number})`
-            }));
-        }
-    };
-
-    // Función para el equipo Local
-    const toggleYellowH = (player) => {
-        // Ciclo: 0 -> 1 -> 2 -> 0
-        player.yellow_cards = (player.yellow_cards + 1) % 3;
-
-        // Si tiene 2 amarillas, activar roja (doble amarilla)
-        if (player.yellow_cards === 2) {
-            player.red_cards = 1;
-            player.is_double_yellow = true;
-        } else {
-            player.red_cards = 0;
-            player.is_double_yellow = false;
-        }
-    };
-
-    // Función para Roja Directa Local
-    const toggleRedH = (player) => {
-        player.red_cards = player.red_cards === 0 ? 1 : 0;
-        // Si es roja directa, reseteamos amarillas para no confundir
-        if (player.red_cards === 1) {
-            player.yellow_cards = 0;
-            player.is_double_yellow = false;
-        }
-    };
-
-    const toggleYellowA = (player) => {
-        // Ciclo: 0 -> 1 -> 2 -> 0
-        player.yellow_cards = (player.yellow_cards + 1) % 3;
-
-        // Si tiene 2 amarillas, activar roja (doble amarilla)
-        if (player.yellow_cards === 2) {
-            player.red_cards = 1;
-            player.is_double_yellow = true;
-        } else {
-            player.red_cards = 0;
-            player.is_double_yellow = false;
-        }
-    };
-
-    // Función para Roja Directa Local
-    const toggleRedA = (player) => {
-        player.red_cards = player.red_cards === 0 ? 1 : 0;
-        // Si es roja directa, reseteamos amarillas para no confundir
-        if (player.red_cards === 1) {
-            player.yellow_cards = 0;
-            player.is_double_yellow = false;
-        }
-    };
-
-    // Al enviar el formulario, cargamos los datos de los refs al form de Inertia
-    const updateMatchScore = () => {
-        formScore.players_h = playersh.value;
-        formScore.players_a = playersa.value;
-        formScore.post(route('even_edition_match_score_update'), {
-            preserveScroll: true,
-            preserveState: true,
-            onError: (errors) => {
-                // Errores de validación del backend (ej. jugador suspendido en la alineación)
-                const message = errors?.score || Object.values(errors || {})[0] || 'Ocurrió un error al guardar el acta';
-                Swal2.fire({
-                    title: 'No se pudo guardar',
-                    text: message,
-                    icon: 'error',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
-            },
-            onSuccess: () => {
-                Swal2.fire({
-                    title: 'Enhorabuena',
-                    text: 'Se actualizo correctamente',
-                    icon: 'success',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
-                displayModalScore.value = false;
-                formScore.reset();
-                refreshFixture();
-            }
-        });
     };
 
     const deleteMatch = (match) => {
@@ -614,6 +365,14 @@
             }
         }
         return true;
+    };
+
+    // Cantidad de partidos de una fase (se muestra en el resumen cuando la fase
+    // queda contraída, para que no parezca que faltan los partidos y sus botones).
+    const phaseMatchCount = (phase) => {
+        const rounds = props.fixture[phase] || {};
+
+        return Object.values(rounds).reduce((total, matches) => total + (matches?.length || 0), 0);
     };
 
     const loaders = reactive({});
@@ -731,6 +490,8 @@
                             saves: s.saves || 0,
                             is_mvp: !!s.is_mvp,
                             minutes_played: s.minutes_played || 0,
+                            // Si el operador escribe los minutos a mano, el cálculo automático los respeta
+                            minutes_manual: false,
 
                             // Tarjetas
                             is_double_yellow: hasDoubleYellow,
@@ -813,6 +574,12 @@
         <details v-for="(rounds, phase) in fixture" :key="phase" :open="!isPhaseCompleted(phase)" class="mb-12">
             <summary class="cursor-pointer text-2xl font-black uppercase mb-6 text-gray-800 border-l-4 border-red-600 pl-4 dark:text-white">
                 {{ formatPhaseName(phase) }}
+                <span
+                    v-if="isPhaseCompleted(phase)"
+                    class="block text-xs font-medium normal-case text-gray-500 dark:text-gray-400"
+                >
+                    {{ phaseMatchCount(phase) }} partidos — clic para expandir y corregir un acta
+                </span>
             </summary>
 
                 <div v-for="(matches, roundNumber) in rounds" :key="roundNumber" class="mb-8">
@@ -901,13 +668,13 @@
                                 </div>
                             </div>
 
-                            <div class="border-t px-4 py-3 bg-gray-50 flex justify-center gap-4 dark:bg-zinc-800/50 dark:border-zinc-800 no-export">
+                            <div class="border-t px-4 py-3 bg-gray-50 flex justify-center gap-2 dark:bg-zinc-800/50 dark:border-zinc-800 no-export">
                                 <button
                                     @click="openModalEdit(match)"
                                     v-tippy="{content: 'Editar', placement: 'bottom'}"
                                     class="p-1 hover:bg-gray-200 rounded-lg transition dark:hover:bg-zinc-700 no-export"
                                 >
-                                    <IconPencilPaper class="w-7 h-7 text-blue-600" />
+                                    <IconPencilPaper class="w-6 h-6 text-blue-600" />
                                 </button>
                                 <button
                                     v-can="'even_ediciones_partido_eliminar'"
@@ -915,17 +682,25 @@
                                     v-tippy="{content: 'Eliminar', placement: 'bottom'}"
                                     class="p-1 hover:bg-red-100 rounded-lg transition dark:hover:bg-red-900/30 no-export"
                                 >
-                                    <IconTrashLines class="w-7 h-7 text-red-500" />
+                                    <IconTrashLines class="w-6 h-6 text-red-500" />
                                 </button>
                                 <button
                                     v-can="'even_ediciones_partido_resultado'"
-                                    v-tippy="{content: 'Resultados de encuentro', placement: 'bottom'}"
-                                    @click="openModalScore(match)"
+                                    v-tippy="{content: 'Registrar resultados del partido', placement: 'bottom'}"
+                                    @click="openMatchScoreView(match)"
                                     class="p-1 hover:bg-green-100 rounded-lg transition dark:hover:bg-green-900/30 no-export"
                                 >
-                                    <svg class="w-7 h-7 text-green-600" fill="currentColor" viewBox="0 0 640 640">
+                                    <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 640 640">
                                         <path d="M192 64C156.7 64 128 92.7 128 128L128 512C128 547.3 156.7 576 192 576L448 576C483.3 576 512 547.3 512 512L512 128C512 92.7 483.3 64 448 64L192 64zM224 128L416 128C433.7 128 448 142.3 448 160L448 192C448 209.7 433.7 224 416 224L224 224C206.3 224 192 209.7 192 192L192 160C192 142.3 206.3 128 224 128z"/>
                                     </svg>
+                                </button>
+                                <button
+                                    v-if="canCorrectScore && match.status !== 'pending' && match.status !== 'live'"
+                                    @click="openMatchScoreView(match)"
+                                    v-tippy="{content: 'Corregir acta: marcador, goles, asistencias, atajadas y MVP', placement: 'bottom'}"
+                                    class="p-1 hover:bg-amber-100 rounded-lg transition dark:hover:bg-amber-900/30 no-export"
+                                >
+                                    <IconNotesEdit class="w-6 h-6 text-amber-500" />
                                 </button>
                                 <button
                                     v-can="'even_ediciones_partido_acta'"
@@ -934,7 +709,7 @@
                                     @click="openModalMatchReport(match)"
                                     class="p-1 hover:bg-green-100 rounded-lg transition dark:hover:bg-[#011403]/30 no-export"
                                 >
-                                    <svg class="w-7 h-7 text-[#067A21]" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                    <svg class="w-6 h-6 text-[#067A21]" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
                                         <path d="M64.1 128C64.1 92.7 92.8 64 128.1 64L277.6 64C294.6 64 310.9 70.7 322.9 82.7L429.3 189.3C441.3 201.3 448 217.6 448 234.6L448 332.1L316 464.1L273.9 464.1L257.8 410.5C253.1 394.8 238.7 384.1 222.3 384.1C211 384.1 200.4 389.2 193.4 398L133.3 473C125 483.3 126.7 498.5 137 506.7C147.3 514.9 162.5 513.3 170.7 502.9L217.8 444.1L233 494.8C236 505 245.4 511.9 256 511.9L287.5 511.9C286.6 515 285.8 518.2 285.2 521.4L274.3 575.9L128.1 575.9C92.8 575.9 64.1 547.2 64.1 511.9L64.1 127.9zM272.1 122.5L272.1 216C272.1 229.3 282.8 240 296.1 240L389.6 240L272.1 122.5zM332.3 530.9C334.8 518.5 340.9 507.1 349.8 498.2L468.7 379.3L548.7 459.3L429.8 578.2C420.9 587.1 409.5 593.2 397.1 595.7L337.5 607.6C336.6 607.8 335.6 607.9 334.6 607.9C326.6 607.9 320 601.4 320 593.3C320 592.3 320.1 591.4 320.3 590.4L332.2 530.8zM600.1 407.9L571.3 436.7L491.3 356.7L520.1 327.9C542.2 305.8 578 305.8 600.1 327.9C622.2 350 622.2 385.8 600.1 407.9z"/>
                                     </svg>
                                 </button>
@@ -944,7 +719,7 @@
                                     v-tippy="{content: 'Ficha Partido', placement: 'bottom'}"
                                     class="p-1 hover:bg-gray-200 rounded-lg transition dark:hover:bg-zinc-700 no-export"
                                 >
-                                    <svg class="w-7 h-7 text-orange-500" fill="currentColor" viewBox="0 0 512 512">
+                                    <svg class="w-6 h-6 text-orange-500" fill="currentColor" viewBox="0 0 512 512">
                                         <path d="M128 0C92.7 0 64 28.7 64 64l0 96 64 0 0-96 226.7 0L384 93.3l0 66.7 64 0 0-80c0-17-6.7-33.3-18.7-45.3L354.7 18.7C342.7 6.7 326.5 0 309.3 0L128 0zM384 352l0-32 0-32 0-160L256 128l0 96c0 17.7-14.3 32-32 32l-96 0 0 96 0 32 0 32 256 0zm-256 96l256 0c35.3 0 64-28.7 64-64l0-128c0-35.3-28.7-64-64-64l-64 0 0-64L128 0 64 0C28.7 0 0 28.7 0 64L0 384c0 35.3 28.7 64 64 64l64 0z"/>
                                     </svg>
                                 </button>
@@ -1150,431 +925,6 @@
                 </PrimaryButton>
         </template>
     </ModalLarge>
-    <ModalLargeXX :show="displayModalScore" :onClose="closeModalScore" :icon="'/img/pelota-de-futbol.png'">
-        <template #title>{{ formScore.equipo_h_name  }} VS {{ formScore.equipo_a_name  }}</template>
-        <template #message>Resultados</template>
-        <template #content>
-            <div class="grid sm:grid-cols-5 gap-2">
-                <div class="sm:col-span-2 flex items-center justify-between">
-                    <InputLabel :value="formScore.equipo_h_name" />
-                    <TextInput v-model="formScore.score_h" class="w-16 border-4" />
-                </div>
-                <div class="sm:col-span-1 flex items-center justify-center">
-                    <h3 class="text-lg font-bold">VS</h3>
-                </div>
-                <div class="sm:col-span-2 flex items-center justify-between">
-                    <InputLabel :value="formScore.equipo_a_name" />
-                    <TextInput v-model="formScore.score_a" class="w-16 border-4" />
-                </div>
-            </div>
-
-            <!-- Checkbox para activar tanda de penales -->
-            <div class="mt-4">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" v-model="formScore.has_penalties" class="w-5 h-5 text-yellow-600 rounded focus:ring-yellow-500" />
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Registrar tanda de penales</span>
-                </label>
-            </div>
-
-            <!-- Sección de Penales -->
-            <div v-if="formScore.has_penalties" class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-yellow-800 dark:text-yellow-200">
-                        Tanda de Penales
-                    </h3>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Rondas:</span>
-                        <TextInput v-model="formScore.penalty_rounds" type="number" min="1" max="10" class="w-16" />
-                        <span class="text-xs text-gray-500">({{ formScore.penalty_rounds * 2 }} patadas máximo)</span>
-                    </div>
-                </div>
-
-                <!-- Mostrar resultado de penales -->
-                <div class="flex items-center justify-center gap-4 mb-4">
-                    <div class="text-center">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Local</span>
-                        <div class="text-3xl font-bold text-green-600">
-                            {{ getPenaltyScore.penalty_h }}
-                        </div>
-                    </div>
-                    <span class="text-lg font-bold text-gray-400">-</span>
-                    <div class="text-center">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Visitante</span>
-                        <div class="text-3xl font-bold text-green-600">
-                            {{ getPenaltyScore.penalty_a }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Botón agregar penal -->
-                <button
-                    type="button"
-                    @click="addPenalty"
-                    :disabled="!canAddMorePenalties"
-                    :class="{ 'opacity-50 cursor-not-allowed': !canAddMorePenalties }"
-                    class="mb-4 inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md text-sm font-medium"
-                >
-                    <IconPlus class="w-4 h-4 mr-1" />
-                    Agregar Penal
-                </button>
-
-                <!-- Lista de penales -->
-                <div v-if="formScore.penalties.length > 0" class="space-y-2">
-                    <!-- Encabezados -->
-                    <div class="flex items-center gap-2 text-xs font-bold text-gray-500 px-2">
-                        <div class="w-12">#</div>
-                        <div class="flex-1">Equipo que Patea</div>
-                        <div class="flex-1">Pateador</div>
-                        <div class="flex-1">Resultado</div>
-                        <div class="flex-1">Arquero</div>
-                        <div class="w-8"></div>
-                    </div>
-
-                    <div v-for="(penalty, index) in formScore.penalties" :key="index" class="flex items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded-lg border">
-                        <div class="w-12">
-                            <span class="text-xs font-bold text-gray-500">Patada {{ index + 1 }}</span>
-                            <span class="block text-[10px] text-gray-400">(Ronda {{ penalty.round }})</span>
-                        </div>
-                        <div class="flex-1">
-                            <select
-                                v-model="penalty.team"
-                                class="form-select text-sm"
-                                :class="penalty.team === 'local' ? 'bg-blue-50 border-blue-300' : 'bg-red-50 border-red-300'"
-                            >
-                                <option value="local">LOCAL</option>
-                                <option value="visitor">VISITANTE</option>
-                            </select>
-                        </div>
-                        <div class="flex-1">
-                            <select
-                                v-model="penalty.kicker"
-                                class="form-select text-sm"
-                            >
-                                <option :value="null">Seleccionar...</option>
-                                <option v-for="player in getPlayersForTeam(penalty.team)" :key="player.value" :value="player.value">
-                                    {{ player.label }}
-                                </option>
-                            </select>
-                        </div>
-                        <div class="flex-1">
-                            <select
-                                v-model="penalty.result"
-                                class="form-select text-sm"
-                                :class="{
-                                    'border-green-500 text-green-600 font-bold': penalty.result === 'goal',
-                                    'border-red-500 text-red-600 font-bold': penalty.result === 'miss',
-                                    'border-orange-500 text-orange-600 font-bold': penalty.result === 'saved'
-                                }"
-                            >
-                                <option value="goal">ANOTADO</option>
-                                <option value="miss">FALLÓ</option>
-                                <option value="saved">TAPÓ</option>
-                            </select>
-                        </div>
-                        <div class="flex-1">
-                            <select
-                                v-model="penalty.goalkeeper"
-                                class="form-select text-sm"
-                            >
-                                <option :value="null">Sin arquero</option>
-                                <option v-for="player in getPlayersForTeam(penalty.team === 'local' ? 'visitor' : 'local')" :key="player.value" :value="player.value">
-                                    {{ player.label }}
-                                </option>
-                            </select>
-                        </div>
-                        <button
-                            type="button"
-                            @click="removePenalty(index)"
-                            class="p-2 text-red-500 hover:text-red-700"
-                        >
-                            <IconTrashLines class="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
-                <p v-else class="text-sm text-gray-500 text-center py-2">
-                    No hay penales agregados. Haz clic en "Agregar Penal" para registrar.
-                </p>
-            </div>
-
-            <div class="grid sm:grid-cols-4 gap-2 mt-4">
-                <div class="sm:col-span-2">
-                    <div class="w-full p-0 border border-default rounded-base shadow-xs dark:border-blue-900">
-                        <div class="table-responsive">
-                            <table class="w-full text-sm text-left rtl:text-right text-body se-score-table">
-                                <thead class="text-sm text-body border-b border-default dark:border-blue-900">
-                                    <th class="se-score-sticky se-score-sticky--role px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white"></th>
-                                    <th class="se-score-sticky se-score-sticky--name px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Nombre</th>
-                                    <th class="px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Goles</th>
-                                    <th class="px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Asistencias</th>
-                                    <th class="px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Atajadas directas</th>
-                                    <th class="px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Mejor jugador</th>
-                                    <th class="px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Sanciones</th>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(playerh, index) in playersh" :key="index" class="border-b border-default">
-                                        <td class="se-score-sticky se-score-sticky--role bg-white px-2 dark:bg-gray-800">
-                                            <div class="flex-col items-start gap-1">
-                                                <label class="inline-flex items-center cursor-pointer">
-                                                    <input type="radio" :name="'role_' + index + playerh.team_id + formScore.id" value="starter"
-                                                        v-model="playerh.match_role"
-                                                        :disabled="playerh.is_suspended"
-                                                        class="text-blue-600 focus:ring-blue-500">
-                                                    <span class="ml-1 text-xs">Titular</span>
-                                                </label>
-                                                <label class="inline-flex items-center cursor-pointer">
-                                                    <input type="radio" :name="'role_' + index + playerh.team_id + formScore.id" value="substitute"
-                                                        v-model="playerh.match_role"
-                                                        :disabled="playerh.is_suspended"
-                                                        class="text-green-600 focus:ring-green-500">
-                                                    <span class="ml-1 text-xs">Suplente</span>
-                                                </label>
-                                                <button @click="playerh.match_role = null" class="text-[11px] text-red-400 underline">
-                                                    No participo
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td class="se-score-sticky se-score-sticky--name px-6 py-4 font-medium text-heading whitespace-nowrap bg-neutral-secondary-soft">
-                                            <p class="font-medium text-heading truncate">{{ playerh.person.full_name }}</p>
-                                            <div v-if="playerh.is_suspended" class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/40 dark:text-red-300">
-                                                SUSPENDIDO
-                                            </div>
-                                            <p v-if="playerh.is_suspended && playerh.suspension" class="text-[10px] text-red-600 dark:text-red-300 leading-tight">
-                                                {{ suspensionSummary(playerh.suspension) }}
-                                            </p>
-                                            <p class="text-sm text-body truncate">
-                                                Camiseta: {{ playerh.jersey_number }}
-                                                Posición: {{ playerh.position }}
-                                                <span v-if="playerh.role_in_team == 'Capitán' || playerh.role_in_team == 'Sub-Capitán'" class="text-sm font-bold text-red-900">
-                                                    {{ ' / '+playerh.role_in_team }}
-                                                </span>
-                                            </p>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="flex items-center bg-gray-100 rounded py-2 dark:bg-gray-600 dark:text-white">
-                                                <button @click="playerh.goals > 0 ? playerh.goals-- : null" class="px-2">
-                                                    <IconMinus class="w-5 h-5 " />
-                                                </button>
-                                                <span class="px-2 font-bold">{{ playerh.goals }}</span>
-                                                <button @click="playerh.goals++" class="px-2">
-                                                    <IconPlus class="w-5 h-5 " />
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="flex items-center bg-gray-100 rounded py-2 dark:bg-gray-600 dark:text-white">
-                                                <button @click="playerh.assists > 0 ? playerh.assists-- : null" class="px-2">
-                                                    <IconMinus class="w-5 h-5 " />
-                                                </button>
-                                                <span class="px-2 font-bold">{{ playerh.assists }}</span>
-                                                <button @click="playerh.assists++" class="px-2">
-                                                    <IconPlus class="w-5 h-5 " />
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="flex items-center bg-gray-100 rounded py-2 dark:bg-gray-600 dark:text-white">
-                                                <button @click="playerh.saves > 0 ? playerh.saves-- : null" class="px-2">
-                                                    <IconMinus class="w-5 h-5 " />
-                                                </button>
-                                                <span class="px-2 font-bold">{{ playerh.saves }}</span>
-                                                <button @click="playerh.saves++" class="px-2">
-                                                    <IconPlus class="w-5 h-5 " />
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <button
-                                                @click="playerh.is_mvp = !playerh.is_mvp"
-                                                :class="playerh.is_mvp ? 'text-yellow-500' : 'text-gray-300'"
-                                                class="text-xl"
-                                                title="Jugador del Partido"
-                                            >
-                                                <IconStarFiller v-if="playerh.is_mvp" class="w-5 h-5" />
-                                                <IconStar v-else class="w-5 h-5" />
-                                            </button>
-                                        </td>
-                                        <td>
-                                            <div class="flex items-center gap-2">
-                                                <div class="flex items-center">
-                                                    <button type="button"
-                                                        @click="toggleYellowH(playerh)"
-                                                        :class="[
-                                                            playerh.yellow_cards > 0 ? 'bg-yellow-50 border-yellow-400' : 'bg-transparent border-gray-200',
-                                                            'relative flex items-center justify-center border rounded-lg h-10 w-10 transition-all'
-                                                        ]">
-                                                        <img :src="'/img/tarjeta-amarilla.png'" class="w-6" :class="playerh.yellow_cards === 0 ? 'opacity-60' : ''" />
-                                                        <span v-if="playerh.yellow_cards > 0"
-                                                            class="absolute -right-2 -top-2 bg-yellow-500 text-white text-[10px] font-bold px-1.5 rounded-full shadow-sm">
-                                                            {{ playerh.yellow_cards }}
-                                                        </span>
-                                                    </button>
-                                                </div>
-
-                                                <button type="button"
-                                                    @click="toggleRedH(playerh)"
-                                                    :class="[
-                                                        playerh.red_cards > 0 ? 'bg-red-100 border-red-500 ring-2 ring-red-200' : 'bg-transparent border-gray-200',
-                                                        'flex items-center justify-center border rounded-lg h-10 w-10 transition-all'
-                                                    ]">
-                                                    <img :src="'/img/tarjeta-roja.png'" class="w-6" :class="playerh.red_cards === 0 ? 'opacity-60' : ''" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="sm:col-span-2">
-                    <div class="w-full p-0 border border-default rounded-base shadow-xs dark:border-blue-900">
-                        <div class="table-responsive">
-                            <table class="w-full text-sm text-left rtl:text-right text-body se-score-table">
-                                <thead class="text-sm text-body border-b border-default dark:border-blue-900">
-                                    <th class="se-score-sticky se-score-sticky--role px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white"></th>
-                                    <th class="se-score-sticky se-score-sticky--name px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Nombre</th>
-                                    <th class="px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Goles</th>
-                                    <th class="px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Asistencias</th>
-                                    <th class="px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Atajadas directas</th>
-                                    <th class="px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Mejor jugador</th>
-                                    <th class="px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Sanciones</th>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(playera, index) in playersa" :key="index" class="border-b border-default">
-                                        <td class="se-score-sticky se-score-sticky--role bg-white px-2 dark:bg-gray-800">
-                                            <div class="flex-col items-start gap-1">
-                                                <label class="inline-flex items-center cursor-pointer">
-                                                    <input type="radio" :name="'role_' + index + playera.team_id + formScore.id" value="starter"
-                                                        v-model="playera.match_role"
-                                                        :disabled="playera.is_suspended"
-                                                        class="text-blue-600 focus:ring-blue-500">
-                                                    <span class="ml-1 text-xs">Titular</span>
-                                                </label>
-                                                <label class="inline-flex items-center cursor-pointer">
-                                                    <input type="radio" :name="'role_' + index + playera.team_id + formScore.id" value="substitute"
-                                                        v-model="playera.match_role"
-                                                        :disabled="playera.is_suspended"
-                                                        class="text-green-600 focus:ring-green-500">
-                                                    <span class="ml-1 text-xs">Suplente</span>
-                                                </label>
-                                                <button @click="playera.match_role = null" class="text-[10px] text-red-400 underline">
-                                                    No participo
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td class="se-score-sticky se-score-sticky--name px-6 py-4 font-medium text-heading whitespace-nowrap bg-neutral-secondary-soft">
-                                            <p class="font-medium text-heading truncate">{{ playera.person.full_name }}</p>
-                                            <div v-if="playera.is_suspended" class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/40 dark:text-red-300">
-                                                SUSPENDIDO
-                                            </div>
-                                            <p v-if="playera.is_suspended && playera.suspension" class="text-[10px] text-red-600 dark:text-red-300 leading-tight">
-                                                {{ suspensionSummary(playera.suspension) }}
-                                            </p>
-                                            <p class="text-sm text-body truncate">
-                                                Camiseta: {{ playera.jersey_number }}
-                                                Posición: {{ playera.position }}
-                                                <span v-if="playera.role_in_team == 'Capitán' || playera.role_in_team == 'Sub-Capitán'" class="text-sm font-bold text-red-900">
-                                                    {{ ' / '+playera.role_in_team }}
-                                                </span>
-                                            </p>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="flex items-center bg-gray-100 rounded py-2 dark:bg-gray-600 dark:text-white">
-                                                <button @click="playera.goals > 0 ? playera.goals-- : null" class="px-2">
-                                                    <IconMinus class="w-5 h-5 " />
-                                                </button>
-                                                <span class="px-2 font-bold">{{ playera.goals }}</span>
-                                                <button @click="playera.goals++" class="px-2">
-                                                    <IconPlus class="w-5 h-5 " />
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="flex items-center bg-gray-100 rounded py-2 dark:bg-gray-600 dark:text-white">
-                                                <button @click="playera.assists > 0 ? playera.assists-- : null" class="px-2">
-                                                    <IconMinus class="w-5 h-5 " />
-                                                </button>
-                                                <span class="px-2 font-bold">{{ playera.assists }}</span>
-                                                <button @click="playera.assists++" class="px-2">
-                                                    <IconPlus class="w-5 h-5 " />
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="flex items-center bg-gray-100 rounded py-2 dark:bg-gray-600 dark:text-white">
-                                                <button @click="playera.saves > 0 ? playera.saves-- : null" class="px-2">
-                                                    <IconMinus class="w-5 h-5 " />
-                                                </button>
-                                                <span class="px-2 font-bold">{{ playera.saves }}</span>
-                                                <button @click="playera.saves++" class="px-2">
-                                                    <IconPlus class="w-5 h-5 " />
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <button
-                                                @click="playera.is_mvp = !playera.is_mvp"
-                                                :class="playera.is_mvp ? 'text-yellow-500' : 'text-gray-300'"
-                                                class="text-xl"
-                                                title="Jugador del Partido"
-                                            >
-                                                <IconStarFiller v-if="playera.is_mvp" class="w-5 h-5" />
-                                                <IconStar v-else class="w-5 h-5" />
-                                            </button>
-                                        </td>
-                                        <td>
-                                            <div class="flex items-center gap-2">
-                                                <div class="flex items-center">
-                                                    <button type="button"
-                                                        @click="toggleYellowA(playera)"
-                                                        :class="[
-                                                            playera.yellow_cards > 0 ? 'bg-yellow-50 border-yellow-400' : 'bg-transparent border-gray-200',
-                                                            'relative flex items-center justify-center border rounded-lg h-10 w-10 transition-all'
-                                                        ]">
-                                                        <img :src="'/img/tarjeta-amarilla.png'" class="w-6" :class="playera.yellow_cards === 0 ? 'opacity-60' : ''" />
-                                                        <span v-if="playera.yellow_cards > 0"
-                                                            class="absolute -right-2 -top-2 bg-yellow-500 text-white text-[10px] font-bold px-1.5 rounded-full shadow-sm">
-                                                            {{ playera.yellow_cards }}
-                                                        </span>
-                                                    </button>
-                                                </div>
-
-                                                <button type="button"
-                                                    @click="toggleRedA(playera)"
-                                                    :class="[
-                                                        playera.red_cards > 0 ? 'bg-red-100 border-red-500 ring-2 ring-red-200' : 'bg-transparent border-gray-200',
-                                                        'flex items-center justify-center border rounded-lg h-10 w-10 transition-all'
-                                                    ]">
-                                                    <img :src="'/img/tarjeta-roja.png'" class="w-6" :class="playera.red_cards === 0 ? 'opacity-60' : ''" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </template>
-        <template #buttons>
-            <PrimaryButton
-                type="button"
-                @click="updateMatchScore"
-                :disabled="formScore.processing"
-            >
-                <div v-if="formScore.processing" class="mr-2">
-                    <svg class="w-5 h-5 animate-bounce-ball" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                        <path fill="currentColor" d="M481.3 424.1L409.7 419.3C404.5 419 399.4 420.4 395.2 423.5C391 426.6 388 430.9 386.8 436L369.2 505.6C353.5 509.8 337 512 320 512C303 512 286.5 509.8 270.8 505.6L253.2 436C251.9 431 248.9 426.6 244.8 423.5C240.7 420.4 235.5 419 230.3 419.3L158.7 424.1C141.1 396.9 130.2 364.9 128.3 330.5L189 292.3C193.4 289.5 196.6 285.3 198.2 280.4C199.8 275.5 199.6 270.2 197.7 265.4L171 198.8C192 173.2 219.3 153 250.7 140.9L305.9 186.9C309.9 190.2 314.9 192 320 192C325.1 192 330.2 190.2 334.1 186.9L389.3 140.9C420.6 153 448 173.2 468.9 198.8L442.2 265.4C440.3 270.2 440.1 275.5 441.7 280.4C443.3 285.3 446.6 289.5 450.9 292.3L511.6 330.5C509.7 364.9 498.8 396.9 481.2 424.1zM320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM334.1 250.3C325.7 244.2 314.3 244.2 305.9 250.3L258 285C249.6 291.1 246.1 301.9 249.3 311.8L267.6 368.1C270.8 378 280 384.7 290.4 384.7L349.6 384.7C360 384.7 369.2 378 372.4 368.1L390.7 311.8C393.9 301.9 390.4 291.1 382 285L334.1 250.2z"/>
-                    </svg>
-                </div>
-
-                <span>
-                    {{ formScore.processing ? 'Procesando resultados...' : 'Guardar resultados' }}
-                </span>
-            </PrimaryButton>
-        </template>
-    </ModalLargeXX>
     <ModalLargeX :show="displayModalMatchReport" :onClose="closeModalMatchReport" :icon="'/img/cita.png'" >
         <template #title>{{ formMatchReport.equipo_h_name  }} VS {{ formMatchReport.equipo_a_name  }}</template>
         <template #message>Generar Acta y Finalizar Partido</template>

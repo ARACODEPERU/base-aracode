@@ -9,14 +9,19 @@ use Tests\TestCase;
 |
 | La imagen diseñada del producto es lo primero que se ve en la tarjeta: va en
 | su propia franja, arriba, con la proporción reservada por CSS y sin ningún
-| degradado encima. El texto corto de apoyo dejó de pintarse —repetía lo que ya
-| dicen el nombre, las prestaciones y la imagen— y vive como texto alternativo
-| de la imagen.
+| degradado encima.
 |
-| Estas pruebas fijan esas dos reglas: que la imagen siga siendo la protagonista
-| (franja propia + texto alternativo, y siempre antes del bloque de texto) y que
-| la frase corta no vuelva a ocupar la tarjeta. La parte puramente visual
-| —tamaño, proporción, contraste— se comprueba en webpage-v2.css.
+| El home y /soluciones presentan el ecosistema con la MISMA tarjeta: la
+| compacta, tres por fila, que resume el producto con su frase corta (que es
+| además el texto alternativo de la imagen). La lista de prestaciones ya no se
+| pinta en ninguna de las dos: alargaba las tarjetas y dejaba el catálogo
+| distinto de la portada.
+|
+| Estas pruebas fijan esas reglas: la imagen es la protagonista (franja propia +
+| texto alternativo, y siempre antes del bloque de texto), el resumen va por la
+| frase corta y las dos páginas usan la misma rejilla. La parte puramente
+| visual —tamaño, proporción— se comprueba en webpage-v2.css y con la revisión
+| en Chrome.
 |
 */
 
@@ -36,7 +41,21 @@ function tarjetasProducto(string $html): array
     return $coincidencias[0];
 }
 
-it('pone la imagen del producto antes que el texto, con su texto alternativo', function (string $ruta, int $esperadas) {
+/**
+ * Clase de la rejilla que envuelve las tarjetas: el <div> con la rejilla que va
+ * justo antes de la primera tarjeta.
+ */
+function rejillaProductos(string $html): string
+{
+    $antes = substr($html, 0, strpos($html, 'ara-product-card'));
+    $inicio = strrpos($antes, '<div class="');
+
+    preg_match('#^<div class="([^"]+)"#', substr($antes, $inicio), $clase);
+
+    return $clase[1] ?? '';
+}
+
+it('pone la franja de la imagen antes que el texto, con su texto alternativo', function (string $ruta, int $esperadas) {
     $tarjetas = tarjetasProducto($this->get($ruta)->getContent());
 
     expect($tarjetas)->toHaveCount($esperadas);
@@ -47,55 +66,81 @@ it('pone la imagen del producto antes que el texto, con su texto alternativo', f
         expect(strpos($tarjeta, 'ara-product-media'))->toBeLessThan(strpos($tarjeta, 'ara-product-content'));
 
         // Los servicios no tienen imagen diseñada: su franja lleva degradado e
-        // icono, y su frase de apoyo sigue ahí porque no hay imagen que explique
-        // el servicio. Se comprueban en su propia prueba.
+        // icono, así que no hay texto alternativo que revisar. Se comprueban en
+        // su propia prueba.
         if (str_contains($tarjeta, 'ara-product-card--plano')) {
             expect($tarjeta)->not->toContain('<img');
 
             continue;
         }
 
-        // La imagen se describe (alt no vacío): es la que presenta el producto
-        // desde que su frase corta no se pinta.
+        // La imagen se describe (alt no vacío): es la que presenta el producto.
         preg_match('#<img\b[^>]*\balt="([^"]+)"#', $tarjeta, $alt);
 
         expect($alt)->not->toBeEmpty();
         expect(mb_strlen($alt[1]))->toBeGreaterThan(10);
-
-        // Nada de párrafos dentro de la tarjeta de producto: el texto es la
-        // lista de prestaciones.
-        expect($tarjeta)->not->toContain('ara-product-text');
     }
 })->with([
-    ['/soluciones', 6],
+    // Siete en /soluciones desde que el servicio de páginas web (`/paginas-web`)
+    // se sumó al ecosistema: cuatro productos y tres servicios.
+    ['/soluciones', 7],
     ['/', 3],
 ]);
 
-it('no pinta la frase corta del producto: la imagen es la que lo presenta', function (string $ruta, string $frase) {
+it('usa la misma tarjeta compacta en la portada y en el catálogo', function (string $ruta, int $esperadas) {
+    $tarjetas = tarjetasProducto($this->get($ruta)->getContent());
+
+    expect($tarjetas)->toHaveCount($esperadas);
+
+    foreach ($tarjetas as $tarjeta) {
+        expect($tarjeta)->toContain('ara-product-card--compacta');
+        expect($tarjeta)->toContain('ara-product-text');
+        expect($tarjeta)->not->toContain('ara-product-features');
+    }
+})->with([
+    ['/soluciones', 7],
+    ['/', 3],
+]);
+
+it('resume el producto con la frase corta, visible y como texto alternativo', function (string $ruta, string $frase) {
     $html = $this->get($ruta)->getContent();
 
     // `strip_tags` deja fuera el contenido de los atributos, así que si la frase
     // aparece es porque se está pintando como texto visible.
-    expect(strip_tags($html))->not->toContain($frase);
+    expect(strip_tags($html))->toContain($frase);
 
-    // Y sigue presente donde aporta: en el texto alternativo de la imagen.
+    // Y sigue describiendo la imagen del producto.
     expect($html)->toContain('alt="'.$frase.'"');
 })->with([
-    ['/soluciones', 'Plataforma SaaS para gestión y formación educativa completa.'],
     ['/', 'Plataforma SaaS para gestión y formación educativa.'],
+    ['/soluciones', 'Plataforma SaaS para gestión y formación educativa completa.'],
 ]);
+
+it('presenta las tarjetas con la rejilla del home: tres por fila', function () {
+    $catalogo = rejillaProductos($this->get('/soluciones')->getContent());
+    $portada = rejillaProductos($this->get('/')->getContent());
+
+    // La misma rejilla en las dos páginas: tres columnas desde `lg` y dos desde
+    // `md`, con la misma separación.
+    expect($catalogo)->toBe($portada);
+    expect($catalogo)->toContain('lg:grid-cols-3');
+});
 
 it('incorpora los servicios al mismo esquema, con su franja y sin imagen', function () {
     $tarjetas = tarjetasProducto($this->get('/soluciones')->getContent());
 
-    // Las dos últimas tarjetas son servicios de ARACODE: no tienen web propia ni
-    // imagen diseñada, así que su franja lleva degradado e icono; conservan su
-    // frase de apoyo porque no hay imagen que explique el servicio.
+    // Las tres últimas tarjetas son servicios de ARACODE: no tienen web propia
+    // ni imagen diseñada, así que su franja lleva degradado e icono; son la
+    // misma tarjeta compacta del resto.
+    expect(array_slice($tarjetas, 4))->toHaveCount(3);
+
     foreach (array_slice($tarjetas, 4) as $servicio) {
         expect($servicio)->toContain('ara-product-card--plano');
+        expect($servicio)->toContain('ara-product-card--compacta');
         expect($servicio)->toContain('ara-product-media');
         expect($servicio)->not->toContain('<img');
         expect($servicio)->toContain('ara-product-text');
+        expect($servicio)->not->toContain('ara-product-features');
         expect($servicio)->toContain('ara-product-cta');
     }
 });

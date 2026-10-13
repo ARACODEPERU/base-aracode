@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Tema claro / oscuro: se aplica antes de pintar, con la misma clave que el
+    resto del sitio ('inmobiliaria-propiedades-tema'), así que el tema elegido
+    viaja de una página a otra y al recargar en oscuro no se ve el destello
+    claro.
+-->
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('inmobiliaria-propiedades-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    })();
+</script>
+
+<!-- Inicio de la demo «Inmobiliaria», de formato SITIO WEB (cinco páginas
+     enlazadas): inicio, listado, ficha de inmueble, vende tu propiedad y
+     contacto. El diseño es propio de esta plantilla: tablero de fichas
+     técnicas, retícula de plano, datos en monoespaciada, sello de precio
+     inclinado y buscador dentro de la portada. -->
+
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Alameda Propiedades: departamentos y casas en venta y alquiler en Miraflores, San Isidro, Barranco, Surco, San Borja y La Molina, con asesor asignado, valoración sin costo y simulador de cuota.">
+<meta name="theme-color" content="#12161B">
+
+<title>Alameda Propiedades — Departamentos y casas en Lima</title>
+
+<link rel="preload" as="image" href="img/ciudad.webp">
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato barra__dato--horario">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+            Oficina: lunes a viernes de 9:00 a 19:00 · sábados de 10:00 a 14:00
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+5100000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (01) 000 0000
+            </a>
+
+            <ul class="redes" aria-label="Redes sociales de Alameda Propiedades">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de Alameda Propiedades">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de Alameda Propiedades">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de Alameda Propiedades">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de Alameda Propiedades">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="index.html" aria-label="Alameda Propiedades, inicio">
+            <span class="marca__sello" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V6.5L12 3l8 3.5V20"/><path d="M4 20h16"/><path d="M9.5 20v-5.5h5V20"/><path d="M8.5 9h2M13.5 9h2M8.5 12h2M13.5 12h2"/></svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Alameda</strong>
+                <span>Propiedades</span>
+            </span>
+        </a>
+
+        <div class="cabecera__acciones">
+            <nav class="menu" id="menu-principal" aria-label="Principal">
+                <ul>
+                    <li><a href="index.html" aria-current="page">Inicio</a></li>
+                    <li><a href="propiedades.html">Propiedades</a></li>
+                    <li><a href="vende-tu-propiedad.html">Vende tu propiedad</a></li>
+                    <li><a href="contacto.html" class="menu__contacto">Agenda una visita</a></li>
+                </ul>
+            </nav>
+
+            <a class="favoritos-boton" href="propiedades.html?favoritos=1" aria-label="Ver mis propiedades guardadas">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                <span class="favoritos-boton__conteo" data-favoritos-conteo hidden>0</span>
+            </a>
+
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false"
+                    aria-label="Cambiar a modo oscuro" title="Cambiar a modo oscuro">
+                <span class="tema-switch__icono tema-switch__icono--luna" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.7A8.6 8.6 0 0 1 9.3 3.5a8.6 8.6 0 1 0 11.2 11.2z"/></svg>
+                </span>
+                <span class="tema-switch__icono tema-switch__icono--sol" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+                </span>
+            </button>
+
+            <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+                <span class="sr-solo menu-boton__etiqueta">Abrir menú</span>
+                <svg class="menu-boton__abrir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                <svg class="menu-boton__cerrar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main id="contenido">
+
+<!-- =========================================================================
+     Portada: slider de tres fotos y buscador dentro del hero
+     ========================================================================= -->
+<section class="portada" data-carrusel aria-label="Portada de Alameda Propiedades">
+    <div class="portada__fondo" aria-hidden="true">
+        <ul class="portada__lista">
+            <li class="portada__diapositiva" data-diapositiva>
+                <img src="img/ciudad.webp" alt="Rascacielos de una ciudad al atardecer" width="1024" height="704" fetchpriority="high">
+            </li>
+            <li class="portada__diapositiva" data-diapositiva>
+                <img src="img/sala.webp" alt="Sala con dos sofás azules y piso de parquet" width="1024" height="704" loading="lazy">
+            </li>
+            <li class="portada__diapositiva" data-diapositiva>
+                <img src="img/casa.webp" alt="Fachada de una casa blanca" width="1024" height="704" loading="lazy">
+            </li>
+        </ul>
+        <span class="portada__velo"></span>
+    </div>
+
+    <div class="contenedor">
+        <div class="portada__contenido">
+            <p class="kicker kicker--claro">Inmobiliaria en Lima · Desde 2009</p>
+            <h1>Encuentra tu dirección y no solo una dirección.</h1>
+            <p class="portada__bajada">Departamentos y casas con ficha técnica completa, asesor asignado y visita acompañada. Publicamos lo que visitamos: superficie, mantenimiento y estado real del inmueble.</p>
+
+            <div class="portada__acciones">
+                <a class="boton" href="propiedades.html">Ver propiedades</a>
+                <a class="boton boton--linea" href="vende-tu-propiedad.html">Valorar mi propiedad</a>
+            </div>
+
+            <ul class="portada__garantias">
+                <li>Valoración sin costo y sin compromiso, en 48 horas.</li>
+                <li>Ficha con plano, medidas y gastos comunes declarados.</li>
+                <li>Un asesor responde el mismo día por WhatsApp.</li>
+            </ul>
+        </div>
+    </div>
+
+    <form class="contenedor buscador" action="propiedades.html" method="get" data-buscador aria-label="Buscar propiedades">
+        <div class="buscador__pestanas" role="group" aria-label="Buscar en venta o en alquiler">
+            <button class="buscador__pestana" type="button" data-operacion="venta" aria-pressed="true">Comprar</button>
+            <button class="buscador__pestana" type="button" data-operacion="alquiler" aria-pressed="false">Alquilar</button>
+            <input type="hidden" name="operacion" value="venta">
+        </div>
+
+        <div class="buscador__campos">
+            <label class="campo">
+                <span class="campo__nombre">Distrito</span>
+                <select name="distrito">
+                    <option value="">Todos los distritos</option>
+                    <option value="miraflores">Miraflores</option>
+                    <option value="san-isidro">San Isidro</option>
+                    <option value="barranco">Barranco</option>
+                    <option value="surco">Surco</option>
+                    <option value="san-borja">San Borja</option>
+                    <option value="la-molina">La Molina</option>
+                </select>
+            </label>
+
+            <label class="campo">
+                <span class="campo__nombre">Tipo</span>
+                <select name="tipo">
+                    <option value="">Departamento o casa</option>
+                    <option value="departamento">Departamento</option>
+                    <option value="casa">Casa</option>
+                </select>
+            </label>
+
+            <label class="campo">
+                <span class="campo__nombre">Dormitorios</span>
+                <select name="dormitorios">
+                    <option value="">Los que sean</option>
+                    <option value="1">1 dormitorio</option>
+                    <option value="2">2 dormitorios</option>
+                    <option value="3">3 dormitorios</option>
+                    <option value="4+">4 o más</option>
+                </select>
+            </label>
+
+            <button class="boton" type="submit">Buscar</button>
+        </div>
+
+        <p class="buscador__nota">8 inmuebles publicados hoy · Miraflores, San Isidro, Barranco, Surco, San Borja y La Molina</p>
+    </form>
+
+    <div class="portada__controles" role="group" aria-label="Controles de la portada">
+        <button class="portada__flecha" type="button" data-carrusel-anterior aria-label="Foto anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>
+        </button>
+        <button class="carrusel__punto" type="button" data-carrusel-punto="0" aria-label="Ver la foto 1 de 3" aria-current="true"></button>
+        <button class="carrusel__punto" type="button" data-carrusel-punto="1" aria-label="Ver la foto 2 de 3"></button>
+        <button class="carrusel__punto" type="button" data-carrusel-punto="2" aria-label="Ver la foto 3 de 3"></button>
+        <button class="portada__flecha" type="button" data-carrusel-siguiente aria-label="Foto siguiente">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
+        </button>
+    </div>
+</section>
+
+<!-- =========================================================================
+     Cifras
+     ========================================================================= -->
+<section class="cifras" aria-label="Cifras de Alameda Propiedades">
+    <div class="contenedor cifras__rejilla">
+        <p class="cifra">
+            <span class="cifra__valor" data-contador="420">420</span>
+            <span class="cifra__nombre">Propiedades vendidas desde 2009</span>
+        </p>
+        <p class="cifra">
+            <span class="cifra__valor" data-contador="640">640</span>
+            <span class="cifra__nombre">Familias con asesor asignado</span>
+        </p>
+        <p class="cifra">
+            <span class="cifra__valor" data-contador="12">12</span>
+            <span class="cifra__nombre">Distritos de Lima que atendemos</span>
+        </p>
+        <p class="cifra">
+            <span class="cifra__valor" data-contador="15" data-sufijo=" años">15 años</span>
+            <span class="cifra__nombre">Con oficina en Miraflores</span>
+        </p>
+    </div>
+</section>
+
+<!-- =========================================================================
+     Propiedades destacadas
+     ========================================================================= -->
+<section class="seccion seccion--plano" aria-labelledby="titulo-destacadas">
+    <div class="contenedor">
+        <div class="seccion__cabecera js-revela">
+            <div>
+                <p class="kicker">01 / Destacadas</p>
+                <h2 id="titulo-destacadas">Las fichas que acabamos de abrir</h2>
+                <p>Cuatro visitas por semana, y cada ficha se publica con el informe de la visita: medidas, estado, mantenimiento y qué se negocia.</p>
+            </div>
+            <a class="enlace-mas" href="propiedades.html">Ver las 8 propiedades</a>
+        </div>
+
+        <div class="rejilla-propiedades">
+            <article class="propiedad js-revela" data-propiedad data-codigo="AL-2401" data-operacion="venta" data-distrito="miraflores" data-tipo="departamento" data-dormitorios="3" data-area="120" data-precio="690000" data-busqueda="departamento en miraflores con tres dormitorios y cocina equipada">
+                <p class="propiedad__cinta">
+                    <span class="etiqueta etiqueta--venta">Venta</span>
+                    <span>AL-2401</span>
+                </p>
+                <div class="propiedad__foto">
+                    <img src="img/comedor.webp" alt="Mesa de centro y sillones junto a un ventanal panorámico" width="1200" height="800" loading="lazy">
+                    <p class="propiedad__sello">S/ 690 000</p>
+                    <button class="favorito" type="button" data-favorito="AL-2401" data-etiqueta="Departamento en Miraflores" aria-pressed="false" aria-label="Guardar en favoritos: departamento en Miraflores">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                    </button>
+                </div>
+                <div class="propiedad__cuerpo">
+                    <ul class="propiedad__datos">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M6 10V7h12v3"/></svg>3 dorm.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 12h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2ZM7 12V6.5h4.5V12"/></svg>2 baños</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h16v5M4 9h16v11H4zM9 20v-5h6v5"/></svg>120 m²</li>
+                    </ul>
+                    <h3 class="propiedad__nombre"><a href="propiedad-los-alisos.html">Departamento en Miraflores</a></h3>
+                    <p class="propiedad__lugar">Av. Los Alisos · Miraflores</p>
+                    <div class="propiedad__pie">
+                        <span class="propiedad__codigo">6.º piso · 1 cochera</span>
+                        <a class="enlace-mas" href="propiedad-los-alisos.html">Ver ficha</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="propiedad js-revela" data-propiedad data-codigo="AL-2402" data-operacion="venta" data-distrito="san-isidro" data-tipo="departamento" data-dormitorios="2" data-area="95" data-precio="585000" data-busqueda="departamento en san isidro con dos dormitorios y comedor luminoso">
+                <p class="propiedad__cinta">
+                    <span class="etiqueta etiqueta--venta">Venta</span>
+                    <span>AL-2402</span>
+                </p>
+                <div class="propiedad__foto">
+                    <img src="img/comedor-luminoso.webp" alt="Comedor con mesa redonda en un ambiente luminoso" width="900" height="600" loading="lazy">
+                    <p class="propiedad__sello">S/ 585 000</p>
+                    <button class="favorito" type="button" data-favorito="AL-2402" data-etiqueta="Departamento en San Isidro" aria-pressed="false" aria-label="Guardar en favoritos: departamento en San Isidro">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                    </button>
+                </div>
+                <div class="propiedad__cuerpo">
+                    <ul class="propiedad__datos">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M6 10V7h12v3"/></svg>2 dorm.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 12h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2ZM7 12V6.5h4.5V12"/></svg>2 baños</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h16v5M4 9h16v11H4zM9 20v-5h6v5"/></svg>95 m²</li>
+                    </ul>
+                    <h3 class="propiedad__nombre">Departamento en San Isidro</h3>
+                    <p class="propiedad__lugar">Calle Bulevar · San Isidro</p>
+                    <div class="propiedad__pie">
+                        <span class="propiedad__codigo">4.º piso · con ascensor</span>
+                        <a class="enlace-mas" href="contacto.html?propiedad=AL-2402">Pedir visita</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="propiedad js-revela" data-propiedad data-codigo="AL-2405" data-operacion="venta" data-distrito="la-molina" data-tipo="casa" data-dormitorios="4" data-area="240" data-precio="1250000" data-busqueda="casa en la molina con cuatro dormitorios y jardín">
+                <p class="propiedad__cinta">
+                    <span class="etiqueta etiqueta--venta">Venta</span>
+                    <span>AL-2405</span>
+                </p>
+                <div class="propiedad__foto">
+                    <img src="img/casa-blanca.webp" alt="Fachada blanca de una casa" width="900" height="600" loading="lazy">
+                    <p class="propiedad__sello">S/ 1 250 000</p>
+                    <button class="favorito" type="button" data-favorito="AL-2405" data-etiqueta="Casa en La Molina" aria-pressed="false" aria-label="Guardar en favoritos: casa en La Molina">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3 4.9 13a4.8 4.8 0 0 1 6.8-6.8l.3.3.3-.3A4.8 4.8 0 0 1 19.1 13Z"/></svg>
+                    </button>
+                </div>
+                <div class="propiedad__cuerpo">
+                    <ul class="propiedad__datos">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M6 10V7h12v3"/></svg>4 dorm.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 12h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2ZM7 12V6.5h4.5V12"/></svg>4 baños</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h16v5M4 9h16v11H4zM9 20v-5h6v5"/></svg>240 m²</li>
+                    </ul>
+                    <h3 class="propiedad__nombre">Casa en La Molina</h3>
+                    <p class="propiedad__lugar">Calle Los Nogales · La Molina</p>
+                    <div class="propiedad__pie">
+                        <span class="propiedad__codigo">3 pisos · 2 cocheras</span>
+                        <a class="enlace-mas" href="contacto.html?propiedad=AL-2405">Pedir visita</a>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================================================
+     Distritos
+     ========================================================================= -->
+<section class="seccion" aria-labelledby="titulo-distritos">
+    <div class="contenedor">
+        <div class="seccion__cabecera js-revela">
+            <div>
+                <p class="kicker">02 / Distritos</p>
+                <h2 id="titulo-distritos">Dónde tenemos inmuebles hoy</h2>
+                <p>El precio es el más bajo publicado en cada distrito y sirve de referencia, no de promesa.</p>
+            </div>
+        </div>
+
+        <div class="distritos js-revela">
+            <a class="distrito" href="propiedades.html?distrito=miraflores">
+                <span class="distrito__nombre">Miraflores</span>
+                <span class="distrito__cifra">3 inmuebles publicados</span>
+                <span class="distrito__precio">Desde S/ 2 900 / mes</span>
+            </a>
+            <a class="distrito" href="propiedades.html?distrito=san-isidro">
+                <span class="distrito__nombre">San Isidro</span>
+                <span class="distrito__cifra">1 inmueble publicado</span>
+                <span class="distrito__precio">Desde S/ 585 000</span>
+            </a>
+            <a class="distrito" href="propiedades.html?distrito=barranco">
+                <span class="distrito__nombre">Barranco</span>
+                <span class="distrito__cifra">2 inmuebles publicados</span>
+                <span class="distrito__precio">Desde S/ 1 850 / mes</span>
+            </a>
+            <a class="distrito" href="propiedades.html?distrito=surco">
+                <span class="distrito__nombre">Surco</span>
+                <span class="distrito__cifra">1 inmueble publicado</span>
+                <span class="distrito__precio">Desde S/ 520 000</span>
+            </a>
+            <a class="distrito" href="propiedades.html?distrito=san-borja">
+                <span class="distrito__nombre">San Borja</span>
+                <span class="distrito__cifra">1 inmueble publicado</span>
+                <span class="distrito__precio">Desde S/ 980 000</span>
+            </a>
+            <a class="distrito" href="propiedades.html?distrito=la-molina">
+                <span class="distrito__nombre">La Molina</span>
+                <span class="distrito__cifra">1 inmueble publicado</span>
+                <span class="distrito__precio">Desde S/ 1 250 000</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================================================
+     Compra y venta
+     ========================================================================= -->
+<section class="seccion seccion--grave" aria-labelledby="titulo-camino">
+    <div class="contenedor">
+        <div class="seccion__cabecera js-revela">
+            <div>
+                <p class="kicker">03 / El camino</p>
+                <h2 id="titulo-camino">Compra, alquila o vende: el mismo acompañamiento</h2>
+            </div>
+        </div>
+
+        <div class="bloques">
+            <div class="bloque js-revela">
+                <h3>Si estás buscando</h3>
+                <ul class="bloque__lista">
+                    <li>Filtramos la cartera por lo que de verdad puedes pagar, no por lo que te gustaría.</li>
+                    <li>Visitamos contigo y levantamos un acta de cada visita, con fotos y observaciones.</li>
+                    <li>Revisamos el título, el HR y PU y las deudas del inmueble antes de la oferta.</li>
+                </ul>
+                <a class="enlace-mas" href="propiedades.html">Ver propiedades</a>
+            </div>
+
+            <div class="bloque bloque--lima js-revela">
+                <h3>Si estás vendiendo</h3>
+                <ul class="bloque__lista">
+                    <li>Valoración con tres comparables reales del mismo distrito, sin costo.</li>
+                    <li>Fotos, plano y ficha técnica hechos por nosotros: publicamos lo que visitamos.</li>
+                    <li>Filtramos a los interesados para que no reciba visitas de curiosos.</li>
+                </ul>
+                <a class="enlace-mas" href="vende-tu-propiedad.html">Valorar mi propiedad</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================================================
+     Financiamiento
+     ========================================================================= -->
+<section class="seccion seccion--tinta" aria-labelledby="titulo-financiamiento">
+    <div class="contenedor">
+        <div class="seccion__cabecera js-revela">
+            <div>
+                <p class="kicker">04 / Financiamiento</p>
+                <h2 id="titulo-financiamiento">Simula la cuota antes de decidir</h2>
+                <p>La ficha de cada inmueble trae un simulador que reparte el precio entre inicial y saldo, y muestra la cuota mes a mes con la tasa que elijas.</p>
+            </div>
+            <a class="boton" href="propiedad-los-alisos.html#simulador">Abrir el simulador</a>
+        </div>
+
+        <div class="financiamiento js-revela">
+            <p class="financiamiento__dato"><strong>20 %</strong><span>Inicial típica en los créditos que acompañamos</span></p>
+            <p class="financiamiento__dato"><strong>9,5 %</strong><span>Tasa anual de referencia de la banca local</span></p>
+            <p class="financiamiento__dato"><strong>25 años</strong><span>Plazo máximo de un crédito hipotecario</span></p>
+            <p class="financiamiento__dato"><strong>0</strong><span>Costo por armarte el expediente hipotecario con nosotros</span></p>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================================================
+     Confianza (foto vertical)
+     ========================================================================= -->
+<section class="seccion" aria-labelledby="titulo-confianza">
+    <div class="contenedor banda">
+        <div class="retrato js-revela">
+            <img src="img/sala-vertical.webp" alt="Rincón de una sala con sillón y plantas junto a la ventana" width="819" height="1024" loading="lazy">
+        </div>
+
+        <div class="js-revela">
+            <p class="kicker">05 / Nuestro compromiso</p>
+            <h2 id="titulo-confianza">La ficha manda</h2>
+            <ul class="lista-datos">
+                <li><strong>Medidas verificadas:</strong> la superficie de la ficha es la del plano levantado en la visita, no la del folleto anterior.</li>
+                <li><strong>Gastos declarados:</strong> mantenimiento, arbitrios y deudas del inmueble van escritos antes de la primera visita.</li>
+                <li><strong>Un asesor por inmueble:</strong> la misma persona responde WhatsApp, correo y llamadas de la operación completa.</li>
+                <li><strong>Sin comisión por adelantado:</strong> cobramos al firmar la minuta o el contrato, nunca antes.</li>
+            </ul>
+            <p class="seccion__pie"><a class="boton boton--grafito" href="vende-tu-propiedad.html">Conoce cómo trabajamos</a></p>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================================================
+     Opiniones
+     ========================================================================= -->
+<section class="seccion seccion--grave" aria-labelledby="titulo-opiniones">
+    <div class="contenedor">
+        <div class="seccion__cabecera js-revela">
+            <div>
+                <p class="kicker">06 / Opiniones</p>
+                <h2 id="titulo-opiniones">Lo que dicen quienes ya cerraron</h2>
+                <p>Los testimonios son de ejemplo, con iniciales: en la demo no se publican datos ni caras de clientes reales.</p>
+            </div>
+        </div>
+
+        <div class="opiniones">
+            <figure class="opinion js-revela">
+                <span class="estrellas" aria-label="5 de 5 estrellas">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                </span>
+                <blockquote>«Vendimos el departamento en cinco semanas y con el precio que nos pusieron en la valoración. Lo que más ayudó fue el informe de la visita: llegaba gente que ya sabía lo que iba a ver.»</blockquote>
+                <figcaption class="opinion__autor">
+                    <span class="opinion__iniciales" aria-hidden="true">MQ</span>
+                    <span>
+                        <span class="opinion__nombre">M. Q.</span>
+                        <span class="opinion__rol">Vendedora · Miraflores</span>
+                    </span>
+                </figcaption>
+            </figure>
+
+            <figure class="opinion js-revela">
+                <span class="estrellas" aria-label="5 de 5 estrellas">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                </span>
+                <blockquote>«Buscábamos alquiler con un presupuesto ajustado y en dos visitas ya teníamos dónde. Nos avisaron de los gastos comunes y del ruido de la avenida antes de firmar.»</blockquote>
+                <figcaption class="opinion__autor">
+                    <span class="opinion__iniciales" aria-hidden="true">LR</span>
+                    <span>
+                        <span class="opinion__nombre">L. R.</span>
+                        <span class="opinion__rol">Inquilina · Barranco</span>
+                    </span>
+                </figcaption>
+            </figure>
+
+            <figure class="opinion js-revela">
+                <span class="estrellas" aria-label="4 de 5 estrellas">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/></svg>
+                </span>
+                <blockquote>«Con la administración del alquiler dejé de preocuparme por la cobranza. La liquidación llega el mismo día y con el detalle de cada gasto.»</blockquote>
+                <figcaption class="opinion__autor">
+                    <span class="opinion__iniciales" aria-hidden="true">JA</span>
+                    <span>
+                        <span class="opinion__nombre">J. A.</span>
+                        <span class="opinion__rol">Propietario · San Isidro</span>
+                    </span>
+                </figcaption>
+            </figure>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================================================
+     Tarifas de referencia
+     ========================================================================= -->
+<section class="seccion seccion--plano" aria-labelledby="titulo-tarifas">
+    <div class="contenedor">
+        <div class="seccion__cabecera js-revela">
+            <div>
+                <p class="kicker">07 / Tarifas</p>
+                <h2 id="titulo-tarifas">Lo que cobramos, escrito antes de empezar</h2>
+                <p>Son tarifas de referencia: el porcentaje final se acuerda según el inmueble y queda en el contrato de encargo.</p>
+            </div>
+        </div>
+
+        <div class="tarifas">
+            <div class="tarifa js-revela">
+                <h3>Comisión por venta</h3>
+                <p class="tarifa__precio">3 %<small>Del valor de venta, al firmar</small></p>
+                <ul>
+                    <li>Valoración con tres comparables del distrito</li>
+                    <li>Fotos, plano y ficha técnica del inmueble</li>
+                    <li>Visitas acompañadas y filtradas</li>
+                    <li>Negociación y seguimiento hasta la minuta</li>
+                </ul>
+                <a class="boton boton--grafito" href="vende-tu-propiedad.html">Valorar mi propiedad</a>
+            </div>
+
+            <div class="tarifa tarifa--destacada js-revela">
+                <h3>Comisión por alquiler</h3>
+                <p class="tarifa__precio">50 %<small>De un mes de renta, al firmar</small></p>
+                <ul>
+                    <li>Publicación y filtro de interesados</li>
+                    <li>Verificación de ingresos y referencias</li>
+                    <li>Contrato y entrega del inmueble</li>
+                    <li>Inventario firmado con fotos</li>
+                </ul>
+                <a class="boton" href="contacto.html">Quiero alquilar</a>
+            </div>
+
+            <div class="tarifa js-revela">
+                <h3>Administración de alquiler</h3>
+                <p class="tarifa__precio">8 %<small>De la renta mensual</small></p>
+                <ul>
+                    <li>Cobranza y recordatorios</li>
+                    <li>Coordinación de mantenimiento</li>
+                    <li>Liquidación mensual con detalle</li>
+                    <li>Renovación y actualización del contrato</li>
+                </ul>
+                <a class="boton boton--grafito" href="contacto.html?propiedad=">Consultar</a>
+            </div>
+        </div>
+
+        <div class="tabla-envoltura js-revela">
+            <table class="tabla">
+                <caption>Qué incluye cada servicio, en una mirada</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Tramo del servicio</th>
+                        <th scope="col">Venta</th>
+                        <th scope="col">Alquiler</th>
+                        <th scope="col">Administración</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">Valoración y ficha técnica</th>
+                        <td>Incluido</td>
+                        <td>Incluido</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Fotos, plano y publicación</th>
+                        <td>Incluido</td>
+                        <td>Incluido</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Visitas acompañadas</th>
+                        <td>Sin límite</td>
+                        <td>Sin límite</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Verificación del inquilino o comprador</th>
+                        <td>Incluido</td>
+                        <td>Incluido</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Cobranza mensual</th>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>Incluido</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Liquidación al propietario</th>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>Mensual</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="nota-demo">Tarifas de referencia con IGV no incluido. En la demo no se cobra nada: son números de ejemplo para mostrar la tabla de precios.</p>
+    </div>
+</section>
+
+<!-- =========================================================================
+     Preguntas frecuentes
+     ========================================================================= -->
+<section class="seccion" aria-labelledby="titulo-preguntas">
+    <div class="contenedor">
+        <div class="seccion__cabecera js-revela">
+            <div>
+                <p class="kicker">08 / Preguntas</p>
+                <h2 id="titulo-preguntas">Antes de escribirnos</h2>
+            </div>
+        </div>
+
+        <div class="preguntas js-revela">
+            <details class="pregunta" open>
+                <summary>¿La valoración de mi propiedad tiene costo?</summary>
+                <div class="pregunta__cuerpo">
+                    <p>No. La valoración incluye la visita, tres comparables del mismo distrito y un informe con el precio sugerido. No compromete a firmar nada: si decides no publicar, el informe es tuyo igual.</p>
+                </div>
+            </details>
+
+            <details class="pregunta">
+                <summary>¿Puedo vender por mi cuenta y pedirles solo la ficha?</summary>
+                <div class="pregunta__cuerpo">
+                    <p>Sí, se puede contratar la ficha técnica con fotos y plano sin comisión de venta. El precio de ese servicio suelto se cotiza según el tamaño del inmueble.</p>
+                </div>
+            </details>
+
+            <details class="pregunta">
+                <summary>¿Cuánto demora una venta en Lima?</summary>
+                <div class="pregunta__cuerpo">
+                    <p>En nuestra cartera, un departamento bien valorado tarda entre cinco y diez semanas en encontrar comprador, y de cuatro a seis semanas más el trámite notarial y registral.</p>
+                </div>
+            </details>
+
+            <details class="pregunta">
+                <summary>¿Acompañan créditos hipotecarios?</summary>
+                <div class="pregunta__cuerpo">
+                    <p>Sí. Armamos el expediente con el banco que mejor tasa ofrezca ese mes y usamos el simulador de la ficha para que veas la cuota antes de ofertar. No cobramos por ese acompañamiento.</p>
+                </div>
+            </details>
+
+            <details class="pregunta">
+                <summary>¿Atienden distritos fuera de la lista?</summary>
+                <div class="pregunta__cuerpo">
+                    <p>Publicamos en seis distritos y atendemos encargos en doce. Si tu inmueble está fuera de la lista, escríbenos igual: decimos con franqueza si podemos o no tomar el encargo.</p>
+                </div>
+            </details>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================================================
+     Cierre
+     ========================================================================= -->
+<section class="cierre" aria-labelledby="titulo-cierre">
+    <div class="contenedor cierre__interior">
+        <div>
+            <p class="kicker kicker--claro">Agenda</p>
+            <h2 id="titulo-cierre">Visitas de lunes a sábado, con cita</h2>
+            <p>Escríbenos con el código del inmueble (por ejemplo AL-2401) y coordinamos la visita en el día.</p>
+        </div>
+        <div class="cierre__acciones">
+            <a class="boton" href="contacto.html?propiedad=AL-2401">Agendar visita</a>
+            <a class="boton boton--linea" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informaci%C3%B3n%20de%20una%20propiedad" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor">
+        <div class="pie__rejilla">
+            <div>
+                <div class="pie__marca">
+                    <span class="marca__sello" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V6.5L12 3l8 3.5V20"/><path d="M4 20h16"/><path d="M9.5 20v-5.5h5V20"/></svg>
+                    </span>
+                    <span class="marca__texto">
+                        <strong>Alameda</strong>
+                        <span>Propiedades</span>
+                    </span>
+                </div>
+                <p class="pie__nota">Inmobiliaria con oficina en Miraflores. Publicamos fichas verificadas, acompañamos la visita y cobramos al cerrar la operación.</p>
+                <ul class="redes" aria-label="Redes sociales de Alameda Propiedades">
+                    <li>
+                        <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de Alameda Propiedades">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de Alameda Propiedades">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de Alameda Propiedades">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de Alameda Propiedades">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div>
+                <h2>Propiedades</h2>
+                <ul class="pie__enlaces">
+                    <li><a href="propiedades.html">Todas las propiedades</a></li>
+                    <li><a href="propiedades.html?operacion=venta">En venta</a></li>
+                    <li><a href="propiedades.html?operacion=alquiler">En alquiler</a></li>
+                    <li><a href="propiedad-los-alisos.html">Ficha destacada</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h2>Distritos</h2>
+                <ul class="pie__enlaces">
+                    <li><a href="propiedades.html?distrito=miraflores">Miraflores</a></li>
+                    <li><a href="propiedades.html?distrito=san-isidro">San Isidro</a></li>
+                    <li><a href="propiedades.html?distrito=barranco">Barranco</a></li>
+                    <li><a href="propiedades.html?distrito=surco">Surco</a></li>
+                    <li><a href="propiedades.html?distrito=san-borja">San Borja</a></li>
+                    <li><a href="propiedades.html?distrito=la-molina">La Molina</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h2>Oficina</h2>
+                <ul class="pie__enlaces">
+                    <li>Av. José Larco 345, of. 802, Miraflores</li>
+                    <li><a href="tel:+5100000000">(01) 000 0000</a></li>
+                    <li><a href="mailto:hola@alamedapropiedades.pe">hola@alamedapropiedades.pe</a></li>
+                    <li>Lunes a viernes de 9:00 a 19:00</li>
+                    <li><a href="contacto.html">Agenda una visita</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pie__legal">
+            <p>© 2026 Alameda Propiedades · Datos de ejemplo</p>
+            <p>Demostración del Banco de Plantillas Web de ARACODE</p>
+        </div>
+    </div>
+</footer>
+
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informaci%C3%B3n%20de%20una%20propiedad" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp a Alameda Propiedades">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js"></script>
+</body>
+</html>

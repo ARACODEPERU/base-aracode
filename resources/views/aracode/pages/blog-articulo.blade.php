@@ -78,11 +78,27 @@
                 {{-- Main Content (3/4) --}}
                 <article class="lg:col-span-3">
                     {{-- Featured Image --}}
+                    {{--
+                        La imagen se muestra ENTERA, con su propia proporción.
+
+                        Antes iba dentro de una caja 16/9 con `object-cover`, y las
+                        imágenes del blog llegan en 3/2 (1536 × 1024): al llenar el
+                        ancho sobraba altura, así que se recortaba cerca del 15 %
+                        por arriba y por abajo. En un diseño que trae su propio
+                        logotipo arriba y remates en los bordes, ese recorte se
+                        nota; además la imagen del artículo es contenido, no una
+                        miniatura decorativa.
+
+                        En las tarjetas del listado (`blog.blade.php`) y en las
+                        miniaturas de «Populares» sí se mantiene la caja de
+                        proporción fija: ahí la imagen presenta el artículo y la
+                        alineación de la rejilla importa más.
+                    --}}
                     @if($article->imagen)
                         <div class="rounded-2xl overflow-hidden mb-8 shadow-lg">
-                            <img src="{{ $article->imagen }}" 
-                                 alt="{{ $article->title }}" 
-                                 class="w-full aspect-video object-cover"
+                            <img src="{{ $article->imagen }}"
+                                 alt="{{ $article->title }}"
+                                 class="w-full h-auto"
                                  loading="lazy">
                         </div>
                     @endif

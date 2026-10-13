@@ -266,7 +266,6 @@
 /* --- Captura de la plantilla --- */
 
 .plt-card__media {
-    position: relative;
     /* 16/10: la medida en que se preparan las capturas */
     aspect-ratio: 16 / 10;
     overflow: hidden;
@@ -303,46 +302,25 @@
     letter-spacing: 0.01em;
 }
 
-.plt-card__etiqueta {
-    position: absolute;
-    top: 0.75rem;
-    left: 0.75rem;
-    display: inline-flex;
+/* --- Etiquetas de la tarjeta: formato, rubro y «Destacada» ---
+
+   Van en una fila al inicio del cuerpo, **no** encima de la captura: así la
+   captura se ve entera —es lo primero que mira quien elige plantilla— y el rubro
+   queda junto al nombre, que es donde se lee.
+
+   La fila abre con el formato: es lo que el cliente compara contra el plan que
+   va a contratar, así que se pinta como hashtag en un chip oscuro que no se
+   confunde con las etiquetas del rubro (esas son claras, en minúscula y van al
+   pie de la tarjeta) ni con «Destacada», que va en el verde de la marca.
+*/
+
+.plt-card__chips {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.3rem 0.7rem;
-    border-radius: 9999px;
-    background: rgba(6, 14, 45, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #ffffff;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    margin: 0 0 0.75rem;
 }
-
-.plt-card__destacada {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    display: inline-flex;
-    align-items: center;
-    padding: 0.3rem 0.7rem;
-    border-radius: 9999px;
-    background: var(--plt-green);
-    color: #ffffff;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
-/* --- Formato: landing o sitio web ---
-
-   Es lo que el cliente compara contra el plan que va a contratar, así que se
-   pinta como hashtag en un chip oscuro que no se confunde con las etiquetas del
-   rubro (esas son grises y van al pie de la tarjeta).
-*/
 
 .plt-tipo {
     display: inline-flex;
@@ -363,8 +341,36 @@
     border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
-.plt-card__formato {
-    margin: 0 0 0.6rem;
+/* El rubro no es el formato ni las palabras clave: chip claro con filete y en
+   mayúsculas, para leerse como categoría y no como etiqueta del pie. */
+.plt-card__etiqueta {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.7rem;
+    border-radius: 9999px;
+    border: 1px solid var(--plt-line);
+    background: var(--plt-mist);
+    color: var(--plt-slate);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* Distintivo de estado, no de rubro: el verde de la marca. */
+.plt-card__destacada {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.7rem;
+    border-radius: 9999px;
+    background: var(--plt-green);
+    color: #ffffff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
 }
 
 /* --- Cuerpo de la tarjeta --- */

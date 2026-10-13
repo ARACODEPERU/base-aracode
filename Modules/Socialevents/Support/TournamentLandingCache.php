@@ -32,6 +32,26 @@ final class TournamentLandingCache
     public static function forget(int $editionId): void
     {
         Cache::forget(self::key($editionId));
+
+        // El detalle partido a partido de cada jugador (modal de la landing) se
+        // cachea por jugador y categoría. Los almacenes de caché habituales no
+        // permiten borrar por prefijo, así que se sube una versión por edición:
+        // las claves anteriores quedan abandonadas y el siguiente request
+        // recalcula con las estadísticas corregidas.
+        Cache::forever(self::versionKey($editionId), self::version($editionId) + 1);
+    }
+
+    /**
+     * Versión de caché de los detalles de jugador de la edición.
+     */
+    public static function version(int $editionId): int
+    {
+        return (int) Cache::get(self::versionKey($editionId), 0);
+    }
+
+    private static function versionKey(int $editionId): string
+    {
+        return "tournament_landing_players_version_{$editionId}";
     }
 
     /**
@@ -39,7 +59,7 @@ final class TournamentLandingCache
      */
     public static function playerKey(int $editionId, int $playerId, string $category): string
     {
-        return "tournament_landing_player_{$editionId}_{$playerId}_{$category}";
+        return "tournament_landing_player_{$editionId}_v".self::version($editionId)."_{$playerId}_{$category}";
     }
 
     /**

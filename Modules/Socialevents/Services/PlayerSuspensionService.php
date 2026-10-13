@@ -4,6 +4,7 @@ namespace Modules\Socialevents\Services;
 
 use Carbon\CarbonInterface;
 use Modules\Socialevents\Entities\EventEditionMatch;
+use Modules\Socialevents\Entities\EventEditionMatchParticipation;
 use Modules\Socialevents\Entities\EventEditionPlayerExclusion;
 use Modules\Socialevents\Entities\EventEditionPlayerSuspension;
 use Modules\Socialevents\Entities\EventEditionTeamPlayer;
@@ -211,6 +212,22 @@ class PlayerSuspensionService
                 $participating[] = (int) $p['person_id'];
             }
         }
+
+        if (empty($participating)) {
+            return [];
+        }
+
+        // Corrección de acta: los jugadores que ya estaban registrados en este
+        // partido no se consideran nuevos. El bloqueo por suspensión evita que
+        // se INSCRIBA a un jugador suspendido, no que se corrija un acta previa
+        // (por ejemplo, al arreglar un gol de un partido ya finalizado).
+        $alreadyRegistered = EventEditionMatchParticipation::query()
+            ->where('match_id', $match->id)
+            ->pluck('player_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $participating = array_values(array_diff($participating, $alreadyRegistered));
 
         if (empty($participating)) {
             return [];

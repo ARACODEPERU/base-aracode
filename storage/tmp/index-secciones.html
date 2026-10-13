@@ -1,0 +1,95 @@
+<!-- Destacados: cuatro productos del catálogo, con su precio, su valoración y su
+     botón de añadir a la canasta. La rejilla la escribe el mismo guion que
+     mantiene el catálogo, para que las dos copias no se separen. -->
+<section class="seccion" id="destacados">
+    <div class="contenedor">
+        <header class="bloque">
+            <div class="bloque__titulo">
+                <p class="bloque__ceja">Lo más vendido</p>
+                <h2>Piezas destacadas</h2>
+            </div>
+            <a class="enlace-flecha" href="tienda.html">
+                Ver las doce piezas
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" width="18" height="18"><path d="M5 12h13M12.5 6l6 6-6 6"/></svg>
+            </a>
+        </header>
+
+        <div class="productos productos--destacados revelar">
+        </div>
+    </div>
+</section>
+
+<!-- La tienda por dentro: quién elige lo que se vende. La foto vertical es la del
+     punto 2 de la lista obligatoria. -->
+<section class="seccion seccion--papel" id="estudio">
+    <div class="contenedor">
+        <header class="bloque">
+            <div class="bloque__titulo">
+                <p class="bloque__ceja">Quién elige</p>
+                <h2>Quiénes están detrás</h2>
+            </div>
+            <p class="bloque__nota">Un equipo de cuatro personas en Miraflores: elegimos, probamos y despachamos cada pedido.</p>
+        </header>
+
+        <div class="estudio__rejilla">
+            <div class="estudio__texto revelar">
+                <p>
+                    Casa Lume nació con un encargo: dejar presentable un departamento chico de
+                    Miraflores sin gastar de más. De ahí quedó el método, que no ha cambiado: se
+                    prueba cada pieza en una casa de verdad, se compara con otras tres y solo
+                    entonces entra al catálogo.
+                </p>
+                <p>
+                    Por eso hay doce piezas y no doscientas. Cada ficha dice de qué está hecha, cómo
+                    se cuida, cuánto mide y en cuánto sale, y de cada producto mostramos la misma
+                    foto que ve el cliente: nada retocado para que se vea más de lo que es.
+                </p>
+                <blockquote class="estudio__cita">
+                    «Si no lo tendríamos en nuestra propia casa, no lo vendemos.»
+                    <cite>Camila y Tino · Casa Lume, Miraflores</cite>
+                </blockquote>
+
+                <div class="cifras revelar" style="margin-top: 2rem;">
+                    <div class="cifra">
+                        <strong data-contar="1480">1 480</strong>
+                        <span>Pedidos enviados</span>
+                    </div>
+                    <div class="cifra">
+                        <strong data-contar="12">12</strong>
+                        <span>Marcas y proveedores</span>
+                    </div>
+                    <div class="cifra">
+                        <strong data-contar="6">6</strong>
+                        <span>Años en Miraflores</span>
+                    </div>
+                </div>
+            </div>
+
+            <figure class="estudio__foto revelar">
+                <img src="img/estudio-vertical.webp" alt="Pedido armado y empacado en la tienda antes de salir" width="900" height="1200" loading="lazy" decoding="async">
+                <span class="insignia">Se empaca en tienda</span>
+                <figcaption>Así se arma y se empaca cada pedido antes de salir a la calle.</figcaption>
+            </figure>
+        </div>
+    </div>
+</section>
+
+<!-- Banda con foto: la casa real que hay detrás del catálogo. -->
+<section class="banda" aria-labelledby="titulo-banda">
+    <img src="img/banda-sala.webp" alt="Sala en tonos claros con mesa de centro, manta sobre el sofá y estantería" width="1200" height="800" loading="lazy" decoding="async">
+    <span class="banda__velo" aria-hidden="true"></span>
+
+    <div class="banda__texto">
+        <h2 id="titulo-banda">Menos cosas, mejores cosas</h2>
+        <p>
+            No vendemos todo: vendemos lo que resuelve. Doce piezas que pasaron por una casa real
+            antes de llegar a la tienda y que se compararon con otras tres del mismo tipo. Lo que
+            no aguanta el uso diario, no entra al catálogo.
+        </p>
+        <div class="banda__pie">
+            <a class="boton boton--claro" href="tienda.html">Ver los doce productos</a>
+            <a class="boton boton--claro" href="index.html#recojo">Cómo llegar a la tienda</a>
+        </div>
+    </div>
+</section>
+

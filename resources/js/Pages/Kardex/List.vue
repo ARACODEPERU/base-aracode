@@ -1,20 +1,32 @@
 <script setup>
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
-import { useForm } from '@inertiajs/vue3';
-import { faTrashAlt, faPencilAlt, faPrint, faWarehouse } from "@fortawesome/free-solid-svg-icons";
+import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import Pagination from '@/Components/Pagination.vue';
-import Keypad from '@/Components/Keypad.vue';
 import ModalSmall from '@/Components/ModalSmall.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import { ref } from 'vue';
-import VueMagnifier from '@websitebeaver/vue-magnifier'
-import '@websitebeaver/vue-magnifier/styles.css'
+import { Link, router, useForm } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import Swal2 from 'sweetalert2';
+import {
+    faArrowsRotate,
+    faBan,
+    faBoxesStacked,
+    faChartLine,
+    faLayerGroup,
+    faMagnifyingGlassChart,
+    faSearch,
+    faTriangleExclamation,
+    faXmark,
+} from '@fortawesome/free-solid-svg-icons';
+import VueMagnifier from '@websitebeaver/vue-magnifier';
+import '@websitebeaver/vue-magnifier/styles.css';
 
 const props = defineProps({
+    // Colección de establecimientos (LocalSale::all()).
     establishments: {
-        type: Object,
-        default: () => ({}),
+        type: Array,
+        default: () => [],
     },
+    // Paginador del inventario: un renglón por producto y establecimiento.
     kardexes: {
         type: Object,
         default: () => ({}),
@@ -24,204 +36,443 @@ const props = defineProps({
         default: () => ({}),
     },
     local_id: {
-        type: Object,
-        default: () => ({}),
-    }
+        type: [Number, String],
+        default: 0,
+    },
 });
+
+/* ------------------------------------------------------------------ Filtros */
 
 const form = useForm({
-    search: props.filters.search,
-    local_id: props.local_id,
-});
-if (form.local_id == null) {
-    form.local_id = 0;
-}
-
-const dataDetails = useForm({
-    kardex: {
-        type: Object,
-        default: () => ({}),
-    },
-    sizes: {
-        type: Object,
-        default: () => ({}),
-    }
+    search: props.filters?.search ?? '',
+    // El controlador puede enviar null cuando no se filtró por local.
+    local_id: Number(props.local_id) || 0,
+    per_page: Number(props.kardexes?.per_page) || 20,
 });
 
-const displayModalDetails = ref(false);
-
-const openModalDetailsSizes = (kardex) => {
-    axios.post(route('kardex_sizes'), {
-        product_id: kardex.id,
-        local_id: kardex.local_id,
-    }).then((res) => {
-        dataDetails.kardex = kardex;
-        dataDetails.sizes = res.data;
-        displayModalDetails.value = true;
+const applyFilters = () => {
+    form.get(route('kardex_index'), {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
     });
-}
+};
 
-const closeModalDetailsSizes = () => {
-    displayModalDetails.value = false;
-}
+const clearSearch = () => {
+    form.search = '';
+    applyFilters();
+};
 
-function getProductsByLocal() {
+const resetFilters = () => {
+    form.search = '';
+    form.local_id = 0;
+    form.per_page = 20;
+    applyFilters();
+};
 
-}
+const refreshing = ref(false);
+
+const refresh = () => {
+    refreshing.value = true;
+    router.reload({
+        only: ['kardexes'],
+        preserveScroll: true,
+        preserveState: true,
+        onFinish: () => {
+            refreshing.value = false;
+        },
+    });
+};
+
+/* -------------------------------------------------------------------- Datos */
+
+const rows = computed(() => props.kardexes?.data ?? []);
+
+const quantityOf = (row) => Number(row.kardex_stock ?? 0);
+const minimumOf = (row) => Number(row.stock_min ?? 0);
+
+const paginatedUnits = computed(() => rows.value.reduce((total, row) => total + quantityOf(row), 0));
+const paginatedValue = computed(() =>
+    rows.value.reduce((total, row) => total + quantityOf(row) * Number(row.purchase_prices ?? 0), 0)
+);
+const lowStockCount = computed(
+    () => rows.value.filter((row) => quantityOf(row) > 0 && minimumOf(row) > 0 && quantityOf(row) <= minimumOf(row)).length
+);
+const outOfStockCount = computed(() => rows.value.filter((row) => quantityOf(row) <= 0).length);
+
+const hasFilters = computed(() => Boolean(form.search) || Number(form.local_id) > 0);
+
+const stockStatus = (row) => {
+    const stock = quantityOf(row);
+    const minimum = minimumOf(row);
+
+    if (stock <= 0) {
+        return { label: 'Sin stock', class: 'badge bg-danger' };
+    }
+
+    if (minimum > 0 && stock <= minimum) {
+        return { label: 'Stock bajo', class: 'badge bg-warning' };
+    }
+
+    return { label: 'Disponible', class: 'badge bg-success' };
+};
+
+/* ------------------------------------------------------------------ Formato */
+
+const formatQuantity = (value) => {
+    const number = Number(value ?? 0);
+
+    return Number.isFinite(number)
+        ? number.toLocaleString('es-PE', { maximumFractionDigits: 2 })
+        : '0';
+};
+
+const formatMoney = (value) => `S/ ${Number(value ?? 0).toLocaleString('es-PE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+})}`;
+
+/**
+ * La imagen del producto puede llegar como ruta de storage, como ruta ya
+ * publicada o como el nombre de la imagen por defecto; se normaliza para que
+ * nunca quede un enlace roto cuando el producto no tiene foto.
+ */
+const imageUrl = (row) => {
+    const value = String(row.image ?? '').trim();
+
+    if (value === '') {
+        return '/img/imagen-no-disponible.jpg';
+    }
+
+    if (/^https?:\/\//i.test(value)) {
+        return value;
+    }
+
+    return value.startsWith('img/') ? `/${value}` : `/storage/${value}`;
+};
+
+/* ------------------------------------------------- Detalle de cantidades por talla */
+
+const showSizes = ref(false);
+const loadingSizes = ref(false);
+const sizes = ref([]);
+// El paginador devuelve `products.*`, así que la columna `id` es la del producto.
+const sizesProduct = ref({});
+
+const sizesTotal = computed(() =>
+    sizes.value.reduce((total, size) => total + Number(size.total ?? 0), 0)
+);
+
+const openSizes = async (row) => {
+    sizesProduct.value = row;
+    sizes.value = [];
+    showSizes.value = true;
+    loadingSizes.value = true;
+
+    try {
+        const { data } = await axios.post(route('kardex_sizes'), {
+            product_id: row.id,
+            local_id: row.local_id,
+        });
+        sizes.value = Array.isArray(data) ? data : [];
+    } catch (error) {
+        sizes.value = [];
+        showMessage('No se pudo cargar el detalle por talla de este producto.', 'error');
+    } finally {
+        loadingSizes.value = false;
+    }
+};
+
+const closeSizes = () => {
+    showSizes.value = false;
+    sizes.value = [];
+    sizesProduct.value = {};
+};
+
+const showMessage = (msg = '', type = 'success') => {
+    Swal2.mixin({
+        toast: true,
+        position: 'top',
+        showConfirmButton: false,
+        timer: 3000,
+        customClass: { container: 'toast' },
+    }).fire({ icon: type, title: msg, padding: '10px 20px' });
+};
 </script>
+
 <template>
     <AppLayout title="Inventario">
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Inventario
-            </h2>
-        </template>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+            :data="[{ title: 'Inventario' }]" />
 
-        <div>
-            <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-                <div class="col-span-6 p-4 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                    <div class="grid grid-cols-4 gap-4 pb-4 bg-white dark:bg-gray-900">
-                        <div class="col-span-4 sm:col-span-1">
-                            <InputLabel for="stablishment" value="Establecimiento" />
-                            <select v-model="form.local_id" v-on:change="form.get(route('kardex_index'))"
-                                id="stablishment"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                <option value="0">Todos los Locales</option>
-                                <template v-for="(establishment, index) in props.establishments" :key="index">
-                                    <option :value="establishment.id">{{ establishment.description }}</option>
-                                </template>
-                            </select>
-                        </div>
-                        <div class="col-span-4 sm:col-span-2">
-                            <form @submit.prevent="form.get(route('kardex_index'))">
-                                <label for="table-search" class="sr-only">Search</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                                            fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                            <path fill-rule="evenodd"
-                                                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                                clip-rule="evenodd"></path>
-                                        </svg>
-                                    </div>
-                                    <input v-model="form.search" type="text" id="table-search-users"
-                                        class="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                        placeholder="Buscar producto">
+        <div class="mt-5 space-y-5">
+            <!-- Encabezado -->
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        Inventario por establecimiento
+                    </h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        Stock de productos físicos calculado desde el kardex. Solo se muestran productos, no servicios.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" class="btn btn-outline-secondary" :disabled="refreshing"
+                        v-tippy="{ content: 'Volver a leer el stock', placement: 'bottom' }" @click="refresh">
+                        <font-awesome-icon :icon="faArrowsRotate" class="ltr:mr-2 rtl:ml-2"
+                            :class="{ 'animate-spin': refreshing }" />
+                        Actualizar
+                    </button>
+                    <Link v-can="'sale_reportes'" :href="route('inventory_kardex_report')"
+                        class="btn btn-outline-primary"
+                        v-tippy="{ content: 'Entradas y salidas registradas en el kardex', placement: 'bottom' }">
+                        <font-awesome-icon :icon="faChartLine" class="ltr:mr-2 rtl:ml-2" />
+                        Ver movimientos
+                    </Link>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="panel">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-12">
+                    <div class="xl:col-span-3">
+                        <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                            Establecimiento
+                        </label>
+                        <select v-model.number="form.local_id" class="form-select w-full" @change="applyFilters">
+                            <option :value="0">Todos los locales</option>
+                            <option v-for="establishment in establishments" :key="establishment.id"
+                                :value="establishment.id">
+                                {{ establishment.description }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="xl:col-span-5">
+                        <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                            Buscar producto
+                        </label>
+                        <form @submit.prevent="applyFilters">
+                            <div class="relative">
+                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                    <font-awesome-icon :icon="faSearch" class="h-4 w-4 text-gray-400" />
                                 </div>
-                            </form>
+                                <input v-model="form.search" type="text" class="form-input w-full ltr:pl-9 rtl:pr-9"
+                                    placeholder="Código exacto o descripción" />
+                                <button v-if="form.search" type="button"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                    v-tippy="{ content: 'Limpiar búsqueda', placement: 'bottom' }" @click="clearSearch">
+                                    <font-awesome-icon :icon="faXmark" class="h-4 w-4" />
+                                </button>
+                            </div>
+                        </form>
+                    </div>
 
+                    <div class="xl:col-span-2">
+                        <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                            Mostrar
+                        </label>
+                        <select v-model.number="form.per_page" class="form-select w-full" @change="applyFilters">
+                            <option :value="20">20 registros</option>
+                            <option :value="50">50 registros</option>
+                            <option :value="100">100 registros</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-end gap-2 xl:col-span-2">
+                        <button type="button" class="btn btn-primary w-full" @click="applyFilters">
+                            <font-awesome-icon :icon="faMagnifyingGlassChart" class="ltr:mr-2 rtl:ml-2" />
+                            Buscar
+                        </button>
+                        <button v-if="hasFilters" type="button" class="btn btn-outline-danger"
+                            v-tippy="{ content: 'Quitar filtros', placement: 'bottom' }" @click="resetFilters">
+                            <font-awesome-icon :icon="faXmark" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div class="panel flex items-center gap-4">
+                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <font-awesome-icon :icon="faBoxesStacked" class="h-5 w-5" />
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Productos con stock</div>
+                        <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                            {{ formatQuantity(kardexes.total ?? 0) }}
                         </div>
                     </div>
-                    <div class="relative overflow-x-auto shadow-md sm:rounded-lg mb-2">
-                        <table class="w-full text-sm text-left text-blue-100 dark:text-blue-100">
-                            <thead
-                                class="text-xs text-white uppercase bg-blue-600 border-b border-blue-400 dark:text-white">
+                </div>
+
+                <div class="panel flex items-center gap-4">
+                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-info/10 text-info">
+                        <font-awesome-icon :icon="faLayerGroup" class="h-5 w-5" />
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Unidades en esta página</div>
+                        <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                            {{ formatQuantity(paginatedUnits) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel flex items-center gap-4">
+                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning">
+                        <font-awesome-icon :icon="faTriangleExclamation" class="h-5 w-5" />
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Stock bajo en esta página</div>
+                        <div class="text-2xl font-bold text-warning">{{ lowStockCount }}</div>
+                    </div>
+                </div>
+
+                <div class="panel flex items-center gap-4">
+                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-danger/10 text-danger">
+                        <font-awesome-icon :icon="faBan" class="h-5 w-5" />
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Sin stock en esta página</div>
+                        <div class="text-2xl font-bold text-danger">{{ outOfStockCount }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla -->
+            <div class="panel p-0 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table-striped table-hover w-full">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Tallas</th>
+                                <th>Tienda</th>
+                                <th class="text-center">Imagen</th>
+                                <th>Código</th>
+                                <th class="min-w-[220px]">Producto</th>
+                                <th class="text-right">Mínimo</th>
+                                <th class="text-right">Stock</th>
+                                <th class="text-right">Valorizado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-if="rows.length === 0">
+                                <td colspan="8" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                                    <font-awesome-icon :icon="faBoxesStacked" class="mb-2 h-6 w-6 opacity-50" />
+                                    <div>
+                                        {{ hasFilters
+                                            ? 'No hay productos que coincidan con los filtros aplicados.'
+                                            : 'Todavía no hay movimientos de inventario registrados.' }}
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-for="row in rows" :key="`${row.id}-${row.local_id}`">
+                                <td class="text-center">
+                                    <!-- El detalle por talla solo existe en productos con presentaciones. -->
+                                    <button v-if="row.presentations" type="button" class="btn btn-sm btn-outline-primary"
+                                        v-tippy="{ content: 'Ver cantidades por talla', placement: 'bottom' }"
+                                        @click="openSizes(row)">
+                                        <font-awesome-icon :icon="faLayerGroup" />
+                                    </button>
+                                    <span v-else class="text-gray-300 dark:text-gray-600">—</span>
+                                </td>
+                                <td class="whitespace-nowrap">{{ row.local_names }}</td>
+                                <td class="w-24 text-center">
+                                    <VueMagnifier :src="imageUrl(row)" width="52px" :zoomImgSrc="imageUrl(row)"
+                                        :mgWidth="200" :mgHeight="200" />
+                                </td>
+                                <td class="whitespace-nowrap font-medium">{{ row.interne }}</td>
+                                <td>
+                                    <div class="font-medium text-gray-900 dark:text-white">{{ row.description }}</div>
+                                    <div class="text-xs text-gray-400">
+                                        {{ row.presentations ? 'Con presentaciones' : 'Stock simple' }}
+                                    </div>
+                                </td>
+                                <td class="text-right">{{ formatQuantity(row.stock_min) }}</td>
+                                <td class="text-right">
+                                    <div class="font-bold" :class="quantityOf(row) <= 0
+                                        ? 'text-danger'
+                                        : quantityOf(row) <= minimumOf(row) && minimumOf(row) > 0
+                                            ? 'text-warning'
+                                            : 'text-success'">
+                                        {{ formatQuantity(row.kardex_stock) }}
+                                    </div>
+                                    <span :class="stockStatus(row).class">{{ stockStatus(row).label }}</span>
+                                </td>
+                                <td class="whitespace-nowrap text-right">
+                                    {{ formatMoney(quantityOf(row) * Number(row.purchase_prices ?? 0)) }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot v-if="rows.length > 0">
+                            <tr>
+                                <td colspan="6" class="text-right font-semibold">Total de la página</td>
+                                <td class="text-right font-bold">{{ formatQuantity(paginatedUnits) }}</td>
+                                <td class="text-right font-bold">{{ formatMoney(paginatedValue) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <Pagination :data="kardexes" />
+            </div>
+
+            <p class="text-xs text-gray-400">
+                El stock es la suma de los movimientos del kardex (compras, ventas y traslados) y la valorización usa el
+                precio de compra del producto.
+            </p>
+        </div>
+
+        <!-- Detalle de tallas -->
+        <ModalSmall :show="showSizes" :onClose="closeSizes">
+            <template #title>
+                <span class="text-base">{{ sizesProduct.local_names }}</span>
+            </template>
+            <template #message>
+                {{ sizesProduct.interne }} — {{ sizesProduct.description }}
+            </template>
+            <template #content>
+                <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
+                    <div class="table-responsive max-h-72 overflow-y-auto">
+                        <table class="table-striped w-full">
+                            <thead>
                                 <tr>
-                                    <th scope="col" class="text-center px-6 py-2">
-                                        Cantida Por Talla
-                                    </th>
-                                    <th scope="col" class="px-6 py-2">
-                                        Tienda
-                                    </th>
-                                    <th scope="col" class="px-6 py-2">
-                                        Imagen
-                                    </th>
-                                    <th scope="col" class="px-6 py-2">
-                                        Código
-                                    </th>
-                                    <th scope="col" class="px-6 py-2">
-                                        Producto
-                                    </th>
-                                    <th scope="col" class="px-6 py-2">
-                                        Cantidad Total
-                                    </th>
+                                    <th>Talla</th>
+                                    <th class="text-right">Cantidad</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(kardex, index) in kardexes.data"
-                                    class="bg-blue-600 border-b border-blue-400 hover:bg-blue-500">
-                                    <td class="text-center px-6 py-4">
-                                        <!-- El detalle por talla solo existe en productos con
-                                             presentaciones; el resto solo se registra en kardex. -->
-                                        <button v-if="kardex.presentations" @click="openModalDetailsSizes(kardex)" type="button"
-                                            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                                            <svg aria-hidden="true" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path fill-rule="evenodd"
-                                                    d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                                                    clip-rule="evenodd"></path>
-                                            </svg>
-                                            <span class="sr-only">Icon description</span>
-                                        </button>
-                                        <span v-else class="text-gray-300 dark:text-gray-500">—</span>
-                                    </td>
-                                    <td class="px-6 py-4">{{ kardex.local_names }}</td>
-                                    <td class="w-32 p-4" style="text-align: center;">
-                                        <VueMagnifier
-                                            :src="'/storage/' + kardex.image" width="60px"
-                                            :zoomImgSrc="'/storage/' + kardex.image"
-                                            :mgWidth="200"
-                                            :mgHeight="200" />
-                                    </td>
-                                    <td class="w-32 p-4">
-                                        {{ kardex.interne }}
-                                    </td>
-                                    <td class="w-32 p-4">
-                                        {{ kardex.description }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        {{ kardex.kardex_stock }}
+                                <tr v-if="loadingSizes">
+                                    <td colspan="2" class="py-6 text-center text-gray-500 dark:text-gray-400">
+                                        Cargando tallas…
                                     </td>
                                 </tr>
+                                <tr v-else-if="sizes.length === 0">
+                                    <td colspan="2" class="py-6 text-center text-gray-500 dark:text-gray-400">
+                                        Este producto no tiene movimientos por talla en este establecimiento.
+                                    </td>
+                                </tr>
+                                <template v-else>
+                                    <tr v-for="size in sizes" :key="size.size">
+                                        <td>{{ size.size }}</td>
+                                        <td class="text-right">{{ formatQuantity(size.total) }}</td>
+                                    </tr>
+                                </template>
                             </tbody>
+                            <tfoot v-if="!loadingSizes && sizes.length > 0">
+                                <tr>
+                                    <th class="text-right">Total por tallas</th>
+                                    <th class="text-right">{{ formatQuantity(sizesTotal) }}</th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
-
-                    <Pagination :data="kardexes" />
                 </div>
 
-            </div>
-        </div>
-        <ModalSmall :show="displayModalDetails" :onClose="closeModalDetailsSizes">
-            <template #title>
-                {{ dataDetails.kardex.local_names }}
-            </template>
-            <template #message>
-                {{ dataDetails.kardex.interne + ' - ' + dataDetails.kardex.description }}
-            </template>
-            <template #content>
-                <div class="flex flex-col">
-                    <div class="overflow-y-auto sm:-mx-6 lg:-mx-8">
-                        <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
-                            <div class="overflow-hidden">
-                                <table class="min-w-full text-sm font-light">
-                                    <thead class="border font-medium dark:border-neutral-500">
-                                        <tr>
-                                            <th scope="col" class="px-6 py-2">Talla</th>
-                                            <th scope="col" class="px-6 py-2">Cantidad</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="(size, fe) in dataDetails.sizes" :key="fe"
-                                            class="border dark:border-neutral-500">
-                                            <td class="text-right px-6 py-2">{{ size.size }}</td>
-                                            <td class="text-right px-6 py-2">
-                                                {{ parseInt(size.total) }}
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <th scope="col" class="text-right px-6 py-2">TOTAL</th>
-                                            <th scope="col" class="text-right px-6 py-2">{{
-                                                parseInt(dataDetails.kardex.kardex_stock) }}</th>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <p v-if="!loadingSizes && sizes.length > 0" class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                    Stock total del producto en este establecimiento:
+                    <strong>{{ formatQuantity(sizesProduct.kardex_stock) }}</strong>
+                </p>
             </template>
         </ModalSmall>
     </AppLayout>

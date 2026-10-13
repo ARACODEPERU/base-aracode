@@ -45,13 +45,12 @@ return new class extends Migration
         // Sin eliminacion de estructuras (skill no-drop-tables).
     }
 
+    /**
+     * Comprueba el índice de forma portable (antes consultaba
+     * information_schema, que solo existe en MySQL).
+     */
     private function hasIndex(string $table, string $index): bool
     {
-        $connection = Schema::getConnection();
-
-        return (bool) $connection->selectOne(
-            'SELECT 1 FROM information_schema.statistics WHERE table_schema = ? AND table_name = ? AND index_name = ?',
-            [$connection->getDatabaseName(), $table, $index]
-        );
+        return Schema::hasTable($table) && Schema::hasIndex($table, $index);
     }
 };
