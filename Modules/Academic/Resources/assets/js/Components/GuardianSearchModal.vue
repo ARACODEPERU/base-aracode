@@ -101,6 +101,15 @@
                 });
                 disabledBtnSelect.value = true;
             }
+        }).catch(error => {
+            // Un fallo de la busqueda tambien debe avisarse: antes el modal
+            // quedaba sin respuesta y parecia que no pasaba nada.
+            Swal2.fire({
+                icon: 'error',
+                text: error.response?.data?.message ?? 'No se pudo consultar el documento.',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
         });
     }
 
@@ -116,25 +125,33 @@
                 customClass: 'sweet-alerts',
             });
             person.value = res.data;
+
+            // La persona recien registrada (o actualizada) todavia no esta
+            // vinculada al alumno: se avanza al paso de asignacion para que el
+            // apoderado quede agregado de verdad. Antes habia que pulsar
+            // "Seleccionar" y, si no se hacia, no se agregaba nada.
+            selectPerson();
         }).catch(error => {
-            const validationErrors = error.response.data.errors;
-            if (validationErrors && validationErrors.number) {
-                form.setError('number', validationErrors.number[0]);
-            }
-            if (validationErrors && validationErrors.telephone) {
-                form.setError('telephone', validationErrors.telephone[0]);
-            }
-            if (validationErrors && validationErrors.full_name) {
-                form.setError('full_name', validationErrors.full_name[0]);
-            }
-            if (validationErrors && validationErrors.email) {
-                form.setError('email', validationErrors.email[0]);
-            }
-            if (validationErrors && validationErrors.address) {
-                form.setError('address', validationErrors.address[0]);
-            }
-            if (validationErrors && validationErrors.ubigeo) {
-                form.setError('ubigeo', validationErrors.ubigeo[0]);
+            const validationErrors = error.response?.data?.errors ?? {};
+            const fields = ['number', 'telephone', 'full_name', 'email', 'address', 'ubigeo'];
+            let hasFieldError = false;
+
+            fields.forEach(field => {
+                if (validationErrors[field]) {
+                    form.setError(field, validationErrors[field][0]);
+                    hasFieldError = true;
+                }
+            });
+
+            // Cualquier otro fallo (error del servidor, permiso) tambien tiene
+            // que verse: antes se quedaba en silencio.
+            if (! hasFieldError) {
+                Swal2.fire({
+                    icon: 'error',
+                    text: error.response?.data?.message ?? 'No se pudo registrar la persona.',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
             }
         }).finally(() => {
             saving.value = false;

@@ -959,12 +959,18 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     // Apoderados de alumnos escolares
     Route::middleware(['middleware' => 'permission:aca_school_alumno_editar|aca_school_alumno_apoderados'])
         ->get('school/students/{studentId}/guardians', [AcaSchoolStudentController::class, 'listGuardians'])->name('aca_school_students_guardians_list');
-    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+    // Vincular y desvincular apoderados usa el mismo permiso que abre el panel
+    // (antes exigian aca_school_alumno_editar: ver el panel sin ese permiso hacia
+    // que el boton "Agregar apoderado" fallara al guardar).
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar|aca_school_alumno_apoderados'])
         ->post('school/students/{studentId}/guardians/store', [AcaSchoolStudentController::class, 'storeGuardian'])->name('aca_school_students_guardians_store');
     Route::middleware(['middleware' => 'permission:aca_school_alumno_editar|aca_school_alumno_apoderados'])
         ->put('school/students/guardians/{guardianId}/update', [AcaSchoolStudentController::class, 'updateGuardian'])->name('aca_school_students_guardians_update');
-    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar|aca_school_alumno_apoderados'])
         ->delete('school/students/guardians/{guardianId}/destroy', [AcaSchoolStudentController::class, 'destroyGuardian'])->name('aca_school_students_guardians_destroy');
+    // Editar los datos del apoderado (persona + vinculo) desde la ficha del alumno.
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_apoderados_editar'])
+        ->put('school/students/guardians/{guardianId}/person', [AcaSchoolStudentController::class, 'updateGuardianPerson'])->name('aca_school_students_guardians_person_update');
 
     // Matriculas escolares
     Route::middleware(['middleware' => 'permission:aca_school_matricula_listado'])
