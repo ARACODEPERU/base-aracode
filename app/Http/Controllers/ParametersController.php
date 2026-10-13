@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Parameter;
+use App\Support\OrdenDeParametros;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,10 @@ class ParametersController extends Controller
         if (request()->has('search')) {
             $parameters->where('description', 'Like', '%' . request()->input('search') . '%');
         }
-        $parameters = $parameters->get();
+
+        // Por prefijo y no por código como texto: 'P000023' (P) va antes que
+        // 'PW00001' (PW), y dentro de cada prefijo se ordena por el número.
+        $parameters = OrdenDeParametros::ordenar($parameters->get());
 
         $formatted = [];
 
@@ -74,6 +78,8 @@ class ParametersController extends Controller
             array_push($formatted, [
                 'id' => $parameter->id,
                 'parameter_code' => $parameter->parameter_code,
+                // Prefijo del código: es como se agrupan las pestañas de la vista.
+                'prefix' => OrdenDeParametros::prefijo($parameter->parameter_code),
                 'description' => $parameter->description,
                 'control_type' => $parameter->control_type,
                 'json_query_data' => $json_query_data,
