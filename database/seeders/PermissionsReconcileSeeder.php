@@ -74,6 +74,11 @@ class PermissionsReconcileSeeder extends Seeder
             'module' => 'M002',
             'roles'  => ['admin', 'Administrador'],
         ],
+        [
+            'name'   => 'aca_school_alumno_apoderados_editar',
+            'module' => 'M007',
+            'roles'  => ['admin', 'Administrador'],
+        ],
     ];
 
     /**

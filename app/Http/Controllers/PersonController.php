@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\District;
 use App\Models\IdentityDocumentType;
 use App\Models\Parameter;
 use App\Models\Person;
@@ -155,10 +156,13 @@ class PersonController extends Controller
             ]
         );
 
-        $person->load('district.province.department');
-        // Obtener el nombre de la ciudad usando los datos relacionados
-        $city = $person->district->province->department->name . "-" . $person->district->province->name . "-" . $person->district->name;
-        $person->city = $city;
+        // La ciudad es opcional: antes, una persona sin ubigeo (o con un distrito
+        // inexistente) tumbaba este endpoint con un 500 y el modal de apoderado
+        // cerraba sin ningun aviso.
+        $district = District::with('province.department')->find($person->ubigeo);
+        $person->city = $district
+            ? $district->province->department->name . "-" . $district->province->name . "-" . $district->name
+            : $person->ubigeo_description;
 
         return response()->json($person);
     }

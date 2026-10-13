@@ -93,6 +93,7 @@ Fuentes revisadas:
 | `aca_gestion_de_calificaciones` | Calificaciones y participaciones | seeder | JS (menú), rutas | sí |
 | `aca_gestion_de_participaciones` | Calificaciones y participaciones | seeder | JS (menú), rutas | sí |
 | `aca_school_alumno_apoderados` | Colegio (school) | seeder | JS (menú), rutas | **no** |
+| `aca_school_alumno_apoderados_editar` | Colegio (school) | migración | rutas, vistas (JS) | **no** |
 | `aca_school_alumno_editar` | Colegio (school) | seeder | rutas | **no** |
 | `aca_school_alumno_eliminar` | Colegio (school) | seeder | rutas | **no** |
 | `aca_school_alumno_listado` | Colegio (school) | seeder | JS (menú), rutas | **no** |
@@ -146,8 +147,11 @@ Referencias externas al módulo que conviene revisar:
   `aca_estudiantes_matricular`, `aca_estudiante_matriculas_crear` y `Aca_student_matricular`. El primero
   sí está en el seeder del módulo; `aca_estudiantes_matricular` y `Aca_student_matricular` no existen en
   ninguna parte del código ni en la base de datos (posibles nombres escritos de más).
-- `database/seeders/PermissionsReconcileSeeder.php` crea `aca_testimonios` y
-  `aca_estudiante_enviar_correo_acceso`, fuera del módulo Académico.
+- `database/seeders/PermissionsReconcileSeeder.php` crea `aca_testimonios`,
+  `aca_estudiante_enviar_correo_acceso` y `aca_school_alumno_apoderados_editar`, fuera del módulo
+  Académico: los dos primeros son de otros módulos y el último existe solo por migración
+  (`2026_10_13_000002_add_school_student_guardian_edit_permission.php`), que concede a
+  `admin` y `Administrador` el permiso para editar los datos de un apoderado.
 - `aca_course_notification` **no es un permiso**: es la clave del flujo de WhatsApp definida en
   `Modules/Academic/Config/config.php`.
 
