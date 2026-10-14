@@ -401,7 +401,7 @@
                                 </div>
                             </template>
                             <template v-if="item.onitem_price > 0">
-                                <a :href="route('web_curso_descripcion',item.slug)" class="btn btn-primary">Ingresar</a>
+                                <a :href="item.entry_url" class="btn btn-primary">Ingresar</a>
                             </template>
                         </div>
                     </template>
