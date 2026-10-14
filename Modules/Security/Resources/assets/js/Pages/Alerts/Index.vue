@@ -226,8 +226,11 @@
                     </div>
                 </div>
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    Un mismo error (mismo nivel, mensaje, archivo y línea) no se repite dentro de la ventana indicada: en
-                    ese caso solo se suma al contador de repeticiones del error guardado.
+                    Un mismo error (mismo nivel, mensaje, archivo y línea) no se repite dentro de la ventana indicada:
+                    solo se suma al contador de repeticiones del error guardado, así que ocupa una única fila. Pasada la
+                    ventana se avisa otra vez, con el total acumulado, para saber que el error sigue vivo sin llenar el
+                    chat ni el disco. La línea genérica del planificador («failed with exit code») se omite cuando el
+                    propio comando ya avisó del motivo real.
                 </p>
 
                 <div class="mt-5 border-t border-gray-200 pt-5 dark:border-gray-700">

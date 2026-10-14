@@ -37,11 +37,29 @@ class ErrorAlertService
     /** Marca que se añade al contexto de los logs internos de las alertas. */
     public const CONTEXT_MARKER = 'security_alert';
 
+    /**
+     * Marca con la que un comando programado avisa que ya explicó su fallo.
+     *
+     * Cuando el planificador ve un comando con salida distinta de cero registra
+     * por su cuenta "Scheduled command [...] failed with exit code [1]", que no
+     * dice nada del motivo. Si el propio comando ya registró el fallo real con
+     * esta marca en el contexto, esa línea genérica no se avisa: el chat recibe
+     * un solo mensaje, el que sirve para corregirlo.
+     */
+    public const SCHEDULED_COMMAND_MARKER = 'scheduled_command';
+
     private const SETTINGS_CACHE_KEY = 'security.alerts.settings';
 
     private const RECIPIENTS_CACHE_KEY = 'security.alerts.recipients';
 
-    private const DEDUP_PREFIX = 'security.alerts.seen:';
+    /** Fila guardada de una huella (se reutiliza durante la ventana de mezcla). */
+    private const ROW_PREFIX = 'security.alerts.row:';
+
+    /** Última vez que se avisó una huella (controla cada cuánto se repite el aviso). */
+    private const ALERT_PREFIX = 'security.alerts.alerted:';
+
+    /** Comandos programados cuyo fallo ya se explicó (silencio de la línea genérica). */
+    private const EXPLAINED_PREFIX = 'security.alerts.explained:';
 
     /** Claves cuyo valor NUNCA se guarda (contraseñas, tokens, cookies...). */
     private const SENSITIVE_KEYS = [
@@ -101,22 +119,41 @@ class ErrorAlertService
             }
 
             $payload = $this->buildPayload($event);
+
+            // La línea genérica del planificador no dice nada del motivo: si el
+            // propio comando ya avisó del fallo real hace un momento, se ignora.
+            if ($this->isScheduledFailureLine((string) ($payload['message'] ?? ''))
+                && $this->commandWasExplained((string) ($payload['message'] ?? ''))) {
+                return;
+            }
+
             $fingerprint = SecurityErrorLog::fingerprint($payload);
             $cooldown = $settings->cooldownMinutes();
+            $mergeMinutes = $this->mergeMinutes();
 
-            // ¿El mismo fallo ya se avisó hace poco? Entonces solo se cuenta la
-            // repetición (si el contexto se está guardando) y no se avisa otra
-            // vez: el chat no se llena y la fila tampoco se duplica.
-            $previousId = $this->previousId($fingerprint, $cooldown);
+            // ¿Es la repetición de un fallo ya conocido? Se suma a la MISMA fila
+            // guardada (no se duplica el contexto en el disco) y solo se vuelve a
+            // avisar cuando pasa la ventana del aviso.
+            $rowId = $this->rememberedRow($fingerprint, $mergeMinutes);
 
-            if ($previousId !== null) {
-                if ($previousId > 0) {
-                    $previous = SecurityErrorLog::find($previousId);
+            if ($rowId !== null) {
+                $row = $rowId > 0 ? SecurityErrorLog::find($rowId) : null;
 
-                    if ($previous) {
-                        $this->errorLogs->touch($previous, $payload);
-                    }
+                if ($row) {
+                    $this->errorLogs->touch($row, $payload);
                 }
+
+                if (! $this->canAlert($fingerprint, $cooldown)) {
+                    return;
+                }
+
+                if ($row) {
+                    $payload['reference'] = $row->reference();
+                    $payload['link'] = $this->errorLogs->linkFor((int) $row->id);
+                    $payload['occurrences'] = (string) $row->occurrences;
+                }
+
+                $this->dispatchAlert($chatIds, $payload, $event);
 
                 return;
             }
@@ -131,9 +168,10 @@ class ErrorAlertService
                 $payload['link'] = $this->errorLogs->linkFor($log?->id);
             }
 
-            $this->remember($fingerprint, $cooldown, $log?->id);
+            $this->rememberRow($fingerprint, $mergeMinutes, $log?->id);
+            $this->canAlert($fingerprint, $cooldown);
 
-            SendSecurityErrorAlert::dispatch($chatIds, $this->renderMessage($payload));
+            $this->dispatchAlert($chatIds, $payload, $event);
         } catch (Throwable) {
             // Una alerta jamás puede tumbar la aplicación. Se recuerda el fallo
             // para no repetir consultas que fallen en cada línea de log.
@@ -452,41 +490,131 @@ class ErrorAlertService
     }
 
     /**
-     * Id del error ya avisado dentro de la ventana de anti-duplicados.
+     * Fila guardada de una huella dentro de la ventana de mezcla.
      *
-     * Devuelve null si es la primera vez (hay que avisar), 0 si ya se avisó pero
-     * no se guardó contexto, o el id de la fila guardada (para sumarle la
-     * repetición).
+     * Devuelve null si es la primera vez, 0 si ya se vio pero no se guardó
+     * contexto, o el id de la fila (para sumarle la repetición).
      */
-    private function previousId(string $fingerprint, int $cooldownMinutes): ?int
+    private function rememberedRow(string $fingerprint, int $mergeMinutes): ?int
     {
-        if ($cooldownMinutes <= 0) {
+        if ($mergeMinutes <= 0) {
             return null;
         }
 
         try {
-            $value = Cache::get(self::DEDUP_PREFIX . $fingerprint);
+            $value = Cache::get(self::ROW_PREFIX . $fingerprint);
 
             return $value === null ? null : (int) $value;
         } catch (Throwable) {
-            // Sin caché no se deduplica, pero se avisa igual.
+            // Sin caché no se reconoce la repetición: se avisa igual.
             return null;
         }
     }
 
     /**
-     * Recuerda la huella avisada durante la ventana, junto con la fila guardada.
+     * Recuerda la fila de una huella durante la ventana de mezcla.
      */
-    private function remember(string $fingerprint, int $cooldownMinutes, ?int $errorLogId): void
+    private function rememberRow(string $fingerprint, int $mergeMinutes, ?int $errorLogId): void
     {
-        if ($cooldownMinutes <= 0) {
+        if ($mergeMinutes <= 0) {
             return;
         }
 
         try {
-            Cache::put(self::DEDUP_PREFIX . $fingerprint, $errorLogId ?? 0, now()->addMinutes($cooldownMinutes));
+            Cache::put(self::ROW_PREFIX . $fingerprint, $errorLogId ?? 0, now()->addMinutes($mergeMinutes));
         } catch (Throwable) {
-            // Sin caché no hay ventana: el siguiente error se volverá a avisar.
+            // Sin caché cada fallo se guarda como uno nuevo.
+        }
+    }
+
+    /**
+     * true si toca avisar esta huella (ha pasado la ventana del aviso).
+     *
+     * El aviso se puede repetir (el error sigue vivo), pero no en cada línea de
+     * log: como mucho una vez cada `cooldown_minutes` por huella.
+     */
+    private function canAlert(string $fingerprint, int $cooldownMinutes): bool
+    {
+        if ($cooldownMinutes <= 0) {
+            return true;
+        }
+
+        try {
+            // add() es atómico y solo devuelve true la primera vez de la ventana.
+            return Cache::add(self::ALERT_PREFIX . $fingerprint, true, now()->addMinutes($cooldownMinutes));
+        } catch (Throwable) {
+            return true;
+        }
+    }
+
+    /**
+     * Encola el aviso y, si el log explica el fallo de un comando programado, lo
+     * recuerda para no avisar después la línea genérica del planificador.
+     *
+     * @param array<int, string>    $chatIds
+     * @param array<string, string> $payload
+     */
+    private function dispatchAlert(array $chatIds, array $payload, MessageLogged $event): void
+    {
+        SendSecurityErrorAlert::dispatch($chatIds, $this->renderMessage($payload));
+
+        $command = $this->explainedCommand($event);
+
+        if ($command === null) {
+            return;
+        }
+
+        try {
+            Cache::put(
+                self::EXPLAINED_PREFIX . $command,
+                true,
+                now()->addMinutes($this->scheduledSilenceMinutes())
+            );
+        } catch (Throwable) {
+            // Sin caché puede llegar la línea genérica de más; no es grave.
+        }
+    }
+
+    /**
+     * Comando programado del que este log es el motivo real (o null).
+     */
+    private function explainedCommand(MessageLogged $event): ?string
+    {
+        $context = is_array($event->context) ? $event->context : [];
+        $command = trim((string) ($context[self::SCHEDULED_COMMAND_MARKER] ?? ''));
+
+        return $command === '' ? null : $command;
+    }
+
+    /**
+     * true si el mensaje es la línea genérica con la que el planificador avisa
+     * que un comando terminó con error. No trae el motivo: solo el código.
+     */
+    private function isScheduledFailureLine(string $message): bool
+    {
+        return (bool) preg_match('/^Scheduled command \[.+\] failed with exit code \[\d+\]\.$/', trim($message));
+    }
+
+    /**
+     * true si el comando de esa línea genérica ya explicó su fallo hace poco.
+     */
+    private function commandWasExplained(string $message): bool
+    {
+        if (! preg_match('/^Scheduled command \[(.+)\] failed with exit code \[\d+\]\.$/', trim($message), $matches)) {
+            return false;
+        }
+
+        $parts = preg_split('/\s+/', trim($matches[1])) ?: [];
+        $command = trim((string) end($parts), "'\"");
+
+        if ($command === '') {
+            return false;
+        }
+
+        try {
+            return Cache::has(self::EXPLAINED_PREFIX . $command);
+        } catch (Throwable) {
+            return false;
         }
     }
 
@@ -501,6 +629,23 @@ class ErrorAlertService
     private function cacheMinutes(): int
     {
         return (int) config('security.alerts.cache_minutes', 5);
+    }
+
+    /**
+     * Minutos que se reutiliza la misma fila para un error que se repite.
+     */
+    private function mergeMinutes(): int
+    {
+        return max(0, (int) config('security.alerts.merge_minutes', 1440));
+    }
+
+    /**
+     * Minutos de silencio de la línea genérica del planificador tras explicarse
+     * el fallo real del comando.
+     */
+    private function scheduledSilenceMinutes(): int
+    {
+        return max(1, (int) config('security.alerts.scheduled_silence_minutes', 10));
     }
 
     private function limit(string $value, ?int $override = null): string

@@ -3,7 +3,9 @@
 namespace Modules\Health\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Modules\Health\Services\GoogleCalendarSyncService;
+use Modules\Security\Services\ErrorAlertService;
 
 /**
  * Trae a la Agenda los cambios hechos en Google Calendar.
@@ -47,6 +49,23 @@ class SyncGoogleCalendar extends Command
             $result = $sync->pull((bool) $this->option('full'));
         } catch (\Throwable $exception) {
             $this->error('Google Calendar: la sincronizacion fallo: ' . $exception->getMessage());
+
+            // Se registra con el motivo REAL y la sugerencia para corregirlo: el
+            // aviso de Telegram (y la pantalla Errores) traen la excepcion, su
+            // traza y el enlace al detalle. La marca SCHEDULED_COMMAND_MARKER
+            // evita que despues llegue tambien el aviso generico del planificador
+            // ("failed with exit code [1]"), que no dice nada del motivo.
+            $hint = $sync->hintFor($exception->getMessage());
+
+            Log::error(
+                'health:sync-google-calendar: la sincronizacion con Google Calendar fallo: '
+                . $exception->getMessage()
+                . ($hint !== '' ? ' — Como corregirlo: ' . $hint : ''),
+                [
+                    ErrorAlertService::SCHEDULED_COMMAND_MARKER => 'health:sync-google-calendar',
+                    'exception' => $exception,
+                ]
+            );
 
             return self::FAILURE;
         }

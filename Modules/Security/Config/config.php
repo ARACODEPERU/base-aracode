@@ -63,6 +63,11 @@ return [
     |                  verlos por enlace (no van en el mensaje de Telegram).
     | 'retention_days' días de retención por defecto del contexto de errores
     |                  (0 = no borrar nunca). La pantalla puede cambiarlo.
+    | 'merge_minutes'  minutos durante los que un error repetido se suma a la
+    |                  MISMA fila guardada (no se duplica el contexto en el disco).
+    | 'scheduled_silence_minutes' minutos de silencio de la línea genérica del
+    |                  planificador ("Scheduled command ... failed with exit code")
+    |                  cuando el propio comando ya avisó del motivo real.
     | 'cache_minutes'  minutos que se cachean ajustes y destinatarios para no
     |                  consultar la base en cada línea de log.
     |
@@ -95,6 +100,8 @@ return [
         'message_limit' => (int) env('SECURITY_ALERT_MESSAGE_LIMIT', 3000),
         'context_limit' => (int) env('SECURITY_ALERT_CONTEXT_LIMIT', 20000),
         'retention_days' => (int) env('SECURITY_ALERT_RETENTION_DAYS', 30),
+        'merge_minutes' => (int) env('SECURITY_ALERT_MERGE_MINUTES', 1440),
+        'scheduled_silence_minutes' => (int) env('SECURITY_ALERT_SCHEDULED_SILENCE_MINUTES', 10),
         'cache_minutes' => (int) env('SECURITY_ALERT_CACHE_MINUTES', 5),
     ],
 ];

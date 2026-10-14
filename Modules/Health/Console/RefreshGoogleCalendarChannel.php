@@ -3,7 +3,9 @@
 namespace Modules\Health\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Modules\Health\Services\GoogleCalendarSyncService;
+use Modules\Security\Services\ErrorAlertService;
 
 /**
  * Registra o renueva el canal de notificaciones push de Google Calendar.
@@ -44,6 +46,14 @@ class RefreshGoogleCalendarChannel extends Command
 
         if (! $result['ok']) {
             $this->error('Google Calendar: ' . $result['message']);
+
+            // El aviso debe traer el motivo del rechazo, no solo el codigo de
+            // salida que agrega el planificador (ver SCHEDULED_COMMAND_MARKER).
+            Log::error(
+                'health:google-calendar-refresh-channel: no se pudo registrar el canal de Google Calendar: '
+                . $result['message'],
+                [ErrorAlertService::SCHEDULED_COMMAND_MARKER => 'health:google-calendar-refresh-channel']
+            );
 
             return self::FAILURE;
         }

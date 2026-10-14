@@ -23,10 +23,21 @@ Reglas que se respetan al guardar:
 
 - Los campos sensibles (`password`, `token`, `secret`, `authorization`,
   `cookie`, …) se guardan como `*** (oculto)`.
-- Un error repetido dentro de la ventana de anti-duplicados **no crea una fila
-  nueva**: se le suma `occurrences` y se actualiza `last_seen_at`.
+- Un error repetido **no crea una fila nueva durante 24 h**
+  (`security.alerts.merge_minutes`): se le suma `occurrences` y se actualiza
+  `last_seen_at`. El aviso sí se repite, pero como mucho una vez cada
+  `cooldown_minutes` (pantalla Alertas) y con el total acumulado.
 - Nunca se lanza una excepción al guardar: si la base falla (puede ser el propio
   error), la alerta sale igual, sin enlace.
+
+## Fallos de comandos programados
+
+El planificador, por su cuenta, registra “Scheduled command [...] failed with exit
+code [1]”, que no dice nada del motivo. Los comandos de este repositorio avisan
+del fallo real marcando el contexto con `ErrorAlertService::SCHEDULED_COMMAND_MARKER`
+(por ejemplo `health:sync-google-calendar`, que además agrega la sugerencia para
+corregirlo); cuando eso ocurre, esa línea genérica no se avisa y el chat recibe un
+solo mensaje: el que sirve.
 
 ## Limpieza (para no llenar el disco)
 

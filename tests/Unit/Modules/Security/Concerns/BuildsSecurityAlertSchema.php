@@ -9,13 +9,16 @@ use Illuminate\Support\Facades\Schema;
  *
  * El suite no corre todas las migraciones de la aplicación sobre sqlite (hay
  * migraciones con esquema MySQL), así que las pruebas del módulo ejecutan solo
- * las migraciones reales que necesitan: destinatarios y ajustes.
+ * las migraciones reales que necesitan: destinatarios, ajustes y el contexto de
+ * errores con sus columnas de retención.
  */
 trait BuildsSecurityAlertSchema
 {
     private const ALERT_MIGRATIONS = [
         'Modules/Security/Database/Migrations/2026_09_30_000030_create_security_alert_recipients_table.php',
         'Modules/Security/Database/Migrations/2026_09_30_000031_create_security_alert_settings_table.php',
+        'Modules/Security/Database/Migrations/2026_10_13_000001_create_security_error_logs_table.php',
+        'Modules/Security/Database/Migrations/2026_10_13_000002_add_security_error_log_settings.php',
     ];
 
     private function createSecurityAlertSchema(): void
@@ -33,5 +36,6 @@ trait BuildsSecurityAlertSchema
 
         Schema::dropIfExists('security_alert_settings');
         Schema::dropIfExists('security_alert_recipients');
+        Schema::dropIfExists('security_error_logs');
     }
 }

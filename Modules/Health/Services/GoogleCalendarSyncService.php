@@ -1104,8 +1104,13 @@ class GoogleCalendarSyncService
 
     /**
      * Sugerencia en espanol para los errores mas comunes de Google.
+     *
+     * La usan el diagnostico de la pantalla y los comandos programados: cuando
+     * la sincronizacion falla en segundo plano, el aviso al administrador debe
+     * traer el motivo Y como corregirlo (el error crudo de Google no dice qué
+     * hacer).
      */
-    private function hintFor(string $message): string
+    public function hintFor(string $message): string
     {
         $lower = mb_strtolower($message);
 

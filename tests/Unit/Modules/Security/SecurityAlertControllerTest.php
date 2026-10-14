@@ -11,6 +11,7 @@ use Modules\Security\Entities\SecurityAlertRecipient;
 use Modules\Security\Entities\SecurityAlertSetting;
 use Modules\Security\Http\Controllers\SecurityAlertController;
 use Modules\Security\Services\ErrorAlertService;
+use Modules\Security\Services\ErrorLogService;
 use Tests\TestCase;
 use Tests\Unit\Modules\Security\Concerns\BuildsSecurityAlertSchema;
 
@@ -43,6 +44,7 @@ class SecurityAlertControllerTest extends TestCase
         return new SecurityAlertController(
             app(ErrorAlertService::class),
             $bot ?? app(TelegramBotService::class),
+            app(ErrorLogService::class),
         );
     }
 
@@ -135,6 +137,50 @@ class SecurityAlertControllerTest extends TestCase
         $this->assertFalse($settings->isEnabled());
         $this->assertSame('critical', $settings->minLevel());
         $this->assertSame(15, $settings->cooldownMinutes());
+    }
+
+    public function test_guarda_los_ajustes_de_contexto_y_retencion(): void
+    {
+        $response = $this->controller()->updateSettings(
+            Request::create('/security/alerts/settings', 'PUT', [
+                'enabled' => true,
+                'min_level' => 'error',
+                'cooldown_minutes' => 5,
+                'store_context' => false,
+                'retention_days' => 7,
+                'purge_enabled' => false,
+            ])
+        );
+
+        $data = $response->getData(true);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertFalse($data['settings']['store_context']);
+        $this->assertSame(7, $data['settings']['retention_days']);
+        $this->assertFalse($data['settings']['purge_enabled']);
+        $this->assertArrayHasKey('logStats', $data);
+
+        $settings = SecurityAlertSetting::current();
+        $this->assertFalse($settings->storesContext());
+        $this->assertSame(7, $settings->retentionDays());
+        $this->assertFalse($settings->autoPurge());
+    }
+
+    public function test_los_ajustes_de_contexto_son_opcionales(): void
+    {
+        $response = $this->controller()->updateSettings(
+            Request::create('/security/alerts/settings', 'PUT', [
+                'enabled' => true,
+                'min_level' => 'error',
+                'cooldown_minutes' => 5,
+            ])
+        );
+
+        $data = $response->getData(true);
+
+        $this->assertTrue($data['settings']['store_context']);
+        $this->assertSame(30, $data['settings']['retention_days']);
+        $this->assertTrue($data['settings']['purge_enabled']);
     }
 
     public function test_el_envio_de_prueba_falla_si_el_bot_no_esta_configurado(): void
