@@ -1,0 +1,289 @@
+[Wed Oct 14 16:43:27 2026] PHP 8.2.12 Development Server (http://127.0.0.1:8130) started
+[Wed Oct 14 16:43:29 2026] 127.0.0.1:59847 Accepted
+[Wed Oct 14 16:43:29 2026] 127.0.0.1:59847 [200]: GET /nexora-hoja.html
+[Wed Oct 14 16:43:29 2026] 127.0.0.1:59847 Closing
+[Wed Oct 14 16:43:29 2026] 127.0.0.1:59848 Accepted
+[Wed Oct 14 16:43:30 2026] 127.0.0.1:59848 [200]: GET /candidatas-nexora2/009.jpg
+[Wed Oct 14 16:43:30 2026] 127.0.0.1:59848 Closing
+[Wed Oct 14 16:43:50 2026] 127.0.0.1:57772 Accepted
+[Wed Oct 14 16:43:50 2026] 127.0.0.1:57772 [200]: GET /nexora-finalistas.html
+[Wed Oct 14 16:43:50 2026] 127.0.0.1:57772 Closing
+[Wed Oct 14 16:43:54 2026] 127.0.0.1:57778 Accepted
+[Wed Oct 14 16:43:54 2026] 127.0.0.1:57778 [200]: GET /nexora-finalistas.html
+[Wed Oct 14 16:43:54 2026] 127.0.0.1:57778 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57785 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57786 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57787 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57788 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57789 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57790 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57785 [200]: GET /candidatas-nexora-ov2/001.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57786 [200]: GET /candidatas-nexora2/006.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57787 [200]: GET /candidatas-nexora3/002.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57788 [200]: GET /candidatas-nexora4-ov/003.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57789 [200]: GET /candidatas-nexora2/005.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57790 [200]: GET /candidatas-nexora3/017.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57786 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57787 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57790 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57785 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57788 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57789 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57791 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57792 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57791 [200]: GET /candidatas-nexora2/057.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57792 [200]: GET /candidatas-nexora2/058.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57792 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57793 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57793 [200]: GET /candidatas-nexora2/061.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57793 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57794 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57794 [200]: GET /candidatas-nexora4-ov/001.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57794 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57795 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57791 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57795 [200]: GET /candidatas-nexora2/055.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57795 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57796 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57796 [200]: GET /candidatas-nexora2/054.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57797 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57796 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57797 [200]: GET /candidatas-nexora2/063.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57797 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57798 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57798 [200]: GET /candidatas-nexora3-ov/007.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57798 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57799 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57799 [200]: GET /candidatas-nexora5/006.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57800 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57800 [200]: GET /candidatas-nexora5-ov/001.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57801 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57801 [200]: GET /candidatas-nexora4-ov/002.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57801 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57799 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57802 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57802 [200]: GET /candidatas-nexora4/003.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57802 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57803 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57803 [200]: GET /candidatas-nexora-ov2/019.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57803 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57804 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57804 [200]: GET /candidatas-nexora-ov/005.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57805 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57804 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57800 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57805 [200]: GET /candidatas-nexora-ov2/007.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57805 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57806 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57806 [200]: GET /candidatas-nexora2/037.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57806 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57807 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57807 [200]: GET /candidatas-nexora2/042.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57807 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57808 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57809 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57808 [200]: GET /candidatas-nexora/024.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57809 [200]: GET /candidatas-nexora2/027.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57810 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57808 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57810 [200]: GET /candidatas-nexora3/011.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57812 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57813 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57812 [200]: GET /candidatas-nexora2/009.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57813 [200]: GET /candidatas-nexora2/013.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57812 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57813 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57814 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57814 [200]: GET /candidatas-nexora2/014.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57809 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57814 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57810 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57815 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57815 [200]: GET /candidatas-nexora2/023.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57815 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57816 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57816 [200]: GET /candidatas-nexora2/024.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57817 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57817 [200]: GET /candidatas-nexora3/007.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57817 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57818 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57818 [200]: GET /candidatas-nexora3/006.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57818 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57819 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57819 [200]: GET /candidatas-nexora2/049.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57819 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57820 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57816 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57820 [200]: GET /candidatas-nexora2/044.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57820 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57821 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57822 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57823 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57821 [200]: GET /candidatas-nexora2/015.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57822 [200]: GET /candidatas-nexora/023.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57823 [200]: GET /candidatas-nexora4-ov/005.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57821 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57822 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57824 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57825 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57824 [200]: GET /candidatas-nexora/013.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57825 [200]: GET /candidatas-nexora-ov2/029.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57826 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57823 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57824 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57826 [200]: GET /candidatas-nexora2/019.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57826 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57825 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57827 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57827 [200]: GET /candidatas-nexora2/020.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57827 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57828 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57828 [200]: GET /candidatas-nexora2/047.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57828 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57829 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57829 [200]: GET /candidatas-nexora3/015.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57830 Accepted
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57830 [200]: GET /candidatas-nexora5/001.jpg
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57830 Closing
+[Wed Oct 14 16:43:55 2026] 127.0.0.1:57829 Closing
+[Wed Oct 14 16:44:12 2026] 127.0.0.1:57870 Accepted
+[Wed Oct 14 16:44:12 2026] 127.0.0.1:57870 [200]: GET /nexora-finalistas.html
+[Wed Oct 14 16:44:12 2026] 127.0.0.1:57870 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57871 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57872 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57873 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57874 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57875 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57871 [200]: GET /candidatas-nexora-ov2/001.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57872 [200]: GET /candidatas-nexora2/006.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57872 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57876 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57873 [200]: GET /candidatas-nexora3/002.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57873 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57874 [200]: GET /candidatas-nexora4-ov/003.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57875 [200]: GET /candidatas-nexora2/005.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57876 [200]: GET /candidatas-nexora3/017.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57874 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57876 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57871 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57875 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57877 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57878 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57877 [200]: GET /candidatas-nexora2/057.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57878 [200]: GET /candidatas-nexora2/058.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57878 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57879 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57879 [200]: GET /candidatas-nexora2/061.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57879 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57880 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57881 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57882 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57877 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57880 [200]: GET /candidatas-nexora4-ov/001.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57881 [200]: GET /candidatas-nexora2/055.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57882 [200]: GET /candidatas-nexora2/054.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57880 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57881 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57882 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57883 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57884 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57885 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57886 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57883 [200]: GET /candidatas-nexora2/063.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57883 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57887 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57884 [200]: GET /candidatas-nexora3-ov/007.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57885 [200]: GET /candidatas-nexora5-ov/001.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57886 [200]: GET /candidatas-nexora-ov/005.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57884 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57886 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57888 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57887 [200]: GET /candidatas-nexora5/006.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57888 [200]: GET /candidatas-nexora4/003.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57888 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57887 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57889 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57890 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57889 [200]: GET /candidatas-nexora-ov2/019.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57890 [200]: GET /candidatas-nexora4-ov/002.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57889 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57890 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57891 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57892 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57891 [200]: GET /candidatas-nexora-ov2/007.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57892 [200]: GET /candidatas-nexora2/037.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57891 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57892 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57885 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57893 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57894 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57895 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57893 [200]: GET /candidatas-nexora2/042.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57894 [200]: GET /candidatas-nexora/024.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57895 [200]: GET /candidatas-nexora2/027.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57893 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57896 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57894 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57897 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57898 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57896 [200]: GET /candidatas-nexora3/011.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57897 [200]: GET /candidatas-nexora2/009.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57898 [200]: GET /candidatas-nexora2/013.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57896 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57895 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57898 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57899 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57899 [200]: GET /candidatas-nexora2/014.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57897 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57899 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57903 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57903 [200]: GET /candidatas-nexora2/023.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57903 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57904 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57904 [200]: GET /candidatas-nexora2/024.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57904 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57905 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57906 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57905 [200]: GET /candidatas-nexora3/007.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57906 [200]: GET /candidatas-nexora3/006.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57905 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57906 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57907 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57908 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57907 [200]: GET /candidatas-nexora2/049.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57908 [200]: GET /candidatas-nexora2/044.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57907 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57908 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57909 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57909 [200]: GET /candidatas-nexora2/015.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57909 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57910 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57911 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57912 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57913 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57910 [200]: GET /candidatas-nexora/023.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57910 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57914 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57911 [200]: GET /candidatas-nexora4-ov/005.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57912 [200]: GET /candidatas-nexora/013.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57913 [200]: GET /candidatas-nexora-ov2/029.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57914 [200]: GET /candidatas-nexora2/019.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57914 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57911 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57912 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57915 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57913 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57915 [200]: GET /candidatas-nexora2/020.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57915 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57916 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57916 [200]: GET /candidatas-nexora2/047.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57916 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57917 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57917 [200]: GET /candidatas-nexora3/015.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57918 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57918 [200]: GET /candidatas-nexora5/001.jpg
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57918 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57917 Closing
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57921 Accepted
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57921 [404]: GET /favicon.ico - No such file or directory
+[Wed Oct 14 16:44:13 2026] 127.0.0.1:57921 Closing

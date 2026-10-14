@@ -1,0 +1,61 @@
+{
+    "horizontal": [
+        "consumer electronics store interior",
+        "clothing store interior shopping",
+        "living room sofa interior design",
+        "modern workspace desk setup",
+        "shopping bags gifts retail",
+        "smartwatch wrist technology"
+    ],
+    "vertical": [
+        "courier parcels boxes warehouse",
+        "cardboard boxes stacked storage"
+    ],
+    "producto": [
+        "wireless headphones",
+        "smartwatch fitness tracker",
+        "running shoes sneakers",
+        "portable bluetooth speaker",
+        "mechanical keyboard",
+        "desk lamp modern",
+        "robot vacuum cleaner",
+        "air fryer kitchen",
+        "backpack urban",
+        "sunglasses fashion",
+        "leather handbag",
+        "perfume bottle glass",
+        "face cream jar cosmetics",
+        "dumbbells fitness",
+        "soccer ball football",
+        "wooden toy blocks",
+        "remote control car toy",
+        "espresso coffee machine",
+        "electric kettle",
+        "drone quadcopter",
+        "board game table",
+        "hair dryer",
+        "power bank portable charger",
+        "computer mouse gaming",
+        "tablet computer screen",
+        "wireless earbuds case",
+        "smart speaker home",
+        "camera mirrorless",
+        "electric toothbrush",
+        "yoga mat rolled",
+        "children bicycle toy",
+        "teddy bear plush"
+    ],
+    "rubro": [
+        "electronics shop shelves",
+        "clothing racks fashion store",
+        "kitchen appliances counter",
+        "cosmetics beauty products",
+        "sports equipment fitness gym",
+        "toys shop shelf colorful"
+    ],
+    "revista": [
+        "headphones desk workspace",
+        "plants home decor interior",
+        "autumn fashion outfit clothing"
+    ]
+}

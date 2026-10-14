@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Néxora">
+    <!--
+        Símbolo de NÉXORA MARKET: la «N» de néxora dibujada como un solo trazo
+        naranja sobre un cuadrado azul noche. Es una marca tipográfica original
+        de esta plantilla: no reutiliza el logotipo de ninguna otra demo del
+        banco ni de ninguna tienda real.
+    -->
+    <rect width="48" height="48" rx="13" fill="#101D30"/>
+    <path d="M15 34V14l18 20V14" fill="none" stroke="#F56A2A" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="34" cy="34" r="3" fill="#209765"/>
+</svg>

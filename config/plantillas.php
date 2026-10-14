@@ -336,6 +336,47 @@ return [
             'actualizada' => '2026-10-13',
         ],
 
+        // Tienda de escaparate amplio: la tercera del formato `tienda` y la
+        // segunda de la categoría `comercio`. Comparte formato con Tienda en
+        // línea y Supermercado VERDIA, pero ni la identidad ni la arquitectura:
+        // cabecera azul noche a sangre, mega panel de categorías con sus
+        // colecciones, tarjetas de producto con valoración y precio anterior,
+        // marcas ficticias, opiniones de ejemplo, guías de compra con su propia
+        // página y canasta lateral en las cinco páginas con pedido simulado.
+        // La subcategoría «Tiendas online y comercio electrónico» del encargo no
+        // existe en el catálogo y no se crea una nueva: dentro de `comercio`, las
+        // etiquetas son las que hacen que el buscador la encuentre por
+        // «marketplace», «carrito» o «favoritos».
+        'nexora-market' => [
+            'nombre' => 'NÉXORA MARKET',
+            'categoria' => 'comercio',
+            'tipo' => 'tienda',
+            'etiquetas' => ['tienda', 'ecommerce', 'marketplace', 'catálogo', 'carrito', 'canasta', 'productos', 'favoritos', 'mega menú'],
+            'resumen' => 'Tienda de escaparate amplio: buscador con sugerencias, mega panel de seis categorías, catálogo con filtros, ficha de producto, favoritos y canasta que simula el pedido.',
+            'incluye' => [
+                'Diseño «escaparate de gran almacén»: azul noche estructural en cabecera, franjas y pie, papel blanco para el producto y un solo naranja de acción, con rejilla ancha y filetes finos en vez de sombras altas',
+                'Aviso de demostración en la cabecera y en el pie: marca, productos, precios, promociones, opiniones y datos de contacto ficticios',
+                'Hero a pantalla completa con slider de tres fotos, garantías y tarjeta de oferta de la semana',
+                'Modo claro y oscuro con interruptor, recordado entre las cinco páginas',
+                'Cabecera con buscador de productos con sugerencias mientras se escribe, favoritos y canasta con contador de unidades',
+                'Mega panel de categorías con las seis categorías y sus colecciones, más dos ofertas destacadas',
+                'Seis categorías y veintisiete productos de demostración, con precio de referencia y precio anterior cuando corresponde',
+                'Catálogo con filtros por categoría, colección, solo ofertas, solo favoritos y precio máximo, búsqueda por texto, cuatro órdenes y el filtro guardado en la URL',
+                'Ficha de producto con precio anterior, ahorro, disponibilidad, plazo de entrega, tabla de especificaciones y hasta cuatro relacionados de la misma categoría',
+                'Canasta lateral en las cinco páginas, con cantidades, subtotal y total, más página de canasta con entrega de ejemplo y pedido simulado',
+                'Canasta y favoritos guardados en el navegador, con la cantidad y el estado visible en toda la tienda',
+                'Seis marcas ficticias, dos bloques editoriales, tres opiniones de ejemplo y una página de guías de compra con tres artículos',
+                'Boletín con validación de correo, ubicación con plano propio, enlace a Google Maps y botón flotante de WhatsApp',
+                'Sin pasarela de pago, sin pedidos reales, sin datos personales y sin peticiones a terceros: todo el JavaScript vive en un solo archivo',
+            ],
+            'tecnologias' => ['HTML5', 'CSS3', 'JavaScript'],
+            'imagen' => 'themes/plantillas/images/nexora-market.jpg',
+            'demo' => 'nexora-market',
+            'destacada' => false,
+            'publicada' => true,
+            'actualizada' => '2026-10-14',
+        ],
+
     ],
 
 ];

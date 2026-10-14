@@ -8,11 +8,12 @@ demostración y qué hacer el día que una demo se mude a su propio subdominio.
 
 Aclaración vigente del banco: **toda landing y todo sitio web abre con un hero o
 un slider a pantalla completa, moderno y responsive**. Es el punto 1 de la lista
-obligatoria de más abajo, y las ocho demostraciones publicadas ya lo cumplen:
+obligatoria de más abajo, y las nueve demostraciones publicadas ya lo cumplen:
 `clinica-dental`, `restaurante-carta` y `portafolio-creativo` (landings), y
 `academia-cursos`, `estudio-contable`, `inmobiliaria-propiedades`,
-`tienda-online` y `supermercado-online-verdia` (sitios web; las dos últimas, del
-tipo `tienda`, de cuatro páginas) abren con un slider de tres fotos cada una.
+`tienda-online`, `supermercado-online-verdia` y `nexora-market` (sitios web; los
+tres últimos, del tipo `tienda`, de cuatro y cinco páginas) abren con un slider
+de tres fotos cada una.
 Antes de dar por buena una portada nueva: avanzar el slider a mano, revisarla a
 1440 px y a 390 px y repetir la revisión con `prefers-reduced-motion` activado,
 que debe apagar el paso automático sin romper los controles.
@@ -61,14 +62,15 @@ que no toque el interruptor recibe el tema oscuro del sistema operativo.
 de la página. El error típico —aplicar la clase al final del cuerpo— produce el
 flash blanco al recargar en oscuro.
 
-**Estado.** Las ocho demostraciones publicadas lo traen: `clinica-dental`,
+**Estado.** Las nueve demostraciones publicadas lo traen: `clinica-dental`,
 `restaurante-carta` y `portafolio-creativo` (landings) y `academia-cursos` (sitio
 de cuatro páginas), `estudio-contable` (sitio de cinco páginas),
 `inmobiliaria-propiedades` (sitio de cinco), `tienda-online` (tienda de cuatro
-páginas) y `supermercado-online-verdia` (tienda de cuatro páginas), en los cuatro
-sitios con la elección viajando de una página a otra porque todas comparten la
-misma clave. No queda ninguna plantilla publicada sin demostración: la novena que
-llegue nace con el interruptor, que es obligatorio para publicar. Lo vigila la prueba
+páginas), `supermercado-online-verdia` (tienda de cuatro páginas) y
+`nexora-market` (tienda de cinco páginas), en todos los casos con la elección
+viajando de una página a otra porque todas comparten la misma clave. No queda
+ninguna plantilla publicada sin demostración: la décima que llegue nace con el
+interruptor, que es obligatorio para publicar. Lo vigila la prueba
 `tests/Unit/CatalogoPlantillasTest.php` → «trae el interruptor de tema claro /
 oscuro en toda demostración publicada», que además exige una clave de
 `localStorage` distinta por plantilla.
@@ -117,7 +119,7 @@ redes sociales, las anclas de sección, y los nombres que vigilan las pruebas
 diferencia sin hablar de color ni de logo. Si la única frase posible es «cambian los colores y las
 fotos», no cumple esta regla.
 
-Las ocho demostraciones publicadas hoy son distintas entre sí y sirven de ejemplo de ocho
+Las nueve demostraciones publicadas hoy son distintas entre sí y sirven de ejemplo de nueve
 lenguajes: `restaurante-carta` (carta impresa, cálido y fotográfico), `clinica-dental` (landing
 clara y cercana), `academia-cursos` (institucional con tarjetas y azul profundo),
 `estudio-contable` (expediente contable: papel y tinta, titulares en serif, filetes en vez de
@@ -137,7 +139,15 @@ etiqueta del producto, y la venta resuelta en dos gestos, la canasta y el pedido
 superficies blancas, verde bosque de la marca para la acción y el naranja reservado a las ofertas,
 tarjetas de producto cuadradas con la foto grande y el precio en negrita, nueve pasillos en tarjeta
 con foto y el catálogo resuelto con buscador con sugerencias, filtros por pasillo y por necesidad y
-una canasta que simula el pedido sin cobrar nada).
+una canasta que simula el pedido sin cobrar nada) y
+`nexora-market` (escaparate de gran almacén: el azul noche como color **estructural** —cabecera a
+sangre, franja de beneficios, panel de canasta y pie— y no como fondo, papel blanco para que el
+color lo ponga el producto, un único naranja de acción, rejilla ancha con filetes finos y precios
+en cifras tabulares; se recorre con un **mega panel** de seis categorías y sus colecciones, el
+catálogo filtra por categoría, colección, oferta, favoritos y precio máximo con el estado en la
+URL, cada producto se compara por valoración de ejemplo y precio anterior, y la canasta es un panel
+lateral presente en las cinco páginas —portada, catálogo, ficha, canasta y guías de compra— que
+simula el pedido sin cobrar nada).
 
 ## Piezas de la sección
 
@@ -217,7 +227,7 @@ chrome --headless=new --hide-scrollbars --force-device-scale-factor=1 \
 El `--user-data-dir` es obligatorio: sin él Chrome puede reutilizar el perfil abierto del usuario en
 vez de arrancar uno limpio. Los guiones del banco son `storage/tmp/capturas-preparar.php` (pasa los
 PNG a JPEG en su carpeta final y **se niega** si alguna no es 16/10 o no se puede leer) y
-`storage/tmp/capturas-hoja.php`, que arma una hoja de contactos para revisar las ocho de un vistazo
+`storage/tmp/capturas-hoja.php`, que arma una hoja de contactos para revisar las nueve de un vistazo
 antes de publicarlas.
 
 Lo vigila la prueba `tests/Unit/CatalogoPlantillasTest.php` → «publica la captura 16/10 de cada
@@ -255,6 +265,15 @@ tabla comparativa, y un formulario de consulta en lugar de uno de matrícula), y
 medidas**. Ese plano no se dibuja a mano: lo genera `storage/tmp/plano-inmobiliaria.php`, que
 declara cada ambiente en metros y **falla si la planta no cierra** (suma de superficies distinta a
 la de la planta, o dos ambientes que se solapan).
+
+Para una **tienda** hay tres referencias y conviene elegir por arquitectura, no por color:
+`public/demos/tienda-online/` cuando el negocio es un catálogo corto de un solo rubro (doce
+productos, filtros por ambiente y cierre por WhatsApp), `public/demos/supermercado-online-verdia/`
+cuando el surtido es amplio y se organiza en **pasillos** (nueve pasillos, veintiún productos,
+buscador con sugerencias y compra por necesidad) y `public/demos/nexora-market/` cuando la tienda
+vende de **varias categorías a la vez** (seis categorías y veintisiete productos con sus
+colecciones, mega panel, filtros por categoría, colección, oferta, favoritos y precio máximo, orden
+múltiple, guías de compra con su propia página y canasta lateral en las cinco páginas).
 
 En una demo de **tienda** hay una copia más que en las demás: el catálogo y los destacados están
 escritos en el HTML —los filtros leen los atributos `data-` de cada tarjeta, no la memoria del

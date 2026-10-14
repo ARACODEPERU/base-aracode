@@ -1,0 +1,84 @@
+== 1. Las cinco páginas: consola y desborde ==
+  ok   index.html: carga con su título
+  ok   index.html: sin desborde horizontal a 1440 px
+  ok   catalogo.html: carga con su título
+  ok   catalogo.html: sin desborde horizontal a 1440 px
+  ok   producto.html: carga con su título
+  ok   producto.html: sin desborde horizontal a 1440 px
+  ok   carrito.html: carga con su título
+  ok   carrito.html: sin desborde horizontal a 1440 px
+  ok   revista.html: carga con su título
+  ok   revista.html: sin desborde horizontal a 1440 px
+== 2. Portada: carrusel, tema y aparición ==
+  ok   la portada tiene tres fotos
+  ok   solo una diapositiva está activa
+  ok   los controles del carrusel se ven con JavaScript
+  ok   se pintan las seis categorías
+  ok   se pintan las seis marcas ficticias
+  ok   el escaparate pinta productos
+  ok   las ofertas del día pintan cuatro productos
+  ok   ninguna imagen rota en la portada
+  ok   la flecha avanza a la segunda foto
+  ok   el interruptor pasa a oscuro y lo guarda
+  ok   el icono cambia al sol con aria-pressed
+  ok   al recargar se mantiene el modo oscuro
+  ok   color-scheme acompaña al modo oscuro
+== 3. Buscador de la cabecera ==
+  ok   el buscador sugiere productos al escribir
+  ok   el buscador avisa cuando no hay coincidencias
+== 4. Catálogo: filtros, orden y estado vacío ==
+  ok   el catálogo pinta los 27 productos
+  ok   filtrar por Tecnología deja 9 productos
+  ok   el chip y el título acompañan al filtro
+  ok   el filtro de ofertas deja los 9 productos rebajados
+  ok   la colección Audio deja los 4 productos de audio
+  ok   el orden por precio ascendente es correcto
+  ok   marcar un favorito lo guarda y actualiza el contador
+  ok   el filtro de favoritos deja solo lo marcado
+  ok   desmarcar el favorito deja el estado vacío
+  ok   la búsqueda sin coincidencias muestra el estado vacío
+  ok   el botón de quitar filtros aparece cuando hay filtro
+== 5. Ficha de producto ==
+  ok   la ficha trae el producto pedido
+  ok   el precio y el precio anterior salen de los datos
+  ok   la tabla de especificaciones tiene cuatro filas
+  ok   la ficha ofrece cuatro productos relacionados
+  ok   la ficha usa la foto del producto
+  ok   el botón de WhatsApp tiene destino
+  ok   la migaja muestra la categoría
+  ok   añadir dos unidades desde la ficha actualiza el contador
+  ok   el aviso de añadido nombra el producto
+== 6. Canasta: sumas, cantidades y pedido simulado ==
+  ok   la canasta conserva lo elegido en la ficha
+  ok   el subtotal suma precio × cantidad
+  ok   la entrega por defecto es el recojo
+  ok   sumar una unidad recalcula el subtotal
+  ok   el envío de ejemplo es gratis desde S/ 199
+  ok   el formulario vacío muestra los tres errores
+  ok   el campo en error se marca con aria-invalid
+  ok   el formulario completo muestra el comprobante
+  ok   el comprobante lleva el total
+  ok   el comprobante lleva el cliente y las cantidades
+  ok   el comprobante arma el enlace de WhatsApp
+  ok   vaciar la canasta deja el estado vacío
+== 7. Movimiento reducido y sin JavaScript ==
+  ok   con movimiento reducido el contenido aparece igual (sin animación)
+  ok   con movimiento reducido el paso automático está apagado
+  ok   con movimiento reducido el carrusel sigue funcionando a mano
+  ok   sin JavaScript el interruptor de tema no se muestra
+  ok   sin JavaScript los controles del carrusel no se muestran
+  ok   sin JavaScript se ve la primera foto de la portada
+  ok   sin JavaScript el titular de la portada se lee
+== 8. Enlaces internos: todos llevan a algo ==
+  60 destinos internos distintos
+  ok   todos los enlaces internos abren una página montada
+  ok   todos los enlaces de categoría o colección traen productos
+  ok   todas las fichas enlazadas cargan su producto
+== 9. Revisión a 390 px ==
+  ok   index.html: sin desborde horizontal a 390 px
+  ok   catalogo.html: sin desborde horizontal a 390 px
+  ok   producto.html: sin desborde horizontal a 390 px
+  ok   carrito.html: sin desborde horizontal a 390 px
+  ok   revista.html: sin desborde horizontal a 390 px
+  ok   el menú móvil se abre y se ve
+  ok   el mega panel abre con todas las colecciones

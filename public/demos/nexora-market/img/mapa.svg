@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 460" role="img" aria-label="Plano de la tienda en el distrito comercial de ejemplo">
+    <!--
+        Plano dibujado para esta demo: manzanas, avenidas y el punto de la
+        tienda. La dirección que representa es ficticia, igual que el resto de
+        los datos de contacto. El bloque de ubicación enlaza a Google Maps con
+        esa misma dirección de ejemplo.
+    -->
+    <rect width="720" height="460" fill="#F2F5F8"/>
+
+    <!-- Manzanas -->
+    <g fill="#E3E9EF">
+        <rect x="40" y="40" width="150" height="90" rx="6"/>
+        <rect x="220" y="40" width="120" height="90" rx="6"/>
+        <rect x="370" y="40" width="140" height="90" rx="6"/>
+        <rect x="540" y="40" width="140" height="90" rx="6"/>
+
+        <rect x="40" y="170" width="150" height="110" rx="6"/>
+        <rect x="220" y="170" width="120" height="110" rx="6"/>
+        <rect x="370" y="170" width="140" height="110" rx="6"/>
+        <rect x="540" y="170" width="140" height="110" rx="6"/>
+
+        <rect x="40" y="320" width="150" height="100" rx="6"/>
+        <rect x="220" y="320" width="120" height="100" rx="6"/>
+        <rect x="370" y="320" width="140" height="100" rx="6"/>
+        <rect x="540" y="320" width="140" height="100" rx="6"/>
+    </g>
+
+    <!-- Calles secundarias -->
+    <g stroke="#FFFFFF" stroke-width="14">
+        <path d="M205 20v420M355 20v420M525 20v420"/>
+        <path d="M20 145h680M20 295h680"/>
+    </g>
+
+    <!-- Avenida principal -->
+    <path d="M-20 402 740 60" stroke="#101D30" stroke-width="26" opacity="0.12"/>
+    <path d="M-20 402 740 60" stroke="#647084" stroke-width="3" stroke-dasharray="14 12"/>
+
+    <!-- Parque -->
+    <g>
+        <rect x="377" y="180" width="126" height="90" rx="8" fill="#DCEFE1"/>
+        <circle cx="410" cy="212" r="12" fill="#209765" opacity="0.55"/>
+        <circle cx="446" cy="236" r="16" fill="#209765" opacity="0.4"/>
+        <circle cx="478" cy="206" r="10" fill="#209765" opacity="0.5"/>
+    </g>
+
+    <!-- Punto de la tienda -->
+    <g>
+        <circle cx="248" cy="238" r="34" fill="#F56A2A" opacity="0.16"/>
+        <circle cx="248" cy="238" r="11" fill="#F56A2A" stroke="#FFFFFF" stroke-width="4"/>
+    </g>
+
+    <!-- Etiqueta -->
+    <g>
+        <rect x="196" y="272" width="188" height="42" rx="10" fill="#101D30"/>
+        <text x="290" y="299" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">NÉXORA Market</text>
+    </g>
+
+    <text x="40" y="440" font-family="system-ui, sans-serif" font-size="13" fill="#647084">Plano de ejemplo · la dirección es ficticia</text>
+</svg>

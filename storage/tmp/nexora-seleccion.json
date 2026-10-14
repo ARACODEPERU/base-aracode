@@ -1,0 +1,51 @@
+[
+    { "carpeta": "candidatas-nexora-ov2", "n": 1, "destino": "portada-tecnologia.webp", "ancho": 1280, "alto": 800, "sesgo": 0.5, "uso": "PORTADA 1 · tienda de tecnología" },
+    { "carpeta": "candidatas-nexora2", "n": 6, "destino": "portada-moda.webp", "ancho": 1280, "alto": 800, "sesgo": 0.45, "uso": "PORTADA 2 · boutique de moda" },
+    { "carpeta": "candidatas-nexora3", "n": 2, "destino": "portada-hogar.webp", "ancho": 1280, "alto": 800, "sesgo": 0.5, "uso": "PORTADA 3 · hogar" },
+
+    { "carpeta": "candidatas-nexora4-ov", "n": 3, "destino": "rubro-tecnologia.webp", "ancho": 800, "alto": 600, "sesgo": 0.5, "uso": "RUBRO tecnología" },
+    { "carpeta": "candidatas-nexora2", "n": 5, "destino": "rubro-moda.webp", "ancho": 800, "alto": 600, "sesgo": 0.5, "uso": "RUBRO moda" },
+    { "carpeta": "candidatas-nexora3", "n": 17, "destino": "rubro-hogar.webp", "ancho": 800, "alto": 600, "sesgo": 0.5, "uso": "RUBRO hogar" },
+    { "carpeta": "candidatas-nexora2", "n": 57, "destino": "rubro-belleza.webp", "ancho": 800, "alto": 600, "sesgo": 0.5, "uso": "RUBRO belleza" },
+    { "carpeta": "candidatas-nexora2", "n": 58, "destino": "rubro-deportes.webp", "ancho": 800, "alto": 600, "sesgo": 0.5, "uso": "RUBRO deportes" },
+    { "carpeta": "candidatas-nexora2", "n": 61, "destino": "rubro-juguetes.webp", "ancho": 800, "alto": 600, "sesgo": 0.5, "uso": "RUBRO juguetes" },
+
+    { "carpeta": "candidatas-nexora4-ov", "n": 1, "destino": "franja-tecnologia.webp", "ancho": 1200, "alto": 800, "sesgo": 0.45, "uso": "FRANJA tecnología" },
+
+    { "carpeta": "candidatas-nexora2", "n": 55, "destino": "editorial-estilo.webp", "ancho": 1100, "alto": 800, "sesgo": 0.5, "uso": "EDITORIAL estilo" },
+    { "carpeta": "candidatas-nexora2", "n": 54, "destino": "editorial-hogar.webp", "ancho": 1100, "alto": 800, "sesgo": 0.5, "uso": "EDITORIAL hogar" },
+
+    { "carpeta": "candidatas-nexora2", "n": 63, "destino": "guia-tecnologia.webp", "ancho": 900, "alto": 600, "sesgo": 0.5, "uso": "BLOG accesorios de tecnología" },
+    { "carpeta": "candidatas-nexora3-ov", "n": 7, "destino": "guia-hogar.webp", "ancho": 900, "alto": 600, "sesgo": 0.5, "uso": "BLOG renovar el hogar" },
+    { "carpeta": "candidatas-nexora2", "n": 64, "destino": "guia-estilo.webp", "ancho": 900, "alto": 600, "sesgo": 0.5, "uso": "BLOG tendencias de estilo" },
+
+    { "carpeta": "candidatas-nexora5", "n": 6, "destino": "confianza-surtido.webp", "ancho": 1000, "alto": 1333, "sesgo": 0.5, "uso": "VERTICAL confianza" },
+
+    { "carpeta": "candidatas-nexora4-ov", "n": 2, "destino": "p-auriculares.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO auriculares over-ear" },
+    { "carpeta": "candidatas-nexora-ov2", "n": 19, "destino": "p-earbuds.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO auriculares inalámbricos" },
+    { "carpeta": "candidatas-nexora-ov", "n": 5, "destino": "p-reloj.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO reloj inteligente" },
+    { "carpeta": "candidatas-nexora-ov2", "n": 7, "destino": "p-altavoz.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO altavoz portátil" },
+    { "carpeta": "candidatas-nexora2", "n": 37, "destino": "p-altavoz-inteligente.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO altavoz inteligente" },
+    { "carpeta": "candidatas-nexora2", "n": 42, "destino": "p-camara.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO cámara mirrorless" },
+    { "carpeta": "candidatas-nexora", "n": 24, "destino": "p-raton.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO ratón gamer" },
+    { "carpeta": "candidatas-nexora2", "n": 27, "destino": "p-dron.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO dron" },
+    { "carpeta": "candidatas-nexora3", "n": 11, "destino": "p-smartphone.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO smartphone" },
+    { "carpeta": "candidatas-nexora2", "n": 9, "destino": "p-zapatillas.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO zapatillas" },
+    { "carpeta": "candidatas-nexora2", "n": 13, "destino": "p-gafas.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO gafas de sol" },
+    { "carpeta": "candidatas-nexora2", "n": 14, "destino": "p-bolso.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO bolso de cuero" },
+    { "carpeta": "candidatas-nexora2", "n": 23, "destino": "p-cafetera.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO cafetera" },
+    { "carpeta": "candidatas-nexora2", "n": 24, "destino": "p-hervidor.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO hervidor eléctrico" },
+    { "carpeta": "candidatas-nexora3", "n": 7, "destino": "p-licuadora.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO licuadora" },
+    { "carpeta": "candidatas-nexora3", "n": 6, "destino": "p-ollas.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO juego de ollas" },
+    { "carpeta": "candidatas-nexora2", "n": 49, "destino": "p-jarron.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO jarrón cerámico" },
+    { "carpeta": "candidatas-nexora2", "n": 43, "destino": "p-cepillo.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO cepillo dental eléctrico" },
+    { "carpeta": "candidatas-nexora2", "n": 15, "destino": "p-perfume.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO perfume" },
+    { "carpeta": "candidatas-nexora", "n": 23, "destino": "p-secador.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO secador de pelo" },
+    { "carpeta": "candidatas-nexora4-ov", "n": 5, "destino": "p-mancuernas.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO mancuernas" },
+    { "carpeta": "candidatas-nexora", "n": 13, "destino": "p-balon.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO balón de fútbol" },
+    { "carpeta": "candidatas-nexora-ov2", "n": 29, "destino": "p-yoga.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO esterilla de yoga" },
+    { "carpeta": "candidatas-nexora2", "n": 19, "destino": "p-bloques.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO bloques de madera" },
+    { "carpeta": "candidatas-nexora2", "n": 20, "destino": "p-coche.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO coche teledirigido" },
+    { "carpeta": "candidatas-nexora2", "n": 47, "destino": "p-peluche.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO peluche" },
+    { "carpeta": "candidatas-nexora3", "n": 15, "destino": "p-tren.webp", "ancho": 800, "alto": 800, "sesgo": 0.5, "uso": "PRODUCTO tren de madera" }
+]

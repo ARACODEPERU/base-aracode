@@ -124,6 +124,17 @@
                     :compacta="true"
                 />
 
+                {{-- Pichanguero --}}
+                <x-v2.product-card
+                    title="PICHANGUERO"
+                    description="Plataforma para organizar torneos de fútbol: fixture, posiciones y estadísticas."
+                    :href="route('solucion_pichanguero')"
+                    image="{{ asset('themes/webpage/images/misc/s3.jpg') }}"
+                    {{-- badge="App móvil" --}}
+                    :delay="3"
+                    :compacta="true"
+                />
+
                 {{-- KIRAFACT: misma grafía que en /soluciones y en el sitio del
                      producto (config/kirafact.php «titulo_marca»). --}}
                 <x-v2.product-card
@@ -133,17 +144,6 @@
                     image="{{ asset('themes/webpage/images/misc/s2.jpg') }}"
                     {{-- badge="SUNAT" --}}
                     :delay="2"
-                    :compacta="true"
-                />
-
-                {{-- Pichanguero --}}
-                <x-v2.product-card
-                    title="Pichanguero"
-                    description="Plataforma para organizar torneos de fútbol: fixture, posiciones y estadísticas."
-                    :href="route('solucion_pichanguero')"
-                    image="{{ asset('themes/webpage/images/misc/s3.jpg') }}"
-                    {{-- badge="App móvil" --}}
-                    :delay="3"
                     :compacta="true"
                 />
             </div>

@@ -1,0 +1,346 @@
+[
+    {
+        "archivo": "portada-tecnologia.webp",
+        "medidas": "1280x800",
+        "kb": 176,
+        "uso": "PORTADA 1 · tienda de tecnología",
+        "candidata": "candidatas-nexora-ov2#001",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora-ov2/001.jpg"
+    },
+    {
+        "archivo": "portada-moda.webp",
+        "medidas": "1280x800",
+        "kb": 88,
+        "uso": "PORTADA 2 · boutique de moda",
+        "candidata": "candidatas-nexora2#006",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/006.jpg"
+    },
+    {
+        "archivo": "portada-hogar.webp",
+        "medidas": "1280x800",
+        "kb": 50,
+        "uso": "PORTADA 3 · hogar",
+        "candidata": "candidatas-nexora3#002",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora3/002.jpg"
+    },
+    {
+        "archivo": "rubro-tecnologia.webp",
+        "medidas": "800x600",
+        "kb": 56,
+        "uso": "RUBRO tecnología",
+        "candidata": "candidatas-nexora4-ov#003",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora4-ov/003.jpg"
+    },
+    {
+        "archivo": "rubro-moda.webp",
+        "medidas": "800x600",
+        "kb": 75,
+        "uso": "RUBRO moda",
+        "candidata": "candidatas-nexora2#005",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/005.jpg"
+    },
+    {
+        "archivo": "rubro-hogar.webp",
+        "medidas": "800x600",
+        "kb": 40,
+        "uso": "RUBRO hogar",
+        "candidata": "candidatas-nexora3#017",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora3/017.jpg"
+    },
+    {
+        "archivo": "rubro-belleza.webp",
+        "medidas": "800x600",
+        "kb": 114,
+        "uso": "RUBRO belleza",
+        "candidata": "candidatas-nexora2#057",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/057.jpg"
+    },
+    {
+        "archivo": "rubro-deportes.webp",
+        "medidas": "800x600",
+        "kb": 58,
+        "uso": "RUBRO deportes",
+        "candidata": "candidatas-nexora2#058",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/058.jpg"
+    },
+    {
+        "archivo": "rubro-juguetes.webp",
+        "medidas": "800x600",
+        "kb": 37,
+        "uso": "RUBRO juguetes",
+        "candidata": "candidatas-nexora2#061",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/061.jpg"
+    },
+    {
+        "archivo": "franja-tecnologia.webp",
+        "medidas": "1200x800",
+        "kb": 64,
+        "uso": "FRANJA tecnología",
+        "candidata": "candidatas-nexora4-ov#001",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora4-ov/001.jpg"
+    },
+    {
+        "archivo": "editorial-estilo.webp",
+        "medidas": "1100x800",
+        "kb": 26,
+        "uso": "EDITORIAL estilo",
+        "candidata": "candidatas-nexora2#055",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/055.jpg"
+    },
+    {
+        "archivo": "editorial-hogar.webp",
+        "medidas": "1100x800",
+        "kb": 79,
+        "uso": "EDITORIAL hogar",
+        "candidata": "candidatas-nexora2#054",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/054.jpg"
+    },
+    {
+        "archivo": "guia-tecnologia.webp",
+        "medidas": "900x600",
+        "kb": 58,
+        "uso": "BLOG accesorios de tecnología",
+        "candidata": "candidatas-nexora2#063",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/063.jpg"
+    },
+    {
+        "archivo": "guia-hogar.webp",
+        "medidas": "900x600",
+        "kb": 17,
+        "uso": "BLOG renovar el hogar",
+        "candidata": "candidatas-nexora3-ov#007",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora3-ov/007.jpg"
+    },
+    {
+        "archivo": "guia-estilo.webp",
+        "medidas": "900x600",
+        "kb": 34,
+        "uso": "BLOG tendencias de estilo",
+        "candidata": "candidatas-nexora2#064",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/064.jpg"
+    },
+    {
+        "archivo": "confianza-surtido.webp",
+        "medidas": "1000x1333",
+        "kb": 175,
+        "uso": "VERTICAL confianza",
+        "candidata": "candidatas-nexora5#006",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora5/006.jpg"
+    },
+    {
+        "archivo": "p-auriculares.webp",
+        "medidas": "800x800",
+        "kb": 29,
+        "uso": "PRODUCTO auriculares over-ear",
+        "candidata": "candidatas-nexora4-ov#002",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora4-ov/002.jpg"
+    },
+    {
+        "archivo": "p-earbuds.webp",
+        "medidas": "800x800",
+        "kb": 11,
+        "uso": "PRODUCTO auriculares inalámbricos",
+        "candidata": "candidatas-nexora-ov2#019",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora-ov2/019.jpg"
+    },
+    {
+        "archivo": "p-reloj.webp",
+        "medidas": "800x800",
+        "kb": 15,
+        "uso": "PRODUCTO reloj inteligente",
+        "candidata": "candidatas-nexora-ov#005",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora-ov/005.jpg"
+    },
+    {
+        "archivo": "p-altavoz.webp",
+        "medidas": "800x800",
+        "kb": 59,
+        "uso": "PRODUCTO altavoz portátil",
+        "candidata": "candidatas-nexora-ov2#007",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora-ov2/007.jpg"
+    },
+    {
+        "archivo": "p-altavoz-inteligente.webp",
+        "medidas": "800x800",
+        "kb": 33,
+        "uso": "PRODUCTO altavoz inteligente",
+        "candidata": "candidatas-nexora2#037",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/037.jpg"
+    },
+    {
+        "archivo": "p-camara.webp",
+        "medidas": "800x800",
+        "kb": 43,
+        "uso": "PRODUCTO cámara mirrorless",
+        "candidata": "candidatas-nexora2#042",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/042.jpg"
+    },
+    {
+        "archivo": "p-raton.webp",
+        "medidas": "800x800",
+        "kb": 85,
+        "uso": "PRODUCTO ratón gamer",
+        "candidata": "candidatas-nexora#024",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora/024.jpg"
+    },
+    {
+        "archivo": "p-dron.webp",
+        "medidas": "800x800",
+        "kb": 220,
+        "uso": "PRODUCTO dron",
+        "candidata": "candidatas-nexora2#027",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/027.jpg"
+    },
+    {
+        "archivo": "p-smartphone.webp",
+        "medidas": "800x800",
+        "kb": 123,
+        "uso": "PRODUCTO smartphone",
+        "candidata": "candidatas-nexora3#011",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora3/011.jpg"
+    },
+    {
+        "archivo": "p-zapatillas.webp",
+        "medidas": "800x800",
+        "kb": 78,
+        "uso": "PRODUCTO zapatillas",
+        "candidata": "candidatas-nexora2#009",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/009.jpg"
+    },
+    {
+        "archivo": "p-gafas.webp",
+        "medidas": "800x800",
+        "kb": 37,
+        "uso": "PRODUCTO gafas de sol",
+        "candidata": "candidatas-nexora2#013",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/013.jpg"
+    },
+    {
+        "archivo": "p-bolso.webp",
+        "medidas": "800x800",
+        "kb": 70,
+        "uso": "PRODUCTO bolso de cuero",
+        "candidata": "candidatas-nexora2#014",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/014.jpg"
+    },
+    {
+        "archivo": "p-cafetera.webp",
+        "medidas": "800x800",
+        "kb": 51,
+        "uso": "PRODUCTO cafetera",
+        "candidata": "candidatas-nexora2#023",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/023.jpg"
+    },
+    {
+        "archivo": "p-hervidor.webp",
+        "medidas": "800x800",
+        "kb": 66,
+        "uso": "PRODUCTO hervidor eléctrico",
+        "candidata": "candidatas-nexora2#024",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/024.jpg"
+    },
+    {
+        "archivo": "p-licuadora.webp",
+        "medidas": "800x800",
+        "kb": 58,
+        "uso": "PRODUCTO licuadora",
+        "candidata": "candidatas-nexora3#007",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora3/007.jpg"
+    },
+    {
+        "archivo": "p-ollas.webp",
+        "medidas": "800x800",
+        "kb": 87,
+        "uso": "PRODUCTO juego de ollas",
+        "candidata": "candidatas-nexora3#006",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora3/006.jpg"
+    },
+    {
+        "archivo": "p-jarron.webp",
+        "medidas": "800x800",
+        "kb": 39,
+        "uso": "PRODUCTO jarrón cerámico",
+        "candidata": "candidatas-nexora2#049",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/049.jpg"
+    },
+    {
+        "archivo": "p-cepillo.webp",
+        "medidas": "800x800",
+        "kb": 31,
+        "uso": "PRODUCTO cepillo dental eléctrico",
+        "candidata": "candidatas-nexora2#043",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/043.jpg"
+    },
+    {
+        "archivo": "p-perfume.webp",
+        "medidas": "800x800",
+        "kb": 75,
+        "uso": "PRODUCTO perfume",
+        "candidata": "candidatas-nexora2#015",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/015.jpg"
+    },
+    {
+        "archivo": "p-secador.webp",
+        "medidas": "800x800",
+        "kb": 15,
+        "uso": "PRODUCTO secador de pelo",
+        "candidata": "candidatas-nexora#023",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora/023.jpg"
+    },
+    {
+        "archivo": "p-mancuernas.webp",
+        "medidas": "800x800",
+        "kb": 61,
+        "uso": "PRODUCTO mancuernas",
+        "candidata": "candidatas-nexora4-ov#005",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora4-ov/005.jpg"
+    },
+    {
+        "archivo": "p-balon.webp",
+        "medidas": "800x800",
+        "kb": 101,
+        "uso": "PRODUCTO balón de fútbol",
+        "candidata": "candidatas-nexora#013",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora/013.jpg"
+    },
+    {
+        "archivo": "p-yoga.webp",
+        "medidas": "800x800",
+        "kb": 53,
+        "uso": "PRODUCTO esterilla de yoga",
+        "candidata": "candidatas-nexora-ov2#029",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora-ov2/029.jpg"
+    },
+    {
+        "archivo": "p-bloques.webp",
+        "medidas": "800x800",
+        "kb": 31,
+        "uso": "PRODUCTO bloques de madera",
+        "candidata": "candidatas-nexora2#019",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/019.jpg"
+    },
+    {
+        "archivo": "p-coche.webp",
+        "medidas": "800x800",
+        "kb": 55,
+        "uso": "PRODUCTO coche teledirigido",
+        "candidata": "candidatas-nexora2#020",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/020.jpg"
+    },
+    {
+        "archivo": "p-peluche.webp",
+        "medidas": "800x800",
+        "kb": 60,
+        "uso": "PRODUCTO peluche",
+        "candidata": "candidatas-nexora2#047",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora2/047.jpg"
+    },
+    {
+        "archivo": "p-tren.webp",
+        "medidas": "800x800",
+        "kb": 151,
+        "uso": "PRODUCTO tren de madera",
+        "candidata": "candidatas-nexora3#015",
+        "origen": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-nexora3/015.jpg"
+    }
+]
