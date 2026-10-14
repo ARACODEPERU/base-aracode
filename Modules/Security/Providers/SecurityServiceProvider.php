@@ -64,6 +64,7 @@ class SecurityServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \Modules\Security\Console\MeasureStorageCommand::class,
+                \Modules\Security\Console\PruneErrorLogsCommand::class,
             ]);
         }
     }

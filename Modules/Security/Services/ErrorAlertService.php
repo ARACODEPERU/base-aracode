@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Integrationhub\Services\TelegramBotService;
 use Modules\Security\Entities\SecurityAlertRecipient;
 use Modules\Security\Entities\SecurityAlertSetting;
+use Modules\Security\Entities\SecurityErrorLog;
 use Modules\Security\Jobs\SendSecurityErrorAlert;
 use Throwable;
 
@@ -27,6 +28,9 @@ use Throwable;
  *   - No satura: deduplica por huella (nivel + mensaje + archivo + línea)
  *     durante la ventana configurada.
  *   - No golpea la base en cada línea: ajustes y destinatarios se cachean.
+ *   - Da contexto: además del resumen del chat, guarda el detalle completo del
+ *     error (con ErrorLogService) y el mensaje lleva el enlace para abrirlo. Las
+ *     repeticiones del mismo fallo solo suman, no avisan otra vez.
  */
 class ErrorAlertService
 {
@@ -39,8 +43,31 @@ class ErrorAlertService
 
     private const DEDUP_PREFIX = 'security.alerts.seen:';
 
+    /** Claves cuyo valor NUNCA se guarda (contraseñas, tokens, cookies...). */
+    private const SENSITIVE_KEYS = [
+        'password',
+        'password_confirmation',
+        'current_password',
+        'token',
+        'access_token',
+        'refresh_token',
+        'secret',
+        'api_key',
+        'apikey',
+        'authorization',
+        'cookie',
+        '_token',
+    ];
+
+    /** Valor con el que se sustituye un dato sensible. */
+    private const REDACTED = '*** (oculto)';
+
     /** true mientras el propio servicio está enviando: evita la recursión. */
     private static bool $suppressed = false;
+
+    public function __construct(private readonly ErrorLogService $errorLogs)
+    {
+    }
 
     /** Ajustes resueltos en esta petición (el servicio es singleton). */
     private ?SecurityAlertSetting $settingsMemo = null;
@@ -74,10 +101,37 @@ class ErrorAlertService
             }
 
             $payload = $this->buildPayload($event);
+            $fingerprint = SecurityErrorLog::fingerprint($payload);
+            $cooldown = $settings->cooldownMinutes();
 
-            if ($this->isDuplicate($payload, $settings->cooldownMinutes())) {
+            // ¿El mismo fallo ya se avisó hace poco? Entonces solo se cuenta la
+            // repetición (si el contexto se está guardando) y no se avisa otra
+            // vez: el chat no se llena y la fila tampoco se duplica.
+            $previousId = $this->previousId($fingerprint, $cooldown);
+
+            if ($previousId !== null) {
+                if ($previousId > 0) {
+                    $previous = SecurityErrorLog::find($previousId);
+
+                    if ($previous) {
+                        $this->errorLogs->touch($previous, $payload);
+                    }
+                }
+
                 return;
             }
+
+            $log = null;
+
+            // El detalle completo se guarda antes de avisar: así el mensaje ya
+            // puede llevar el enlace al contexto.
+            if ($settings->storesContext()) {
+                $log = $this->errorLogs->record($payload, $fingerprint);
+                $payload['reference'] = $log?->reference() ?? '';
+                $payload['link'] = $this->errorLogs->linkFor($log?->id);
+            }
+
+            $this->remember($fingerprint, $cooldown, $log?->id);
 
             SendSecurityErrorAlert::dispatch($chatIds, $this->renderMessage($payload));
         } catch (Throwable) {
@@ -228,7 +282,11 @@ class ErrorAlertService
     }
 
     /**
-     * Arma el arreglo serializable que viaja en el job (sin objetos Throwable).
+     * Arma el arreglo serializable que viaja en el job y se guarda en el
+     * contexto del error (sin objetos Throwable).
+     *
+     * `trace` es el resumen que va en el mensaje del chat; `trace_full` y
+     * `context` son el detalle completo que se guarda para verlo por enlace.
      *
      * @return array<string, string>
      */
@@ -240,13 +298,13 @@ class ErrorAlertService
         $class = '';
         $file = '';
         $line = '';
-        $trace = '';
+        $traceFull = '';
 
         if ($exception instanceof Throwable) {
             $class = $exception::class;
             $file = $exception->getFile();
             $line = (string) $exception->getLine();
-            $trace = $this->formatTrace($exception);
+            $traceFull = $this->limit($exception->getTraceAsString(), $this->contextLimit());
         }
 
         return [
@@ -255,13 +313,20 @@ class ErrorAlertService
             'class' => $class,
             'file' => $file,
             'line' => $line,
-            'trace' => $trace,
+            'trace' => $this->formatTrace($exception),
+            'trace_full' => $traceFull,
+            'context' => $this->encodeContext($event),
             'environment' => (string) app()->environment(),
             'url' => $this->requestUrl(),
             'method' => $this->requestMethod(),
             'user' => $this->userLabel(),
+            'user_id' => $this->userId(),
             'ip' => $this->requestIp(),
+            'agent' => $this->requestAgent(),
             'date' => now()->format('d/m/Y H:i:s'),
+            'reference' => '',
+            'link' => '',
+            'occurrences' => '1',
         ];
     }
 
@@ -290,7 +355,11 @@ class ErrorAlertService
             'metodo' => $payload['method'] ?? '',
             'usuario' => $payload['user'] ?? '',
             'ip' => $payload['ip'] ?? '',
+            'agente' => $payload['agent'] ?? '',
             'fecha' => $payload['date'] ?? '',
+            'referencia' => $payload['reference'] ?? '',
+            'repeticiones' => $payload['occurrences'] ?? '',
+            'enlace' => $payload['link'] ?? '',
         ];
 
         $lines = preg_split('/\R/', $template) ?: [];
@@ -330,7 +399,11 @@ class ErrorAlertService
             'method' => $this->requestMethod() ?: 'CLI',
             'user' => $this->userLabel() ?: 'Prueba',
             'ip' => $this->requestIp(),
+            'agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0',
             'date' => now()->format('d/m/Y H:i:s'),
+            'reference' => '1',
+            'occurrences' => '1',
+            'link' => $this->errorLogs->linkFor(1),
         ];
     }
 
@@ -379,29 +452,41 @@ class ErrorAlertService
     }
 
     /**
-     * true si la misma huella ya se avisó dentro de la ventana.
+     * Id del error ya avisado dentro de la ventana de anti-duplicados.
      *
-     * @param array<string, string> $payload
+     * Devuelve null si es la primera vez (hay que avisar), 0 si ya se avisó pero
+     * no se guardó contexto, o el id de la fila guardada (para sumarle la
+     * repetición).
      */
-    private function isDuplicate(array $payload, int $cooldownMinutes): bool
+    private function previousId(string $fingerprint, int $cooldownMinutes): ?int
     {
         if ($cooldownMinutes <= 0) {
-            return false;
+            return null;
         }
 
-        $fingerprint = sha1(implode('|', [
-            $payload['level'] ?? '',
-            $payload['message'] ?? '',
-            $payload['file'] ?? '',
-            $payload['line'] ?? '',
-        ]));
-
         try {
-            // add() es atómico: devuelve false si la clave ya existía.
-            return ! Cache::add(self::DEDUP_PREFIX . $fingerprint, true, now()->addMinutes($cooldownMinutes));
+            $value = Cache::get(self::DEDUP_PREFIX . $fingerprint);
+
+            return $value === null ? null : (int) $value;
         } catch (Throwable) {
             // Sin caché no se deduplica, pero se avisa igual.
-            return false;
+            return null;
+        }
+    }
+
+    /**
+     * Recuerda la huella avisada durante la ventana, junto con la fila guardada.
+     */
+    private function remember(string $fingerprint, int $cooldownMinutes, ?int $errorLogId): void
+    {
+        if ($cooldownMinutes <= 0) {
+            return;
+        }
+
+        try {
+            Cache::put(self::DEDUP_PREFIX . $fingerprint, $errorLogId ?? 0, now()->addMinutes($cooldownMinutes));
+        } catch (Throwable) {
+            // Sin caché no hay ventana: el siguiente error se volverá a avisar.
         }
     }
 
@@ -418,15 +503,131 @@ class ErrorAlertService
         return (int) config('security.alerts.cache_minutes', 5);
     }
 
-    private function limit(string $value): string
+    private function limit(string $value, ?int $override = null): string
     {
-        $limit = max(50, (int) config('security.alerts.message_limit', 3000));
+        $limit = $override ?? max(50, (int) config('security.alerts.message_limit', 3000));
 
         return mb_substr($value, 0, $limit);
     }
 
-    private function formatTrace(Throwable $exception): string
+    /**
+     * Máximo de caracteres que se guardan por error (traza + contexto).
+     */
+    private function contextLimit(): int
     {
+        return max(500, (int) config('security.alerts.context_limit', 20000));
+    }
+
+    /**
+     * Contexto del log y de la petición, saneado y en JSON, tal como se guarda
+     * para verlo desde el enlace del aviso.
+     */
+    private function encodeContext(MessageLogged $event): string
+    {
+        $context = is_array($event->context) ? $event->context : [];
+
+        // La excepción se guarda aparte (clase, archivo, línea y traza).
+        unset($context['exception']);
+
+        $data = [
+            'log' => $this->sanitize($context),
+            'request' => $this->requestContext(),
+        ];
+
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR);
+
+        return $this->limit($json === false ? '' : $json, $this->contextLimit());
+    }
+
+    /**
+     * Datos de la petición que ayudan a reproducir el error.
+     *
+     * @return array<string, mixed>
+     */
+    private function requestContext(): array
+    {
+        try {
+            if (app()->runningInConsole() || ! app()->bound('request')) {
+                return [];
+            }
+
+            $request = request();
+
+            return [
+                'query' => $this->sanitize($request->query()),
+                'input' => $this->sanitize($request->all()),
+                'headers' => $this->sanitize([
+                    'user_agent' => $request->userAgent(),
+                    'referer' => $request->headers->get('referer'),
+                    'accept_language' => $request->headers->get('accept-language'),
+                ]),
+            ];
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Quita del contexto lo que no se puede guardar (objetos) o no se debe
+     * guardar (contraseñas, tokens, cookies) y recorta textos enormes.
+     */
+    private function sanitize(mixed $value, int $depth = 0): mixed
+    {
+        if ($depth > 6) {
+            return '...';
+        }
+
+        if (is_array($value)) {
+            $result = [];
+
+            foreach ($value as $key => $item) {
+                $result[$key] = is_string($key) && $this->isSensitiveKey($key)
+                    ? self::REDACTED
+                    : $this->sanitize($item, $depth + 1);
+            }
+
+            return $result;
+        }
+
+        if ($value instanceof Throwable) {
+            return [
+                'class' => $value::class,
+                'message' => $value->getMessage(),
+                'file' => $value->getFile(),
+                'line' => $value->getLine(),
+            ];
+        }
+
+        if (is_object($value)) {
+            return method_exists($value, '__toString') ? (string) $value : $value::class;
+        }
+
+        if (is_string($value) && mb_strlen($value) > 2000) {
+            return mb_substr($value, 0, 2000) . '…';
+        }
+
+        return is_scalar($value) || $value === null ? $value : gettype($value);
+    }
+
+    private function isSensitiveKey(string $key): bool
+    {
+        $normalized = strtolower(trim($key));
+
+        foreach (self::SENSITIVE_KEYS as $sensitive) {
+            if ($normalized === $sensitive || str_contains($normalized, $sensitive)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function formatTrace(?Throwable $exception): string
+    {
+        if (! $exception instanceof Throwable) {
+            return '';
+        }
+
         $lines = max(0, (int) config('security.alerts.trace_lines', 0));
 
         if ($lines === 0) {
@@ -490,6 +691,30 @@ class ErrorAlertService
             }
 
             return (string) (request()->ip() ?? '');
+        } catch (Throwable) {
+            return '';
+        }
+    }
+
+    private function requestAgent(): string
+    {
+        try {
+            if (app()->runningInConsole() || ! app()->bound('request')) {
+                return '';
+            }
+
+            return (string) (request()->userAgent() ?? '');
+        } catch (Throwable) {
+            return '';
+        }
+    }
+
+    private function userId(): string
+    {
+        try {
+            $id = auth()->id();
+
+            return $id === null ? '' : (string) $id;
         } catch (Throwable) {
             return '';
         }

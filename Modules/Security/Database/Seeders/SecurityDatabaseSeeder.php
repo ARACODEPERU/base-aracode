@@ -34,6 +34,8 @@ class SecurityDatabaseSeeder extends Seeder
             'conf_dashboard',
             'conf_historial_actividades',
             'conf_alertas',
+            'conf_errores',
+            'conf_errores_eliminar',
             'configuracion',
             'empresa',
             'modulos',

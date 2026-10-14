@@ -10,6 +10,10 @@ use Illuminate\Database\Eloquent\Model;
  * El nivel mínimo se compara por severidad, no alfabéticamente: 'error' incluye
  * también critical, alert y emergency. La ventana de anti-duplicados evita que
  * un mismo fallo repetido en ráfaga llene el chat.
+ *
+ * store_context guarda el detalle completo del error (para verlo por enlace),
+ * retention_days indica cuántos días se conserva (0 = para siempre) y
+ * purge_enabled activa el borrado automático de los errores vencidos.
  */
 class SecurityAlertSetting extends Model
 {
@@ -19,11 +23,17 @@ class SecurityAlertSetting extends Model
         'enabled',
         'min_level',
         'cooldown_minutes',
+        'store_context',
+        'retention_days',
+        'purge_enabled',
     ];
 
     protected $casts = [
         'enabled' => 'boolean',
         'cooldown_minutes' => 'integer',
+        'store_context' => 'boolean',
+        'retention_days' => 'integer',
+        'purge_enabled' => 'boolean',
     ];
 
     /** Niveles de PSR-3 ordenados de menor a mayor severidad. */
@@ -43,6 +53,9 @@ class SecurityAlertSetting extends Model
 
     /** Ventana de anti-duplicados por defecto (minutos). */
     public const DEFAULT_COOLDOWN = 5;
+
+    /** Días de retención por defecto del contexto de errores. */
+    public const DEFAULT_RETENTION_DAYS = 30;
 
     /**
      * Ajustes vigentes. Si la tabla todavía no tiene fila (o no existe) se
@@ -65,6 +78,9 @@ class SecurityAlertSetting extends Model
             'enabled' => true,
             'min_level' => self::DEFAULT_LEVEL,
             'cooldown_minutes' => self::DEFAULT_COOLDOWN,
+            'store_context' => true,
+            'retention_days' => (int) config('security.alerts.retention_days', self::DEFAULT_RETENTION_DAYS),
+            'purge_enabled' => true,
         ]);
     }
 
@@ -83,6 +99,30 @@ class SecurityAlertSetting extends Model
     public function cooldownMinutes(): int
     {
         return max(0, (int) ($this->cooldown_minutes ?? self::DEFAULT_COOLDOWN));
+    }
+
+    /**
+     * true si se guarda el contexto completo del error para verlo por enlace.
+     */
+    public function storesContext(): bool
+    {
+        return (bool) ($this->store_context ?? true);
+    }
+
+    /**
+     * Días que se conservan los errores guardados (0 = no borrar nunca).
+     */
+    public function retentionDays(): int
+    {
+        return max(0, (int) ($this->retention_days ?? self::DEFAULT_RETENTION_DAYS));
+    }
+
+    /**
+     * true si el borrado automático diario de errores vencidos está activo.
+     */
+    public function autoPurge(): bool
+    {
+        return $this->retentionDays() > 0 && (bool) ($this->purge_enabled ?? true);
     }
 
     /**

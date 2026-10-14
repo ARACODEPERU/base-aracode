@@ -7,8 +7,19 @@
     import { ref } from 'vue';
 
     const props = defineProps({
-        settings: { type: Object, default: () => ({ enabled: true, min_level: 'error', cooldown_minutes: 5 }) },
+        settings: {
+            type: Object,
+            default: () => ({
+                enabled: true,
+                min_level: 'error',
+                cooldown_minutes: 5,
+                store_context: true,
+                retention_days: 30,
+                purge_enabled: true,
+            }),
+        },
         levels: { type: Array, default: () => [] },
+        logStats: { type: Object, default: () => ({ total: 0, size_bytes: 0, oldest_at: null, newest_at: null }) },
         recipients: { type: Array, default: () => [] },
         botConfigured: { type: Boolean, default: false },
         preview: { type: String, default: '' },
@@ -27,7 +38,12 @@
         enabled: props.settings.enabled,
         min_level: props.settings.min_level,
         cooldown_minutes: props.settings.cooldown_minutes,
+        store_context: props.settings.store_context,
+        retention_days: props.settings.retention_days,
+        purge_enabled: props.settings.purge_enabled,
     });
+
+    const logStats = ref({ ...props.logStats });
 
     const recipientList = ref([...props.recipients]);
     const preview = ref(props.preview);
@@ -54,6 +70,7 @@
         try {
             const { data } = await axios.put(route('security_alerts_settings_update'), settingsForm.value);
             settingsForm.value = { ...data.settings };
+            logStats.value = { ...(data.logStats || logStats.value) };
             preview.value = data.preview;
             toast.fire({ icon: 'success', title: data.message || 'Ajustes guardados' });
         } catch (error) {
@@ -190,7 +207,7 @@
 
             <div class="panel p-5">
                 <h3 class="text-base font-semibold text-gray-800 dark:text-white">Ajustes</h3>
-                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
+                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div class="flex items-center gap-3">
                         <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                             <input v-model="settingsForm.enabled" type="checkbox" class="form-checkbox" />
@@ -207,16 +224,55 @@
                         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Anti-duplicados (min)</label>
                         <input v-model.number="settingsForm.cooldown_minutes" type="number" min="0" max="1440" class="form-input w-full" />
                     </div>
-                    <div class="flex items-end">
-                        <button type="button" class="btn btn-primary w-full" :disabled="savingSettings" @click="saveSettings">
-                            <span v-if="savingSettings" class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
-                            Guardar ajustes
-                        </button>
-                    </div>
                 </div>
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    Un mismo error (mismo nivel, mensaje, archivo y línea) no se repite dentro de la ventana indicada.
+                    Un mismo error (mismo nivel, mensaje, archivo y línea) no se repite dentro de la ventana indicada: en
+                    ese caso solo se suma al contador de repeticiones del error guardado.
                 </p>
+
+                <div class="mt-5 border-t border-gray-200 pt-5 dark:border-gray-700">
+                    <h4 class="text-sm font-semibold text-gray-800 dark:text-white">Contexto de los errores</h4>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Además del resumen del chat, cada error se guarda completo (traza, contexto del log y datos de la
+                        petición) y el mensaje de Telegram lleva el enlace para abrirlo. Así el diagnóstico no depende de
+                        lo que quepa en el mensaje.
+                    </p>
+
+                    <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div class="flex items-center gap-3">
+                            <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                <input v-model="settingsForm.store_context" type="checkbox" class="form-checkbox" />
+                                Guardar contexto y enlace
+                            </label>
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Retención (días)</label>
+                            <input v-model.number="settingsForm.retention_days" type="number" min="0" max="3650" class="form-input w-full" />
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">0 = no borrar nunca. Se limpia todos los días a las 02:00.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                <input v-model="settingsForm.purge_enabled" type="checkbox" class="form-checkbox" />
+                                Borrado automático de vencidos
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+                        <span>
+                            Guardados: <span class="font-medium">{{ logStats.total }}</span> error(es)
+                            <span v-if="logStats.newest_at"> · último {{ logStats.newest_at }}</span>
+                        </span>
+                        <a :href="route('security_errors')" class="text-primary hover:underline">Ver errores guardados</a>
+                    </div>
+                </div>
+
+                <div class="mt-5 border-t border-gray-200 pt-4 dark:border-gray-700">
+                    <button type="button" class="btn btn-primary" :disabled="savingSettings" @click="saveSettings">
+                        <span v-if="savingSettings" class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+                        Guardar ajustes
+                    </button>
+                </div>
             </div>
 
             <div class="panel p-5">

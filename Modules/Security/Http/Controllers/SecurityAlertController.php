@@ -11,6 +11,7 @@ use Modules\Integrationhub\Services\TelegramBotService;
 use Modules\Security\Entities\SecurityAlertRecipient;
 use Modules\Security\Entities\SecurityAlertSetting;
 use Modules\Security\Services\ErrorAlertService;
+use Modules\Security\Services\ErrorLogService;
 
 /**
  * Pantalla "Alertas" del módulo Security.
@@ -24,6 +25,7 @@ class SecurityAlertController extends Controller
     public function __construct(
         private readonly ErrorAlertService $alerts,
         private readonly TelegramBotService $bot,
+        private readonly ErrorLogService $errorLogs,
     ) {
     }
 
@@ -32,12 +34,9 @@ class SecurityAlertController extends Controller
         $settings = SecurityAlertSetting::current();
 
         return Inertia::render('Security::Alerts/Index', [
-            'settings' => [
-                'enabled' => $settings->isEnabled(),
-                'min_level' => $settings->minLevel(),
-                'cooldown_minutes' => $settings->cooldownMinutes(),
-            ],
+            'settings' => $this->settingsPayload($settings),
             'levels' => SecurityAlertSetting::selectableLevels(),
+            'logStats' => $this->logStats(),
             'recipients' => SecurityAlertRecipient::orderBy('id')
                 ->get(['id', 'name', 'chat_id', 'is_active'])
                 ->map(fn (SecurityAlertRecipient $recipient) => [
@@ -107,6 +106,9 @@ class SecurityAlertController extends Controller
             'enabled' => ['required', 'boolean'],
             'min_level' => ['required', Rule::in(SecurityAlertSetting::selectableLevels())],
             'cooldown_minutes' => ['required', 'integer', 'min:0', 'max:1440'],
+            'store_context' => ['nullable', 'boolean'],
+            'retention_days' => ['nullable', 'integer', 'min:0', 'max:3650'],
+            'purge_enabled' => ['nullable', 'boolean'],
         ]);
 
         $settings = SecurityAlertSetting::current();
@@ -114,17 +116,19 @@ class SecurityAlertController extends Controller
             'enabled' => $validated['enabled'],
             'min_level' => $validated['min_level'],
             'cooldown_minutes' => $validated['cooldown_minutes'],
+            // Los ajustes de contexto son opcionales: si no llegan se conserva
+            // lo que ya había (pantallas o clientes antiguos).
+            'store_context' => $validated['store_context'] ?? $settings->storesContext(),
+            'retention_days' => $validated['retention_days'] ?? $settings->retentionDays(),
+            'purge_enabled' => $validated['purge_enabled'] ?? $settings->autoPurge(),
         ])->save();
 
         $this->alerts->forgetCache();
 
         return response()->json([
             'message' => 'Ajustes guardados.',
-            'settings' => [
-                'enabled' => $settings->isEnabled(),
-                'min_level' => $settings->minLevel(),
-                'cooldown_minutes' => $settings->cooldownMinutes(),
-            ],
+            'settings' => $this->settingsPayload($settings),
+            'logStats' => $this->logStats(),
             'preview' => $this->alerts->previewMessage(),
         ]);
     }
@@ -162,6 +166,40 @@ class SecurityAlertController extends Controller
             'failed' => $result['failed'],
             'results' => $result['results'],
         ]);
+    }
+
+    /**
+     * Ajustes tal como los consume la pantalla.
+     *
+     * @return array<string, mixed>
+     */
+    private function settingsPayload(SecurityAlertSetting $settings): array
+    {
+        return [
+            'enabled' => $settings->isEnabled(),
+            'min_level' => $settings->minLevel(),
+            'cooldown_minutes' => $settings->cooldownMinutes(),
+            'store_context' => $settings->storesContext(),
+            'retention_days' => $settings->retentionDays(),
+            'purge_enabled' => $settings->autoPurge(),
+        ];
+    }
+
+    /**
+     * Cuánto contexto de errores hay guardado (lo resume la pantalla).
+     *
+     * @return array<string, mixed>
+     */
+    private function logStats(): array
+    {
+        $stats = $this->errorLogs->stats();
+
+        return [
+            'total' => $stats['total'],
+            'size_bytes' => $stats['size_bytes'],
+            'oldest_at' => $stats['oldest_at'],
+            'newest_at' => $stats['newest_at'],
+        ];
     }
 
     /**

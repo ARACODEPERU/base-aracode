@@ -55,9 +55,14 @@ return [
     | expone.
     |
     | 'template'       plantilla del mensaje; las líneas cuya variable llegue
-    |                  vacía no se envían.
-    | 'trace_lines'    líneas de la traza que se incluyen (0 para omitirla).
+    |                  vacía no se envían. {enlace} apunta al contexto completo
+    |                  guardado en la pantalla Errores (Seguridad → Errores).
+    | 'trace_lines'    líneas de la traza que se incluyen en el mensaje.
     | 'message_limit'  recorte del mensaje/traza (límite de Telegram: 4096).
+    | 'context_limit'  recorte de la traza y el contexto que se GUARDAN para
+    |                  verlos por enlace (no van en el mensaje de Telegram).
+    | 'retention_days' días de retención por defecto del contexto de errores
+    |                  (0 = no borrar nunca). La pantalla puede cambiarlo.
     | 'cache_minutes'  minutos que se cachean ajustes y destinatarios para no
     |                  consultar la base en cada línea de log.
     |
@@ -70,17 +75,26 @@ return [
         <b>Nivel:</b> {nivel}
         <b>Mensaje:</b> {mensaje}
 
-        <b>Origen:</b> {clase}
+        <b>Excepción:</b> {clase}
         <b>Archivo:</b> {archivo}:{linea}
 
         <b>Entorno:</b> {entorno}
         <b>Ruta:</b> {metodo} {ruta}
         <b>Usuario:</b> {usuario}
         <b>IP:</b> {ip}
+        <b>Navegador:</b> {agente}
+        <b>Repeticiones:</b> {repeticiones}
         <b>Fecha:</b> {fecha}
+
+        <b>Traza:</b>
+        {traza}
+
+        🔍 <a href="{enlace}">Ver el contexto completo del error</a>
         TXT),
-        'trace_lines' => (int) env('SECURITY_ALERT_TRACE_LINES', 0),
+        'trace_lines' => (int) env('SECURITY_ALERT_TRACE_LINES', 10),
         'message_limit' => (int) env('SECURITY_ALERT_MESSAGE_LIMIT', 3000),
+        'context_limit' => (int) env('SECURITY_ALERT_CONTEXT_LIMIT', 20000),
+        'retention_days' => (int) env('SECURITY_ALERT_RETENTION_DAYS', 30),
         'cache_minutes' => (int) env('SECURITY_ALERT_CACHE_MINUTES', 5),
     ],
 ];

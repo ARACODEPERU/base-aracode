@@ -1,4 +1,5 @@
 import {
+    faBug,
     faGear,
     faBuilding,
     faPalette,
@@ -80,6 +81,13 @@ const menuConfig = {
             text: "Alertas",
             icom: faBell,
             permissions: "conf_alertas",
+        },
+        {
+            route: route("security_errors"),
+            status: false,
+            text: "Errores",
+            icom: faBug,
+            permissions: "conf_errores",
         },
 
     ],
