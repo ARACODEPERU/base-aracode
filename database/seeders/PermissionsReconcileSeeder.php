@@ -84,6 +84,18 @@ class PermissionsReconcileSeeder extends Seeder
             'module' => 'M007',
             'roles'  => ['admin', 'Administrador'],
         ],
+        [
+            // Pantalla Errores (contexto completo de los fallos avisados por
+            // Telegram): verla y, solo para administración, borrarla.
+            'name'   => 'conf_errores',
+            'module' => 'M019',
+            'roles'  => ['admin', 'Administrador'],
+        ],
+        [
+            'name'   => 'conf_errores_eliminar',
+            'module' => 'M019',
+            'roles'  => ['admin', 'Administrador'],
+        ],
     ];
 
     /**
