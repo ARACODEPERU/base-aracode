@@ -94,7 +94,7 @@ return [
      * El canal es propio del modulo escolar: usa credenciales de SMSGate
      * distintas a las de las campanas de especializacion (SC-00003/04/05) y a
      * las de Salud (SC-00006/07/08). Se administran desde Academico >
-     * Parametros / SMS (parametros SC-00020 a SC-00031) y solo envia cuando el
+     * Parametros / SMS (parametros SC-00020 a SC-00032) y solo envia cuando el
      * interruptor general (SC-00023) esta encendido.
      */
     'school_notices' => [
@@ -119,6 +119,10 @@ return [
             'primary_only_parameter' => env('ACA_SCHOOL_SMS_PRIMARY_ONLY_PARAMETER', 'SC-00030'),
             // Maximo de avisos por alumno y dia (0 = sin limite).
             'daily_limit_parameter' => env('ACA_SCHOOL_SMS_DAILY_LIMIT_PARAMETER', 'SC-00031'),
+            // Pausa minima entre cada mensaje SMS, en milisegundos (anti-SPAM).
+            'interval_ms_parameter' => env('ACA_SCHOOL_SMS_INTERVAL_MS_PARAMETER', 'SC-00032'),
+            // Valor usado cuando el parametro todavia no existe en la base.
+            'interval_ms' => (int) env('ACA_SCHOOL_SMS_INTERVAL_MS', 2000),
             // URL por defecto: la que usa la aplicacion movil de SMSGate.
             'default_url' => env('SMSGATE_URL', 'https://api.sms-gate.app/mobile/v1'),
             // Textos por defecto si la plantilla queda vacia.

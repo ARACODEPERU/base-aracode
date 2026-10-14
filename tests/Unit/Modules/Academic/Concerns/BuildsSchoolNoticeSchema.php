@@ -163,6 +163,7 @@ trait BuildsSchoolNoticeSchema
         $this->setChannelParameter('SC-00027', '1');
         $this->setChannelParameter('SC-00030', '0');
         $this->setChannelParameter('SC-00031', '0');
+        $this->setChannelParameter('SC-00032', '2000');
     }
 
     /** Persona con su nombre y su teléfono. Devuelve el id de la persona. */

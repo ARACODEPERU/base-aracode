@@ -452,7 +452,7 @@ alcanzando el carné, que son los que dominan en la puerta real.
 
 El paso por la puerta avisa al padre o apoderado. El canal tiene credenciales propias de SMSGate
 (no comparte las de las campañas de especialización ni las de Salud) y se configura desde
-**Académico > Colegio > Parámetros SMS** (parametros SC-00020 a SC-00031).
+**Académico > Colegio > Parámetros SMS** (parametros SC-00020 a SC-00032).
 
 | Ruta | Nombre | Permiso |
 | --- | --- | --- |
@@ -468,6 +468,8 @@ El paso por la puerta avisa al padre o apoderado. El canal tiene credenciales pr
   el alumno vuelva a pasar por la puerta el mismo día.
 - **Interruptores**: general (SC-00023), entrada (SC-00024), salida (SC-00025), tardanza (SC-00026),
   salida anticipada (SC-00027), solo al apoderado principal (SC-00030) y límite diario (SC-00031).
+- **Anti-SPAM**: pausa mínima entre mensajes (SC-00032, por defecto 2000 ms); cada envío se
+  separa al menos ese tiempo del anterior para que los operadores no lo marquen como SPAM.
   Las plantillas (SC-00028 y SC-00029) admiten `{alumno}`, `{apoderado}`, `{colegio}`, `{seccion}`,
   `{fecha}`, `{hora}` y `{estado}`.
 

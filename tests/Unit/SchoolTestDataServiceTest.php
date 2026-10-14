@@ -303,21 +303,27 @@ it('llena el colegio con datos marcados y los registra', function () {
     $resultado = $servicio->fill(['sections_per_grade' => 1, 'students_per_section' => 2]);
 
     expect($resultado['total'])->toBeGreaterThan(0)
-        ->and(DB::table('aca_school_levels')->count())->toBe(3)
-        ->and(DB::table('aca_school_grades')->count())->toBe(14)
-        ->and(DB::table('aca_school_sections')->count())->toBe(14)
-        ->and(DB::table('aca_school_students')->count())->toBe(28)
-        ->and(DB::table('aca_school_enrollments')->count())->toBe(28)
-        ->and(DB::table('aca_school_student_guardians')->count())->toBe(28)
+        ->and(DB::table('aca_school_levels')->count())->toBe(4)
+        ->and(DB::table('aca_school_levels')->where('name', 'Estimulación')->exists())->toBeTrue()
+        ->and(DB::table('aca_school_grades')->count())->toBe(16)
+        ->and(DB::table('aca_school_sections')->count())->toBe(16)
+        ->and(DB::table('aca_school_students')->count())->toBe(32)
+        ->and(DB::table('aca_school_enrollments')->count())->toBe(32)
+        ->and(DB::table('aca_school_student_guardians')->count())->toBe(32)
         ->and(DB::table('aca_teachers')->count())->toBe(5)
         ->and(DB::table('aca_school_areas')->count())->toBeGreaterThan(0)
-        ->and(DB::table('aca_school_schedules')->count())->toBe(14 * 10)
+        ->and(DB::table('aca_school_schedules')->count())->toBe(16 * 10)
         ->and(DB::table('aca_school_test_records')->count())->toBe($resultado['total']);
 
     expect(Person::where('number', 'like', 'TEST%')->count())->toBeGreaterThan(0)
-        ->and(AcaSchoolStudent::where('student_code', 'like', 'PRUEBA-%')->count())->toBe(28)
-        ->and(AcaSchoolSection::where('name', 'like', 'PRUEBA%')->count())->toBe(14)
-        ->and(AcaSchoolGrade::where('name', 'like', 'PRUEBA%')->count())->toBe(14);
+        ->and(AcaSchoolStudent::where('student_code', 'like', 'PRUEBA-%')->count())->toBe(32)
+        ->and(AcaSchoolGrade::where('name', 'like', 'PRUEBA%')->count())->toBe(16);
+
+    // Secciones con letras reales (A, B, C...) y personas con nombres reales.
+    expect(AcaSchoolSection::where('name', 'A')->count())->toBe(16)
+        ->and(AcaSchoolSection::where('name', 'like', 'PRUEBA%')->count())->toBe(0)
+        ->and(Person::where('full_name', 'like', '%PRUEBA%')->count())->toBe(0)
+        ->and(Person::where('names', 'like', '%Alumno%')->count())->toBe(0);
 
     // El resumen que ve la pantalla sale del registro.
     expect($servicio->summary()['total'])->toBe($resultado['total']);
@@ -329,8 +335,8 @@ it('no duplica la estructura cuando se llena otra vez', function () {
     $segundo = $servicio->fill(['sections_per_grade' => 1, 'students_per_section' => 2]);
 
     expect($segundo['total'])->toBe(0)
-        ->and(DB::table('aca_school_sections')->count())->toBe(14)
-        ->and(DB::table('aca_school_students')->count())->toBe(28);
+        ->and(DB::table('aca_school_sections')->count())->toBe(16)
+        ->and(DB::table('aca_school_students')->count())->toBe(32);
 });
 
 it('borra lo de prueba y lo generado sin tocar los datos reales', function () {
@@ -379,7 +385,7 @@ it('borra lo de prueba y lo generado sin tocar los datos reales', function () {
     // Se borro lo de prueba y lo generado con ello.
     expect(DB::table('aca_school_test_records')->count())->toBe(0)
         ->and(DB::table('aca_school_students')->where('student_code', 'like', 'PRUEBA-%')->count())->toBe(0)
-        ->and(DB::table('aca_school_sections')->where('name', 'like', 'PRUEBA%')->count())->toBe(0)
+        ->and(DB::table('aca_school_sections')->count())->toBe(1)
         ->and(DB::table('aca_school_attendances')->count())->toBe(0)
         ->and(DB::table('aca_school_charges')->where('id', $cobro)->count())->toBe(0)
         ->and(DB::table('aca_school_enrollments')->where('id', $prueba->id)->count())->toBe(0)
@@ -483,5 +489,5 @@ it('exige la frase exacta y la contrasena antes de llenar, borrar o dejar en pro
 
     expect($respuesta->getStatusCode())->toBe(200)
         ->and($respuesta->getData(true)['success'])->toBeTrue()
-        ->and(DB::table('aca_school_students')->count())->toBe(14);
+        ->and(DB::table('aca_school_students')->count())->toBe(16);
 });
