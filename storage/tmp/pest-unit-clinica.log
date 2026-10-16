@@ -1,0 +1,329 @@
+
+  [30;43;1m WARN [39;49;22m Your XML configuration validates against a deprecated schema. Migrate your XML configuration using "--migrate-configuration"!
+
+  [39;41;1m FAIL [39;49;22m[39m Tests\Unit\CatalogoPlantillasTest[39m
+  [32;1m✓[39;22m[90m [39m[90mit resuelve el catálogo y los nombres de categoría sin recursión[39m[90m                                            [39m [90m1.34s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit devuelve la ficha de una plantilla publicada y null para una que no existe[39m[90m                               [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit resuelve la demostración dentro de public/demos[39m[90m                                                          [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit publica el catálogo con una tarjeta por plantilla publicada[39m[90m                                              [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit filtra por categoría y por búsqueda sin romper la página[39m[90m                                                 [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit responde 200 en la ficha publicada y 404 en la que no existe[39m[90m                                             [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit marca el formato de cada plantilla y lo pinta en la tarjeta[39m[90m                                              [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit explica el formato en la ficha, no solo lo nombra[39m[90m                                                        [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit encuentra las plantillas por su formato desde el buscador[39m[90m                                                [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit compila su hoja de estilos sin declarar clases del sitio[39m[90m                                                 [39m [90m0.68s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit solo publica la demostración de las plantillas que la tienen de verdad[39m[90m                                   [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit no deja enlaces internos rotos en una demo de varias páginas[39m[90m                                             [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit abre cada demostración publicada con un hero o slider a pantalla completa[39m[90m                                [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit deja el slider del hero utilizable a mano, con teclado y sin JavaScript[39m[90m                                  [39m [90m0.66s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit trae el interruptor de tema claro / oscuro en toda demostración publicada[39m[90m                                [39m [90m0.67s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit abre la demostración con un 302 a su carpeta y 404 si todavía no está[39m[90m                                    [39m [90m0.69s[39m  
+  [31;1m⨯[39;22m[90m [39m[90mit publica la captura 16/10 de cada demostración y deja el mosaico solo donde no hay demo[39m[90m                   [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit comparte la captura como imagen social de la ficha, con la frase de la propia ficha[39m[90m                      [39m [90m0.74s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\CatalogoProductosTest[39m
+  [32;1m✓[39;22m[90m [39m[90mit pone la franja de la imagen antes que el texto, con su texto alternativo with ('/soluciones', 7)[39m[90m         [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit pone la franja de la imagen antes que el texto, con su texto alternativo with ('/', 3)[39m[90m                   [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit usa la misma tarjeta compacta en la portada y en el catálogo with ('/soluciones', 7)[39m[90m                     [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit usa la misma tarjeta compacta en la portada y en el catálogo with ('/', 3)[39m[90m                               [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit resume el producto con la frase corta, visible y como texto alternativo with ('/', 'Plataforma SaaS para[39m[90m…[39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit resume el producto con la frase corta, visible y como texto alternativo with ('/soluciones', 'Plataforma[39m[90m…[39m [90m0.68s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit presenta las tarjetas con la rejilla del home: tres por fila[39m[90m                                             [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit reserva en la franja el alto exacto de la imagen with ('/')[39m[90m                                              [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit reserva en la franja el alto exacto de la imagen with ('/soluciones')[39m[90m                                    [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit no recorta el diseño del producto en su franja[39m[90m                                                           [39m [90m0.81s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit incorpora los servicios al mismo esquema, con su franja y sin imagen[39m[90m                                     [39m [90m0.75s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\ClinicaProductoTest[39m
+  [32;1m✓[39;22m[90m [39m[90mit publica la página de Gestión de Clínica con canónica propia[39m[90m                                              [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit describe el producto con un solo SoftwareApplication firmado por ARACODE[39m[90m                                 [39m [90m0.80s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit enlaza la ficha desde el pie, junto al resto de soluciones[39m[90m                                               [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit cuenta lo que el módulo Salud hace, no una lista de deseos with ('Espacios libres calculados se…rvicio')[39m[90m [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit cuenta lo que el módulo Salud hace, no una lista de deseos with ('Recordatorios automáticos por…a cita')[39m[90m [39m [90m0.82s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit cuenta lo que el módulo Salud hace, no una lista de deseos with ('Diagnóstico con el catálogo CIE-10')[39m[90m   [39m [90m0.80s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit cuenta lo que el módulo Salud hace, no una lista de deseos with ('Odontograma por pieza dental')[39m[90m         [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit cuenta lo que el módulo Salud hace, no una lista de deseos with ('Firma de la atención con el P…doctor')[39m[90m [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit cuenta lo que el módulo Salud hace, no una lista de deseos with ('Google Calendar')[39m[90m                      [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit cuenta lo que el módulo Salud hace, no una lista de deseos with ('Cobros que terminan en compro…rónico')[39m[90m [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit inscribe la página en el mapa del sitio[39m[90m                                                                  [39m [90m0.74s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Database\DedupeSunatCurrencyTypesMigrationTest[39m
+  [32;1m✓[39;22m[90m [39m[90mdeja una sola fila por moneda[39m[90m                                                                               [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mconserva la descripcion mas baja cuando las filas difieren[39m[90m                                                  [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel indice unico impide volver a duplicar[39m[90m                                                                    [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla reversion quita el indice unico[39m[90m                                                                          [39m [90m0.69s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Database\EnvExampleFileTest[39m
+  [32;1m✓[39;22m[90m [39m[90mes un dotenv valido para phpdotenv[39m[90m                                                                          [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mtodas sus lineas son asignaciones o comentarios[39m[90m                                                             [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdeclara las claves que necesita una instalacion nueva[39m[90m                                                       [39m [90m0.67s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Database\FreshInstallSeederTest[39m
+  [32;1m✓[39;22m[90m [39m[90mdatabase seeder ejecuta los seeders de modulos en orden[39m[90m                                                     [39m [90m0.67s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna instalacion nueva deja modulos roles y permisos asignados[39m[90m                                              [39m [90m46.87s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlos permisos que solo creaban migraciones quedan asignados[39m[90m                                                 [39m [90m46.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90msembrar dos veces no duplica ni falla[39m[90m                                                                     [39m [90m126.21s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Database\PaginaPrincipalParameterMigrationTest[39m
+  [32;1m✓[39;22m[90m [39m[90mit crea el parámetro con todas las portadas cuando no existe[39m[90m                                                [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit conserva la portada elegida que ya existía en el catálogo anterior[39m[90m                                       [39m [90m0.69s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit devuelve a la portada corporativa un valor que antes no significaba nada[39m[90m                                 [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit es idempotente: volver a ejecutarla no cambia nada[39m[90m                                                       [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit al revertir deja las dos portadas del sitio corporativo y no toca la elegida[39m[90m                             [39m [90m0.71s[39m  
+
+  [39;41;1m FAIL [39;49;22m[39m Tests\Unit\Database\PermissionCatalogConsistencyTest[39m
+  [31;1m⨯[39;22m[90m [39m[90mtodo permiso que solo crean las migraciones esta en el catalogo[39m[90m                                             [39m [90m0.89s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel catalogo no tiene entradas duplicadas ni sin modulo[39m[90m                                                      [39m [90m0.68s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\ExampleTest[39m
+  [32;1m✓[39;22m[90m [39m[90mthat true is true[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\FichasProductoSeoTest[39m
+  [32;1m✓[39;22m[90m [39m[90mit mantiene las tres fichas publicadas con canónica propia with ('kapta')[39m[90m                                   [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit mantiene las tres fichas publicadas con canónica propia with ('kirafact')[39m[90m                                [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit mantiene las tres fichas publicadas con canónica propia with ('pichanguero')[39m[90m                             [39m [90m0.80s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit publica un solo SoftwareApplication que apunta al sitio del producto with ('kapta')[39m[90m                      [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit publica un solo SoftwareApplication que apunta al sitio del producto with ('kirafact')[39m[90m                   [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit publica un solo SoftwareApplication que apunta al sitio del producto with ('pichanguero')[39m[90m                [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit no publica importes ni compite por las consultas del producto with ('kapta')[39m[90m                             [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit no publica importes ni compite por las consultas del producto with ('kirafact')[39m[90m                          [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit no publica importes ni compite por las consultas del producto with ('pichanguero')[39m[90m                       [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit enlaza al sitio oficial y a su página de planes o descargas with ('kapta')[39m[90m                               [39m [90m0.80s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit enlaza al sitio oficial y a su página de planes o descargas with ('kirafact')[39m[90m                            [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit enlaza al sitio oficial y a su página de planes o descargas with ('pichanguero')[39m[90m                         [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit sigue redirigiendo con 301 las URLs antiguas que apuntan a cada ficha with ('/e-learning', '/kapta')[39m[90m     [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit sigue redirigiendo con 301 las URLs antiguas que apuntan a cada ficha with ('/sitios-webs', '/kapta')[39m[90m    [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit sigue redirigiendo con 301 las URLs antiguas que apuntan a cada ficha with ('/facturador', '/kirafact')[39m[90m  [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit sigue redirigiendo con 301 las URLs antiguas que apuntan a cada ficha with ('/soluciones/kapta', '/kapta[39m[90m…[39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit sigue redirigiendo con 301 las URLs antiguas que apuntan a cada ficha with ('/soluciones/facturacion', '[39m[90m…[39m [90m0.69s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\FormularioAsesoriaTest[39m
+  [32;1m✓[39;22m[90m [39m[90mit guarda la solicitud del modal en el buzón que lista /cms/contact-messages[39m[90m                                [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit no guarda ni avisa por correo si falta la aceptación de la política[39m[90m                                      [39m [90m0.68s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit publica la casilla de consentimiento en la página de contacto y en el modal[39m[90m                              [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit devuelve los errores en JSON y no guarda nada[39m[90m                                                            [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit publica el modal en las páginas del sitio, con el formulario y sus botones with ('/', 4)[39m[90m                 [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit publica el modal en las páginas del sitio, con el formulario y sus botones with ('/soluciones', 4)[39m[90m       [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit publica el modal en las páginas del sitio, con el formulario y sus botones with ('/paginas-web', 4)[39m[90m      [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit pinta la misma lista de servicios que la página de contacto[39m[90m                                              [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit manda a Google el token que pide el modal antes de enviar[39m[90m                                                [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit descarta en silencio los envíos que rellenan el campo trampa[39m[90m                                             [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit acepta el envío cuando el campo trampa viaja vacío[39m[90m                                                       [39m [90m0.69s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit lleva el campo trampa oculto en el modal y en la página de contacto with ('/', 'asesoriaSitioWeb')[39m[90m       [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit lleva el campo trampa oculto en el modal y en la página de contacto with ('/contacto', 'contactoSitioWeb[39m[90m…[39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit publica en la hoja que carga el navegador la regla que esconde la trampa[39m[90m                                 [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit corta por IP la ráfaga de envíos y lo avisa en español[39m[90m                                                   [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit avisa con una redirección cuando el límite se pasa sin JavaScript[39m[90m                                        [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit no toca el buzón cuando el captcha que envía el modal está vacío[39m[90m                                         [39m [90m0.74s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\ImagenArticuloBlogTest[39m
+  [32;1m✓[39;22m[90m [39m[90mit publica la imagen destacada sin recortarla[39m[90m                                                               [39m [90m0.79s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Academic\Database\AcaSchoolNoticeIntervalParameterMigrationTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcrea el parametro con 2000 ms por defecto[39m[90m                                                                   [39m [90m0.85s[39m  
+  [32;1m✓[39;22m[90m [39m[90mes idempotente y no pisa el valor cargado[39m[90m                                                                   [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdown elimina solo la fila propia[39m[90m                                                                            [39m [90m0.70s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Academic\Database\AcaSchoolNoticeParametersMigrationTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcrea los parametros del canal con sus tipos[39m[90m                                                                 [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mes idempotente y no pisa los valores cargados[39m[90m                                                               [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdown elimina solo las filas propias[39m[90m                                                                         [39m [90m0.71s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Academic\Http\AcaSchoolGuardianEditTest[39m
+  [32;1m✓[39;22m[90m [39m[90mla migracion crea el permiso y lo concede a los roles de administracion[39m[90m                                     [39m [90m0.83s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla ruta el boton y el modal van atados al mismo permiso[39m[90m                                                     [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90medita los datos de la persona y del vinculo[39m[90m                                                                 [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90msolo puede quedar un apoderado principal[39m[90m                                                                    [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrechaza el documento de otra persona[39m[90m                                                                        [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mexige parentesco valido[39m[90m                                                                                     [39m [90m0.68s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Academic\Http\AcaSmsParametersControllerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mla vista previa reemplaza las variables de ejemplo[39m[90m                                                          [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla prueba exige el canal configurado[39m[90m                                                                        [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla prueba exige el interruptor general[39m[90m                                                                      [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla prueba envia el sms con datos de ejemplo[39m[90m                                                                 [39m [90m0.73s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Academic\Jobs\SendSchoolGateNoticeJobTest[39m
+  [32;1m✓[39;22m[90m [39m[90mel job envia el sms y marca la entrega como enviada[39m[90m                                                         [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun rechazo permanente de smsgate queda como fallido[39m[90m                                                         [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel canal apagado omite el aviso[39m[90m                                                                             [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna entrega ya enviada no se repite[39m[90m                                                                         [39m [90m0.72s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Academic\Services\GateScanServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mel contenedor resuelve el servicio de porteria con su dependencia[39m[90m                                           [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel servicio de avisos se construye sin dependencias[39m[90m                                                         [39m [90m0.67s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Academic\Services\OpenAiAssistantServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90msends prompt to responses api and returns text[39m[90m                                                              [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mresolves api key from system parameter[39m[90m                                                                      [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mchains conversation with previous response id[39m[90m                                                               [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mretries without history when previous response expired[39m[90m                                                      [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90msurfaces openai error message when key is invalid[39m[90m                                                           [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mthrows clear error when parameter and env key are missing[39m[90m                                                   [39m [90m0.69s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcensor text uses fresh context without previous response id[39m[90m                                                 [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcorrect text returns corrected text with fresh context[39m[90m                                                      [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcorrect text spelling mode only asks for spelling[39m[90m                                                           [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90msanitizes invisible characters from api key[39m[90m                                                                 [39m [90m0.72s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Academic\Services\SchoolGateNoticeServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mel canal apagado no encola avisos[39m[90m                                                                           [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90msin credenciales no encola avisos[39m[90m                                                                           [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla entrada encola un aviso por apoderado con telefono[39m[90m                                                       [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel mismo evento y destinatario no se duplica[39m[90m                                                                [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla tardanza no avisa cuando el interruptor esta apagado[39m[90m                                                     [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla tardanza avisa cuando el interruptor esta encendido[39m[90m                                                      [39m [90m0.80s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla salida anticipada no avisa cuando el interruptor esta apagado[39m[90m                                            [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90msolo al apoderado principal cuando el interruptor esta encendido[39m[90m                                            [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90msin apoderados usa el telefono de la matricula[39m[90m                                                              [39m [90m0.87s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun apoderado inactivo o sin telefono no recibe aviso[39m[90m                                                        [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel limite diario frena los avisos[39m[90m                                                                           [39m [90m0.69s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlas variables de la plantilla se reemplazan[39m[90m                                                                 [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90msin plantilla guardada usa el texto por defecto[39m[90m                                                             [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel intervalo anti spam vale 2000 ms por defecto[39m[90m                                                             [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel intervalo respeta el valor guardado y sus limites[39m[90m                                                        [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel aviso se encola con el intervalo configurado[39m[90m                                                             [39m [90m0.74s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Academic\Services\TelegramStudentAccountTest[39m
+  [32;1m✓[39;22m[90m [39m[90mun documento desconocido no resuelve a nadie[39m[90m                                                                [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun correo que no pertenece a la persona no resuelve[39m[90m                                                         [39m [90m0.67s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel correo se compara sin distinguir mayusculas[39m[90m                                                              [39m [90m0.82s[39m  
+  [32;1m✓[39;22m[90m [39m[90msolo lista los cursos de pago vigentes con matricula activa[39m[90m                                                 [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna suscripcion vigente se informa sin premium[39m[90m                                                              [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna suscripcion premium vip se marca como tal[39m[90m                                                               [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna suscripcion vencida no cuenta[39m[90m                                                                           [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlos certificados se listan sin enlace de descarga[39m[90m                                                           [39m [90m0.69s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna persona que no es alumno existe pero sin datos[39m[90m                                                          [39m [90m0.76s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Academic\Services\TelegramStudentDirectoryTest[39m
+  [32;1m✓[39;22m[90m [39m[90mun documento desconocido no resuelve a nadie[39m[90m                                                                [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla matricula activa en un programa de especializacion registra[39m[90m                                              [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna matricula inactiva o de otro tipo de curso no cuenta[39m[90m                                                    [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna suscripcion vigente por fechas basta[39m[90m                                                                    [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna suscripcion vencida no basta[39m[90m                                                                            [39m [90m0.68s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel estado activo de la suscripcion tambien basta[39m[90m                                                            [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna persona que no es alumno existe pero sin acceso[39m[90m                                                         [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel documento se compara sin distinguir mayusculas[39m[90m                                                           [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel nombre cae al nombre completo cuando falta el corto[39m[90m                                                      [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlos programas no se repiten[39m[90m                                                                                 [39m [90m0.77s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Academic\TelegramStudentRegistrationFlowTest[39m
+  [32;1m✓[39;22m[90m [39m[90mel padron academico esta vinculado al webhook[39m[90m                                                               [39m [90m0.82s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun alumno matriculado se registra escribiendo su documento[39m[90m                                                  [39m [90m0.81s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun documento que no esta matriculado no registra nada[39m[90m                                                       [39m [90m0.75s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\CMS\ContactMessageDeletePermissionTest[39m
+  [32;1m✓[39;22m[90m [39m[90mla migracion crea el permiso y lo concede a los roles de administracion[39m[90m                                     [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun usuario con el permiso por su rol puede eliminar[39m[90m                                                         [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun usuario con el permiso directo puede eliminar[39m[90m                                                            [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel borrado tambien funciona sin javascript[39m[90m                                                                  [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel borrado deja rastro de quien lo hizo[39m[90m                                                                     [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90msin el permiso la ruta responde 403 y el mensaje sigue en el buzon[39m[90m                                          [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun usuario sin sesion no puede eliminar[39m[90m                                                                     [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel boton del listado y la ruta van atados al mismo permiso[39m[90m                                                  [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel controlador publica la capacidad solo a quien puede borrar[39m[90m                                               [39m [90m0.75s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Commercial\NegotiationForceDeleteTest[39m
+  [32;1m✓[39;22m[90m [39m[90mel admin elimina una negociacion aprobada con su contrasena[39m[90m                                                 [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel admin elimina una negociacion confirmada que antes estaba bloqueada[39m[90m                                      [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla contrasena incorrecta no elimina la negociacion[39m[90m                                                          [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel borrado sensible sin contrasena no pasa[39m[90m                                                                  [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun vendedor no puede forzar el borrado de una negociacion confirmada[39m[90m                                        [39m [90m0.81s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun vendedor no puede eliminar la negociacion de otro asesor[39m[90m                                                 [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel asesor que creo la negociacion la elimina con su contrasena[39m[90m                                              [39m [90m0.83s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun estado anterior al confirmado se elimina sin contrasena[39m[90m                                                  [39m [90m0.79s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Commercial\NegotiationFreeTest[39m
+  [32;1m✓[39;22m[90m [39m[90mla negociacion gratuita se guarda con medio de pago gratis y sin datos de cobro[39m[90m                             [39m [90m0.82s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna negociacion con cobro sigue exigiendo medio de pago y billetera[39m[90m                                         [39m [90m0.82s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel cliente de una negociacion gratuita envia sus datos sin voucher[39m[90m                                          [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel cliente completa el envio de una negociacion gratuita[39m[90m                                                    [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel envio gratuito no falla por el campo del voucher vacio[39m[90m                                                   [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel cliente de una negociacion con cobro si debe adjuntar el voucher[39m[90m                                         [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel pago con tarjeta de mercado pago no falla por el voucher vacio[39m[90m                                           [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun voucher que no es archivo sigue siendo rechazado[39m[90m                                                         [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel proceso de una negociacion gratuita completa sus pasos sin comprobante[39m[90m                                   [39m [90m0.80s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel correo de una inscripcion gratuita se renderiza sin comprobante[39m[90m                                          [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel correo de una negociacion con cobro sigue pidiendo su comprobante[39m[90m                                        [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla plantilla del correo muestra el comprobante cuando la negociacion tiene cobro[39m[90m                            [39m [90m0.74s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Health\DoctorGoogleCalendarServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mel doctor sin cuenta no tiene agenda activa[39m[90m                                                                 [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel token se guarda cifrado y nunca sale en el estado[39m[90m                                                        [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun calendario no puede quedar enlazado a dos doctores[39m[90m                                                       [39m [90m0.67s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla busqueda por calendario solo devuelve cuentas activas[39m[90m                                                    [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdesenlazar revoca el permiso y borra la cuenta[39m[90m                                                              [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel resultado del envio queda registrado y se limpia al funcionar[39m[90m                                            [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlas opciones tienen valores por defecto y acotan los minutos[39m[90m                                                [39m [90m0.73s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Health\GoogleCalendarListEventsTest[39m
+  [32;1m✓[39;22m[90m [39m[90mlee los eventos cuando google responde bien[39m[90m                                                                 [39m [90m0.69s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun token caducado por http 410 avisa que hay que releer[39m[90m                                                     [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel motivo full sync required tambien avisa que hay que releer[39m[90m                                               [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun error real de google no se confunde con el token caducado[39m[90m                                                [39m [90m0.70s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Health\GoogleCalendarRedirectUriTest[39m
+  [32;1m✓[39;22m[90m [39m[90muna url https sirve[39m[90m                                                                                         [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mhttp en un dominio propio se detecta y se explica[39m[90m                                                           [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlocalhost y loopback son la excepcion que google admite[39m[90m                                                     [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel boton probar conexion reporta este problema[39m[90m                                                              [39m [90m0.73s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Health\SyncGoogleCalendarCommandTest[39m
+  [32;1m✓[39;22m[90m [39m[90mregistra el motivo real y la sugerencia cuando falla la sincronizacion[39m[90m                                      [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel servicio ofrece la sugerencia para los errores comunes de google[39m[90m                                         [39m [90m0.67s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Integrationhub\IntegrationhubCronExpressionTest[39m
+  [32;1m✓[39;22m[90m [39m[90mvalida expresiones de cinco campos[39m[90m                                                                          [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mis due con pasos rangos y listas[39m[90m                                                                            [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel domingo es 0 y 7[39m[90m                                                                                         [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdia del mes y dia semana se combinan con and[39m[90m                                                                [39m [90m0.81s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnext run date salta al siguiente disparo[39m[90m                                                                    [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnext run date resuelve expresiones raras en milisegundos[39m[90m                                                    [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnext run date con expresion invalida es null[39m[90m                                                                [39m [90m0.74s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Integrationhub\IntegrationhubSchedulerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mdespacha solo las programaciones vencidas[39m[90m                                                                   [39m [90m0.83s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdos corridas en el mismo minuto no despachan dos veces[39m[90m                                                      [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna programacion nunca ejecutada se alinea sin despachar[39m[90m                                                    [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna ejecucion perdida se despacha una vez y se realinea[39m[90m                                                     [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna integracion apagada no se encola[39m[90m                                                                        [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdeja una senal de vida para saber si el scheduler esta vivo[39m[90m                                                 [39m [90m0.71s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Integrationhub\RunIntegrationScheduleJobTest[39m
+  [32;1m✓[39;22m[90m [39m[90mejecuta el endpoint con las variables del borrador y marca exito[39m[90m                                            [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun fallo del endpoint se relanza y deja el motivo[39m[90m                                                           [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90msin endpoints activos la programacion falla[39m[90m                                                                 [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mal agotarse los reintentos se registra en la bitacora de errores[39m[90m                                            [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna programacion inactiva no se ejecuta[39m[90m                                                                     [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmodule api ejecuta la ruta interna del modulo[39m[90m                                                               [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmodule api con respuesta de error es un fallo[39m[90m                                                               [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmodule api con ruta inexistente es un fallo[39m[90m                                                                 [39m [90m0.73s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Integrationhub\TelegramBotIntegrationMigrationTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcrea la integracion con sus endpoints y field maps[39m[90m                                                          [39m [90m0.85s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcrea el parametro del token y las tablas del bot[39m[90m                                                            [39m [90m0.80s[39m  
+  [32;1m✓[39;22m[90m [39m[90mretira las columnas del registro con codigo[39m[90m                                                                 [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrepetir las migraciones no duplica nada[39m[90m                                                                     [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrepetir la migracion del formato respeta lo configurado[39m[90m                                                     [39m [90m0.82s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrepetir la migracion respeta el token configurado[39m[90m                                                           [39m [90m0.76s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Integrationhub\TelegramBotServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90msin token el bot no esta configurado[39m[90m                                                                        [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcon token esta configurado y el secreto se deriva del token[39m[90m                                                 [39m [90m0.84s[39m  
+  [32;1m✓[39;22m[90m [39m[90msend message inyecta el token en la ruta y el texto en el body[39m[90m                                              [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90msin token no se puede enviar[39m[90m                                                                                [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mtelegram con ok false lanza excepcion[39m[90m                                                                       [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun error http lanza excepcion[39m[90m                                                                               [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90marma el enlace unico de registro con el usuario del bot[39m[90m                                                     [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpublica los comandos del bot[39m[90m                                                                                [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90msend formatted conserva el html y reintenta en texto plano[39m[90m                                                  [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90msend formatted en texto plano no reintenta[39m[90m                                                                  [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregistra el webhook con el secreto derivado[39m[90m                                                                 [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla url del webhook apunta a la ruta publica[39m[90m                                                                 [39m [90m0.75s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Integrationhub\TelegramHtmlTest[39m
+  [32;1m✓[39;22m[90m [39m[90men modo html escapa simbolos y conserva etiquetas[39m[90m                                                           [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mno duplica las entidades ya escritas[39m[90m                                                                        [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mescapa el href de un enlace[39m[90m                                                                                 [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mconserva emojis y saltos de linea[39m[90m                                                                           [39m [90m0.69s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdescarta etiquetas que telegram no entiende[39m[90m                                                                 [39m [90m0.69s[39m  
+  [32;1m✓[39;22m[90m [39m[90men modo texto no se interpreta ninguna etiqueta[39m[90m                                                             [39m [90m0.72s[39m  

@@ -1270,6 +1270,11 @@ class WebPageController extends Controller
         return view('aracode.products.pichanguero.index');
     }
 
+    public function solucionClinica()
+    {
+        return view('aracode.products.clinica.index');
+    }
+
     public function solucionDesarrollo()
     {
         return view('aracode.pages.desarrollo');
