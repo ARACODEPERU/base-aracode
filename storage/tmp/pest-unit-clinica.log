@@ -327,3 +327,122 @@
   [32;1m✓[39;22m[90m [39m[90mconserva emojis y saltos de linea[39m[90m                                                                           [39m [90m0.69s[39m  
   [32;1m✓[39;22m[90m [39m[90mdescarta etiquetas que telegram no entiende[39m[90m                                                                 [39m [90m0.69s[39m  
   [32;1m✓[39;22m[90m [39m[90men modo texto no se interpreta ninguna etiqueta[39m[90m                                                             [39m [90m0.72s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Integrationhub\TelegramMessageServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mtodos los mensajes del catalogo tienen texto de fabrica[39m[90m                                                     [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreemplaza las variables del mensaje[39m[90m                                                                         [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna linea con variable vacia no se envia[39m[90m                                                                    [39m [90m0.80s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla plantilla de las campanas usa el curso y el tiempo del formulario[39m[90m                                        [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90msin tiempo la linea del tiempo desaparece[39m[90m                                                                   [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna variable desconocida queda escrita[39m[90m                                                                      [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguardar un texto reemplaza el de fabrica[39m[90m                                                                    [39m [90m0.85s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun texto vacio vuelve al de fabrica[39m[90m                                                                         [39m [90m0.81s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrestaurar devuelve el texto de fabrica[39m[90m                                                                      [39m [90m0.84s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrestaurar todos borra los reemplazos[39m[90m                                                                        [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel formato sale de la configuracion[39m[90m                                                                         [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel catalogo marca los textos modificados[39m[90m                                                                    [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun codigo desconocido no se puede guardar[39m[90m                                                                   [39m [90m0.77s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Integrationhub\TelegramRegistrationServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mabre una sesion de registro con vigencia[39m[90m                                                                    [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mvolver a empezar reinicia la sesion[39m[90m                                                                         [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna sesion vencida se descarta[39m[90m                                                                              [39m [90m0.83s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcuenta los intentos y tiene un tope[39m[90m                                                                         [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcerrar la sesion la elimina[39m[90m                                                                                 [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mattach guarda el chat de la persona[39m[90m                                                                         [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun chat no puede quedar en dos personas[39m[90m                                                                     [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna persona que vuelve a registrarse reemplaza su chat[39m[90m                                                      [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mattach exige persona y chat[39m[90m                                                                                 [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla baja marca el contacto como inactivo[39m[90m                                                                     [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90msolo los contactos activos con chat estan suscritos[39m[90m                                                         [39m [90m0.77s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Integrationhub\TelegramWebhookControllerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mun secreto invalido no procesa el mensaje[39m[90m                                                                   [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mstart abre el registro y pide el documento[39m[90m                                                                  [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mstart ignora cualquier texto que venga despues[39m[90m                                                              [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel documento del padron registra el chat[39m[90m                                                                    [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mquien solo tiene suscripcion tambien se registra[39m[90m                                                            [39m [90m0.81s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun documento desconocido se reintenta y no registra[39m[90m                                                         [39m [90m0.80s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun texto que no parece documento tambien cuenta[39m[90m                                                             [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mtras cinco intentos se cierra la conversacion[39m[90m                                                               [39m [90m0.82s[39m  
+  [32;1m✓[39;22m[90m [39m[90muna persona sin programa ni suscripcion no se registra[39m[90m                                                      [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mstart en un chat ya registrado menciona al titular[39m[90m                                                          [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel bot usa el texto configurado por el administrador[39m[90m                                                        [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun texto suelto sin sesion recibe un recordatorio corto[39m[90m                                                     [39m [90m0.80s[39m  
+  [32;1m✓[39;22m[90m [39m[90mayuda explica como registrarse[39m[90m                                                                              [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90msin padron disponible el registro avisa y cierra la sesion[39m[90m                                                  [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mbaja apaga el contacto y cierra la conversacion[39m[90m                                                             [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mbaja de un chat no registrado lo indica[39m[90m                                                                     [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90msin token configurado el webhook no hace nada[39m[90m                                                               [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mchatid devuelve el identificador del chat[39m[90m                                                                   [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla consulta de cursos pide correo y documento y lista[39m[90m                                                       [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla consulta avisa cuando los datos no coinciden[39m[90m                                                             [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun correo invalido cuenta intento[39m[90m                                                                           [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mtras cinco intentos se cierra la consulta[39m[90m                                                                   [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla consulta informa la suscripcion sin especializacion[39m[90m                                                      [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla consulta informa la suscripcion premium vip[39m[90m                                                              [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcertificados lista sin descarga y manda a la plataforma[39m[90m                                                     [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mstart menciona todas las opciones del bot[39m[90m                                                                   [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90msin padron de consulta el bot avisa[39m[90m                                                                         [39m [90m0.81s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Integrationhub\TelegramWebhookRegisterMigrationTest[39m
+  [32;1m✓[39;22m[90m [39m[90msin token no registra nada y no falla[39m[90m                                                                       [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcon token registra la url publica y publica los comandos[39m[90m                                                    [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun error de telegram no tumba la migracion[39m[90m                                                                  [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrepetir la migracion no duplica la integracion[39m[90m                                                              [39m [90m0.75s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Security\ErrorAlertServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mencola la alerta cuando hay error y destinatarios activos[39m[90m                                                   [39m [90m0.80s[39m  
+  [32;1m✓[39;22m[90m [39m[90mno encola si las alertas estan desactivadas[39m[90m                                                                 [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mno encola si no hay destinatarios activos[39m[90m                                                                   [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mno encola por debajo del umbral[39m[90m                                                                             [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel umbral configurable puede subir a critical[39m[90m                                                               [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdeduplica la misma huella[39m[90m                                                                                   [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mignora los logs internos de las alertas[39m[90m                                                                     [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla vista previa no deja variables sin reemplazar[39m[90m                                                            [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel envio de prueba llega solo a destinatarios activos[39m[90m                                                       [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguarda el contexto del error y avisa con el enlace[39m[90m                                                          [39m [90m0.69s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla repeticion suma en el mismo error sin volver a avisar[39m[90m                                                    [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla repeticion despues de la ventana avisa de nuevo pero no duplica la fila[39m[90m                                  [39m [90m0.69s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel fallo de un comando programado se avisa una sola vez[39m[90m                                                     [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla linea del planificador si avisa cuando nadie explico el fallo[39m[90m                                            [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel contexto guardado oculta los datos sensibles[39m[90m                                                             [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel mensaje incluye la traza resumida[39m[90m                                                                        [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90msin guardado de contexto el aviso sale sin enlace[39m[90m                                                           [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel envio de prueba reporta los fallos por destinatario[39m[90m                                                      [39m [90m0.69s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Security\ErrorLogControllerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mlista los errores paginados[39m[90m                                                                                 [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlos filtros acotan el listado[39m[90m                                                                               [39m [90m0.74s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel detalle responde con la pantalla del error[39m[90m                                                               [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel contexto se decodifica para la pantalla[39m[90m                                                                  [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun id inexistente devuelve 404[39m[90m                                                                              [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90melimina un error con su contexto[39m[90m                                                                            [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90melimina todos los errores[39m[90m                                                                                   [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla purga usa los dias indicados[39m[90m                                                                             [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla purga sin dias usa la retencion configurada[39m[90m                                                              [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcon retencion cero la purga no borra nada[39m[90m                                                                   [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlas rutas exigen los permisos[39m[90m                                                                               [39m [90m0.73s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Security\ErrorLogServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mguarda el contexto completo del error[39m[90m                                                                       [39m [90m0.70s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel enlace apunta a la pantalla de detalle[39m[90m                                                                   [39m [90m0.68s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlas repeticiones suman en la misma fila[39m[90m                                                                     [39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla traza que llega despues se completa[39m[90m                                                                      [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mla purga borra solo los vencidos[39m[90m                                                                            [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcon retencion cero no se borra nada[39m[90m                                                                         [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mse puede borrar uno o todo[39m[90m                                                                                  [39m [90m0.78s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlas estadisticas resumen lo guardado[39m[90m                                                                        [39m [90m0.71s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Security\PermissionActionsTest[39m
+  [32;1m✓[39;22m[90m [39m[90mreconoce la accion de cada sufijo[39m[90m                                                                           [39m [90m0.69s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun permiso de seccion sin sufijo es ver[39m[90m                                                                     [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mel prefijo quita el sufijo de accion[39m[90m                                                                        [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcada accion tiene etiqueta y verbo[39m[90m                                                                          [39m [90m0.71s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Modules\Security\PermissionPanelTest[39m
+  [32;1m✓[39;22m[90m [39m[90magrupa los permisos hermanos por accion[39m[90m                                                                     [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mofrece una pestana por accion con el permiso que las rutas exigen[39m[90m                                           [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mal editar la accion del elemento manda su propio permiso[39m[90m                                                    [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mun elemento cuyo permiso no existe todavia se puede configurar[39m[90m                                              [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrefleja el borrador de la sesion de edicion[39m[90m                                                                 [39m [90m0.72s[39m  

@@ -139,7 +139,26 @@ it('cuenta lo que el módulo Salud hace, no una lista de deseos', function (stri
     'Firma de la atención con el PIN del doctor',
     'Google Calendar',
     'Cobros que terminan en comprobante electrónico',
+    'La atención se inicia desde la cita de la agenda',
+    'Regla del cobro de la consulta: se cobra cuando el paciente no tiene atención previa',
 ]);
+
+it('no le atribuye a Salud lo que solo hace el módulo Dental', function () {
+    // Estas dos frases estuvieron en la ficha y no eran ciertas para Salud:
+    //
+    //   * «Programar la próxima cita desde la atención» vive en Dental
+    //     (dent_attentions.next_appointment_id); en Salud el camino es al
+    //     revés —la agenda abre la atención (can_start_attention)—.
+    //   * El cobro de la consulta no es «la primera del día»: se cobra cuando
+    //     el paciente no tiene atención previa o su última atención fue hace
+    //     más de dos meses (HealAttentionController::shouldChargeConsultation).
+    //
+    // Se fijan aquí para que un copiar y pegar futuro no las devuelva.
+    $html = strip_tags($this->get('/clinica')->getContent());
+
+    expect($html)->not->toContain('La próxima cita se registra desde la propia atención');
+    expect($html)->not->toContain('se cobra la primera del día');
+});
 
 it('inscribe la página en el mapa del sitio', function () {
     $sitemap = file_get_contents(public_path('sitemap.xml'));

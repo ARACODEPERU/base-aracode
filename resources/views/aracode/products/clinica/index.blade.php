@@ -18,8 +18,16 @@
         lista de deseos: agenda y disponibilidad de HealAgendaController, avisos
         por SMS de AppointmentNoticeService, sincronización con Google Calendar
         de GoogleCalendarSyncService, atención con CIE-10, signos vitales,
-        odontograma y firma con PIN de HealAttentionController, y cobros que se
-        preparan para su comprobante electrónico en HealProcedureChargeController.
+        odontograma y firma con PIN        de HealAttentionController, y cobros que se preparan para su comprobante electrónico en HealProcedureChargeController.
+
+        Y con un límite: solo lo que Salud hace. Por eso la agenda habla de
+        empezar la atención desde la cita (HealAgendaController marca
+        `can_start_attention`) y no de programar la próxima cita desde la
+        atención: eso vive en el módulo Dental (dent_attentions.next_appointment_id).
+        Igual con el cobro de la consulta: no es «la primera del día», se cobra
+        cuando el paciente no tiene atención previa o su última atención fue
+        hace más de dos meses (HealAttentionController::shouldChargeConsultation).
+
 
         El día que Gestión de Clínica tenga su propio dominio, se replica el
         procedimiento de docs/SEO_ECOSISTEMA_PRODUCTOS.md: mapa en
@@ -69,8 +77,8 @@
                 'Espacios libres calculados según la duración del servicio y los cruces ya ocupados.',
                 'Estado de llegada de cada paciente (a tiempo o tarde) y resumen de puntualidad del día.',
                 'Las citas que nadie atiende se marcan como ausencia para no contarlas dos veces.',
-                'Reprogramar una cita la mueve y regenera sus recordatorios en el horario nuevo.',
-                'La próxima cita se registra desde la propia atención, sin salir del formulario.',
+                'Reprogramar una cita la mueve y borra los avisos ya registrados, para que reciba sus recordatorios en el horario nuevo.',
+                'La atención se inicia desde la cita de la agenda, con el paciente y el doctor ya cargados; cada doctor solo abre las citas de su propia agenda.',
             ],
         ],
         [
@@ -85,7 +93,7 @@
         [
             'title' => 'Atención de consulta',
             'items' => [
-                'Más de veinte especialidades médicas y odontológicas por doctor.',
+                'Veinticinco especialidades y servicios de atención, médicos y odontológicos, para asignar a cada doctor.',
                 'Motivo, examen clínico, plan de tratamiento y observaciones.',
                 'Diagnóstico con el catálogo CIE-10, con búsqueda por código o descripción.',
                 'Signos vitales con índice de masa corporal, frecuencia cardiaca y respiratoria.',
@@ -126,7 +134,7 @@
             'items' => [
                 'Catálogo de procedimientos con precio: consulta, endodoncia, extracción, restauración, profilaxis y los que agregue el consultorio.',
                 'Cobro por paciente y por atención, con precio ajustable, cantidad y estado (pendiente o pagado).',
-                'Regla de recobro de la consulta: se cobra la primera del día y no se duplica en los controles.',
+                'Regla del cobro de la consulta: se cobra cuando el paciente no tiene atención previa o su última atención fue hace más de dos meses, y los controles seguidos no la duplican.',
                 'El cobro conserva el nombre y el detalle del momento en que se hizo, aunque después cambie el catálogo.',
                 'Preparación de los cobros pendientes para emitir su comprobante electrónico en el módulo de ventas.',
             ],
