@@ -12,8 +12,9 @@ use Tests\Unit\Modules\Academic\Concerns\BuildsTelegramStudentSchema;
  *
  * La promesa: solo responde cuando el correo pertenece a la persona dueña del
  * documento; los cursos son los de pago vigentes con matrícula activa; la
- * suscripción activa se informa y se marca si es Premium VIP; y los certificados
- * se listan sin enlace de descarga, con el enlace de la plataforma para bajarlos.
+ * suscripción activa se informa y se marca si incluye los Programas de
+ * Especialización; y los certificados se listan sin enlace de descarga, con el
+ * enlace de la plataforma para bajarlos.
  */
 class TelegramStudentAccountTest extends TestCase
 {
@@ -97,18 +98,31 @@ class TelegramStudentAccountTest extends TestCase
         $result = $this->account->resolveAccount('12345678', 'ana@correo.com');
 
         $this->assertNotNull($result['subscription']);
-        $this->assertFalse($result['subscription']['vip']);
+        $this->assertFalse($result['subscription']['includes_specialization_programs']);
     }
 
-    public function test_una_suscripcion_premium_vip_se_marca_como_tal(): void
+    public function test_una_suscripcion_que_incluye_especializacion_se_marca_como_tal(): void
     {
         $studentId = $this->student('12345678', 'Ana', 'ana@correo.com');
-        $this->subscriptionType(1, 'Suscripción Premium VIP');
+        $this->subscriptionType(1, 'Plan Oro', ['access_specialization_programs' => true]);
         $this->subscription($studentId, 1, ['status' => true]);
 
         $result = $this->account->resolveAccount('12345678', 'ana@correo.com');
 
-        $this->assertTrue($result['subscription']['vip']);
+        $this->assertTrue($result['subscription']['includes_specialization_programs']);
+    }
+
+    public function test_el_nombre_del_plan_no_decide_si_incluye_especializacion(): void
+    {
+        $studentId = $this->student('12345678', 'Ana', 'ana@correo.com');
+
+        // Aunque se llame "Premium VIP", sin el flag no incluye especialización.
+        $this->subscriptionType(1, 'Premium VIP');
+        $this->subscription($studentId, 1, ['status' => true]);
+
+        $result = $this->account->resolveAccount('12345678', 'ana@correo.com');
+
+        $this->assertFalse($result['subscription']['includes_specialization_programs']);
     }
 
     public function test_una_suscripcion_vencida_no_cuenta(): void
@@ -219,11 +233,19 @@ class TelegramStudentAccountTest extends TestCase
         ]);
     }
 
-    private function subscriptionType(int $id, string $title): void
+    /**
+     * @param array<string, bool> $flags
+     */
+    private function subscriptionType(int $id, string $title, array $flags = []): void
     {
         DB::table('aca_subscription_types')->insert([
             'id' => $id,
             'title' => $title,
+            'access_all_courses' => $flags['access_all_courses'] ?? false,
+            'access_specialization_programs' => $flags['access_specialization_programs'] ?? false,
+            'access_all_webinars' => $flags['access_all_webinars'] ?? false,
+            'can_view_specialization_zooms' => $flags['can_view_specialization_zooms'] ?? false,
+            'can_view_specialization_webinars' => $flags['can_view_specialization_webinars'] ?? false,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

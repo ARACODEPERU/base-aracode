@@ -28,7 +28,7 @@ interface TelegramAccountResolver
      *     person_id: int,
      *     name: string,
      *     courses: array<int, array{description: string, type: string|null, time_limit: string|null}>,
-     *     subscription: array{vip: bool, ends_at: string|null}|null,
+     *     subscription: array{includes_specialization_programs: bool, ends_at: string|null}|null,
      *     certificates: array<int, array{id: int, course: string, module: string|null}>,
      *     platform_url: string
      * }|null

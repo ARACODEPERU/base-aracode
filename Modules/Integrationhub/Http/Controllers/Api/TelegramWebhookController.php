@@ -424,13 +424,14 @@ class TelegramWebhookController extends Controller
     }
 
     /**
-     * Nota de suscripcion: el texto cambia segun sea Premium VIP o no.
+     * Nota de suscripcion: el texto cambia segun si el plan incluye los
+     * Programas de Especializacion (nunca por el nombre del plan).
      *
-     * @param array{vip?: bool, ends_at?: string|null} $subscription
+     * @param array{includes_specialization_programs?: bool, ends_at?: string|null} $subscription
      */
     private function subscriptionNote(TelegramMessageService $messages, array $subscription): string
     {
-        $code = ! empty($subscription['vip'])
+        $code = ! empty($subscription['includes_specialization_programs'])
             ? TelegramMessages::COURSES_SUBSCRIPTION_VIP
             : TelegramMessages::COURSES_SUBSCRIPTION;
 

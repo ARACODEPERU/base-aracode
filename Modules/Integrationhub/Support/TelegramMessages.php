@@ -103,7 +103,7 @@ class TelegramMessages
     /** Nota de suscripcion activa (sin los programas de especializacion). */
     public const COURSES_SUBSCRIPTION = 'bot_courses_subscription';
 
-    /** Nota de suscripcion Premium VIP (incluye especializacion). */
+    /** Nota de suscripcion cuyo plan incluye los Programas de Especializacion. */
     public const COURSES_SUBSCRIPTION_VIP = 'bot_courses_subscription_vip';
 
     /** Linea de la lista de certificados. */
@@ -425,22 +425,22 @@ class TelegramMessages
             ],
             self::COURSES_SUBSCRIPTION => [
                 'name' => 'Consulta: nota de suscripción',
-                'description' => 'Se antepone a la lista cuando la persona tiene suscripción activa. La suscripción no incluye los Programas de Especialización; solo el plan Premium VIP los incluye.',
+                'description' => 'Se antepone a la lista cuando la persona tiene una suscripción activa.',
                 'variables' => ['{hasta}'],
                 'format' => self::FORMAT_HTML,
                 'body' => <<<'TXT'
-                💳 Tienes una suscripción activa: incluye todos los cursos de pago, excepto los Programas de Especialización.
+                💳 Tienes una suscripción activa.
 
                 📅 Vigencia: {hasta}
                 TXT,
             ],
             self::COURSES_SUBSCRIPTION_VIP => [
-                'name' => 'Consulta: nota de suscripción Premium VIP',
-                'description' => 'Se antepone a la lista cuando la suscripción es Premium VIP, que sí incluye los Programas de Especialización.',
+                'name' => 'Consulta: nota de suscripción con especialización',
+                'description' => 'Se antepone a la lista cuando la suscripción incluye los Programas de Especialización.',
                 'variables' => ['{hasta}'],
                 'format' => self::FORMAT_HTML,
                 'body' => <<<'TXT'
-                💳 Tu plan Premium VIP está activo e incluye también los Programas de Especialización.
+                💳 Tu suscripción incluye también los Programas de Especialización.
 
                 📅 Vigencia: {hasta}
                 TXT,

@@ -32,7 +32,12 @@ const form = useForm({
     prices: props.subscription.prices,
     status: props.subscription.status == 1 ? true : false,
     period: props.subscription.period,
-    order_number: props.subscription.order_number ?? 1
+    order_number: props.subscription.order_number ?? 1,
+    access_all_courses: props.subscription.access_all_courses == 1,
+    access_specialization_programs: props.subscription.access_specialization_programs == 1,
+    access_all_webinars: props.subscription.access_all_webinars == 1,
+    can_view_specialization_zooms: props.subscription.can_view_specialization_zooms == 1,
+    can_view_specialization_webinars: props.subscription.can_view_specialization_webinars == 1
 });
 
 const updateSubscription = () => {
@@ -153,6 +158,57 @@ const removePrice = (indexToRemove) => {
                     <input v-model="form.status" type="checkbox" class="form-checkbox rounded-full" />
                     <span>Activo</span>
                 </label>
+            </div>
+            <div class="col-span-6">
+                <div class="p-4 border border-[#888ea8] dark:border-[#1b2e4b] rounded">
+                    <h5 class="font-semibold text-lg dark:text-white-light mb-1">Acceso a cursos</h5>
+                    <p class="text-xs text-gray-500 mb-4">Define qué categorías del catálogo incluye esta suscripción. No depende del nombre del plan.</p>
+                    <div class="space-y-3">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input v-model="form.access_all_courses" type="checkbox" class="form-checkbox mt-0.5" />
+                            <span>
+                                <span class="block font-medium">Acceso a todos los cursos o talleres</span>
+                                <span class="block text-xs text-gray-500">Cursos y talleres de pago, sin contar programas de especialización ni webinars.</span>
+                            </span>
+                        </label>
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input v-model="form.access_specialization_programs" type="checkbox" class="form-checkbox mt-0.5" />
+                            <span>
+                                <span class="block font-medium">Acceso a todos los programas de especialización</span>
+                                <span class="block text-xs text-gray-500">Habilita todos los Programas de Especialización.</span>
+                            </span>
+                        </label>
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input v-model="form.access_all_webinars" type="checkbox" class="form-checkbox mt-0.5" />
+                            <span>
+                                <span class="block font-medium">Acceso a todos los webinars</span>
+                                <span class="block text-xs text-gray-500">Habilita los cursos cuyo tipo es Webinar.</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-span-6">
+                <div class="p-4 border border-[#888ea8] dark:border-[#1b2e4b] rounded">
+                    <h5 class="font-semibold text-lg dark:text-white-light mb-1">Contenido en Programas de Especialización</h5>
+                    <p class="text-xs text-gray-500 mb-4">Aplica solo dentro de los Programas de Especialización; los cursos normales no cambian.</p>
+                    <div class="space-y-3">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input v-model="form.can_view_specialization_zooms" type="checkbox" class="form-checkbox mt-0.5" />
+                            <span>
+                                <span class="block font-medium">Acceso a contenido Meet/Zoom</span>
+                                <span class="block text-xs text-gray-500">Habilita los enlaces de sesiones en vivo de los programas de especialización.</span>
+                            </span>
+                        </label>
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input v-model="form.can_view_specialization_webinars" type="checkbox" class="form-checkbox mt-0.5" />
+                            <span>
+                                <span class="block font-medium">Acceso a contenido Webinar</span>
+                                <span class="block text-xs text-gray-500">Habilita los contenidos tipo Webinar dentro de los programas de especialización.</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
             </div>
             <div class="col-span-6 sm:col-span-3">
                 <div class="p-4 border border-[#888ea8] dark:border-[#1b2e4b] rounded" >

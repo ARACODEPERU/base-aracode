@@ -3,7 +3,6 @@
 namespace Modules\CRM\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -50,16 +49,8 @@ class CrmInformationBankController extends Controller
             return false;
         }
 
-        $today = Carbon::today();
-
         return AcaStudentSubscription::where('student_id', $studentId)
-            ->where(function ($query) use ($today) {
-                $query->where('status', true)
-                    ->orWhere(function ($q) use ($today) {
-                        $q->whereDate('date_start', '<=', $today)
-                            ->whereDate('date_end', '>=', $today);
-                    });
-            })
+            ->activeNow()
             ->exists();
     }
 

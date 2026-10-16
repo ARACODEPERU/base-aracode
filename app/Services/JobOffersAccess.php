@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Parameter;
 use App\Models\User;
-use Carbon\Carbon;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentSubscription;
@@ -43,7 +42,7 @@ class JobOffersAccess
     }
 
     /**
-     * Suscripcion activa (status = true) o vigente por fechas.
+     * Suscripcion vigente hoy (ver AcaStudentSubscription::scopeActiveNow).
      */
     public static function hasActiveSubscription(?int $studentId): bool
     {
@@ -51,16 +50,8 @@ class JobOffersAccess
             return false;
         }
 
-        $today = Carbon::today();
-
         return AcaStudentSubscription::where('student_id', $studentId)
-            ->where(function ($query) use ($today) {
-                $query->where('status', true)
-                    ->orWhere(function ($q) use ($today) {
-                        $q->whereDate('date_start', '<=', $today)
-                            ->whereDate('date_end', '>=', $today);
-                    });
-            })
+            ->activeNow()
             ->exists();
     }
 
