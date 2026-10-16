@@ -120,6 +120,8 @@ class CommercialNegotiation extends Model
             'mercadopago' => 'Mercado Pago',
             'transferencia' => 'Transferencia bancaria',
             'enlace' => 'Enlace de pago',
+            // Negociacion gratuita: el precio acordado es 0 y el cliente no paga nada.
+            'gratis' => 'Gratis',
         ];
     }
 

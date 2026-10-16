@@ -77,13 +77,18 @@
         <h1>Tu cotizacion</h1>
         <p>
             Hola, hemos preparado una cotizacion para ti: <b>{{ $negotiation->title }}</b>.
-            Haz clic en el boton de abajo para revisarla y, si estas de acuerdo, confirmar tu compra.
+            Haz clic en el boton de abajo para revisarla y, si estas de acuerdo, {{ (float) $negotiation->total_price === 0.0 ? 'confirmar tu inscripcion gratuita' : 'confirmar tu compra' }}.
         </p>
 
         @php
             $presentationMode = \App\Helpers\Invoice\DocumentPresentation::modeForCount($negotiation->items->count());
             $presentationNames = \App\Helpers\Invoice\DocumentPresentation::names($negotiation->items);
             $presentationTotal = number_format((float) $negotiation->total_price, 2);
+            // Negociacion gratuita (total 0): el cliente no paga nada, asi que el correo no
+            // debe hablarle de un monto a pagar.
+            $isFree = (float) $negotiation->total_price === 0.0;
+            $totalTitle = $isFree ? 'INSCRIPCION GRATIS' : 'TOTAL A PAGAR';
+            $totalValue = $isFree ? 'GRATIS' : $negotiation->currency.' '.$presentationTotal;
             $quoteUrl = route('comm_negotiations_public_show', $negotiation->token);
         @endphp
 
@@ -97,10 +102,10 @@
                 @endforeach
             </ul>
             <p style="text-align: right; font-weight: bold; font-size: 16px; color: #333; margin: 20px 0 0;">
-                TOTAL A PAGAR
+                {{ $totalTitle }}
             </p>
             <p style="text-align: right; font-weight: bold; font-size: 20px; color: #2c3e50; margin: 0;">
-                {{ $negotiation->currency }} {{ $presentationTotal }}
+                {{ $totalValue }}
             </p>
         @elseif ($presentationMode === 'summary')
             <p style="text-align: left; font-weight: bold; font-size: 16px; color: #333; margin: 20px 0 10px;">
@@ -110,10 +115,10 @@
                 Cantidad de cursos: <strong>{{ $negotiation->items->count() }}</strong>
             </p>
             <p style="text-align: right; font-weight: bold; font-size: 16px; color: #333; margin: 20px 0 0;">
-                TOTAL A PAGAR
+                {{ $totalTitle }}
             </p>
             <p style="text-align: right; font-weight: bold; font-size: 20px; color: #2c3e50; margin: 0;">
-                {{ $negotiation->currency }} {{ $presentationTotal }}
+                {{ $totalValue }}
             </p>
         @else
             <table>
@@ -135,9 +140,9 @@
                 </tbody>
                 <tfoot>
                     <tr style="background-color: #2c3e50;">
-                        <td style="padding: 15px; text-align: right; color: white; font-weight: bold; font-size: 16px;">TOTAL:</td>
+                        <td style="padding: 15px; text-align: right; color: white; font-weight: bold; font-size: 16px;">{{ $isFree ? 'INSCRIPCION GRATIS:' : 'TOTAL:' }}</td>
                         <td style="padding: 15px; text-align: right; color: white; font-weight: bold; font-size: 18px;">
-                            {{ $negotiation->currency }} {{ $presentationTotal }}
+                            {{ $totalValue }}
                         </td>
                     </tr>
                 </tfoot>
@@ -158,7 +163,7 @@
 
         <p>
             <b>Asesor:</b> {{ $negotiation->contact_detail ?: 'No registrado' }}<br>
-            <b>Medio de pago:</b> {{ $negotiation->payment_method ?: 'Por definir' }}<br>
+            <b>Medio de pago:</b> {{ \Modules\Commercial\Entities\CommercialNegotiation::paymentMethodLabel($negotiation->payment_method) ?: 'Por definir' }}<br>
             @if ($negotiation->single_payment_days)
                 <b>Plazo de pago:</b> {{ $negotiation->single_payment_days }} dias<br>
             @endif

@@ -17,6 +17,7 @@ import {
     faRotate,
     faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
+import { isFreeNegotiation, totalPriceLabel } from "../Support/freeNegotiation.js";
 
 const props = defineProps({
     negotiation: { type: Object, default: () => ({}) },
@@ -33,6 +34,14 @@ const hasCourses = computed(() => props.negotiation.items?.some((item) => item.i
 const hasSubscriptions = computed(() => props.negotiation.items?.some((item) => item.item_type === "subscription") ?? false);
 const isSinglePayment = computed(() => props.negotiation.payment_type === "single");
 const isInstallments = computed(() => props.negotiation.payment_type === "installments");
+// Negociacion gratuita (precio total 0): no hay venta que registrar ni comprobante que
+// emitir, asi que el paso del comprobante no aplica.
+const isFree = computed(() => isFreeNegotiation(props.negotiation.total_price));
+
+// Total de la cabecera: "Gratis" en lugar del monto en cero.
+const totalPriceText = computed(() =>
+    totalPriceLabel(props.negotiation.currency, props.negotiation.total_price)
+);
 
 // El cliente ya tiene cuenta de usuario y/o registro de estudiante: los pasos
 // correspondientes se muestran como actualizacion con color distintivo (ambar).
@@ -118,7 +127,7 @@ const steps = ref([
         label: "Comprobante de venta",
         description: "Generar la boleta o factura",
         status: initialStatus("document"),
-        skipped: false,
+        skipped: isFree.value,
     },
     {
         key: "email",
@@ -360,8 +369,10 @@ const run = async () => {
     if (processing.value || finished.value) return;
 
     // La fecha de emision debe quedar guardada antes de procesar: es la que usaran la
-    // venta y el comprobante.
-    await saveEmissionDate(false);
+    // venta y el comprobante. En una negociacion gratuita no hay comprobante que emitir.
+    if (! isFree.value) {
+        await saveEmissionDate(false);
+    }
 
     processing.value = true;
     runRemaining();
@@ -384,9 +395,9 @@ const run = async () => {
                     <span class="badge" :class="`bg-${statusByValue(negotiation.status)?.color || 'secondary'}`">
                         {{ statusByValue(negotiation.status)?.label || negotiation.status }}
                     </span>
-                    <span class="text-sm text-gray-500">{{ negotiation.currency }} {{ negotiation.total_price }}</span>
+                    <span class="text-sm text-gray-500">{{ totalPriceText }}</span>
                     <span
-                        v-if="String(negotiation.currency || '').toUpperCase() === 'USD' && Number(exchangeRate) > 0"
+                        v-if="!isFree && String(negotiation.currency || '').toUpperCase() === 'USD' && Number(exchangeRate) > 0"
                         class="text-sm text-blue-600 dark:text-blue-400"
                     >
                         ≈ S/ {{ (Number(negotiation.total_price || 0) * Number(exchangeRate)).toFixed(2) }} (TC: {{ Number(exchangeRate).toFixed(4) }})
@@ -402,7 +413,7 @@ const run = async () => {
             </div>
         </div>
 
-        <div class="mt-5 panel">
+        <div v-if="!isFree" class="mt-5 panel">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <h3 class="font-semibold dark:text-white">Fecha de emision del comprobante</h3>

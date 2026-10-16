@@ -549,9 +549,16 @@ class CommercialNegotiationPublicController extends Controller
      * Mercado Pago pagando con tarjeta. En Mercado Pago el cliente puede declarar
      * que ya pago por fuera ('evidence'): ahi la imagen vuelve a ser obligatoria,
      * igual que en una transferencia o billetera.
+     *
+     * En una negociacion gratuita (precio total 0) no hay pago que acreditar, asi que
+     * el cliente envia solo sus datos y no se le pide ninguna evidencia.
      */
     private function voucherRequired(CommercialNegotiation $negotiation, ?string $paymentOption): bool
     {
+        if ((float) $negotiation->total_price === 0.0) {
+            return false;
+        }
+
         if ($negotiation->payment_method !== 'mercadopago') {
             return true;
         }

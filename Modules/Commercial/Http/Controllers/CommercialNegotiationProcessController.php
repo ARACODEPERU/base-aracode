@@ -106,6 +106,7 @@ class CommercialNegotiationProcessController extends Controller
     {
         $progress = $negotiation->process_progress ?? [];
         $isInstallments = $negotiation->payment_type === 'installments';
+        $isFree = (float) $negotiation->total_price === 0.0;
 
         $hasCourses = $negotiation->items->contains(fn ($item) => $item->item_type === 'course');
         $hasSubscriptions = $negotiation->items->contains(fn ($item) => $item->item_type === 'subscription');
@@ -130,7 +131,8 @@ class CommercialNegotiationProcessController extends Controller
             'registrations' => $hasCourses ? $statusOf('registrations') : 'skipped',
             'subscriptions' => $hasSubscriptions ? $statusOf('subscriptions') : 'skipped',
             'installments' => $isInstallments ? $statusOf('installments') : 'skipped',
-            'document' => $statusOf('document'),
+            // Negociacion gratuita: no se registra venta ni se emite comprobante por 0.
+            'document' => $isFree ? 'skipped' : $statusOf('document'),
             'email' => $statusOf('email'),
             'webhook' => $statusOf('webhook'),
             'complete' => $statusOf('complete'),
@@ -608,6 +610,16 @@ class CommercialNegotiationProcessController extends Controller
         $negotiation = $this->negotiation($id);
 
         $isInstallments = $negotiation->payment_type === 'installments';
+
+        // Negociacion gratuita: el precio acordado es 0, asi que no hay venta que registrar
+        // ni comprobante que emitir (un documento con importe 0 no corresponde).
+        if ((float) $negotiation->total_price === 0.0) {
+            return response()->json([
+                'success' => true,
+                'skipped' => true,
+                'message' => 'Negociacion gratuita: no se emite comprobante.',
+            ]);
+        }
 
         if ($negotiation->sale_document_id) {
             return response()->json([
@@ -1176,6 +1188,8 @@ class CommercialNegotiationProcessController extends Controller
             ['value' => 'mercadopago', 'label' => 'Mercado Pago'],
             ['value' => 'transferencia', 'label' => 'Transferencia bancaria'],
             ['value' => 'enlace', 'label' => 'Enlace de pago'],
+            // Negociacion gratuita: total 0, el cliente no paga nada.
+            ['value' => 'gratis', 'label' => 'Gratis'],
         ];
     }
 }
