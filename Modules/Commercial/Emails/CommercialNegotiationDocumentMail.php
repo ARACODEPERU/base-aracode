@@ -21,7 +21,8 @@ class CommercialNegotiationDocumentMail extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public CommercialNegotiation $negotiation;
-    public SaleDocument $document;
+    /** Una negociacion gratuita no emite comprobante: en ese caso llega null. */
+    public ?SaleDocument $document;
     /** @var array<string, mixed> */
     public array $dataFile;
     /** @var array<string, string>|null */
@@ -30,10 +31,13 @@ class CommercialNegotiationDocumentMail extends Mailable implements ShouldQueue
     public array $backoff = [60, 300];
 
     /**
+     * El comprobante es opcional porque una negociacion gratuita (precio 0) no genera uno:
+     * el correo sale igual, con el detalle del acuerdo y las credenciales de acceso.
+     *
      * @param array<string, mixed> $dataFile
      * @param array<string, string>|null $credentials
      */
-    public function __construct(CommercialNegotiation $negotiation, SaleDocument $document, array $dataFile, ?array $credentials = null)
+    public function __construct(CommercialNegotiation $negotiation, ?SaleDocument $document = null, array $dataFile = [], ?array $credentials = null)
     {
         $this->negotiation = $negotiation;
         $this->document = $document;
@@ -68,6 +72,12 @@ class CommercialNegotiationDocumentMail extends Mailable implements ShouldQueue
     public function attachments(): array
     {
         $attachments = [];
+
+        // Sin comprobante no hay adjuntos que mandar (negociacion gratuita).
+        if (! $this->document) {
+            return $attachments;
+        }
+
         $pdf = $this->dataFile['pdf'] ?? null;
 
         if (! is_array($pdf) || empty($pdf['filePath'])) {
@@ -113,7 +123,7 @@ class CommercialNegotiationDocumentMail extends Mailable implements ShouldQueue
 
         Log::error('CommercialNegotiationDocumentMail failed', [
             'negotiation_id' => $this->negotiation->getKey(),
-            'document_id' => $this->document->getKey(),
+            'document_id' => $this->document?->getKey(),
             'message' => $exception->getMessage(),
         ]);
     }

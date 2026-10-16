@@ -605,6 +605,12 @@ class CommercialNegotiationController extends Controller
                 return;
             }
 
+            // 'gratis' solo identifica a una negociacion sin cobro: no es un medio de pago
+            // elegible cuando la negociacion tiene precio.
+            if (($data['payment_method'] ?? null) === 'gratis') {
+                $validator->errors()->add('payment_method', 'Elige un medio de pago valido para una negociacion con cobro.');
+            }
+
             // Si el medio de pago es billetera digital, debe elegirse al menos una.
             if (($data['payment_method'] ?? null) === 'billetera_digital') {
                 $billeteraIds = array_values(array_filter((array) ($data['company_billetera_ids'] ?? [])));

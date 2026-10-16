@@ -409,6 +409,10 @@ class CommercialNegotiationProcessController extends Controller
         $nextPaymentDate = $this->nextPaymentDate($negotiation);
         $courseItems = $negotiation->items->where('item_type', 'course');
 
+        // Negociacion gratuita: el item conserva su costo de catalogo (es lo que el alumno
+        // recibe), pero no pago nada, asi que la matricula queda en 0 y no genera deuda.
+        $isFree = (float) $negotiation->total_price === 0.0;
+
         if ($courseItems->isEmpty()) {
             return response()->json([
                 'success' => true,
@@ -418,8 +422,10 @@ class CommercialNegotiationProcessController extends Controller
         }
 
         foreach ($courseItems as $item) {
-            $amountPaid = (float) ($item->price ?? 0);
-            $advancement = $isInstallments ? (float) ($negotiation->initial_amount ?? 0) : $amountPaid;
+            $amountPaid = $isFree ? 0.0 : (float) ($item->price ?? 0);
+            $advancement = $isFree
+                ? 0.0
+                : ($isInstallments ? (float) ($negotiation->initial_amount ?? 0) : $amountPaid);
 
             AcaCapRegistration::updateOrCreate(
                 [
@@ -462,6 +468,9 @@ class CommercialNegotiationProcessController extends Controller
         $nextPaymentDate = $this->nextPaymentDate($negotiation);
         $subscriptionItems = $negotiation->items->where('item_type', 'subscription');
 
+        // Negociacion gratuita: la suscripcion se entrega sin cobro.
+        $isFree = (float) $negotiation->total_price === 0.0;
+
         if ($subscriptionItems->isEmpty()) {
             return response()->json([
                 'success' => true,
@@ -485,9 +494,9 @@ class CommercialNegotiationProcessController extends Controller
                 $dateEnd = $this->calculateDateEnd($subscription->period, $dateStart);
             }
 
-            $amount = (float) ($item->price ?? 0);
+            $amount = $isFree ? 0.0 : (float) ($item->price ?? 0);
 
-            if (! $amount && $subscription->prices) {
+            if (! $amount && ! $isFree && $subscription->prices) {
                 foreach (json_decode($subscription->prices, true) ?: [] as $price) {
                     if (($price['currency'] ?? null) === 'PEN') {
                         $amount = (float) ($price['amount'] ?? 0);
@@ -890,7 +899,12 @@ class CommercialNegotiationProcessController extends Controller
     {
         $negotiation = $this->negotiation($id);
 
-        if (! $negotiation->sale_document_id) {
+        // Negociacion gratuita: no se emite comprobante (importe 0), pero el correo con las
+        // credenciales de acceso y el detalle del acuerdo debe salir igual; sin esto el paso
+        // devolvia 422 y el proceso quedaba atascado antes de llegar al cliente.
+        $isFree = (float) $negotiation->total_price === 0.0;
+
+        if (! $negotiation->sale_document_id && ! $isFree) {
             return response()->json([
                 'success' => false,
                 'message' => 'Primero debe generarse el comprobante de venta.',
@@ -921,7 +935,7 @@ class CommercialNegotiationProcessController extends Controller
             ]);
         }
 
-        $document = SaleDocument::find($negotiation->sale_document_id);
+        $document = $negotiation->sale_document_id ? SaleDocument::find($negotiation->sale_document_id) : null;
 
         $user = User::where('person_id', $person->id)->first();
 
@@ -931,7 +945,7 @@ class CommercialNegotiationProcessController extends Controller
         ] : null;
 
         try {
-            $dataFile = app(AcaSaleDocumentController::class)->generateBoletaPDF($document->id);
+            $dataFile = $document ? app(AcaSaleDocumentController::class)->generateBoletaPDF($document->id) : [];
 
             Mail::to($recipient)->queue(
                 new CommercialNegotiationDocumentMail($negotiation, $document, $dataFile, $credentials)
@@ -945,7 +959,9 @@ class CommercialNegotiationProcessController extends Controller
             return response()->json([
                 'success' => true,
                 'queued' => true,
-                'message' => 'Correo con los detalles del acuerdo, su comprobante y credenciales de acceso puesto en cola correctamente.',
+                'message' => $isFree
+                    ? 'Correo con el detalle de la inscripcion gratuita y las credenciales de acceso puesto en cola correctamente.'
+                    : 'Correo con los detalles del acuerdo, su comprobante y credenciales de acceso puesto en cola correctamente.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -1027,7 +1043,9 @@ class CommercialNegotiationProcessController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Proceso completado: la negociacion y su comprobante quedaron registrados.',
+            'message' => (float) $negotiation->total_price === 0.0
+                ? 'Proceso completado: la inscripcion gratuita quedo registrada sin comprobante.'
+                : 'Proceso completado: la negociacion y su comprobante quedaron registrados.',
         ]);
     }
 

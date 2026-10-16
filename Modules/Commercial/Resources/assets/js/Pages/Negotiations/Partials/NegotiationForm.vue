@@ -13,7 +13,7 @@ import { Select } from "ant-design-vue";
 import Swal2 from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faCalculator, faCalendarPlus, faGift, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
-import { isFreeNegotiation } from "../Support/freeNegotiation.js";
+import { FREE_PAYMENT_METHOD, isFreeNegotiation } from "../Support/freeNegotiation.js";
 
 const props = defineProps({
     negotiation: { type: Object, default: null },
@@ -76,14 +76,24 @@ const subscriptionOptions = computed(() => props.subscriptions.map((item) => ({
 
 // Al quedar el total en 0 se limpian los datos de cobro que ya no aplican: si viajaran
 // igual quedarian guardados en la negociacion sin que el cliente llegue a usarlos.
+// Los campos de pago no se ocultan: se muestran inhabilitados, para que el asesor vea
+// que existen y que no aplican.
 watch(isFree, (gratis) => {
-    if (!gratis) return;
+    if (gratis) {
+        form.payment_type = "single";
+        form.payment_method = FREE_PAYMENT_METHOD;
+        form.schedule = [];
+        form.company_billetera_ids = [];
+        form.payment_link = null;
+        form.single_payment_days = null;
 
-    form.payment_type = "single";
-    form.schedule = [];
-    form.company_billetera_ids = [];
-    form.payment_link = null;
-    form.single_payment_days = null;
+        return;
+    }
+
+    // Volvio a tener precio: se recupera un medio de pago elegible por el asesor.
+    if (form.payment_method === FREE_PAYMENT_METHOD) {
+        form.payment_method = "billetera_digital";
+    }
 });
 
 // Una sola opcion por moneda: si la tabla de monedas llega con filas repetidas,
@@ -105,10 +115,14 @@ const currencyOptions = computed(() => {
 
 });
 
-const paymentMethodOptions = computed(() => props.paymentMethods.map((item) => ({
-    value: item.value,
-    label: item.label,
-})));
+// El catalogo incluye 'gratis' para las etiquetas del listado y el detalle, pero no es una
+// opcion elegible: solo se ofrece mientras la negociacion no tiene cobro (y esta bloqueada).
+const paymentMethodOptions = computed(() => props.paymentMethods
+    .filter((item) => isFree.value || item.value !== FREE_PAYMENT_METHOD)
+    .map((item) => ({
+        value: item.value,
+        label: item.label,
+    })));
 
 // Equivalente en soles del monto ingresado, para que el asesor vea a cuanto
 // equivale el precio total (y cada cuota) cuando elige trabajar en dolares.
@@ -471,34 +485,48 @@ const submit = async () => {
                 </div>
             </div>
 
-            <!-- Negociacion Gratis: sin cobro no hay modalidad, cuotas ni medio de pago
-                 que registrar; el cliente solo completara sus datos. -->
+            <!-- Negociacion Gratis: los campos de cobro siguen visibles pero inhabilitados,
+                 para que el asesor vea que no aplican; el cliente solo completara sus datos. -->
             <div v-if="isFree" class="col-span-6">
                 <div class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
                     <FontAwesomeIcon :icon="faGift" class="mr-1 h-3.5 w-3.5" />
                     <strong>Negociacion Gratis:</strong> el total acordado es 0, asi que no se pedira ningun pago.
-                    <span class="block mt-0.5">El cliente recibira los cursos y suscripciones seleccionados y en el enlace solo completara sus datos, sin voucher ni datos de pago.</span>
+                    <span class="block mt-0.5">El tipo de pago, las cuotas y el medio de pago quedan inhabilitados. El cliente recibira los cursos y suscripciones seleccionados y en el enlace solo completara sus datos, sin voucher, sin comprobante y sin datos de pago.</span>
                 </div>
             </div>
 
-            <div v-if="!isFree" class="col-span-6 sm:col-span-2">
+            <div class="col-span-6 sm:col-span-2">
                 <InputLabel value="Tipo de pago *" />
-                <select v-model="form.payment_type" class="form-select text-white-dark">
+                <select
+                    v-model="form.payment_type"
+                    class="form-select text-white-dark"
+                    :disabled="isFree"
+                    :class="{ 'cursor-not-allowed opacity-60': isFree }"
+                >
                     <option value="single">Pago unico</option>
                     <option value="installments">Cuotas</option>
                 </select>
+                <p v-if="isFree" class="text-xs text-gray-500 mt-1">Inhabilitado: una negociacion gratuita no se cobra, ni al contado ni en cuotas.</p>
                 <InputError :message="form.errors.payment_type" class="mt-2" />
             </div>
 
-            <div v-if="!isFree && form.payment_type === 'installments'" class="col-span-6 sm:col-span-2">
+            <div v-if="form.payment_type === 'installments'" class="col-span-6 sm:col-span-2">
                 <div class="pt-5 text-xs text-gray-500">
                     La primera cuota del cronograma corresponde al pago inicial.
                 </div>
             </div>
 
-            <div v-else-if="!isFree" class="col-span-6 sm:col-span-2">
+            <div v-else class="col-span-6 sm:col-span-2">
                 <InputLabel for="single_payment_days" value="Plazo de pago (dias)" />
-                <TextInput id="single_payment_days" v-model="form.single_payment_days" type="number" min="1" />
+                <TextInput
+                    id="single_payment_days"
+                    v-model="form.single_payment_days"
+                    type="number"
+                    min="1"
+                    :disabled="isFree"
+                    :class="{ 'cursor-not-allowed bg-gray-100 dark:bg-gray-800': isFree }"
+                />
+                <p v-if="isFree" class="text-xs text-gray-500 mt-1">Inhabilitado: no hay pago que programar.</p>
                 <InputError :message="form.errors.single_payment_days" class="mt-2" />
             </div>
 
@@ -551,16 +579,17 @@ const submit = async () => {
             </template>
 
             <div
-                v-if="!isFree"
                 class="col-span-6"
-                :class="form.payment_method === 'billetera_digital' ? 'sm:col-span-2' : 'sm:col-span-3'"
+                :class="!isFree && form.payment_method === 'billetera_digital' ? 'sm:col-span-2' : 'sm:col-span-3'"
             >
                 <InputLabel value="Medio de pago *" />
                 <Select
                     v-model:value="form.payment_method"
                     :options="paymentMethodOptions"
+                    :disabled="isFree"
                     style="width: 100%"
                 />
+                <p v-if="isFree" class="text-xs text-gray-500 mt-1">Inhabilitado: la negociacion no tiene cobro, no habra ningun medio de pago que el cliente use.</p>
                 <InputError :message="form.errors.payment_method" class="mt-2" />
             </div>
 

@@ -1337,7 +1337,9 @@ watch(brickFormVisible, async (visible) => {
                                 </div>
                             </template>
 
-                            <div class="col-span-6 mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                            <!-- Negociacion gratuita: no se emite comprobante, asi que el cliente
+                                 no elige el tipo (ni boleta a terceros ni datos de factura). -->
+                            <div v-if="!isFree" class="col-span-6 mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
                                 <InputLabel value="Tipo de comprobante *" />
                                 <div class="flex flex-wrap gap-4 mt-2">
                                     <label class="inline-flex items-center">
@@ -1355,7 +1357,7 @@ watch(brickFormVisible, async (visible) => {
                                 <InputError :message="form.errors.invoice_type" class="mt-1" />
                             </div>
 
-                            <template v-if="isBoleta">
+                            <template v-if="!isFree && isBoleta">
                                 <div class="col-span-6">
                                     <div class="rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/40">
                                         <label class="inline-flex cursor-pointer items-center gap-3">
@@ -1398,7 +1400,7 @@ watch(brickFormVisible, async (visible) => {
                                 </div>
                             </template>
 
-                            <template v-if="isFactura">
+                            <template v-if="!isFree && isFactura">
                                 <div class="col-span-6 pt-2">
                                     <h3 class="font-semibold dark:text-white">Datos de la factura</h3>
                                     <p class="text-xs text-gray-500">Estos datos se usaran solo para la factura electronica.</p>
@@ -1454,8 +1456,9 @@ watch(brickFormVisible, async (visible) => {
                             <div class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
                                 <p class="font-semibold">Inscripcion gratuita</p>
                                 <p class="mt-1">
-                                    El precio de este acuerdo es <strong>0</strong>: no necesitas realizar ningun pago ni
-                                    adjuntar voucher. Solo completa tus datos para registrar tu inscripcion.
+                                    El precio de este acuerdo es <strong>0</strong>: no necesitas realizar ningun pago,
+                                    adjuntar voucher ni elegir comprobante. Solo completa tus datos para registrar tu
+                                    inscripcion.
                                 </p>
                             </div>
                         </div>

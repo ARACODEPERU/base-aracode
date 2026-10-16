@@ -90,11 +90,55 @@ test("la pantalla de proceso da el comprobante por no aplica en una negociacion 
         /key: "document"[\s\S]{0,260}skipped: isFree\.value/,
         "El paso del comprobante no debe ejecutarse cuando el precio acordado es 0.",
     );
+    assert.match(
+        proceso,
+        /<div v-if="!isFree" class="mt-5 panel">[\s\S]{0,200}Fecha de emision del comprobante/,
+        "Sin comprobante no hay fecha de emision que ajustar.",
+    );
+});
+
+test("el detalle del admin oculta el voucher y la fecha de emision en una negociacion gratuita", () => {
+    const detalle = leer("Show.vue");
+
+    assert.match(detalle, /const isFree = computed\(\(\) => isFreeNegotiation\(props\.negotiation\.total_price\)\)/);
+    assert.match(detalle, /<div v-if="!isFree" class="panel">[\s\S]{0,120}isMercadoPago/);
+    assert.match(detalle, /no hay voucher ni comprobante/);
 });
 
 test("el formulario de creacion usa la misma regla compartida", () => {
     const formulario = leer("Partials/NegotiationForm.vue");
 
-    assert.match(formulario, /import \{ isFreeNegotiation \} from "\.\.\/Support\/freeNegotiation\.js"/);
+    assert.match(formulario, /import \{ FREE_PAYMENT_METHOD, isFreeNegotiation \} from "\.\.\/Support\/freeNegotiation\.js"/);
     assert.match(formulario, /const isFree = computed\(\(\) => isFreeNegotiation\(form\.total_price\)\)/);
+});
+
+test("con total 0 el formulario inhabilita el tipo de pago, las cuotas y el medio de pago", () => {
+    const formulario = leer("Partials/NegotiationForm.vue");
+
+    // Los campos de cobro no se ocultan: quedan visibles pero inhabilitados.
+    assert.match(formulario, /v-model="form\.payment_type"[\s\S]{0,400}:disabled="isFree"/);
+    assert.match(formulario, /v-model="form\.single_payment_days"[\s\S]{0,200}:disabled="isFree"/);
+    assert.match(formulario, /v-model:value="form\.payment_method"[\s\S]{0,200}:disabled="isFree"/);
+
+    // 'gratis' no es una opcion elegible: solo aparece mientras la negociacion no tiene costo.
+    assert.match(formulario, /const paymentMethodOptions = computed\(\(\) => props\.paymentMethods\s*\n?\s*\.filter\(\(item\) => isFree\.value \|\| item\.value !== FREE_PAYMENT_METHOD\)/);
+});
+
+test("el cliente de una negociacion gratuita no elige tipo de comprobante", () => {
+    const publico = leer("Public/Show.vue");
+
+    assert.match(
+        publico,
+        /<div v-if="!isFree" class="col-span-6 mt-4 border-t[^"]*">[\s\S]{0,120}Tipo de comprobante/,
+        "Sin comprobante no se ofrece elegir boleta o factura.",
+    );
+    assert.match(publico, /<template v-if="!isFree && isBoleta">/);
+    assert.match(publico, /<template v-if="!isFree && isFactura">/);
+});
+
+test("el resumen previo tampoco muestra la seccion de comprobante", () => {
+    const resumen = leer("Public/Partials/SummaryModal.vue");
+
+    assert.match(resumen, /import \{ isFreeNegotiation \} from "\.\.\/\.\.\/Support\/freeNegotiation\.js"/);
+    assert.match(resumen, /if \(!isFree\.value\) \{[\s\S]{0,160}summarySection\("Comprobante"\)/);
 });
