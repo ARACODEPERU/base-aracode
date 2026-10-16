@@ -154,7 +154,13 @@ class CommercialNegotiationPublicController extends Controller
             'invoice_distrito' => ['nullable', 'string', 'max:255'],
             'invoice_provincia' => ['nullable', 'string', 'max:255'],
             'invoice_departamento' => ['nullable', 'string', 'max:255'],
-            'voucher' => [Rule::requiredIf(fn () => $this->voucherRequired($negotiation, $request->input('payment_option'))), 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            // 'nullable' no es decorativo: el navegador envia la clave aunque el bloque del
+            // voucher este oculto (Inertia manda los null del formulario como cadena vacia)
+            // y con la clave presente la regla 'file' se ejecuta igual sobre el valor nulo
+            // y rechaza el envio con un error sobre un campo que el cliente no ve. Con
+            // 'nullable' las reglas de archivo solo corren cuando de verdad hay un archivo
+            // adjunto; que sea obligatorio o no lo sigue decidiendo 'requiredIf'.
+            'voucher' => [Rule::requiredIf(fn () => $this->voucherRequired($negotiation, $request->input('payment_option'))), 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $isRuc = (string) $data['document_type_id'] === '6';

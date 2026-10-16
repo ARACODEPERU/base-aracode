@@ -59,6 +59,9 @@ class NegotiationFreeTest extends TestCase
         'Modules/Commercial/Database/Migrations/2026_08_25_000000_add_mercado_pago_to_commercial_negotiations_table.php',
         'Modules/Commercial/Database/Migrations/2026_08_25_100000_add_link_expiration_to_commercial_negotiations_table.php',
         'Modules/Commercial/Database/Migrations/2026_08_25_200000_add_entity_name_product_to_commercial_negotiation_items_table.php',
+        // La boleta a nombre de una tercera persona viaja en el mismo envio del formulario
+        // publico, asi que la tabla de comprobantes necesita esas columnas.
+        'Modules/Commercial/Database/Migrations/2026_09_15_000002_add_boleta_third_party_to_commercial_negotiation_invoices_table.php',
     ];
 
     protected function setUp(): void
@@ -69,11 +72,12 @@ class NegotiationFreeTest extends TestCase
         $this->createCommercialSchema();
         $this->createNegotiationExtraSchema();
         $this->createProcessSchema();
+        $this->createRoles();
     }
 
     protected function tearDown(): void
     {
-        foreach (['aca_student_subscriptions', 'aca_subscription_types', 'aca_cap_registrations', 'aca_courses', 'identity_document_type'] as $table) {
+        foreach (['aca_student_subscriptions', 'aca_subscription_types', 'aca_cap_registrations', 'aca_courses', 'identity_document_type', 'parameters'] as $table) {
             Schema::dropIfExists($table);
         }
 
@@ -209,6 +213,56 @@ class NegotiationFreeTest extends TestCase
         $respuesta->assertJsonMissingValidationErrors('voucher');
     }
 
+    public function test_el_cliente_completa_el_envio_de_una_negociacion_gratuita(): void
+    {
+        Mail::fake();
+
+        $negotiation = $this->negotiation(0, 'gratis');
+
+        $respuesta = $this->postJson(
+            route('comm_negotiations_public_store', $negotiation->token),
+            $this->fullPublicPayload()
+        );
+
+        // El envio completo tiene que pasar sin voucher: es lo que hace el cliente cuando
+        // confirma el resumen y presiona "Si, estoy seguro y de acuerdo".
+        $respuesta->assertStatus(302);
+        $respuesta->assertSessionHasNoErrors();
+
+        $negotiation->refresh();
+
+        $this->assertSame('confirmada', $negotiation->status);
+        $this->assertNull($negotiation->voucher_path, 'Sin pago no hay voucher que guardar.');
+        $this->assertNotNull($negotiation->client_id);
+        $this->assertDatabaseMissing('commercial_negotiation_invoices', ['negotiation_id' => $negotiation->id]);
+        $this->assertDatabaseHas('people', ['number' => '70123456', 'email' => 'cliente.nuevo@example.com']);
+    }
+
+    public function test_el_envio_gratuito_no_falla_por_el_campo_del_voucher_vacio(): void
+    {
+        Mail::fake();
+
+        $negotiation = $this->negotiation(0, 'gratis');
+
+        // En el navegador el bloque del voucher esta oculto, pero el campo viaja igual:
+        // Inertia manda los null del formulario como cadena vacia, asi que la clave
+        // 'voucher' llega al servidor aunque el cliente no adjunte nada. El envio tiene
+        // que pasar; si la validacion la rechaza, el cliente no ve ningun mensaje
+        // (el bloque que mostraria el error esta oculto) y el formulario se queda igual.
+        $respuesta = $this->post(
+            route('comm_negotiations_public_store', $negotiation->token),
+            array_merge($this->fullPublicPayload(), ['voucher' => ''])
+        );
+
+        $respuesta->assertSessionHasNoErrors();
+        $respuesta->assertStatus(302);
+
+        $negotiation->refresh();
+
+        $this->assertSame('confirmada', $negotiation->status);
+        $this->assertNull($negotiation->voucher_path, 'Sin pago no hay voucher que guardar.');
+    }
+
     public function test_el_cliente_de_una_negociacion_con_cobro_si_debe_adjuntar_el_voucher(): void
     {
         $negotiation = $this->negotiation(1200, 'transferencia');
@@ -219,6 +273,45 @@ class NegotiationFreeTest extends TestCase
         )
             ->assertStatus(422)
             ->assertJsonValidationErrors(['voucher', 'number']);
+    }
+
+    public function test_el_pago_con_tarjeta_de_mercado_pago_no_falla_por_el_voucher_vacio(): void
+    {
+        Mail::fake();
+
+        // Pagando con tarjeta el voucher no se pide (lo cobra Mercado Pago), pero el campo
+        // del formulario viaja igual: es el mismo caso que la negociacion gratuita.
+        $negotiation = $this->negotiation(1200, 'mercadopago');
+
+        $respuesta = $this->post(
+            route('comm_negotiations_public_store', $negotiation->token),
+            array_merge($this->fullPublicPayload(), ['payment_option' => 'card', 'voucher' => ''])
+        );
+
+        $respuesta->assertSessionHasNoErrors();
+        $respuesta->assertStatus(302);
+
+        $negotiation->refresh();
+
+        $this->assertSame('confirmada', $negotiation->status);
+        $this->assertNull($negotiation->voucher_path, 'Con tarjeta no hay evidencia que guardar.');
+        $this->assertFalse($negotiation->client_data['payment_declared'] ?? true);
+    }
+
+    public function test_un_voucher_que_no_es_archivo_sigue_siendo_rechazado(): void
+    {
+        // El campo opcional acepta que no venga nada, pero no que venga cualquier cosa:
+        // un envio con cobro y un valor que no es archivo se rechaza igual.
+        $negotiation = $this->negotiation(1200, 'transferencia');
+
+        $this->post(
+            route('comm_negotiations_public_store', $negotiation->token),
+            array_merge($this->fullPublicPayload(), ['voucher' => 'no-es-un-archivo'])
+        )
+            ->assertStatus(302)
+            ->assertSessionHasErrors('voucher');
+
+        $this->assertSame('pendiente', $negotiation->fresh()->status);
     }
 
     // -----------------------------------------------------------------
@@ -368,6 +461,18 @@ class NegotiationFreeTest extends TestCase
     // -----------------------------------------------------------------
 
     /**
+     * Roles del sistema que usan el alta y el proceso: el aviso de "negociacion
+     * confirmada" resuelve los administradores por nombre, y el paso "crear usuario"
+     * asigna el rol Alumno.
+     */
+    private function createRoles(): void
+    {
+        foreach (['Alumno', 'Administrador', 'admin', 'Asesor comercial'] as $name) {
+            Role::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+        }
+    }
+
+    /**
      * Asesor con permiso para registrar negociaciones.
      */
     private function advisor(): User
@@ -379,9 +484,6 @@ class NegotiationFreeTest extends TestCase
 
         $role = Role::firstOrCreate(['name' => 'Asesor comercial', 'guard_name' => 'web']);
         $role->givePermissionTo($permission);
-
-        // El paso "crear usuario" asigna este rol al alumno.
-        Role::firstOrCreate(['name' => 'Alumno', 'guard_name' => 'web']);
 
         $user = User::create([
             'name' => 'Asesor de prueba',
@@ -485,6 +587,27 @@ class NegotiationFreeTest extends TestCase
     }
 
     /**
+     * Envio real y completo del formulario publico (boleta a nombre del propio cliente, DNI,
+     * ubicacion peruana y las tres aceptaciones legales).
+     *
+     * @return array<string, mixed>
+     */
+    private function fullPublicPayload(): array
+    {
+        return array_merge($this->publicPayload(), [
+            'number' => '70123456',
+            'names' => 'Cliente',
+            'father_lastname' => 'Gratuito',
+            'mother_lastname' => 'Prueba',
+            'gender' => 'M',
+            'email' => 'cliente.nuevo@example.com',
+            'telephone' => '999888777',
+            'ubigeo' => '021801',
+            'ubigeo_description' => 'Lima-Lima-Miraflores',
+        ]);
+    }
+
+    /**
      * Columnas del alta y catalogo de tipos de documento que usa el formulario publico.
      */
     private function createNegotiationExtraSchema(): void
@@ -507,6 +630,18 @@ class NegotiationFreeTest extends TestCase
             'sunat_code' => '01',
             'number_characters' => 8,
         ]);
+
+        // Parametros del sistema: de aqui salen los enlaces legales (PN00002-PN00004)
+        // que el alta publica deja como constancia de aceptacion.
+        Schema::create('parameters', function (Blueprint $table) {
+            $table->id();
+            $table->string('parameter_code')->nullable();
+            $table->string('description')->nullable();
+            $table->string('control_type')->nullable();
+            $table->string('json_query_data')->nullable();
+            $table->text('value_default')->nullable();
+            $table->timestamps();
+        });
     }
 
     /**
@@ -539,6 +674,7 @@ class NegotiationFreeTest extends TestCase
             $table->string('foreign_city')->nullable();
             $table->boolean('status')->nullable();
             $table->boolean('is_client')->nullable();
+            $table->boolean('is_provider')->nullable();
         });
 
         Schema::table('users', function (Blueprint $table) {

@@ -752,6 +752,33 @@ const toggleBoletaTercero = (checked) => {
     }
 };
 
+// Los mensajes de validacion son texto del servidor: se escapan antes de inyectarlos
+// en el HTML del aviso.
+const escapeHtml = (value) => String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+/** Avisa al cliente por que no se pudo enviar: sin esto el resumen se cierra en silencio. */
+const notifySubmitError = (errors) => {
+    const mensajes = Object.values(errors ?? {}).filter(Boolean);
+
+    Swal2.fire({
+        title: "No se pudo enviar",
+        // Un error puede caer en un campo que el cliente no tiene a la vista (el voucher
+        // de una negociacion gratuita, por ejemplo): se listan los mensajes para que
+        // siempre sepa que corregir en vez de volver al formulario sin ninguna pista.
+        html: mensajes.length
+            ? `<p style="text-align:left;margin-bottom:8px;">Revisa lo siguiente y vuelve a intentarlo:</p><ul style="text-align:left;margin:0;padding-left:18px;">${mensajes.map((mensaje) => `<li>${escapeHtml(mensaje)}</li>`).join("")}</ul>`
+            : "No se pudo enviar la confirmacion. Vuelve a intentarlo o avisa a tu asesor.",
+        icon: "error",
+        padding: "2em",
+        customClass: "sweet-alerts",
+    });
+};
+
 const confirmNegotiation = () => {
     // El pago con tarjeta llega aqui directo (el ladrillo de Mercado Pago llama a esta
     // funcion al aprobarse el cobro): se revisan igual las aceptaciones legales para
@@ -775,6 +802,9 @@ const confirmNegotiation = () => {
                 window.location.reload();
             });
         },
+        // El envio puede fallar (datos rechazados por el servidor, sesion vencida, error
+        // del servidor): el cliente tiene que ver el motivo.
+        onError: notifySubmitError,
     });
 };
 

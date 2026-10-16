@@ -183,3 +183,19 @@ test("los imports relativos del modulo Commercial apuntan a archivos que existen
 
     assert.deepEqual(rotos, [], `Imports relativos que no resuelven: ${rotos.join(", ")}`);
 });
+
+test("la pagina publica avisa al cliente cuando el envio no pasa la validacion", () => {
+    const publico = leer("Public/Show.vue");
+
+    // El resumen ya se cerro cuando el envio falla: si no hay aviso, el cliente vuelve al
+    // formulario sin ninguna pista de que corregir. Paso con el campo del voucher de una
+    // negociacion gratuita, que ni siquiera esta a la vista.
+    assert.match(publico, /onError: notifySubmitError/);
+    assert.match(publico, /const notifySubmitError = \(errors\) => \{/);
+    assert.match(publico, /title: "No se pudo enviar"/);
+    assert.match(
+        publico,
+        /escapeHtml\(mensaje\)/,
+        "Los mensajes del servidor se escapan antes de inyectarlos en el aviso.",
+    );
+});
