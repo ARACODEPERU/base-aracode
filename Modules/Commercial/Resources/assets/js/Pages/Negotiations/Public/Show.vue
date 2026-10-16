@@ -420,6 +420,19 @@ const {
 const searchPerson = () => {
     if (searchLoading.value) return;
 
+    // La busqueda manda el documento al servidor: no sale del navegador hasta que
+    // el titular acepta la politica de privacidad.
+    if (! form.accepted_privacidad) {
+        Swal2.fire({
+            title: "Falta tu aceptación",
+            text: "Acepta la Política de Privacidad para buscar tus datos.",
+            icon: "info",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        });
+        return;
+    }
+
     onlyNumbers();
     form.clearErrors();
     searchLoading.value = true;
@@ -573,6 +586,29 @@ watch(() => form.document_type_id, (current, previous) => {
         form.foreign_state = null;
         form.foreign_city = null;
     }
+});
+
+// La aceptacion de la politica habilita las consultas de identidad. Si el cliente ya
+// habia escrito su documento antes de marcarla, la consulta pendiente se lanza al
+// aceptarla: asi el formulario no queda bloqueado esperando una verificacion que, por
+// el corte anterior, nunca llego a correr.
+watch(() => form.accepted_privacidad, (accepted) => {
+    if (! accepted) return;
+
+    if (isRuc.value) {
+        if (! rucClientSearched.value && String(form.number || "").length === 11) {
+            validateClientRuc();
+        }
+    } else {
+        const longitud = Number(selectedDocumentType.value?.number_characters) || 8;
+
+        if (! dniSearched.value && String(form.number || "").length === longitud) {
+            validateDni();
+        }
+    }
+
+    // El correo tambien se consulta recien con la aceptacion puesta.
+    checkEmailAccount();
 });
 
 const acceptAgreement = () => {

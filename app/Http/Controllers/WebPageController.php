@@ -828,6 +828,13 @@ class WebPageController extends Controller
             'invoice_ruc' => 'required_if:invoice_type,factura|nullable|string|max:20',
             'invoice_business_name' => 'required_if:invoice_type,factura|nullable|string|max:255',
             'invoice_address' => 'nullable|string|max:255',
+            // Sin esta aceptacion no se crea la cuenta ni se registran los datos
+            // de facturacion: el comprador ya pago, pero sus datos no se guardan
+            // hasta que acepte los terminos y la politica de privacidad.
+            'acepto' => 'required|accepted',
+        ], [
+            'acepto.required' => 'Debes aceptar los Términos y Condiciones y la Política de Privacidad para finalizar la compra.',
+            'acepto.accepted' => 'Debes aceptar los Términos y Condiciones y la Política de Privacidad para finalizar la compra.',
         ]);
 
         if ($validator->fails()) {
@@ -1303,12 +1310,18 @@ class WebPageController extends Controller
             'company' => 'nullable|string|max:255',
             'service' => 'required|string|max:100',
             'message' => 'required|string|max:2000',
+            // Consentimiento del titular: su dato no se guarda ni se avisa por
+            // correo si no acepta el tratamiento descrito en la politica. Va al
+            // final para que el navegador lo valide junto con los demas campos.
+            'acepto' => ['required', 'accepted'],
         ], [
             'name.required' => 'El nombre es obligatorio.',
             'email.required' => 'El email es obligatorio.',
             'email.email' => 'Debe ingresar un email válido.',
             'service.required' => 'Seleccione un servicio.',
             'message.required' => 'El mensaje es obligatorio.',
+            'acepto.required' => 'Debe aceptar la Política de Privacidad para enviar sus datos.',
+            'acepto.accepted' => 'Debe aceptar la Política de Privacidad para enviar sus datos.',
         ]);
 
         // El captcha se valida antes de guardar nada: un envio rechazado no debe
@@ -1466,9 +1479,14 @@ class WebPageController extends Controller
     {
         $validated = $request->validate([
             'email' => 'required|email|max:255',
+            // El newsletter solo se guarda si el titular acepta recibir estas
+            // comunicaciones: la casilla es la prueba del consentimiento.
+            'acepto' => ['required', 'accepted'],
         ], [
             'email.required' => 'El email es obligatorio.',
             'email.email' => 'Debe ingresar un email válido.',
+            'acepto.required' => 'Debe aceptar recibir el newsletter para suscribirse.',
+            'acepto.accepted' => 'Debe aceptar recibir el newsletter para suscribirse.',
         ]);
 
         try {

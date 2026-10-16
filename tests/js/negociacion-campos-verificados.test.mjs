@@ -58,18 +58,21 @@ const escenario = async ({ composable, funcion, campos, respuestas, extra = {} }
     return { form, locks, consulta: modulo[funcion]({ form, token: 'token', locks, ...extra }) };
 };
 
-const escenarioDni = (respuestas) => escenario({
+// `accepted_privacidad` va en true porque las consultas de identidad solo salen del
+// navegador con el consentimiento puesto: los casos que lo omiten a proposito usan
+// `escenarioSinConsentimiento`.
+const escenarioDni = (respuestas, consentimiento = true) => escenario({
     composable: 'useDniReniecCheck.js',
     funcion: 'useDniReniecCheck',
-    campos: { number: '12345678', names: null, father_lastname: null, mother_lastname: null, full_name: null, address: null },
+    campos: { number: '12345678', names: null, father_lastname: null, mother_lastname: null, full_name: null, address: null, accepted_privacidad: consentimiento },
     respuestas,
     extra: { isDni: { value: true }, normalizeNumber: () => {}, numberLength: () => 8 },
 });
 
-const escenarioRuc = (respuestas) => escenario({
+const escenarioRuc = (respuestas, consentimiento = true) => escenario({
     composable: 'useRucSunatCheck.js',
     funcion: 'useRucSunatCheck',
-    campos: { number: '20123456789', full_name: null, address: null },
+    campos: { number: '20123456789', full_name: null, address: null, accepted_privacidad: consentimiento },
     respuestas,
 });
 
@@ -238,6 +241,72 @@ test('sin datos de SUNAT el RUC se completa a mano', async () => {
     assert.equal(locks.isLocked('full_name'), false);
     assert.equal(consulta.rucClientValidated.value, false);
     assert.equal(consulta.rucClientSearched.value, true);
+});
+
+const escenarioEmail = (respuestas, consentimiento = true) => escenario({
+    composable: 'useEmailAccountCheck.js',
+    funcion: 'useEmailAccountCheck',
+    campos: { email: 'ana@empresa.test', accepted_privacidad: consentimiento },
+    respuestas,
+    extra: { loadPerson: () => {} },
+});
+
+/** Cuenta las consultas que salen a la API despues de crear el escenario. */
+const contarPeticiones = () => {
+    const estado = { total: 0 };
+    const postOriginal = globalThis.axios.post;
+
+    globalThis.axios.post = (...args) => {
+        estado.total += 1;
+
+        return postOriginal(...args);
+    };
+
+    return estado;
+};
+
+test('sin aceptar la politica de privacidad el DNI no sale del navegador', async () => {
+    const { consulta } = await escenarioDni([{ success: true, person: { names: 'ANA QUISPE' } }], false);
+    const peticiones = contarPeticiones();
+
+    consulta.validateDni();
+    await flush();
+
+    assert.equal(peticiones.total, 0, 'RENIEC no se consulta sin consentimiento.');
+    assert.equal(consulta.dniSearched.value, false);
+    assert.match(consulta.dniHint.value, /Política de Privacidad/);
+});
+
+test('sin aceptar la politica de privacidad el RUC no se consulta en SUNAT', async () => {
+    const { consulta } = await escenarioRuc([{ success: true, person: { razon_social: 'EMPRESA SAC' } }], false);
+    const peticiones = contarPeticiones();
+
+    consulta.validateClientRuc();
+    await flush();
+
+    assert.equal(peticiones.total, 0, 'SUNAT no se consulta sin consentimiento.');
+    assert.equal(consulta.rucClientSearched.value, false);
+    assert.match(consulta.rucClientNotice.value, /Política de Privacidad/);
+});
+
+test('sin aceptar la politica de privacidad el correo no se consulta', async () => {
+    const { consulta } = await escenarioEmail([{ exists: false }], false);
+    const peticiones = contarPeticiones();
+
+    consulta.checkEmailAccount();
+    await flush();
+
+    assert.equal(peticiones.total, 0, 'El correo no se consulta sin consentimiento.');
+});
+
+test('con la politica aceptada el correo si se consulta', async () => {
+    const { consulta } = await escenarioEmail([{ exists: false }]);
+    const peticiones = contarPeticiones();
+
+    consulta.checkEmailAccount();
+    await flush();
+
+    assert.equal(peticiones.total, 1);
 });
 
 test('al cambiar el RUC se sueltan y se vacian los datos de SUNAT', async () => {

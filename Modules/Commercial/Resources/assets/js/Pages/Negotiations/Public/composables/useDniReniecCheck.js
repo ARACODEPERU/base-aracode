@@ -113,6 +113,13 @@ export function useDniReniecCheck({ form, token, isDni, normalizeNumber, numberL
     const validateDni = () => {
         if (dniLoading.value) return;
 
+        // El numero de documento no sale del navegador hasta que el titular acepta
+        // la politica de privacidad: consultarlo en RENIEC ya es tratar su dato.
+        if (! form.accepted_privacidad) {
+            dniHint.value = "Acepta la Política de Privacidad para verificar tu documento.";
+            return;
+        }
+
         if (!form.number || String(form.number).length !== expectedLength()) {
             Swal2.fire({
                 title: "DNI invalido",

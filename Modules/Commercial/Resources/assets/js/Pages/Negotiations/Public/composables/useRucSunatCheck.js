@@ -60,6 +60,13 @@ export function useRucSunatCheck({ form, token, locks }) {
     const validateClientRuc = () => {
         if (rucClientLoading.value) return;
 
+        // El RUC no sale del navegador hasta que el titular acepta la politica de
+        // privacidad: consultarlo en SUNAT ya es tratar su dato.
+        if (! form.accepted_privacidad) {
+            rucClientNotice.value = "Acepta la Política de Privacidad para verificar tu RUC.";
+            return;
+        }
+
         if (!form.number || String(form.number).length !== 11) {
             Swal2.fire({
                 title: "RUC invalido",

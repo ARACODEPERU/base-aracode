@@ -1,5 +1,5 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import { ConfigProvider, notification } from 'ant-design-vue';
 import InputError from '@/Components/InputError.vue';
 
@@ -7,9 +7,18 @@ const form = useForm({
     full_name: null,
     email: null,
     phone: null,
-    message: null
+    message: null,
+    // Consentimiento del titular: el servidor lo exige (regla "acepto" accepted),
+    // asi que sin esta casilla el mensaje no se guarda.
+    acepto: false
 });
 const saveSubscriber = () => {
+    // El boton ya esta deshabilitado, pero el envio tambien puede salir con Enter:
+    // sin la aceptacion no se manda nada al servidor.
+    if (! form.acepto) {
+        return;
+    }
+
     form.post(route('subscriber_public'), {
         errorBag: 'saveSubscriber',
         preserveScroll: true,
@@ -116,8 +125,19 @@ const saveSubscriber = () => {
                                 <textarea id="message" v-model="form.message" rows="4" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Escribe aquí tu mensaje..."></textarea>
                                 <InputError :message="form.errors.message" class="mt-2" />
                             </div>
+                            <div>
+                                <label class="flex items-start gap-2 text-sm text-gray-500 dark:text-gray-300">
+                                    <input v-model="form.acepto" type="checkbox" class="mt-1">
+                                    <span>
+                                        He leído y acepto la
+                                        <Link :href="route('politica_privacidad')" target="_blank" class="text-blue-700 hover:underline dark:text-blue-400">Política de Privacidad</Link>
+                                        para que ARACODE trate mis datos con la finalidad de atender este mensaje.
+                                    </span>
+                                </label>
+                                <InputError :message="form.errors.acepto" class="mt-2" />
+                            </div>
                             <button type="submit" 
-                                :class="{ 'opacity-25': form.processing }" :disabled="form.processing"
+                                :class="{ 'opacity-25': form.processing || ! form.acepto }" :disabled="form.processing || ! form.acepto"
                                 class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium 
                                 rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-lg">
                                 <svg v-show="form.processing" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -82,6 +82,9 @@ it('guarda la solicitud del modal en el buzón que lista /cms/contact-messages',
         'company' => 'Empresa Uno',
         'service' => 'automatizacion',
         'message' => 'Quiero automatizar el área de compras.',
+        // Sin esta aceptacion el controlador no guarda nada: es la prueba de que
+        // el dato viajo con consentimiento.
+        'acepto' => '1',
     ], [
         // El modal envía con estas cabeceras: el controlador tiene que
         // responder JSON, no una redirección.
@@ -106,6 +109,39 @@ it('guarda la solicitud del modal en el buzón que lista /cms/contact-messages',
 
     // Y dispara el mismo aviso por correo que el formulario de /contacto.
     Mail::assertQueued(ContactFormMailable::class);
+});
+
+it('no guarda ni avisa por correo si falta la aceptación de la política', function () {
+    Mail::fake();
+
+    // El envío de un dato personal sin consentimiento no se guarda ni dispara el
+    // aviso por correo: el error apunta a la casilla que falta.
+    $respuesta = $this->postJson(route('contacto_store'), [
+        'name' => 'Ana Quispe',
+        'email' => 'ana@empresa.test',
+        'service' => 'otro',
+        'message' => 'Consulta sin aceptar la política.',
+    ], [
+        'X-Requested-With' => 'XMLHttpRequest',
+    ]);
+
+    $respuesta->assertStatus(422)
+        ->assertJsonValidationErrors(['acepto' => 'Debe aceptar la Política de Privacidad para enviar sus datos.']);
+
+    expect(ContactMessage::count())->toBe(0);
+    Mail::assertNothingQueued();
+});
+
+it('publica la casilla de consentimiento en la página de contacto y en el modal', function () {
+    foreach (['/contacto', '/'] as $ruta) {
+        $html = $this->get($ruta)->assertOk()->getContent();
+
+        // La casilla viaja con el formulario, marcada como obligatoria, y el
+        // enlace lleva a la política de privacidad publicada.
+        expect($html)->toContain('name="acepto"');
+        expect($html)->toContain('required');
+        expect($html)->toContain(route('politica_privacidad'));
+    }
 });
 
 it('devuelve los errores en JSON y no guarda nada', function () {
@@ -189,6 +225,7 @@ it('manda a Google el token que pide el modal antes de enviar', function () {
         'email' => 'ana@empresa.test',
         'service' => 'otro',
         'message' => 'Con token del modal.',
+        'acepto' => '1',
         'g-recaptcha-response' => 'token-de-prueba',
     ]);
 
@@ -236,6 +273,7 @@ it('acepta el envío cuando el campo trampa viaja vacío', function () {
         'email' => 'ana@empresa.test',
         'service' => 'otro',
         'message' => 'Consulta normal.',
+        'acepto' => '1',
         'website' => '',
     ], [
         'X-Requested-With' => 'XMLHttpRequest',
@@ -280,6 +318,7 @@ it('corta por IP la ráfaga de envíos y lo avisa en español', function () {
         'email' => 'ana@empresa.test',
         'service' => 'otro',
         'message' => 'Consulta repetida.',
+        'acepto' => '1',
     ];
 
     // Los primeros envíos del minuto (el tope del limitador es 5) pasan, aunque
@@ -313,6 +352,7 @@ it('avisa con una redirección cuando el límite se pasa sin JavaScript', functi
         'email' => 'ana@empresa.test',
         'service' => 'otro',
         'message' => 'Consulta repetida.',
+        'acepto' => '1',
     ];
 
     foreach (range(1, 5) as $envio) {
@@ -343,6 +383,7 @@ it('no toca el buzón cuando el captcha que envía el modal está vacío', funct
         'email' => 'ana@empresa.test',
         'service' => 'otro',
         'message' => 'Sin token de captcha.',
+        'acepto' => '1',
         'g-recaptcha-response' => '',
     ]);
 

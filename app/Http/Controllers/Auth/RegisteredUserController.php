@@ -36,6 +36,12 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            // La cuenta se crea con datos personales: sin aceptar los terminos y
+            // la politica de privacidad no se registra nada.
+            'acepto' => ['required', 'accepted'],
+        ], [
+            'acepto.required' => 'Debes aceptar los Términos y Condiciones y la Política de Privacidad para crear tu cuenta.',
+            'acepto.accepted' => 'Debes aceptar los Términos y Condiciones y la Política de Privacidad para crear tu cuenta.',
         ]);
 
         $data['confirmation_code'] = Str::random(20);

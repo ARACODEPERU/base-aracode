@@ -111,6 +111,18 @@
                 @endif
             @endif
 
+            {{-- Consentimiento del titular: el modal envia al mismo destino que
+                 /contacto, asi que el servidor tambien exige esta aceptacion
+                 (regla "acepto" accepted). --}}
+            <div class="flex items-start gap-3 text-sm">
+                <input type="checkbox" id="asesoriaAcepto" name="acepto" value="1" required class="mt-1">
+                <label for="asesoriaAcepto">
+                    He leído y acepto la
+                    <a href="{{ route('politica_privacidad') }}" target="_blank" rel="noopener" class="text-ara-blue hover:underline">Política de Privacidad</a>
+                    para que ARACODE trate mis datos con la finalidad de atender esta solicitud.
+                </label>
+            </div>
+
             <p class="ara-modal-error" id="asesoriaError" role="alert" hidden></p>
 
             <button type="submit" class="ara-btn ara-btn-primary ara-btn-lg ara-modal-enviar">
