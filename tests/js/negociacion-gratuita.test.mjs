@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /**
  * Negociacion gratuita: se entregan cursos o suscripciones que tienen costo, pero el
@@ -141,4 +143,43 @@ test("el resumen previo tampoco muestra la seccion de comprobante", () => {
 
     assert.match(resumen, /import \{ isFreeNegotiation \} from "\.\.\/\.\.\/Support\/freeNegotiation\.js"/);
     assert.match(resumen, /if \(!isFree\.value\) \{[\s\S]{0,160}summarySection\("Comprobante"\)/);
+});
+
+test("los imports relativos del modulo Commercial apuntan a archivos que existen", () => {
+    // Un import relativo mal escrito no rompe la compilacion de la SFC ni las pruebas de
+    // comportamiento: recien explota en el `vite build` de produccion. Ya paso una vez con
+    // el helper compartido, por eso se revisa aqui la ruta real de cada import.
+    const raiz = fileURLToPath(new URL(BASE_COMPONENTES + "../", import.meta.url));
+    const archivos = [];
+
+    const recorrer = (dir) => {
+        for (const entrada of readdirSync(dir)) {
+            const path = resolve(dir, entrada);
+
+            if (statSync(path).isDirectory()) recorrer(path);
+            else if (/\.(vue|js|mjs)$/.test(entrada)) archivos.push(path);
+        }
+    };
+
+    recorrer(raiz);
+    assert.ok(archivos.length > 0, "El modulo Commercial debe tener paginas que revisar.");
+
+    const existeModulo = (destino) => [destino, `${destino}.js`, `${destino}.vue`, `${destino}.mjs`, `${destino}/index.js`]
+        .some((candidato) => existsSync(candidato));
+
+    const rotos = [];
+
+    for (const archivo of archivos) {
+        const fuente = readFileSync(archivo, "utf8");
+        const patron = /(?:from|import)\s+["'](\.[^"']*)["']/g;
+        let coincidencia;
+
+        while ((coincidencia = patron.exec(fuente)) !== null) {
+            if (! existeModulo(resolve(dirname(archivo), coincidencia[1]))) {
+                rotos.push(`${archivo.split(/[\\/]/).pop()} -> ${coincidencia[1]}`);
+            }
+        }
+    }
+
+    assert.deepEqual(rotos, [], `Imports relativos que no resuelven: ${rotos.join(", ")}`);
 });

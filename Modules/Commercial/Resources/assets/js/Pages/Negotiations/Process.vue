@@ -17,7 +17,7 @@ import {
     faRotate,
     faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
-import { isFreeNegotiation, totalPriceLabel } from "../Support/freeNegotiation.js";
+import { isFreeNegotiation, totalPriceLabel } from "./Support/freeNegotiation.js";
 
 const props = defineProps({
     negotiation: { type: Object, default: () => ({}) },
