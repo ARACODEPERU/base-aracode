@@ -3,11 +3,14 @@
 namespace Tests\Unit\Modules\Security;
 
 use Exception;
+use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Mockery;
 use Modules\Integrationhub\Services\TelegramBotService;
+use Modules\Security\Services\ErrorLogService;
 use Modules\Security\Entities\SecurityAlertRecipient;
 use Modules\Security\Entities\SecurityAlertSetting;
 use Modules\Security\Entities\SecurityErrorLog;
@@ -327,6 +330,50 @@ class ErrorAlertServiceTest extends TestCase
         Queue::assertPushed(SendSecurityErrorAlert::class, function (SendSecurityErrorAlert $job) {
             return ! str_contains($job->text, '/security/errors/');
         });
+    }
+
+    public function test_un_fallo_al_encolar_la_alerta_solo_queda_en_el_log(): void
+    {
+        Log::spy();
+
+        // El peor escenario del canal de avisos: la cola no está disponible.
+        // Ni así el aviso puede detener al sistema que venía fallando, ni
+        // generar una alerta por el fallo de la alerta.
+        $dispatcher = Mockery::mock(Dispatcher::class);
+        $dispatcher->shouldReceive('dispatch')->andThrow(new RuntimeException('la cola no está disponible'));
+        $this->app->instance(Dispatcher::class, $dispatcher);
+
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        app(ErrorAlertService::class)->handle(new MessageLogged('error', 'Fallo grave', [
+            'exception' => new RuntimeException('Fallo grave'),
+        ]));
+
+        Log::shouldHaveReceived('warning')
+            ->withArgs(fn ($message, $context = []) => $message === 'No se pudo encolar la alerta de error'
+                && ($context[ErrorAlertService::CONTEXT_MARKER] ?? false) === true)
+            ->once();
+    }
+
+    public function test_un_fallo_al_preparar_la_alerta_no_detiene_y_queda_en_el_log(): void
+    {
+        Log::spy();
+
+        // Guardar el contexto revienta (base de datos caída). El aviso no sale,
+        // pero tampoco se propaga ni se deja sin rastro en el log.
+        $errorLogs = Mockery::mock(ErrorLogService::class);
+        $errorLogs->shouldReceive('record')->andThrow(new RuntimeException('base de datos caída'));
+
+        $service = new ErrorAlertService($errorLogs);
+
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        $service->handle(new MessageLogged('error', 'Fallo con contexto roto', []));
+
+        Log::shouldHaveReceived('warning')
+            ->withArgs(fn ($message, $context = []) => $message === 'La alerta de error no se pudo preparar'
+                && ($context[ErrorAlertService::CONTEXT_MARKER] ?? false) === true)
+            ->once();
     }
 
     public function test_el_envio_de_prueba_reporta_los_fallos_por_destinatario(): void

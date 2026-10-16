@@ -172,9 +172,15 @@ class ErrorAlertService
             $this->canAlert($fingerprint, $cooldown);
 
             $this->dispatchAlert($chatIds, $payload, $event);
-        } catch (Throwable) {
-            // Una alerta jamás puede tumbar la aplicación. Se recuerda el fallo
-            // para no repetir consultas que fallen en cada línea de log.
+        } catch (Throwable $exception) {
+            // Una alerta jamás puede tumbar la aplicación: el motivo queda en el
+            // log (con la marca interna, para no generar otra alerta) y el fallo
+            // se recuerda para no repetir consultas que fallen en cada línea de
+            // log de la misma petición.
+            $this->logFailure('La alerta de error no se pudo preparar', [
+                'error' => $exception->getMessage(),
+            ]);
+
             $this->memoFailed = true;
         }
     }
@@ -464,8 +470,7 @@ class ErrorAlertService
         } catch (Throwable $exception) {
             // Se registra en nivel warning (por debajo del umbral) para no
             // generar una alerta por el fallo de una alerta.
-            Log::warning('No se pudo enviar una alerta de error por Telegram', [
-                self::CONTEXT_MARKER => true,
+            $this->logFailure('No se pudo enviar una alerta de error por Telegram', [
                 'chat_id' => $chatId,
                 'error' => $exception->getMessage(),
             ]);
@@ -551,12 +556,31 @@ class ErrorAlertService
      * Encola el aviso y, si el log explica el fallo de un comando programado, lo
      * recuerda para no avisar después la línea genérica del planificador.
      *
+     * El encolado va aparte a propósito: si la cola falla (o el propio aviso no
+     * se puede armar), el sistema sigue igual, el motivo queda en el log —sin
+     * disparar una alerta por el fallo de la alerta— y no se marca como
+     * explicado el fallo de un comando programado, porque el chat no lo recibió.
+     *
+     * Se encola por el bus en lugar de usar SendSecurityErrorAlert::dispatch():
+     * ese helper entrega el job en el destructor del PendingDispatch, es decir,
+     * fuera de este try/catch, y un fallo de la cola terminaba explotando más
+     * tarde en medio de la petición.
+     *
      * @param array<int, string>    $chatIds
      * @param array<string, string> $payload
      */
     private function dispatchAlert(array $chatIds, array $payload, MessageLogged $event): void
     {
-        SendSecurityErrorAlert::dispatch($chatIds, $this->renderMessage($payload));
+        try {
+            app(\Illuminate\Contracts\Bus\Dispatcher::class)
+                ->dispatch(new SendSecurityErrorAlert($chatIds, $this->renderMessage($payload)));
+        } catch (Throwable $exception) {
+            $this->logFailure('No se pudo encolar la alerta de error', [
+                'error' => $exception->getMessage(),
+            ]);
+
+            return;
+        }
 
         $command = $this->explainedCommand($event);
 
@@ -615,6 +639,25 @@ class ErrorAlertService
             return Cache::has(self::EXPLAINED_PREFIX . $command);
         } catch (Throwable) {
             return false;
+        }
+    }
+
+    /**
+     * Deja constancia de un fallo del propio sistema de alertas.
+     *
+     * Se registra a nivel warning (por debajo del umbral por defecto) y con la
+     * marca interna, así que nunca genera otra alerta ni entra en bucle; y si el
+     * log tampoco está disponible, el sistema sigue: una alerta fallida se
+     * registra, jamás detiene a la aplicación.
+     *
+     * @param array<string, mixed> $context
+     */
+    private function logFailure(string $message, array $context = []): void
+    {
+        try {
+            Log::warning($message, array_merge([self::CONTEXT_MARKER => true], $context));
+        } catch (Throwable) {
+            // Sin log disponible no queda nada más que hacer.
         }
     }
 

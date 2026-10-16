@@ -30,6 +30,23 @@ Reglas que se respetan al guardar:
 - Nunca se lanza una excepción al guardar: si la base falla (puede ser el propio
   error), la alerta sale igual, sin enlace.
 
+## Fallos al usar una integración (Integrationhub)
+
+Cuando una llamada a un endpoint de **Integrationhub** falla, el error se avisa
+por este mismo canal (nivel `ERROR`, fuente `integrationhub_endpoint`) y queda en
+el Historial del módulo. El aviso incluye el nombre del endpoint y de la
+integración, el estado HTTP cuando lo hubo y la respuesta del servicio externo;
+los datos que cambian en cada intento (id de lote, mensaje exacto del tercero)
+viajan en el contexto del error, así el mismo fallo repetido conserva su huella y
+no llena el chat.
+
+Lo importante para el sistema: **Integrationhub nunca detiene a quien lo llama**.
+Los jobs, webhooks y pantallas reciben una respuesta de error en vez de una
+excepción, así que el flujo sigue (incluido un endpoint mal configurado o un
+mapeo roto). Y si el aviso en sí falla —cola caída, base de datos sin responder—
+tampoco se propaga: se registra a nivel `warning` con la marca interna
+`security_alert`, sin generar una alerta por el fallo de la alerta.
+
 ## Fallos de comandos programados
 
 El planificador, por su cuenta, registra “Scheduled command [...] failed with exit
