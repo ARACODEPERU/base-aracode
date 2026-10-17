@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\ModoAlumno;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +17,10 @@ class RedirectIfInvalidUserData
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::user() && Auth::user()->hasRole('Alumno') && !Auth::user()->updated_information) {
+        // Solo el campus del alumno exige completar los datos personales. Un
+        // administrador que además es alumno entra al panel y no queda atrapado
+        // en la pantalla de actualización de perfil.
+        if (ModoAlumno::activo(Auth::user()) && ! Auth::user()->updated_information) {
             return redirect()->route('user-update-profile'); // Cambia 'update-profile' por la ruta que desees
         }
         return $next($request);

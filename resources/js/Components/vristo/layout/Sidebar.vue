@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+    import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 
     import { useAppStore } from '@/stores/index';
     import IconCaretsDown from '@/Components/vristo/icon/icon-carets-down.vue';
@@ -11,6 +11,8 @@
     import { Popover } from 'ant-design-vue';
     import { Link, usePage } from '@inertiajs/vue3';
     import menuData from './MenuData.js'
+    // El campus del alumno solo aplica si 'Alumno' es el único rol de peso.
+    import { esModoAlumno } from '@/utils/modoAlumno'
 
     const store = useAppStore();
     const activeDropdown = ref('');
@@ -18,9 +20,8 @@
 
     const userData = usePage().props.auth.user;
 
-    const hasAnyRole = (rolesToCheck) => {
-        return userData.roles.some(role => rolesToCheck.includes(role.name))
-    }
+    // Misma regla que AppLayout: con un rol de panel la sesión no es de alumno.
+    const modoAlumno = computed(() => esModoAlumno(userData.roles));
 
     // Cleanup function para Popovers de Ant Design
     const cleanupPopovers = () => {
@@ -55,7 +56,7 @@
 
         getStudentCertificates();
 
-        if(hasAnyRole(['Alumno'])){
+        if(modoAlumno.value){
             loadTeachers();
         }
 
@@ -72,8 +73,8 @@
     const getStudentCertificates = () =>{
         const roles = usePage().props.auth.roles;
 
-        // Verifica si el usuario tiene el rol "Alumno"
-        if (roles.includes('Alumno')) {
+        // Verifica si la sesión está en modo alumno (sin rol de panel).
+        if (esModoAlumno(roles)) {
             //console.log('aca llega');
             axios({
                 method: 'post',
@@ -419,7 +420,7 @@
                             </li>
                         </template>
                         <template v-if="menuChatAI">
-                            <template v-if="hasAnyRole(['Alumno'])">
+                            <template v-if="modoAlumno">
                                 <li v-if="menuChatAI.permissions" class="menu nav-item">
                                     <button
                                         type="button"

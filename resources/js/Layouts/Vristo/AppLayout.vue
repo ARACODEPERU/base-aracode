@@ -18,6 +18,9 @@
     import SuperEditorPanel from 'Modules/Security/Resources/assets/js/Components/SuperEditor/Panel.vue';
     import SuperEditorPasswordModal from 'Modules/Security/Resources/assets/js/Components/SuperEditor/PasswordModal.vue';
     import { variablesDeMarca } from '@/utils/colorMarca';
+    // Una cuenta con rol de panel entra al panel aunque también tenga el rol
+    // 'Alumno'; el campus del alumno se muestra solo cuando es su único rol.
+    import { esModoAlumno } from '@/utils/modoAlumno';
 
     const store = useAppStore();
     const userData = usePage().props.auth.user;
@@ -109,9 +112,7 @@
 
     const baseURL = assetUrl;
 
-    const hasAnyRole = (rolesToCheck) => {
-        return userData.roles.some(role => rolesToCheck.includes(role.name))
-    }
+    const modoAlumno = computed(() => esModoAlumno(userData.roles));
 </script>
 
 <template>
@@ -176,7 +177,7 @@
 
             <div class="main-container text-black dark:text-white-dark min-h-screen" :class="[store.navbar]">
                 <!--  BEGIN SIDEBAR  -->
-                <template v-if="hasAnyRole(['Alumno'])">
+                <template v-if="modoAlumno">
                     <SidebarStudent />
                 </template>
                 <template v-else>

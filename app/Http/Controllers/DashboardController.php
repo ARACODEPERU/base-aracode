@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Parameter;
 use App\Models\Person;
+use App\Support\ModoAlumno;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +30,10 @@ class DashboardController extends Controller
     }
     public function index()
     {
-        if (Auth::user()->hasRole('Alumno')) {
+        // El campus del alumno solo se muestra cuando 'Alumno' es el único rol
+        // de peso: una cuenta con rol de panel (por ejemplo admin) entra al
+        // panel aunque también estudie. Ver App\Support\ModoAlumno.
+        if (ModoAlumno::activo(Auth::user())) {
             return Inertia::render('Academic::Dashboard/knowledge-base', [
                 'interests' => $this->getDataStudent(),
                 'expiring'  => $this->getExpiringItems()

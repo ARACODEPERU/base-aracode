@@ -26,6 +26,9 @@
     import ChatNotifications from 'Modules/CRM/Resources/assets/js/Components/ChatNotifications.vue';
     import ShoppingCartMenu from 'Modules/Onlineshop/Resources/assets/js/Components/ShoppingCartMenu.vue';
     import menuData from './MenuData.js'
+    // Misma regla que el layout: el panel gana cuando la cuenta tiene un rol de
+    // trabajo además de 'Alumno'.
+    import { esModoAlumno } from '@/utils/modoAlumno'
 
 
     const userData = usePage().props.auth.user;
@@ -36,9 +39,8 @@
     // "Cambio de moneda" en el header.
     const multiCurrencyEnabled = computed(() => pageProps.multiCurrencyEnabled === true);
 
-    const hasAnyRole = (rolesToCheck) => {
-        return userData.roles.some(role => rolesToCheck.includes(role.name))
-    }
+    // Campus del alumno: solo si 'Alumno' es su único rol de peso.
+    const modoAlumno = computed(() => esModoAlumno(userData.roles));
 
     const logout = () => {
         router.post(route('logout'));
@@ -70,7 +72,7 @@
 
     onMounted(() => {
         setActiveDropdown();
-        if(hasAnyRole(['Alumno'])){
+        if(modoAlumno.value){
             loadTeachers();
         }
     });
@@ -390,7 +392,7 @@
                         </li>
                     </template>
                 </template>
-                <template v-if="hasAnyRole(['Alumno'])">
+                <template v-if="modoAlumno">
                     <li v-can="menuChatAI.permissions" class="menu nav-item relative">
                         <a href="javascript:;" class="nav-link">
                             <div class="flex items-center">
