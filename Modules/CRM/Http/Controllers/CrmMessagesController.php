@@ -145,13 +145,21 @@ class CrmMessagesController extends Controller
         $channelListen = "message-notification-" . $appCodeUnique;
 
         try {
+            $payload = [
+                'channelName' => $channelListen,
+                'participants' => $participants,
+                'message' => $message,
+                'ofUserId' => $personId
+            ];
+
+            // Las ediciones viajan con action=updated para que el frontend
+            // actualice el mensaje existente en lugar de pintar uno nuevo.
+            if (!empty($message->action)) {
+                $payload['action'] = $message->action;
+            }
+
             $res = $client->post($url, [
-                'json' => [
-                    'channelName' => $channelListen,
-                    'participants' => $participants,
-                    'message' => $message,
-                    'ofUserId' => $personId
-                ],
+                'json' => $payload,
                 'verify' => false // importante si usas certificado autofirmado
             ]);
 
@@ -188,6 +196,8 @@ class CrmMessagesController extends Controller
             $message->text = $message->content;
             $message->time = timeElapsed($message->created_at);
             $message->sent_by_name = $message->sent_by_user_id ? ($auditores[$message->sent_by_user_id] ?? null) : null;
+            $message->edited = $message->updated_at && $message->created_at
+                && $message->updated_at->gt($message->created_at);
             return $message;
         });
 
@@ -363,6 +373,87 @@ class CrmMessagesController extends Controller
         Mail::to($data[1]->email_for)->queue(new ClientHelpEmail($data));
 
         return true;
+    }
+
+    public function updateMessage(Request $request)
+    {
+        $this->validate(
+            $request,
+            [
+                'message_id' => 'required',
+                'text' => 'required|string',
+            ]
+        );
+
+        $personId = $this->personaEfectiva($request);
+        $msg = CrmMessage::find($request->get('message_id'));
+
+        if (! $msg) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El mensaje ya no existe.'
+            ], 404);
+        }
+
+        // Cada usuario solo puede editar lo que él mismo escribió (incluye al
+        // admin que responde en nombre de un asistente).
+        if ($msg->person_id != $personId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo puedes editar tus propios mensajes.'
+            ], 403);
+        }
+
+        if ($msg->type !== 'text') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo puedes editar mensajes de texto.'
+            ], 403);
+        }
+
+        // La ventana de edición es estricta: 90 segundos desde el envío.
+        if (! $msg->created_at || $msg->created_at->lte(now()->subSeconds(90))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo puedes editar un mensaje durante los primeros 90 segundos.'
+            ], 403);
+        }
+
+        try {
+            $msg->content = $request->get('text');
+            $msg->save();
+
+            // Marca el broadcast como edición (no se guarda en la base).
+            $msg->action = 'updated';
+
+            $participants = CrmParticipant::where('conversation_id', $msg->conversation_id)
+                ->pluck('user_id')
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            $this->broadcastSend($participants, $msg, $personId);
+
+            return response()->json([
+                'success' => true,
+                'message' => [
+                    'id' => $msg->id,
+                    'conversation_id' => $msg->conversation_id,
+                    'text' => $msg->content,
+                    'updated_at' => $msg->updated_at,
+                    'edited' => true,
+                    'action' => 'updated',
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('CRM updateMessage: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo editar el mensaje. Intenta nuevamente.'
+            ], 500);
+        }
     }
 
     public function destroyMessage(Request $request)

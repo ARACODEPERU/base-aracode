@@ -80,6 +80,8 @@ class CrmIaController extends Controller
         // El alumno nunca ve quien respondio realmente (auditoria interna).
         $messages->each(function ($message) {
             $message->makeHidden('sent_by_user_id');
+            $message->edited = $message->updated_at && $message->created_at
+                && $message->updated_at->gt($message->created_at);
         });
 
         return Inertia::render('CRM::Chat/studentDashboard', [

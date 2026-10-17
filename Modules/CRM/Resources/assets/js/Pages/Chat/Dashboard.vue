@@ -17,6 +17,7 @@
     import IconVideo from '@/Components/vristo/icon/icon-video.vue';
     import IconCopy from '@/Components/vristo/icon/icon-copy.vue';
     import IconTrashLines from '@/Components/vristo/icon/icon-trash-lines.vue';
+    import IconPencil from '@/Components/vristo/icon/icon-pencil.vue';
     import IconShare from '@/Components/vristo/icon/icon-share.vue';
     import IconMoodSmile from '@/Components/vristo/icon/icon-mood-smile.vue';
     import IconSend from '@/Components/vristo/icon/icon-send.vue';
@@ -29,6 +30,7 @@
     import AudioPlay from '@/Components/AudioPlayer.vue';
     import FileDownload from './Partials/FileDownload.vue';
     import Swal from 'sweetalert2';
+    import { useMessageEdition } from '../../useMessageEdition';
     import ModalLargeX from '@/Components/ModalLargeX.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import Editor from '@tinymce/tinymce-vue';
@@ -204,6 +206,9 @@
                 existente.fromUserId = esMio ? mio : 0;
             }
             if (msg.time) existente.time = msg.time;
+            if (msg.created_at) existente.created_at = msg.created_at;
+            if (msg.updated_at) existente.updated_at = msg.updated_at;
+            if (msg.edited) existente.edited = true;
             scrollToBottom();
             return;
         }
@@ -226,7 +231,8 @@
                 text: textMessage.value,
                 time: 'En este momento',
                 type: 'text',
-                id: null
+                id: null,
+                created_at: new Date().toISOString()
             };
             registrarPropio(msg);
             chatPost(route('crm_send_message'),msg).then((response) => {
@@ -337,6 +343,7 @@
 
     const chatGet = (url, config = {}) => axios.get(url, withActing(config));
     const chatPost = (url, data = {}, config = {}) => axios.post(url, data, withActing(config));
+    const chatPut = (url, data = {}, config = {}) => axios.put(url, data, withActing(config));
     const chatDelete = (url, config = {}) => axios.delete(url, withActing(config));
 
     // Mantiene la URL sincronizada para que un refresh conserve la seleccion.
@@ -379,15 +386,34 @@
 
     onMounted(() => {
         window.socketIo.on(channelListenChat, (result) => {
-            let participants = result.data.participants;
-            let conversationId = result.data.message.conversation_id;
+            const mensajeEco = result.data.message ?? {};
+            const accion = result.data.action ?? mensajeEco.action ?? 'created';
+            const participants = result.data.participants ?? [];
+            const participa = participants.some((item) => effectiveUserId.value == item);
+
+            // Una edición actualiza el mensaje que ya está en pantalla; no se
+            // pinta como un mensaje nuevo ni se mueve la conversación.
+            if (accion === 'updated') {
+                if (participa && selectedUser.value && mismoMensaje(mensajeEco.conversation_id, selectedUser.value.conversationId)) {
+                    const existente = listaMensajes().find((m) => mismoMensaje(m.id, mensajeEco.id));
+
+                    if (existente) {
+                        existente.text = mensajeEco.content;
+                        existente.edited = true;
+                        if (mensajeEco.updated_at) existente.updated_at = mensajeEco.updated_at;
+                    }
+                }
+
+                return;
+            }
+
+            let conversationId = mensajeEco.conversation_id;
 
             // El backend manda "ofUserId" = person_id de quien ENVIO. Esta vista
             // pinta como propio (derecha) lo que trae fromUserId igual al person_id
             // del contacto, asi que hay que traducirlo: si el emisor soy yo, va como
             // mio; si no, va como del alumno.
             const ofUserId = Number(result.data.ofUserId);
-            const mensajeEco = result.data.message ?? {};
             // Se compara contra todas mis identidades: la persona suplantada (si
             // estoy respondiendo como un asistente) y mi propia persona. El
             // person_id que guarda el mensaje es el dato de la base, asi que sirve
@@ -412,7 +438,10 @@
                 time: 'En este momento',
                 type: mensajeEco.type,
                 id: mensajeEco.id,
-                sent_by_name: mensajeEco.sent_by_name ?? null
+                sent_by_name: mensajeEco.sent_by_name ?? null,
+                created_at: mensajeEco.created_at ?? null,
+                updated_at: mensajeEco.updated_at ?? null,
+                edited: !!mensajeEco.edited
             };
 
             participants.forEach(item => {
@@ -484,14 +513,20 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
     const displayModalConfirmarAi = ref(false);
     const censoredQuestion = ref(null);
     const censoredResponse = ref(null);
-    // Bandera: tras guardar en banco de consultas, ¿se debe enviar la respuesta al usuario?
-    const sendAfterSave = ref(false);
+    // Bandera: la respuesta ya se envió al usuario y solo falta revisar/guardar
+    // la versión censurada. Evita reenviarla y evita que cerrar la revisión
+    // parezca cancelar el envío.
+    const respuestaEnviada = ref(false);
 
     const openModalQuestionAI = (item) => {
         formIaconsulta.messageText = item.content
         formIaconsulta.instructions = instructionsPorDefecto
         displayModalAi.value = true;
         displayModalRespuestaAi.value = false;
+        displayModalConfirmarAi.value = false;
+        respuestaEnviada.value = false;
+        censoredQuestion.value = null;
+        censoredResponse.value = null;
     };
 
     const openModalRespuestaAI = () => {
@@ -505,7 +540,7 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
         displayModalConfirmarAi.value = false;
         censoredQuestion.value = null;
         censoredResponse.value = null;
-        sendAfterSave.value = false;
+        respuestaEnviada.value = false;
         formIaconsulta.reset();
     };
 
@@ -565,30 +600,51 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
     }
 
     const sendMessageAi = () => {
-        if (formIaconsulta.respond?.trim()) {
-            Swal.fire({
-                title: '¿Quieres guardar la respuesta en el banco de consultas?',
-                text: 'Si eliges sí, podrás revisarla antes de enviarla.',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Sí, guardar y enviar',
-                cancelButtonText: 'No, solo enviar',
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    sendAfterSave.value = true;
-                    saveQuestionResult();
-                } else {
-                    sendAfterSave.value = false;
-                    doSendMessageAi();
-                }
-            });
-        }
+        if (!formIaconsulta.respond?.trim()) return;
+
+        Swal.fire({
+            title: '¿Quieres guardar la respuesta en el banco de consultas?',
+            text: 'Si eliges sí, la respuesta se envía ahora al usuario y luego podrás revisar la versión censurada antes de guardarla.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, guardar y enviar',
+            cancelButtonText: 'No, solo enviar',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                enviarRespuestaYCensurar();
+            } else {
+                respuestaEnviada.value = false;
+                doSendMessageAi();
+            }
+        });
     };
 
-    const doSendMessageAi = () => {
-        if (!formIaconsulta.respond?.trim()) return;
+    // "Sí, guardar y enviar": primero se envía la respuesta al usuario y recién
+    // después se pide la versión censurada para el Banco de Consultas. Así el
+    // envío no depende de que se complete (o se cierre) la revisión posterior.
+    const enviarRespuestaYCensurar = async () => {
+        // Mantiene bloqueado el modal mientras se envía, para que no se cierre
+        // a mitad de la operación y se pierda el contenido a censurar.
+        formIaconsulta.processing = true;
+        let enviado = false;
+        try {
+            enviado = await doSendMessageAi({ cerrarAlTerminar: false });
+        } finally {
+            formIaconsulta.processing = false;
+        }
+        if (!enviado) return;
+
+        respuestaEnviada.value = true;
+        showMessage('Respuesta enviada al usuario.', 'success');
+        saveQuestionResult();
+    };
+
+    // Devuelve true solo si el mensaje realmente se envió. cerrarAlTerminar se
+    // desactiva cuando falta revisar/guardar la versión censurada.
+    const doSendMessageAi = ({ cerrarAlTerminar = true } = {}) => {
+        if (!formIaconsulta.respond?.trim()) return Promise.resolve(false);
         isShowLoadingSend.value = true;
         const msg = {
             fromUserId: selectedUser.value.userId,
@@ -597,23 +653,29 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
             time: 'En este momento',
             type: 'text',
             id: null,
-            answer_ai: true
+            answer_ai: true,
+            created_at: new Date().toISOString()
         };
         registrarPropio(msg);
-        chatPost(route('crm_send_message'), msg).then((response) => {
+        return chatPost(route('crm_send_message'), msg).then((response) => {
             return response.data;
         }).then((res) => {
             if(res.success){
                 msg.id = res.message?.id ?? null;
                 pushMensajePropio(msg);
-                olvidarPropio(msg);
                 textMessage.value = '';
+                return true;
             }else{
                 showMessage('No puede enviar mensajes en este momento. Por favor, complete su información personal en su perfil para habilitar esta función.','info');
+                return false;
             }
-            isShowLoadingSend.value = false;
+        }).catch((error) => {
+            showMessage(error.response?.data?.message || 'No se pudo enviar la respuesta. Intenta nuevamente.', 'error');
+            return false;
         }).finally(() => {
-            closeModalQuestionAI();
+            olvidarPropio(msg);
+            isShowLoadingSend.value = false;
+            if (cerrarAlTerminar) closeModalQuestionAI();
         });
     };
 
@@ -665,11 +727,12 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
             timeout: 0,
         }).then((result) => {
             if(result.data.success){
-                showMessage('Información guardada correctamente.','success');
-                if (sendAfterSave.value) {
-                    sendAfterSave.value = false;
-                    doSendMessageAi();
+                if (respuestaEnviada.value) {
+                    // La respuesta ya salió: solo se cierra la revisión sin reenviarla.
+                    closeModalQuestionAI();
+                    showMessage('Respuesta enviada y guardada en Banco de Consultas.','success');
                 } else {
+                    showMessage('Información guardada correctamente.','success');
                     askSendAfterSave();
                 }
             }
@@ -704,8 +767,17 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
 
     const closeModalConfirmarAI = () => {
         displayModalConfirmarAi.value = false;
+
+        // Si la respuesta ya se envió, cerrar la revisión no cancela nada: el
+        // mensaje queda enviado y se cierran todos los modales. Antes se volvía
+        // al modal principal y parecía que el envío había fallado.
+        if (respuestaEnviada.value) {
+            closeModalQuestionAI();
+            showMessage('La respuesta ya fue enviada. No se guardó en Banco de Consultas.', 'info');
+            return;
+        }
+
         displayModalRespuestaAi.value = true;
-        sendAfterSave.value = false;
     };
 
     const confirmSaveQuestion = () => {
@@ -724,11 +796,12 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
             },
         }).then((result) => {
             if (result.data.ibank) {
-                showMessage('Información guardada correctamente. puede visualizarlo en Banco de Consultas','success');
-                if (sendAfterSave.value) {
-                    sendAfterSave.value = false;
-                    doSendMessageAi();
+                if (respuestaEnviada.value) {
+                    // Ya se envió antes de la revisión: guardar y cerrar, sin reenviar.
+                    closeModalQuestionAI();
+                    showMessage('Respuesta enviada y guardada en Banco de Consultas.','success');
                 } else {
+                    showMessage('Información guardada correctamente. puede visualizarlo en Banco de Consultas','success');
                     askSendAfterSave();
                 }
             } else {
@@ -787,6 +860,30 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
             }
         });
     };
+
+    // Edición de mensajes propios: disponible para cualquier usuario del chat
+    // durante los primeros 90 segundos desde el envío.
+    const {
+        editingText,
+        isSavingEdit,
+        canEditMessage,
+        isEditingMessage,
+        startEditMessage,
+        cancelEditMessage,
+        saveEditedMessage,
+    } = useMessageEdition({
+        isOwnMessage: (message) => mismoMensaje(selectedUser.value?.userId, message.fromUserId),
+        getMessageText: (message) => message.text ?? '',
+        setMessageText: (message, text) => {
+            message.text = text;
+        },
+        requestUpdate: (message, text) => chatPut(
+            route('crm_chat_message_update'),
+            { message_id: message.id, text },
+            { headers: { 'Content-Type': 'application/json' } }
+        ).then((response) => response.data),
+        notify: showMessage,
+    });
 </script>
 <template>
     <AppLayout title="Chat">
@@ -999,9 +1096,19 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
                 <!-- Modal de Confirmacion de Guardado - Tercera pantalla -->
                 <ModalLargeX :show="displayModalConfirmarAi" :onClose="closeModalConfirmarAI" :icon="'/img/ai.png'" :loading="censorLoader">
                     <template #title>Inteligencia Artificial</template>
-                    <template #message>Revisa la pregunta y la respuesta antes de guardarla en Banco de Consultas</template>
+                    <template #message>Revisa la versión censurada antes de guardarla en Banco de Consultas</template>
                     <template #content>
                         <div class="space-y-4">
+                            <div class="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
+                                <IconInfoCircle class="mt-0.5 h-4 w-4 flex-none" />
+                                <p>
+                                    La consulta ha sido censurada por privacidad. Revísala y modifícala de ser necesario y luego haz clic en Guardar.
+                                </p>
+                            </div>
+                            <div v-if="respuestaEnviada" class="flex items-start gap-2 rounded-md border border-success/40 bg-success/10 p-3 text-xs text-success">
+                                <IconInfoCircle class="mt-0.5 h-4 w-4 flex-none" />
+                                <p>La respuesta ya fue enviada al usuario. Cerrar esta ventana no cancela el envío.</p>
+                            </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Pregunta</label>
                                 <textarea
@@ -1030,13 +1137,8 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
                         >
                             Guardar
                         </button>
-                        <button
-                            type="button"
-                            @click="closeModalConfirmarAI"
-                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                        >
-                            Cancelar
-                        </button>
+                        <!-- El botón Cerrar del modal ya usa closeModalConfirmarAI,
+                             que conserva el envío cuando la respuesta ya salió. -->
                     </template>
                 </ModalLargeX>
 
@@ -1468,6 +1570,17 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
                                                         <div class="flex items-center gap-3">
 
                                                                 <button
+                                                                    v-if="canEditMessage(message)"
+                                                                    type="button"
+                                                                    class="hidden group-hover:flex items-center gap-1 text-white-dark hover:text-primary"
+                                                                    title="Editar mensaje (disponible 90 segundos)"
+                                                                    @click="startEditMessage(message)"
+                                                                >
+                                                                    <IconPencil class="w-4.5 h-4.5" />
+                                                                    <span class="text-xs">Editar</span>
+                                                                </button>
+
+                                                                <button
                                                                     v-if="canDeleteMessage(message)"
                                                                     type="button"
                                                                     class="hidden group-hover:flex items-center text-white-dark hover:text-danger"
@@ -1481,7 +1594,37 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
                                                                     :class="message.fromUserId == selectedUser.userId ? 'ltr:rounded-br-none rtl:rounded-bl-none !bg-primary text-white': 'ltr:rounded-tl-none rtl:rounded-tr-none'"
                                                                 >
                                                                     <template v-if="message.type == 'text'">
-                                                                        <div v-html="message.text"></div>
+                                                                        <div v-if="isEditingMessage(message)" class="min-w-[220px] space-y-2 text-left">
+                                                                            <textarea
+                                                                                v-model="editingText"
+                                                                                class="form-textarea text-gray-900"
+                                                                                rows="3"
+                                                                                autofocus
+                                                                                @keydown.enter.exact.prevent="saveEditedMessage(message)"
+                                                                                @keydown.esc.prevent="cancelEditMessage"
+                                                                            ></textarea>
+                                                                            <p class="text-[11px] opacity-70">Enter guarda · Shift+Enter agrega una línea · Esc cancela</p>
+                                                                            <div class="flex items-center justify-end gap-2">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    class="rounded bg-white/20 px-3 py-1 text-xs text-white hover:bg-white/30 disabled:opacity-50"
+                                                                                    :disabled="isSavingEdit"
+                                                                                    @click="cancelEditMessage"
+                                                                                >
+                                                                                    Cancelar
+                                                                                </button>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    class="rounded bg-white px-3 py-1 text-xs text-primary hover:bg-gray-100 disabled:opacity-50"
+                                                                                    :disabled="isSavingEdit || !editingText.trim()"
+                                                                                    @click="saveEditedMessage(message)"
+                                                                                >
+                                                                                    Guardar
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div v-else v-html="message.text"></div>
+                                                                        <div v-if="message.edited" class="mt-1 text-[11px] opacity-70">Editado</div>
                                                                     </template>
                                                                     <template v-if="message.type == 'audio'">
                                                                         <AudioPlay :audioSrc="message.text" :position="message.fromUserId == selectedUser.userId ? 'right' : 'left'" />

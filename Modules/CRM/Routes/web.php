@@ -74,6 +74,10 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('crm')->gro
         ->post('conversations/messages/list', [CrmMessagesController::class, 'getMessages'])
         ->name('crm_list_message');
 
+    Route::middleware(['middleware' => 'permission:crm_chat_messages|crm_chat_asistente|crm_clientes_preguntas_ia'])
+        ->put('conversations/messages/update', [CrmMessagesController::class, 'updateMessage'])
+        ->name('crm_chat_message_update');
+
     Route::middleware(['middleware' => 'permission:crm_chat_messages|crm_chat_asistente'])
         ->delete('conversations/messages/destroy', [CrmMessagesController::class, 'destroyMessage'])
         ->name('crm_chat_message_destroy');

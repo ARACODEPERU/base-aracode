@@ -5,10 +5,12 @@
     import IconMinimizer from '@/Components/vristo/icon/icon-minimizer.vue';
     import IconX from '@/Components/vristo/icon/icon-x.vue';
     import IconSend from '@/Components/vristo/icon/icon-send.vue';
+    import IconPencil from '@/Components/vristo/icon/icon-pencil.vue';
     import AudioPlayer from '@/Components/AudioPlayer.vue';
     import { usePage, router, Link } from '@inertiajs/vue3';
     import FileDownload from '../Pages/Chat/Partials/FileDownload.vue';
     import Swal from 'sweetalert2';
+    import { useMessageEdition } from '../useMessageEdition';
 
     // Instancia del store
     const appCodeUnique = import.meta.env.VITE_APP_CODE ?? 'ARACODE';
@@ -103,7 +105,8 @@
                 time: 'En este momento',
                 type: 'text',
                 person_id: authUser.person_id,
-                id: null
+                id: null,
+                created_at: new Date().toISOString()
             };
             axios.post(route('crm_send_message'),msg).then((response) => {
                 return response.data;
@@ -149,21 +152,68 @@
         });
     };
 
+    // Edición de mensajes propios durante los primeros 90 segundos.
+    const {
+        editingText,
+        isSavingEdit,
+        canEditMessage,
+        isEditingMessage,
+        startEditMessage,
+        cancelEditMessage,
+        saveEditedMessage,
+    } = useMessageEdition({
+        isOwnMessage: (message) => String(authUser.person_id) === String(message.person_id),
+        getMessageText: (message) => message.text ?? '',
+        setMessageText: (message, text) => {
+            message.text = text;
+        },
+        requestUpdate: (message, text) => axios.put(route('crm_chat_message_update'), {
+            message_id: message.id,
+            text,
+        }, {
+            headers: { 'Content-Type': 'application/json' },
+        }).then((response) => response.data),
+        notify: showMessage,
+    });
+
     onMounted(() => {
         window.socketIo.on(channelListenChat, (result) => {
-            let participants = result.data.participants;
-            let conversationId = result.data.message.conversation_id;
+            const mensajeEco = result.data.message ?? {};
+            const accion = result.data.action ?? mensajeEco.action ?? 'created';
+            const participants = result.data.participants ?? [];
+            const participa = participants.some((item) => authUser.id == item);
+
+            // Si el mensaje fue editado, se actualiza el que ya está pintado.
+            if (accion === 'updated') {
+                if (participa && String(mensajeEco.conversation_id) === String(privateChat.value.conversation)) {
+                    const existente = (privateChat.value.messages ?? [])
+                        .find((m) => String(m.id) === String(mensajeEco.id));
+
+                    if (existente) {
+                        existente.text = mensajeEco.content;
+                        existente.edited = true;
+                        if (mensajeEco.updated_at) existente.updated_at = mensajeEco.updated_at;
+                    }
+                }
+
+                return;
+            }
+
+            let conversationId = mensajeEco.conversation_id;
             const newmsg = {
                 fromUserId: result.data.ofUserId,
                 toUserId: 0,
-                text: result.data.message.content,
+                text: mensajeEco.content,
                 time: 'En este momento',
-                type: result.data.message.type,
-                id: result.data.message.id,
+                type: mensajeEco.type,
+                id: mensajeEco.id,
                 // El widget decide el lado comparando authUser.person_id con el
                 // person_id del mensaje, asi que hay que conservarlo: sin el, mis
                 // propios mensajes se pintaban como si los hubiera escrito el otro.
-                person_id: result.data.message.person_id,
+                person_id: mensajeEco.person_id,
+                created_at: mensajeEco.created_at ?? null,
+                updated_at: mensajeEco.updated_at ?? null,
+                edited: !!mensajeEco.edited,
             };
 
             participants.forEach(item => {
@@ -179,6 +229,9 @@
                             if (sinId) {
                                 if (newmsg.id != null) sinId.id = newmsg.id;
                                 sinId.person_id = newmsg.person_id ?? sinId.person_id;
+                                if (newmsg.created_at) sinId.created_at = newmsg.created_at;
+                                if (newmsg.updated_at) sinId.updated_at = newmsg.updated_at;
+                                if (newmsg.edited) sinId.edited = true;
                             } else {
                                 mensajes.push(newmsg);
                             }
@@ -286,13 +339,55 @@
                 <!-- Chat messages will be displayed here -->
                  <template v-if="privateChat.messages.length > 0">
                     <template v-for="(message, index) in privateChat.messages">
-                        <div v-if="authUser.person_id == message.person_id" class="mb-2 text-right">
-                            <div
-                                v-if="message.type == 'text'"
-                                class="bg-blue-500 text-white rounded-lg rounded-br-none py-2 px-4 inline-block"
-                                v-html="message.text"
-                            >
+                        <div v-if="authUser.person_id == message.person_id" class="mb-2 text-right group">
+                            <div class="flex items-center justify-end gap-2">
+                                <button
+                                    v-if="canEditMessage(message)"
+                                    type="button"
+                                    class="hidden group-hover:flex items-center gap-1 text-gray-500 hover:text-blue-600"
+                                    title="Editar mensaje (disponible 90 segundos)"
+                                    @click="startEditMessage(message)"
+                                >
+                                    <IconPencil class="w-4 h-4" />
+                                    <span class="text-xs">Editar</span>
+                                </button>
+                                <div v-if="isEditingMessage(message)" class="w-full max-w-xs rounded-lg bg-white p-2 text-left shadow dark:bg-gray-800">
+                                    <textarea
+                                        v-model="editingText"
+                                        class="form-textarea text-sm text-gray-900"
+                                        rows="3"
+                                        autofocus
+                                        @keydown.enter.exact.prevent="saveEditedMessage(message)"
+                                        @keydown.esc.prevent="cancelEditMessage"
+                                    ></textarea>
+                                    <p class="text-[11px] opacity-70">Enter guarda · Shift+Enter agrega una línea · Esc cancela</p>
+                                    <div class="mt-2 flex items-center justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            class="rounded bg-gray-200 px-3 py-1 text-xs text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                                            :disabled="isSavingEdit"
+                                            @click="cancelEditMessage"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-500 disabled:opacity-50"
+                                            :disabled="isSavingEdit || !editingText.trim()"
+                                            @click="saveEditedMessage(message)"
+                                        >
+                                            Guardar
+                                        </button>
+                                    </div>
+                                </div>
+                                <div
+                                    v-else-if="message.type == 'text'"
+                                    class="bg-blue-500 text-white rounded-lg rounded-br-none py-2 px-4 inline-block"
+                                    v-html="message.text"
+                                >
+                                </div>
                             </div>
+                            <p v-if="message.edited" class="mt-1 text-[11px] text-gray-500">Editado</p>
                             <p v-if="message.type == 'audio'" class="bg-blue-500 text-white rounded-lg rounded-br-none py-2 px-4 inline-block">
                                 <AudioPlayer :audioSrc="message.text" :position="'right'" />
                             </p>
