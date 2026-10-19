@@ -183,6 +183,51 @@ class SecurityAlertControllerTest extends TestCase
         $this->assertTrue($data['settings']['purge_enabled']);
     }
 
+    public function test_guarda_los_interruptores_por_tipo_de_aviso(): void
+    {
+        $response = $this->controller()->updateSettings(
+            Request::create('/security/alerts/settings', 'PUT', [
+                'enabled' => true,
+                'min_level' => 'error',
+                'cooldown_minutes' => 5,
+                'topics' => ['errors' => false, 'contacts' => true],
+            ])
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+
+        $settings = SecurityAlertSetting::current();
+
+        $this->assertFalse($settings->topicEnabled(SecurityAlertSetting::TOPIC_ERRORS));
+        $this->assertTrue($settings->topicEnabled(SecurityAlertSetting::TOPIC_CONTACTS));
+        $this->assertFalse($settings->allowsTopic(SecurityAlertSetting::TOPIC_ERRORS));
+        $this->assertTrue($settings->allowsTopic(SecurityAlertSetting::TOPIC_CONTACTS));
+
+        $topics = collect($response->getData(true)['topics'])->keyBy('key');
+
+        $this->assertFalse($topics['errors']['enabled']);
+        $this->assertTrue($topics['contacts']['enabled']);
+        $this->assertSame('Mensajes de contacto', $topics['contacts']['label']);
+    }
+
+    public function test_un_tipo_que_no_llega_conserva_su_interruptor(): void
+    {
+        SecurityAlertSetting::current()->update(['contacts_enabled' => false]);
+
+        $this->controller()->updateSettings(
+            Request::create('/security/alerts/settings', 'PUT', [
+                'enabled' => true,
+                'min_level' => 'error',
+                'cooldown_minutes' => 5,
+            ])
+        );
+
+        $settings = SecurityAlertSetting::current();
+
+        $this->assertFalse($settings->topicEnabled(SecurityAlertSetting::TOPIC_CONTACTS));
+        $this->assertTrue($settings->topicEnabled(SecurityAlertSetting::TOPIC_ERRORS));
+    }
+
     public function test_el_envio_de_prueba_falla_si_el_bot_no_esta_configurado(): void
     {
         $bot = Mockery::mock(TelegramBotService::class);

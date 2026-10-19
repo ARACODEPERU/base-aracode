@@ -108,7 +108,10 @@ class ErrorAlertService
         try {
             $settings = $this->settings();
 
-            if (! $settings->isEnabled() || ! $settings->levelReaches((string) $event->level)) {
+            // Interruptor general y del tipo: los avisos de errores se pueden
+            // silenciar sin apagar los de contacto (y al revés).
+            if (! $settings->allowsTopic(SecurityAlertSetting::TOPIC_ERRORS)
+                || ! $settings->levelReaches((string) $event->level)) {
                 return;
             }
 

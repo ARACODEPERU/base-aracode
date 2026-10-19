@@ -75,6 +75,32 @@ class ErrorAlertServiceTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    public function test_no_encola_si_los_avisos_de_errores_estan_apagados(): void
+    {
+        Queue::fake();
+
+        SecurityAlertSetting::current()->update(['errors_enabled' => false]);
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        app(ErrorAlertService::class)->handle(new MessageLogged('error', 'Fallo', []));
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_apagar_los_contactos_no_silencia_las_alertas_de_error(): void
+    {
+        Queue::fake();
+
+        SecurityAlertSetting::current()->update(['contacts_enabled' => false]);
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        app(ErrorAlertService::class)->handle(
+            new MessageLogged('error', 'Fallo grave', ['exception' => new RuntimeException('Fallo grave')])
+        );
+
+        Queue::assertPushed(SendSecurityErrorAlert::class, 1);
+    }
+
     public function test_no_encola_si_no_hay_destinatarios_activos(): void
     {
         Queue::fake();

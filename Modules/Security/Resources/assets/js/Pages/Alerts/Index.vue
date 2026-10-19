@@ -19,6 +19,8 @@
             }),
         },
         levels: { type: Array, default: () => [] },
+        // Interruptores por tipo de aviso, con la etiqueta que arma el backend.
+        topics: { type: Array, default: () => [] },
         logStats: { type: Object, default: () => ({ total: 0, size_bytes: 0, oldest_at: null, newest_at: null }) },
         recipients: { type: Array, default: () => [] },
         botConfigured: { type: Boolean, default: false },
@@ -42,6 +44,9 @@
         retention_days: props.settings.retention_days,
         purge_enabled: props.settings.purge_enabled,
     });
+
+    // Copia local de los tipos de aviso: se guardan junto con los demás ajustes.
+    const topicList = ref(props.topics.map((topic) => ({ ...topic })));
 
     const logStats = ref({ ...props.logStats });
 
@@ -68,8 +73,14 @@
     const saveSettings = async () => {
         savingSettings.value = true;
         try {
-            const { data } = await axios.put(route('security_alerts_settings_update'), settingsForm.value);
+            const payload = {
+                ...settingsForm.value,
+                topics: Object.fromEntries(topicList.value.map((topic) => [topic.key, topic.enabled])),
+            };
+
+            const { data } = await axios.put(route('security_alerts_settings_update'), payload);
             settingsForm.value = { ...data.settings };
+            topicList.value = (data.topics || []).map((topic) => ({ ...topic }));
             logStats.value = { ...(data.logStats || logStats.value) };
             preview.value = data.preview;
             toast.fire({ icon: 'success', title: data.message || 'Ajustes guardados' });
@@ -188,11 +199,12 @@
                     <div>
                         <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-white">
                             <font-awesome-icon :icon="faBell" class="text-primary" />
-                            Alertas de error por Telegram
+                            Avisos por Telegram
                         </h2>
                         <p class="mt-1 max-w-3xl text-sm text-gray-500 dark:text-gray-400">
-                            Cuando un error se registra en los logs, se envía su detalle por la integración
-                            <span class="font-medium">Telegram_bot</span> a los chat_id activos de esta lista.
+                            Los avisos salen por la integración <span class="font-medium">Telegram_bot</span> hacia los chat_id
+                            activos de esta lista, y cada tipo se activa por separado: errores del sistema y mensajes de
+                            contacto del sitio.
                         </p>
                     </div>
                     <span
@@ -207,13 +219,51 @@
 
             <div class="panel p-5">
                 <h3 class="text-base font-semibold text-gray-800 dark:text-white">Ajustes</h3>
-                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div class="flex items-center gap-3">
-                        <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                            <input v-model="settingsForm.enabled" type="checkbox" class="form-checkbox" />
-                            Alertas activas
+
+                <div class="mt-4 rounded border border-gray-200 p-4 dark:border-gray-700">
+                    <h4 class="text-sm font-semibold text-gray-800 dark:text-white">Avisos que se envían</h4>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        El interruptor general apaga todos los avisos. Cada tipo se puede silenciar por separado sin borrar
+                        destinatarios: al volver a activarlo, los mismos chat_id vuelven a recibirlos.
+                    </p>
+
+                    <label class="mt-3 flex cursor-pointer items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <input v-model="settingsForm.enabled" type="checkbox" class="form-checkbox mt-0.5" />
+                        <span>
+                            Avisos activos (general)
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">
+                                Si se apaga, no se envía ningún aviso por Telegram, sin importar los tipos activados abajo.
+                            </span>
+                        </span>
+                    </label>
+
+                    <div class="mt-3 space-y-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+                        <label
+                            v-for="topic in topicList"
+                            :key="topic.key"
+                            class="flex cursor-pointer items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
+                            :class="settingsForm.enabled ? '' : 'opacity-50'"
+                        >
+                            <input
+                                v-model="topic.enabled"
+                                type="checkbox"
+                                class="form-checkbox mt-0.5"
+                                :disabled="!settingsForm.enabled"
+                            />
+                            <span>
+                                {{ topic.label }}
+                                <span class="block text-xs text-gray-500 dark:text-gray-400">{{ topic.description }}</span>
+                            </span>
                         </label>
+                        <p v-if="!topicList.length" class="text-xs text-gray-500 dark:text-gray-400">
+                            No hay tipos de aviso configurados.
+                        </p>
                     </div>
+                </div>
+
+                <div class="mt-5 border-t border-gray-200 pt-5 dark:border-gray-700">
+                    <h4 class="text-sm font-semibold text-gray-800 dark:text-white">Detalles de las alertas de errores</h4>
+                    <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
                         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Nivel mínimo</label>
                         <select v-model="settingsForm.min_level" class="form-select w-full">
@@ -224,14 +274,16 @@
                         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Anti-duplicados (min)</label>
                         <input v-model.number="settingsForm.cooldown_minutes" type="number" min="0" max="1440" class="form-input w-full" />
                     </div>
+                    </div>
+
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Un mismo error (mismo nivel, mensaje, archivo y línea) no se repite dentro de la ventana indicada:
+                        solo se suma al contador de repeticiones del error guardado, así que ocupa una única fila. Pasada la
+                        ventana se avisa otra vez, con el total acumulado, para saber que el error sigue vivo sin llenar el
+                        chat ni el disco. La línea genérica del planificador («failed with exit code») se omite cuando el
+                        propio comando ya avisó del motivo real.
+                    </p>
                 </div>
-                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    Un mismo error (mismo nivel, mensaje, archivo y línea) no se repite dentro de la ventana indicada:
-                    solo se suma al contador de repeticiones del error guardado, así que ocupa una única fila. Pasada la
-                    ventana se avisa otra vez, con el total acumulado, para saber que el error sigue vivo sin llenar el
-                    chat ni el disco. La línea genérica del planificador («failed with exit code») se omite cuando el
-                    propio comando ya avisó del motivo real.
-                </p>
 
                 <div class="mt-5 border-t border-gray-200 pt-5 dark:border-gray-700">
                     <h4 class="text-sm font-semibold text-gray-800 dark:text-white">Contexto de los errores</h4>

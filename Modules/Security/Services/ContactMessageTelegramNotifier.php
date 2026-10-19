@@ -5,6 +5,7 @@ namespace Modules\Security\Services;
 use App\Models\ContactMessage;
 use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Support\Facades\Log;
+use Modules\Security\Entities\SecurityAlertSetting;
 use Modules\Security\Jobs\SendContactMessageTelegram;
 use Throwable;
 
@@ -13,8 +14,11 @@ use Throwable;
  *
  * Usa el mismo bot que las alertas del sistema (integración Telegram_bot) y los
  * destinatarios activos de Seguridad → Alertas, de modo que quien ya recibe los
- * avisos del sistema recibe también los contactos. No depende del interruptor
- * de alertas de error: ese silencia los avisos de fallos, no los contactos.
+ * avisos del sistema recibe también los contactos.
+ *
+ * Se rige por los interruptores de Seguridad → Alertas: el general y el propio
+ * de los mensajes de contacto (topics.contacts). Así los contactos se pueden
+ * silenciar sin apagar los avisos de errores, y al revés.
  *
  * Reglas:
  *   - el mensaje se encola: el formulario responde sin esperar a Telegram;
@@ -36,6 +40,10 @@ class ContactMessageTelegramNotifier
     public function notify(ContactMessage $message): void
     {
         try {
+            if (!SecurityAlertSetting::current()->allowsTopic(SecurityAlertSetting::TOPIC_CONTACTS)) {
+                return;
+            }
+
             $chatIds = $this->alerts->activeChatIds();
 
             if ($chatIds === []) {

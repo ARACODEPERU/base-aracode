@@ -14,13 +14,25 @@ use Illuminate\Database\Eloquent\Model;
  * store_context guarda el detalle completo del error (para verlo por enlace),
  * retention_days indica cuántos días se conserva (0 = para siempre) y
  * purge_enabled activa el borrado automático de los errores vencidos.
+ *
+ * `enabled` es el interruptor general y cada tipo de aviso tiene el suyo
+ * ({topic}_enabled): así se puede silenciar los avisos de errores sin perder
+ * los mensajes de contacto, o al revés, sin borrar destinatarios.
  */
 class SecurityAlertSetting extends Model
 {
     protected $table = 'security_alert_settings';
 
+    /** Tipo de aviso: fallo registrado en los logs. */
+    public const TOPIC_ERRORS = 'errors';
+
+    /** Tipo de aviso: mensaje del formulario de contacto del sitio. */
+    public const TOPIC_CONTACTS = 'contacts';
+
     protected $fillable = [
         'enabled',
+        'errors_enabled',
+        'contacts_enabled',
         'min_level',
         'cooldown_minutes',
         'store_context',
@@ -30,6 +42,8 @@ class SecurityAlertSetting extends Model
 
     protected $casts = [
         'enabled' => 'boolean',
+        'errors_enabled' => 'boolean',
+        'contacts_enabled' => 'boolean',
         'cooldown_minutes' => 'integer',
         'store_context' => 'boolean',
         'retention_days' => 'integer',
@@ -76,6 +90,8 @@ class SecurityAlertSetting extends Model
 
         return new self([
             'enabled' => true,
+            'errors_enabled' => true,
+            'contacts_enabled' => true,
             'min_level' => self::DEFAULT_LEVEL,
             'cooldown_minutes' => self::DEFAULT_COOLDOWN,
             'store_context' => true,
@@ -87,6 +103,54 @@ class SecurityAlertSetting extends Model
     public function isEnabled(): bool
     {
         return (bool) ($this->enabled ?? true);
+    }
+
+    /**
+     * Tipos de aviso que la pantalla ofrece, con el texto que los explica.
+     *
+     * Agregar un tipo nuevo es: la columna `{clave}_enabled` en una migración y
+     * una entrada aquí. El resto (interruptor en pantalla, guardado y
+     * gating) sale de este registro.
+     *
+     * @return array<string, array{label: string, description: string}>
+     */
+    public static function topics(): array
+    {
+        return [
+            self::TOPIC_ERRORS => [
+                'label' => 'Alertas de errores',
+                'description' => 'Cuando un error se registra en los logs se envía su detalle, con el enlace al contexto guardado.',
+            ],
+            self::TOPIC_CONTACTS => [
+                'label' => 'Mensajes de contacto',
+                'description' => 'Cuando alguien envía el formulario de contacto del sitio.',
+            ],
+        ];
+    }
+
+    /**
+     * true si ese tipo de aviso está activo.
+     *
+     * Un tipo desconocido (sin entrada en topics()) devuelve false: se prefiere
+     * no enviar un aviso que ningún interruptor controla. Si la columna todavía
+     * no existe porque la migración está pendiente se asume activo, para no
+     * silenciar avisos que nadie apagó.
+     */
+    public function topicEnabled(string $topic): bool
+    {
+        if (! array_key_exists($topic, self::topics())) {
+            return false;
+        }
+
+        return (bool) ($this->getAttribute($topic . '_enabled') ?? true);
+    }
+
+    /**
+     * true si el aviso de ese tipo debe enviarse: interruptor general y del tipo.
+     */
+    public function allowsTopic(string $topic): bool
+    {
+        return $this->isEnabled() && $this->topicEnabled($topic);
     }
 
     public function minLevel(): string

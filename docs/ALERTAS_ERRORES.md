@@ -12,6 +12,23 @@ Alertas**. El aviso lleva ahora:
 - un enlace **“Ver el contexto completo del error”** a la pantalla
   **Seguridad → Errores** (módulo Security).
 
+## Interruptores de avisos
+
+En **Seguridad → Alertas** hay un interruptor general y uno por tipo de aviso:
+
+- **Avisos activos (general)** (`enabled`) — si se apaga, no sale ningún aviso por
+  Telegram, sin importar los tipos activados.
+- **Alertas de errores** (`errors_enabled`) — los fallos registrados en los logs.
+- **Mensajes de contacto** (`contacts_enabled`) — el formulario del sitio.
+
+Los interruptores por tipo permiten silenciar unos avisos sin perder los otros y
+sin borrar destinatarios: al reactivarlos, los mismos `chat_id` vuelven a
+recibirlos. Agregar un tipo nuevo es agregar su columna `{clave}_enabled` en una
+migración y una entrada en `SecurityAlertSetting::topics()`; el interruptor en
+pantalla, el guardado y el filtrado salen de ese registro. El botón de prueba
+sigue enviando aunque los interruptores estén apagados, porque es una acción
+explícita.
+
 ## Dónde vive el contexto
 
 Cada error avisado se guarda completo en la tabla `security_error_logs`
@@ -41,8 +58,10 @@ servicio, fecha y el texto de la consulta.
   literal en Telegram y no rompe el HTML del aviso.
 - Solo se envía cuando el envío pasó el captcha, el campo trampa y el límite de
   envíos por IP; un intento descartado no llega al chat.
-- No depende del interruptor `enabled` de las alertas de error ni del nivel
-  mínimo: son contactos comerciales, no fallos del sistema.
+- Se rige por los interruptores de **Seguridad → Alertas**: el general y el de
+  **Mensajes de contacto** (`contacts_enabled`). No depende del nivel mínimo ni
+  del interruptor de errores, así que apagar las alertas de error no silencia los
+  contactos (ni al revés).
 - Se encola (`SendContactMessageTelegram`). Si Telegram falla, el mensaje ya
   quedó guardado en `contact_messages` y el correo al admin ya se encoló.
 - Sin destinatarios activos no se envía nada y el formulario responde igual.

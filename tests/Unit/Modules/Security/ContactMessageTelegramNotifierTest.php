@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Schema;
 use Mockery;
 use Modules\Integrationhub\Services\TelegramBotService;
 use Modules\Security\Entities\SecurityAlertRecipient;
+use Modules\Security\Entities\SecurityAlertSetting;
 use Modules\Security\Services\ContactMessageTelegramNotifier;
 use Tests\TestCase;
 use Tests\Unit\Modules\Security\Concerns\BuildsSecurityAlertSchema;
@@ -19,7 +20,9 @@ use Tests\Unit\Modules\Security\Concerns\BuildsSecurityAlertSchema;
  *   - llega solo a los destinatarios activos de Seguridad → Alertas;
  *   - lleva los datos del contacto y el texto escapado (una etiqueta escrita
  *     por la persona no puede romper ni dar formato al mensaje);
- *   - sin destinatarios activos no se envía nada.
+ *   - sin destinatarios activos no se envía nada;
+ *   - respeta el interruptor general y el propio de los mensajes de contacto,
+ *     sin depender del de errores.
  */
 class ContactMessageTelegramNotifierTest extends TestCase
 {
@@ -135,5 +138,60 @@ class ContactMessageTelegramNotifierTest extends TestCase
         app(ContactMessageTelegramNotifier::class)->notify($message);
 
         $this->assertTrue(true);
+    }
+
+    public function test_no_avisa_cuando_el_interruptor_general_esta_apagado(): void
+    {
+        SecurityAlertRecipient::create(['name' => 'Equipo', 'chat_id' => '111', 'is_active' => true]);
+        SecurityAlertSetting::current()->update(['enabled' => false]);
+
+        $bot = Mockery::mock(TelegramBotService::class);
+        $bot->shouldNotReceive('sendFormatted');
+
+        $this->app->instance(TelegramBotService::class, $bot);
+
+        app(ContactMessageTelegramNotifier::class)->notify($this->contactMessage());
+
+        $this->assertTrue(true);
+    }
+
+    public function test_no_avisa_cuando_los_mensajes_de_contacto_estan_apagados(): void
+    {
+        SecurityAlertRecipient::create(['name' => 'Equipo', 'chat_id' => '111', 'is_active' => true]);
+        SecurityAlertSetting::current()->update(['contacts_enabled' => false]);
+
+        $bot = Mockery::mock(TelegramBotService::class);
+        $bot->shouldNotReceive('sendFormatted');
+
+        $this->app->instance(TelegramBotService::class, $bot);
+
+        app(ContactMessageTelegramNotifier::class)->notify($this->contactMessage());
+
+        $this->assertTrue(true);
+    }
+
+    public function test_apagar_los_errores_no_silencia_los_contactos(): void
+    {
+        SecurityAlertRecipient::create(['name' => 'Equipo', 'chat_id' => '111', 'is_active' => true]);
+        SecurityAlertSetting::current()->update(['errors_enabled' => false]);
+
+        $bot = Mockery::mock(TelegramBotService::class);
+        $bot->shouldReceive('sendFormatted')->once()->andReturn([]);
+
+        $this->app->instance(TelegramBotService::class, $bot);
+
+        app(ContactMessageTelegramNotifier::class)->notify($this->contactMessage());
+
+        $this->assertTrue(true);
+    }
+
+    private function contactMessage(): ContactMessage
+    {
+        return ContactMessage::create([
+            'name' => 'Ana Quispe',
+            'email' => 'ana@empresa.test',
+            'service' => 'otro',
+            'message' => 'Consulta de prueba.',
+        ]);
     }
 }

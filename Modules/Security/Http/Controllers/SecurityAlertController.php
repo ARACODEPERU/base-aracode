@@ -16,9 +16,12 @@ use Modules\Security\Services\ErrorLogService;
 /**
  * Pantalla "Alertas" del módulo Security.
  *
- * Administra los chat_id de Telegram que reciben los avisos de error que se
- * registran en los logs, los ajustes de la alerta (interruptor, nivel mínimo y
+ * Administra los chat_id de Telegram que reciben los avisos, los ajustes
+ * (interruptor general, un interruptor por tipo de aviso, nivel mínimo y
  * ventana anti-duplicados) y el envío de una alerta de prueba.
+ *
+ * Los tipos de aviso salen de SecurityAlertSetting::topics(): agregar uno nuevo
+ * no requiere tocar la validación ni el guardado de esta pantalla.
  */
 class SecurityAlertController extends Controller
 {
@@ -35,6 +38,7 @@ class SecurityAlertController extends Controller
 
         return Inertia::render('Security::Alerts/Index', [
             'settings' => $this->settingsPayload($settings),
+            'topics' => $this->topicsPayload($settings),
             'levels' => SecurityAlertSetting::selectableLevels(),
             'logStats' => $this->logStats(),
             'recipients' => SecurityAlertRecipient::orderBy('id')
@@ -109,7 +113,7 @@ class SecurityAlertController extends Controller
             'store_context' => ['nullable', 'boolean'],
             'retention_days' => ['nullable', 'integer', 'min:0', 'max:3650'],
             'purge_enabled' => ['nullable', 'boolean'],
-        ]);
+        ] + $this->topicRules());
 
         $settings = SecurityAlertSetting::current();
         $settings->fill([
@@ -121,13 +125,25 @@ class SecurityAlertController extends Controller
             'store_context' => $validated['store_context'] ?? $settings->storesContext(),
             'retention_days' => $validated['retention_days'] ?? $settings->retentionDays(),
             'purge_enabled' => $validated['purge_enabled'] ?? $settings->autoPurge(),
-        ])->save();
+        ]);
+
+        // Cada interruptor llega dentro de `topics`; el que no llegue conserva su
+        // valor, para que una pantalla antigua no apague avisos sin querer.
+        foreach (array_keys(SecurityAlertSetting::topics()) as $topic) {
+            $settings->setAttribute(
+                $topic . '_enabled',
+                $validated['topics'][$topic] ?? $settings->topicEnabled($topic)
+            );
+        }
+
+        $settings->save();
 
         $this->alerts->forgetCache();
 
         return response()->json([
             'message' => 'Ajustes guardados.',
             'settings' => $this->settingsPayload($settings),
+            'topics' => $this->topicsPayload($settings),
             'logStats' => $this->logStats(),
             'preview' => $this->alerts->previewMessage(),
         ]);
@@ -183,6 +199,43 @@ class SecurityAlertController extends Controller
             'retention_days' => $settings->retentionDays(),
             'purge_enabled' => $settings->autoPurge(),
         ];
+    }
+
+    /**
+     * Interruptores por tipo de aviso, con la etiqueta que muestra la pantalla.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function topicsPayload(SecurityAlertSetting $settings): array
+    {
+        $topics = [];
+
+        foreach (SecurityAlertSetting::topics() as $key => $topic) {
+            $topics[] = [
+                'key' => $key,
+                'label' => $topic['label'],
+                'description' => $topic['description'],
+                'enabled' => $settings->topicEnabled($key),
+            ];
+        }
+
+        return $topics;
+    }
+
+    /**
+     * Reglas de validación de los interruptores por tipo.
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function topicRules(): array
+    {
+        $rules = ['topics' => ['sometimes', 'array']];
+
+        foreach (array_keys(SecurityAlertSetting::topics()) as $topic) {
+            $rules["topics.{$topic}"] = ['nullable', 'boolean'];
+        }
+
+        return $rules;
     }
 
     /**
