@@ -109,14 +109,25 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
     Route::put('attentions/{id}/update', [HealAttentionController::class, 'update'])->name('heal_attentions_update');
     Route::delete('attentions/{id}/destroy', [HealAttentionController::class, 'destroy'])->name('heal_attentions_destroy');
 
-    Route::get('procedures-charges', [HealProcedureChargeController::class, 'index'])->name('heal_procedure_charges_list');
-    Route::get('procedures-charges/patients/{patient}/attentions', [HealProcedureChargeController::class, 'patientAttentions'])->name('heal_procedure_charges_patient_attentions');
-    Route::post('procedures/store', [HealProcedureChargeController::class, 'storeProcedure'])->name('heal_procedures_store');
-    Route::put('procedures/{procedure}/update', [HealProcedureChargeController::class, 'updateProcedure'])->name('heal_procedures_update');
-    Route::post('charges/store', [HealProcedureChargeController::class, 'storeCharge'])->name('heal_patient_charges_store');
-    Route::post('charges/store-many', [HealProcedureChargeController::class, 'storeManyCharges'])->name('heal_patient_charges_store_many');
-    Route::put('charges/{charge}/status', [HealProcedureChargeController::class, 'updateChargeStatus'])->name('heal_patient_charges_status');
-    Route::post('charges/prepare-sales-review', [HealProcedureChargeController::class, 'prepareSalesReview'])->name('heal_patient_charges_prepare_sales');
+    // Cobros y catálogo de procedimientos. El permiso es el mismo que exige el
+    // menú de la pantalla (heal_atenciones_listado): antes la ruta quedaba solo
+    // con auth+verified y cualquier cuenta entraba escribiendo la URL.
+    Route::middleware(['permission:heal_atenciones_listado'])->group(function () {
+        Route::get('procedures-charges', [HealProcedureChargeController::class, 'index'])->name('heal_procedure_charges_list');
+        Route::get('procedures-charges/patients/{patient}/attentions', [HealProcedureChargeController::class, 'patientAttentions'])->name('heal_procedure_charges_patient_attentions');
+        Route::post('charges/store', [HealProcedureChargeController::class, 'storeCharge'])->name('heal_patient_charges_store');
+        Route::post('charges/store-many', [HealProcedureChargeController::class, 'storeManyCharges'])->name('heal_patient_charges_store_many');
+        Route::put('charges/{charge}/status', [HealProcedureChargeController::class, 'updateChargeStatus'])->name('heal_patient_charges_status');
+        Route::put('charges/{charge}/release', [HealProcedureChargeController::class, 'releaseCharge'])->name('heal_patient_charges_release');
+        Route::post('charges/prepare-sales-review', [HealProcedureChargeController::class, 'prepareSalesReview'])->name('heal_patient_charges_prepare_sales');
+
+        // El catálogo cambia precios: solo quien administra la configuración del
+        // módulo, no cualquier usuario con acceso a la lista de cobros.
+        Route::middleware(['permission:heal_configuracion'])->group(function () {
+            Route::post('procedures/store', [HealProcedureChargeController::class, 'storeProcedure'])->name('heal_procedures_store');
+            Route::put('procedures/{procedure}/update', [HealProcedureChargeController::class, 'updateProcedure'])->name('heal_procedures_update');
+        });
+    });
 
     Route::middleware(['role:admin|Administrador|webAdmin'])->prefix('admin')->group(function () {
         Route::get('activities', [HealActivityController::class, 'index'])->name('heal_activities_list');
