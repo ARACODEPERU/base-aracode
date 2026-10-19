@@ -36,9 +36,9 @@
     import Editor from '@tinymce/tinymce-vue';
 
     const props = defineProps({
-        P000015: {
-            type: String,
-            default: null
+        aiProvider: {
+            type: [String, Number],
+            default: '2'
         },
         P000010: {
             type: String,
@@ -511,6 +511,8 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
 
     const displayModalRespuestaAi = ref(false);
     const displayModalConfirmarAi = ref(false);
+    // Aviso cuando el agente no respondio y se uso el modelo por defecto.
+    const agentFallbackNotice = ref(null);
     const censoredQuestion = ref(null);
     const censoredResponse = ref(null);
     // Bandera: la respuesta ya se envió al usuario y solo falta revisar/guardar
@@ -524,6 +526,7 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
         displayModalAi.value = true;
         displayModalRespuestaAi.value = false;
         displayModalConfirmarAi.value = false;
+        agentFallbackNotice.value = null;
         respuestaEnviada.value = false;
         censoredQuestion.value = null;
         censoredResponse.value = null;
@@ -538,6 +541,7 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
         displayModalAi.value = false;
         displayModalRespuestaAi.value = false;
         displayModalConfirmarAi.value = false;
+        agentFallbackNotice.value = null;
         censoredQuestion.value = null;
         censoredResponse.value = null;
         respuestaEnviada.value = false;
@@ -545,11 +549,10 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
     };
 
     const selectServerAI = () => {
-        console.log(props.P000015)
-        if(props.P000015 == 1){
+        if(props.aiProvider == 1){
 
             sendPromptOpenAI();
-        }else if(props.P000015 == 2){
+        }else if(props.aiProvider == 2){
             sendPromptGeminiAI();
         }
     }
@@ -565,6 +568,10 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
         }).then((result) => {
             if (result.data.success) {
                 formIaconsulta.respond = result.data.responseText
+                agentFallbackNotice.value = result.data.notice || null
+                if (agentFallbackNotice.value) {
+                    showMessage(agentFallbackNotice.value, 'info')
+                }
                 openModalRespuestaAI()
             } else {
                 showMessage(result.data.message || 'No se pudo consultar la IA.', 'error')
@@ -704,9 +711,9 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
 
     const saveQuestionResult = () => {
         // formIaconsulta
-        if(props.P000015 == 1){
+        if(props.aiProvider == 1){
             sendCensorTextOpenAI();
-        }else if(props.P000015 == 2){
+        }else if(props.aiProvider == 2){
             sendCensorTextGeminiAI();
         }
     }
@@ -1055,6 +1062,12 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
                                         Restablecer
                                     </button>
                                 </div>
+                            </div>
+                            <div
+                                v-if="agentFallbackNotice"
+                                class="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800"
+                            >
+                                {{ agentFallbackNotice }}
                             </div>
                             <div class="bg-gray-50 p-3 rounded-md border">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Respuesta de la IA</label>

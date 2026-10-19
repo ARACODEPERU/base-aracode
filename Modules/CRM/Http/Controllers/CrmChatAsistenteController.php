@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Parameter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Modules\Academic\Services\OpenAiAssistantService;
 use Modules\CRM\Http\Controllers\Concerns\ResuelveIdentidadAsistente;
 
 /**
@@ -40,7 +41,8 @@ class CrmChatAsistenteController extends Controller
         }
 
         return Inertia::render('CRM::Chat/Dashboard', [
-            'P000015' => Parameter::where('parameter_code', 'P000015')->value('value_default'),
+            // Proveedor de IA del parametro IA-00002 (1 OpenAI, 2 Gemini).
+            'aiProvider' => app(OpenAiAssistantService::class)->provider(),
             'P000010' => Parameter::where('parameter_code', 'P000010')->value('value_default'),
             'modoAsistentes' => true,
             'asistentes' => $asistentes,

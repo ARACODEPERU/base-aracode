@@ -9,7 +9,7 @@ use Tests\TestCase;
 |--------------------------------------------------------------------------
 |
 | La pantalla de Parámetros del sistema agrupa los códigos por su prefijo
-| (P, PC, PHD, PN, PTM, PW, SC…) y ordena por el número dentro de cada grupo.
+| (P, IA, PC, PHD, PN, PTM, PW, SC…) y ordena por el número dentro de cada grupo.
 | Estas pruebas fijan esa regla: el prefijo manda y no se ordena por el código
 | como texto, donde los ceros de relleno deciden antes que el número real
 | ('P000023' iría antes que 'P4').
@@ -22,6 +22,7 @@ it('saca el prefijo de las letras con las que empieza el código', function () {
     expect(OrdenDeParametros::prefijo('P000023'))->toBe('P');
     expect(OrdenDeParametros::prefijo('PW00001'))->toBe('PW');
     expect(OrdenDeParametros::prefijo('SC-00001'))->toBe('SC');
+    expect(OrdenDeParametros::prefijo('IA-00001'))->toBe('IA');
     expect(OrdenDeParametros::prefijo('pc00004'))->toBe('PC');
     expect(OrdenDeParametros::prefijo(' P000026'))->toBe('P');
 });
@@ -36,6 +37,7 @@ it('saca el número del código para ordenar dentro de un prefijo', function () 
     expect(OrdenDeParametros::numero('P000023'))->toBe(23);
     expect(OrdenDeParametros::numero('PW00001'))->toBe(1);
     expect(OrdenDeParametros::numero('SC-00001'))->toBe(1);
+    expect(OrdenDeParametros::numero('IA-00003'))->toBe(3);
     expect(OrdenDeParametros::numero('PHD00004'))->toBe(4);
     expect(OrdenDeParametros::numero('SIN-NUMERO'))->toBe(0);
 });

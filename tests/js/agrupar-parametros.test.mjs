@@ -72,6 +72,21 @@ test('el orden alternativo es alfabético por el código y no muta el arreglo', 
     assert.deepEqual(parametros, original, 'El arreglo recibido no se reordena en su sitio.');
 });
 
+test('agrupa la configuración de IA en la pestaña IA', () => {
+    const conIa = [
+        ...parametros,
+        { id: 7, parameter_code: 'IA-00001', prefix: 'IA' },
+        { id: 8, parameter_code: 'IA-00002', prefix: 'IA' },
+        { id: 9, parameter_code: 'IA-00003', prefix: 'IA' },
+    ];
+
+    assert.deepEqual(filtrarPorPrefijo(conIa, 'IA').map((p) => p.id), [7, 8, 9]);
+    assert.deepEqual(agruparPorPrefijo(conIa).find((g) => g.prefijo === 'IA'), {
+        prefijo: 'IA',
+        total: 3,
+    });
+});
+
 test('sin parámetros no hay pestañas ni errores', () => {
     assert.deepEqual(agruparPorPrefijo([]), []);
     assert.deepEqual(agruparPorPrefijo(undefined), []);

@@ -125,6 +125,10 @@ class ParametersController extends Controller
             'json_query_data'       => $request->get('json_query_data'),
             'value_default'         => $valor_seguro
         ]);
+
+        // Si se crea un parametro de IA desde la pantalla, los servicios deben
+        // verlo en la siguiente consulta y no esperar a que expire la cache.
+        $this->forgetIaParameterCache((string) $request->get('parameter_code'));
     }
 
     public function edit($id)
@@ -173,6 +177,10 @@ class ParametersController extends Controller
             return;
         }
 
+        // Si el administrador cambia el codigo, hay que limpiar tambien la
+        // cache del codigo anterior: los servicios de IA la siguen leyendo.
+        $oldCode = (string) $parameter->parameter_code;
+
         $attributes = [
             'parameter_code'        => $request->get('parameter_code'),
             'description'           => $request->get('description'),
@@ -187,9 +195,10 @@ class ParametersController extends Controller
 
         $parameter->update($attributes);
 
-        // Invalidar caches que dependen de valores de parametros (ej: API Key de OpenAI en P000025)
-        Cache::forget('academic:openai-api-key:' . $request->get('parameter_code'));
-        Log::info('Parametro actualizado, cache de API key invalidada', ['parameter_code' => $request->get('parameter_code')]);
+        // Invalidar la cache de parametros de IA (API Key en IA-00001, agente en IA-00003, proveedor en IA-00002).
+        $this->forgetIaParameterCache($oldCode);
+        $this->forgetIaParameterCache((string) $request->get('parameter_code'));
+        Log::info('Parametro actualizado, cache de IA invalidada', ['parameter_code' => $request->get('parameter_code')]);
 
         // Sincronizar archivos (robots.txt, llms.txt)
         $this->syncFileFromParameter($parameter);
@@ -219,8 +228,8 @@ class ParametersController extends Controller
             'value_default' => $val
         ]);
 
-        // Invalidar caches que dependen de valores de parametros (ej: API Key de OpenAI en P000025)
-        Cache::forget('academic:openai-api-key:' . $parameter->parameter_code);
+        // Invalidar la cache de parametros de IA (API Key, agente y proveedor).
+        $this->forgetIaParameterCache($parameter->parameter_code);
 
         // Sincronizar archivos (robots.txt, llms.txt)
         $this->syncFileFromParameter($parameter);
@@ -255,7 +264,7 @@ class ParametersController extends Controller
             'value_default' => $value
         ]);
 
-        Cache::forget('academic:openai-api-key:' . $parameter->parameter_code);
+        $this->forgetIaParameterCache($parameter->parameter_code);
         $this->syncFileFromParameter($parameter);
 
         return response()->json([
@@ -263,6 +272,17 @@ class ParametersController extends Controller
             'unchanged' => false,
             'has_value' => trim($value) !== '',
         ]);
+    }
+
+    /**
+     * Invalida las caches que usan los servicios de IA. Se conserva la clave
+     * vieja 'academic:openai-api-key:*' para no dejar valores previos activos
+     * en instalaciones que vienen de la version anterior.
+     */
+    private function forgetIaParameterCache(string $parameterCode): void
+    {
+        Cache::forget('academic:parameter:' . $parameterCode);
+        Cache::forget('academic:openai-api-key:' . $parameterCode);
     }
 
     /**

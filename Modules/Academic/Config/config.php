@@ -4,12 +4,32 @@ return [
     'name' => 'Academic',
 
     'openai' => [
+        // Valor de respaldo mientras el parametro IA-00001 no tenga valor.
         'api_key' => env('API_KEY_IA', env('OPENAI_API_KEY')),
         // Parametro del sistema (tabla parameters) que contiene la API Key de OpenAI.
-        'api_key_parameter' => env('OPENAI_API_KEY_PARAMETER', 'P000025'),
+        'api_key_parameter' => env('OPENAI_API_KEY_PARAMETER', 'IA-00001'),
+        // Parametro que elige el proveedor de IA del chat: 1 OpenAI, 2 Gemini.
+        'provider_parameter' => env('OPENAI_PROVIDER_PARAMETER', 'IA-00002'),
         'model' => env('OPENAI_MODEL', 'gpt-4.1-mini'),
         'instructions' => env('OPENAI_INSTRUCTIONS', 'Responde como docente de CPA Academy. Se claro, util y cuidadoso con datos personales.'),
         'timeout' => env('OPENAI_TIMEOUT', 60),
+
+        /*
+         * Agente guardado de la Agents API de OpenAI (ID con formato agent_...).
+         * El valor se administra en el parametro IA-00003; 'agent_id' es solo
+         * el valor inicial que se copia si el parametro todavia no existe.
+         * Cuando esta configurado, el chat de consultas a alumnos responde con
+         * el agente; si falla o no responde a tiempo se usa el modelo de
+         * 'model' y se avisa en la interfaz. Vacio = se usa siempre el modelo.
+         */
+        'agent_id_parameter' => env('OPENAI_AGENT_ID_PARAMETER', 'IA-00003'),
+        'agent_id' => env('OPENAI_AGENT_ID'),
+        // Espera maxima del agente antes de caer al modelo, en segundos.
+        'agent_timeout' => (int) env('OPENAI_AGENT_TIMEOUT', 90),
+        // Milisegundos entre consultas del estado de la sesion del agente.
+        'agent_poll_interval_ms' => (int) env('OPENAI_AGENT_POLL_INTERVAL_MS', 1000),
+        // Minutos que se conserva la sesion del agente para continuar el hilo.
+        'agent_session_minutes' => (int) env('OPENAI_AGENT_SESSION_MINUTES', 720),
     ],
 
     /*

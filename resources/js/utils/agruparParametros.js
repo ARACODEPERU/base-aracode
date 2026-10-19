@@ -2,8 +2,8 @@
  * Agrupación y orden de los parámetros del sistema por el prefijo de su código.
  *
  * Los códigos empiezan por letras que dicen a qué grupo pertenecen (P de
- * generales, PC, PHD, PN, PTM, PW de página web, SC de credenciales) y siguen
- * con un número. El prefijo lo calcula el servidor (App\Support\OrdenDeParametros)
+ * generales, IA de inteligencia artificial, PC, PHD, PN, PTM, PW de página web,
+ * SC de credenciales) y siguen con un número. El prefijo lo calcula el servidor (App\Support\OrdenDeParametros)
  * y viaja en cada parámetro; aquí solo se agrupa, se filtra y se ordena para la
  * pantalla de Parámetros (pestañas por prefijo y botón «Ordenar»).
  *
