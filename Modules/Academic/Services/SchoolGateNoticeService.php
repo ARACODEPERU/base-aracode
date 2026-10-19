@@ -37,10 +37,21 @@ class SchoolGateNoticeService
 
     private SmsgateService $smsgate;
 
-    public function __construct()
+    private SchoolTelegramNoticeService $telegramNotices;
+
+    public function __construct(?SchoolTelegramNoticeService $telegramNotices = null)
     {
         // Credenciales propias del módulo escolar (SC-00020, SC-00021 y SC-00022).
         $this->smsgate = new SmsgateService('academic.school_notices.smsgate');
+        $this->telegramNotices = $telegramNotices ?? new SchoolTelegramNoticeService();
+    }
+
+    /**
+     * Servicio de avisos por Telegram del colegio.
+     */
+    public function telegram(): SchoolTelegramNoticeService
+    {
+        return $this->telegramNotices;
     }
 
     /**
@@ -293,6 +304,17 @@ class SchoolGateNoticeService
      */
     public function notify(AcaSchoolGateAttendance $gate, string $event): int
     {
+        $smsQueued = $this->notifySms($gate, $event);
+        $telegramQueued = $this->telegramNotices->notify($gate, $event);
+
+        return $smsQueued + $telegramQueued;
+    }
+
+    /**
+     * Encola los avisos del evento por el canal SMSGate.
+     */
+    private function notifySms(AcaSchoolGateAttendance $gate, string $event): int
+    {
         if (! $this->isConfigured() || ! $this->isChannelActive()) {
             return 0;
         }
@@ -443,11 +465,16 @@ class SchoolGateNoticeService
      */
     public function recentDeliveries(int $limit = 50): array
     {
-        return AcaSchoolNoticeDelivery::query()
+        $query = AcaSchoolNoticeDelivery::query()
             ->with(['student.person', 'guardian'])
             ->orderByDesc('id')
-            ->limit($limit)
-            ->get()
+            ->limit($limit);
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('aca_school_notice_deliveries', 'channel')) {
+            $query->where('channel', AcaSchoolNoticeDelivery::CHANNEL_SMS);
+        }
+
+        return $query->get()
             ->map(fn (AcaSchoolNoticeDelivery $delivery) => [
                 'id' => $delivery->id,
                 'student' => $delivery->student?->person?->full_name,
@@ -477,10 +504,15 @@ class SchoolGateNoticeService
     /** Avisos ya encolados hoy para el alumno (límite diario). */
     private function deliveriesToday(int $studentId): int
     {
-        return AcaSchoolNoticeDelivery::query()
+        $query = AcaSchoolNoticeDelivery::query()
             ->where('student_id', $studentId)
-            ->whereDate('created_at', now()->toDateString())
-            ->count();
+            ->whereDate('created_at', now()->toDateString());
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('aca_school_notice_deliveries', 'channel')) {
+            $query->where('channel', AcaSchoolNoticeDelivery::CHANNEL_SMS);
+        }
+
+        return $query->count();
     }
 
     /** Nombre completo del alumno de la asistencia. */

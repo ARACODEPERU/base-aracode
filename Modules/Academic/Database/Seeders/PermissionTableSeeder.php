@@ -137,6 +137,8 @@ class PermissionTableSeeder extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_porteria_reporte']));
         // Parametros / SMS: canal propio de los avisos de asistencia al apoderado.
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_sms_configuracion']));
+        // Parametros / Telegram: canal de avisos de asistencia escolar por Telegram (exclusivo del rol admin).
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_telegram_configuracion']));
         // Modos de prueba: llenar el colegio con datos de prueba, borrarlos con
         // lo generado y dejar el sistema en modo produccion. El bucle de abajo
         // lo concede unicamente al rol admin (y a ningun otro rol): crea y

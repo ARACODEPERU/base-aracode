@@ -753,6 +753,11 @@ class SchoolTestDataService
                 'gate_attendance_id' => $gateIds,
             ]);
 
+            $deleted['Suscripciones Telegram de asistencia'] = $this->deleteRelated('aca_school_telegram_subscriptions', [
+                'student_id' => $studentIds,
+                'guardian_person_id' => $personIds,
+            ]);
+
             $deleted['Asistencias de puerta'] = $this->deleteByIds('aca_school_gate_attendances', 'id', $gateIds);
 
             // 2) Asistencia de aula (mes a mes).
@@ -1077,6 +1082,7 @@ class SchoolTestDataService
             ['aca_school_students', 'person_id'],
             ['aca_school_enrollments', 'guardian_person_id'],
             ['aca_school_student_guardians', 'guardian_person_id'],
+            ['aca_school_telegram_subscriptions', 'guardian_person_id'],
             ['aca_school_sections', 'tutor_person_id'],
             ['aca_school_sections', 'auxiliary_person_id'],
             ['aca_school_schedules', 'teacher_person_id'],

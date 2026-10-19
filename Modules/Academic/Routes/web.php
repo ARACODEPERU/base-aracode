@@ -39,6 +39,7 @@ use Modules\Academic\Http\Controllers\AcaSchoolEnrollmentController;
 use Modules\Academic\Http\Controllers\AcaSchoolFeeController;
 use Modules\Academic\Http\Controllers\AcaSchoolGateController;
 use Modules\Academic\Http\Controllers\AcaSmsParametersController;
+use Modules\Academic\Http\Controllers\AcaTelegramParametersController;
 use Modules\Academic\Http\Controllers\AcaSchoolScheduleController;
 use Modules\Academic\Http\Controllers\AcaSchoolStudentController;
 use Modules\Academic\Http\Controllers\AcaSchoolStructureController;
@@ -1038,6 +1039,27 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
             ->name('aca_school_sms_parameters_preview');
         Route::post('school/sms/test', [AcaSmsParametersController::class, 'test'])
             ->name('aca_school_sms_parameters_test');
+    });
+
+    /*
+     * Parametros / Telegram del colegio: canal de avisos de asistencia
+     * (entrada y salida) por bot de Telegram, con registro conversacional de
+     * apoderado y uno o mas hijos. Exclusivo del rol admin (permiso
+     * aca_school_telegram_configuracion).
+     */
+    Route::middleware(['middleware' => 'permission:aca_school_telegram_configuracion'])->group(function () {
+        Route::get('school/telegram', [AcaTelegramParametersController::class, 'index'])
+            ->name('aca_school_telegram_parameters');
+        Route::post('school/telegram/update', [AcaTelegramParametersController::class, 'update'])
+            ->name('aca_school_telegram_parameters_update');
+        Route::post('school/telegram/webhook', [AcaTelegramParametersController::class, 'webhook'])
+            ->name('aca_school_telegram_parameters_webhook');
+        Route::get('school/telegram/link', [AcaTelegramParametersController::class, 'link'])
+            ->name('aca_school_telegram_parameters_link');
+        Route::post('school/telegram/preview', [AcaTelegramParametersController::class, 'preview'])
+            ->name('aca_school_telegram_parameters_preview');
+        Route::post('school/telegram/test', [AcaTelegramParametersController::class, 'test'])
+            ->name('aca_school_telegram_parameters_test');
     });
 
     /*

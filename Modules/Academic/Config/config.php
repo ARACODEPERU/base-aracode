@@ -134,5 +134,47 @@ return [
             'country_code' => env('SMSGATE_COUNTRY_CODE', '51'),
             'timeout' => (int) env('ACA_SCHOOL_SMS_TIMEOUT', 30),
         ],
+
+        /*
+         * Bot de Telegram propio del colegio para avisos de asistencia
+         * (entrada y salida en porteria). Se administra desde Academico >
+         * Colegio > Parametros Telegram (exclusivo del rol admin) con los
+         * parametros SC-00033 a SC-00043.
+         */
+        'telegram' => [
+            // Parametro del sistema con el token / ID del bot entregado por BotFather.
+            'token_parameter' => env('ACA_SCHOOL_TELEGRAM_TOKEN_PARAMETER', 'SC-00033'),
+            // Parametro del sistema con el interruptor general del canal.
+            'enabled_parameter' => env('ACA_SCHOOL_TELEGRAM_ENABLED_PARAMETER', 'SC-00034'),
+            // Interruptores por evento (entrada, salida, tardanza y salida anticipada).
+            'entry_parameter' => env('ACA_SCHOOL_TELEGRAM_ENTRY_PARAMETER', 'SC-00035'),
+            'exit_parameter' => env('ACA_SCHOOL_TELEGRAM_EXIT_PARAMETER', 'SC-00036'),
+            'late_parameter' => env('ACA_SCHOOL_TELEGRAM_LATE_PARAMETER', 'SC-00037'),
+            'early_exit_parameter' => env('ACA_SCHOOL_TELEGRAM_EARLY_EXIT_PARAMETER', 'SC-00038'),
+            // Plantillas editables del texto de cada evento.
+            'entry_message_parameter' => env('ACA_SCHOOL_TELEGRAM_ENTRY_MESSAGE_PARAMETER', 'SC-00039'),
+            'exit_message_parameter' => env('ACA_SCHOOL_TELEGRAM_EXIT_MESSAGE_PARAMETER', 'SC-00040'),
+            // Avisar solo al apoderado principal.
+            'primary_only_parameter' => env('ACA_SCHOOL_TELEGRAM_PRIMARY_ONLY_PARAMETER', 'SC-00041'),
+            // Maximo de avisos por alumno y dia (0 = sin limite).
+            'daily_limit_parameter' => env('ACA_SCHOOL_TELEGRAM_DAILY_LIMIT_PARAMETER', 'SC-00042'),
+            // Pausa minima entre cada mensaje de Telegram, en milisegundos.
+            'interval_ms_parameter' => env('ACA_SCHOOL_TELEGRAM_INTERVAL_MS_PARAMETER', 'SC-00043'),
+            // Valor usado cuando el parametro todavia no existe en la base.
+            'interval_ms' => (int) env('ACA_SCHOOL_TELEGRAM_INTERVAL_MS', 500),
+            // Textos por defecto si la plantilla queda vacia.
+            'default_entry_message' => '🏫 Estimado(a) {apoderado}: le informamos que {alumno} ({seccion}) registró su INGRESO al colegio {colegio} el {fecha} a las {hora} ({estado}).',
+            'default_exit_message' => '🏫 Estimado(a) {apoderado}: le informamos que {alumno} ({seccion}) registró su SALIDA del colegio {colegio} el {fecha} a las {hora} ({estado}).',
+            // Ruta publica del webhook del bot escolar.
+            'webhook_path' => env('ACA_SCHOOL_TELEGRAM_WEBHOOK_PATH', 'api/academic/school/telegram/webhook'),
+            // Minutos de vigencia del usuario del bot en cache.
+            'username_cache_minutes' => (int) env('ACA_SCHOOL_TELEGRAM_USERNAME_CACHE_MINUTES', 1440),
+            // Minutos de vigencia de una sesion conversacional de registro en el bot.
+            'session_minutes' => (int) env('ACA_SCHOOL_TELEGRAM_SESSION_MINUTES', 30),
+            // Intentos fallidos maximos durante el registro antes de reiniciar.
+            'max_attempts' => (int) env('ACA_SCHOOL_TELEGRAM_MAX_ATTEMPTS', 5),
+            'api_base' => env('ACA_SCHOOL_TELEGRAM_API_BASE', 'https://api.telegram.org'),
+            'timeout' => (int) env('ACA_SCHOOL_TELEGRAM_TIMEOUT', 30),
+        ],
     ],
 ];

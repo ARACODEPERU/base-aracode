@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
+use Modules\Academic\Http\Controllers\Api\SchoolTelegramWebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,3 +25,10 @@ Route::post('tickets/generate/student', [AcaSaleDocumentController::class, 'gene
 Route::post('tickets/send/mail/student', [AcaSaleDocumentController::class, 'sendEmailBoleta'])->name('aca_send_email_student_boleta');
 Route::post('students/import/excel/create', [AcaStudentController::class, 'importByCourse'])->name('aca_import_student_bycourse');
 Route::post('course/invoice/send/email', [AcaSaleDocumentController::class, 'generateAndSendInvoices'])->name('academic_generate_and_send_invoices');
+
+/*
+ * Webhook público del bot de Telegram para avisos de asistencia escolar.
+ * Se valida con el header X-Telegram-Bot-Api-Secret-Token derivado del token SC-00033.
+ */
+Route::post('academic/school/telegram/webhook', SchoolTelegramWebhookController::class)
+    ->name('aca_school_telegram_webhook');

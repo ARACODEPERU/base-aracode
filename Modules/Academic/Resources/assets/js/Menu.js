@@ -25,6 +25,7 @@ import {
     faQrcode,
     faMoneyBillWave,
     faSliders,
+    faPaperPlane,
     faFlask
 
 } from "@fortawesome/free-solid-svg-icons";
@@ -242,6 +243,7 @@ const colegioGroup = {
         'aca_school_porteria_escaner',
         'aca_school_porteria_reporte',
         'aca_school_sms_configuracion',
+        'aca_school_telegram_configuracion',
         // Permiso exclusivo del rol admin (llenar/borrar datos de prueba y
         // dejar el sistema en modo produccion).
         'aca_school_modo_prueba',
@@ -556,6 +558,28 @@ const colegioGroup = {
             },
         },
         {
+            route: route('aca_school_telegram_parameters'),
+            status: false,
+            text: 'Parámetros Telegram',
+            icom: faPaperPlane,
+            permissions: 'aca_school_telegram_configuracion',
+            info: {
+                title: 'Parámetros Telegram',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Solo para el rol admin: avisos por Telegram al padre o apoderado cuando el alumno entra o sale del colegio:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>🤖 <span>Token / ID del bot de Telegram y guía paso a paso con BotFather.</span></li>
+                        <li>👨‍👩‍👧‍👦 <span>Registro conversacional validando DNI del apoderado y DNI de uno o más hijos.</span></li>
+                        <li>🔔 <span>Interruptor general y avisos por entrada, salida, tardanza o salida anticipada.</span></li>
+                        <li>✍️ <span>Mensajes editables con variables y envío de prueba.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
+        },
+        {
             route: route('aca_school_test_mode'),
             status: false,
             text: 'Modos de Prueba',
@@ -731,6 +755,7 @@ const menuAcademic = {
         'aca_school_porteria_escaner',
         'aca_school_porteria_reporte',
         'aca_school_sms_configuracion',
+        'aca_school_telegram_configuracion',
     ],
     items: academicItems,
 };

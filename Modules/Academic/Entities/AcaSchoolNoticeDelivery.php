@@ -23,13 +23,21 @@ class AcaSchoolNoticeDelivery extends Model
     /** Evento de portería que originó el aviso: salida. */
     public const EVENT_EXIT = 'out';
 
+    /** Canal de envío: SMS vía SMSGate. */
+    public const CHANNEL_SMS = 'sms';
+
+    /** Canal de envío: Bot de Telegram escolar. */
+    public const CHANNEL_TELEGRAM = 'telegram';
+
     protected $fillable = [
         'gate_attendance_id',
         'student_id',
         'guardian_person_id',
         'recipient_key',
         'event',
+        'channel',
         'phone',
+        'chat_id',
         'status',
         'error_message',
         'sent_at',
