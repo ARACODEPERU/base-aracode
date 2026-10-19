@@ -376,7 +376,13 @@ class SchoolTelegramRegistrationService
      */
     public function schoolInfo(): array
     {
-        $school = AcaSchool::defaultSchool();
+        try {
+            $school = \Illuminate\Support\Facades\Schema::hasColumn('aca_schools', 'is_default')
+                ? AcaSchool::defaultSchool()
+                : AcaSchool::orderBy('id')->first();
+        } catch (\Throwable) {
+            $school = null;
+        }
 
         if (! $school) {
             return [
@@ -391,11 +397,19 @@ class SchoolTelegramRegistrationService
             ];
         }
 
-        $activeYear = AcaSchoolYear::where('school_id', $school->id)
-            ->where('status', AcaSchoolYear::STATUS_ACTIVE)
-            ->orderByDesc('year')
-            ->first()
-            ?? AcaSchoolYear::where('school_id', $school->id)->orderByDesc('year')->first();
+        $activeYear = null;
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('aca_school_years')) {
+                $activeYear = AcaSchoolYear::where('school_id', $school->id)
+                    ->where('status', AcaSchoolYear::STATUS_ACTIVE)
+                    ->orderByDesc('year')
+                    ->first()
+                    ?? AcaSchoolYear::where('school_id', $school->id)->orderByDesc('year')->first();
+            }
+        } catch (\Throwable) {
+            $activeYear = null;
+        }
 
         $journeys = [];
 
