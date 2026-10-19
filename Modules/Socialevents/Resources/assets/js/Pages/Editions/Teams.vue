@@ -10,6 +10,7 @@
     import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
     import iconTrashLines from '@/Components/vristo/icon/icon-trash-lines.vue';
     import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
+    import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
     import { Empty } from 'ant-design-vue';
 
     const props = defineProps({
@@ -98,7 +99,7 @@
                     method: 'get',
                     preserveState: true,
                     preserveScroll: true,
-                    only: ['urrentEquipment', 'teams'],
+                    only: ['currentEquipment', 'teams'],
                 });
             }
         });
@@ -378,7 +379,7 @@
                             >
                             </Multiselect>
                         </div>
-                        <button @click="addTeamSave" class="btn btn-primary uppercase text-xs" type="button"><icon-plus class="w-4 h-4 mr-1" />Agregar</button>
+                        <button @click="addTeamSave" :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="btn btn-primary uppercase text-xs" type="button"><IconLoader v-if="form.processing" class="w-4 h-4 animate-spin mr-1" /><icon-plus v-else class="w-4 h-4 mr-1" />Agregar</button>
                     </div>
                     <div class="flex items-center justify-end gap-6">
                         <button @click="openModalBonus" class="btn btn-secondary uppercase text-xs">

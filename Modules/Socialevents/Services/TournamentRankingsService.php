@@ -122,13 +122,16 @@ class TournamentRankingsService
                 + ($stat->is_mvp ? ($weights['mvp'] ?? 5) : 0)
                 + ($stat->clean_sheet ? ($weights['clean_sheet'] ?? 1) : 0);
 
-            $playerSanctions = $sanctions->get($playerId, collect());
-            $points -= $playerSanctions->count() * ($weights['sanction_penalty'] ?? 1);
-
             if (! isset($players[$playerId])) {
+                // La sanción se descuenta una sola vez por edición. Antes se
+                // restaba el total de sanciones en cada acta, así que un jugador
+                // con una tarjeta perdía un punto por cada partido jugado.
+                $playerSanctions = $sanctions->get($playerId, collect());
+                $penalty = $playerSanctions->count() * ($weights['sanction_penalty'] ?? 1);
+
                 $players[$playerId] = [
                     'player' => $stat->player,
-                    'points' => 0,
+                    'points' => -1 * $penalty,
                     'stats' => ['goals' => 0, 'assists' => 0, 'mvp' => 0, 'clean_sheet' => 0],
                 ];
             }
@@ -182,13 +185,15 @@ class TournamentRankingsService
                 + ($stat->is_mvp ? ($weights['mvp'] ?? 5) : 0)
                 + ($stat->clean_sheet ? ($weights['clean_sheet'] ?? 5) : 0);
 
-            $playerSanctions = $sanctions->get($playerId, collect());
-            $points -= $playerSanctions->count() * ($weights['sanction_penalty'] ?? 1);
-
             if (! isset($goalkeepers[$playerId])) {
+                // Mismo criterio que el ranking de jugadores: la sanción se
+                // descuenta una vez por edición y no en cada partido.
+                $playerSanctions = $sanctions->get($playerId, collect());
+                $penalty = $playerSanctions->count() * ($weights['sanction_penalty'] ?? 1);
+
                 $goalkeepers[$playerId] = [
                     'player' => $stat->player,
-                    'points' => 0,
+                    'points' => -1 * $penalty,
                     'stats' => ['saves' => 0, 'mvp' => 0, 'clean_sheet' => 0],
                 ];
             }
@@ -363,12 +368,11 @@ class TournamentRankingsService
 
         $weights = (array) config("socialevents.rankings.{$this->weightsKey($category)}", []);
 
-        // El ranking descuenta la penalización por sanción en cada partido con
-        // estadísticas registradas. El detalle replica esa fórmula para que el
-        // puntaje del modal coincida con el de la tarjeta y con la app móvil.
+        // El ranking descuenta la penalización una sola vez por sanción de la
+        // edición. El detalle replica esa fórmula para que el puntaje del modal
+        // coincida con el de la tarjeta y con el de la app móvil.
         $sanctionsTotal = $sanctionsByMatch->flatten()->count();
-        $statRows = $stats->count();
-        $sanctionApplications = $sanctionsTotal * $statRows;
+        $sanctionApplications = $sanctionsTotal;
 
         $totals = [
             'matches_played' => $matchesPlayed,
@@ -386,11 +390,15 @@ class TournamentRankingsService
         $mvpMatches = [];
         $scoringMatches = [];
         $cleanSheetMatches = [];
+        $sanctionsInBreakdown = 0;
 
         foreach ($this->sortStatsChronologically($stats) as $stat) {
             $match = $stat->match;
             $sanctions = (int) $sanctionsByMatch->get($stat->match_id, collect())->count();
-            $points = $this->statPoints($category, $stat, $sanctionsTotal, $weights);
+            $sanctionsInBreakdown += $sanctions;
+            // Cada fila del desglose muestra la sanción de ese partido; así las
+            // filas siguen sumando el total del ranking.
+            $points = $this->statPoints($category, $stat, $sanctions, $weights);
 
             $totals['goals'] += (int) $stat->goals;
             $totals['assists'] += (int) $stat->assists;
@@ -446,6 +454,14 @@ class TournamentRankingsService
                 'sanctions' => $sanctions,
                 'points' => $category === 'scorer' ? null : round($points, 2),
             ];
+        }
+
+        // Una sanción registrada en un partido sin acta no aparece en el
+        // desglose, pero igual descuenta: se completa aquí para que el total
+        // coincida con el de la tarjeta.
+        if ($category !== 'scorer' && $sanctionsTotal > $sanctionsInBreakdown) {
+            $totals['points'] -= ($sanctionsTotal - $sanctionsInBreakdown)
+                * ($weights['sanction_penalty'] ?? 1);
         }
 
         return [
@@ -621,7 +637,7 @@ class TournamentRankingsService
 
         if ($sanctionApplications > 0) {
             $reasons[] = [
-                'concept' => 'Sanciones (por partido)',
+                'concept' => 'Sanciones',
                 'count' => $sanctionApplications,
                 'unit' => -$penaltyUnit,
                 'points' => round(-1 * $sanctionApplications * $penaltyUnit, 2),

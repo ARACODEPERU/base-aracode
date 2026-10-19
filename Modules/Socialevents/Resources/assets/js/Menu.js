@@ -8,6 +8,7 @@ import {
     faBoltLightning,
     faGauge,
     faHouseChimney,
+    faCreditCard,
     faFutbol,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -38,6 +39,7 @@ const menuSocialevents = {
             route: route("even_local_list"),
             status: false,
             text: "Locales",
+            sportsText: "Complejo deportivo",
             permissions: "even_local_listado",
             icom: faBuildingFlag,
         },
@@ -71,6 +73,17 @@ const menuSocialevents = {
             icom: faBoltLightning,
         },
         {
+            // Pagos del organizador: entra antes de que venza el acceso, para
+            // recargar saldo sin esperar el aviso de vencimiento. Misma vista
+            // que abre el aviso al crear un partido (even_organizations.topup.index).
+            route: route("even_organizations.topup.index"),
+            status: false,
+            text: "Mis pagos",
+            permissions: "even_dashboard",
+            organizationOnly: true,
+            icom: faCreditCard,
+        },
+        {
             route: route("even_tickets_listado"),
             status: false,
             text: "Ticket Vendidos",
@@ -81,8 +94,17 @@ const menuSocialevents = {
         {
             route: route("even_organizations.index"),
             status: false,
-            text: "Organizaciones y tarifas",
-            permissions: "even_dashboard",
+            text: "Tarifas",
+            permissions: "even_organizaciones_admin",
+            sportsOnly: true,
+            superAdminOnly: true,
+            icom: faBuildingFlag,
+        },
+        {
+            route: route("even_organizations.accounts"),
+            status: false,
+            text: "Cuentas de organizaciones",
+            permissions: "even_organizaciones_admin",
             sportsOnly: true,
             superAdminOnly: true,
             icom: faBuildingFlag,

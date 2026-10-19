@@ -30,6 +30,12 @@ class SportsOrganizationService
         return $user && ($user->hasRole('admin') || $user->hasRole('Administrador'));
     }
 
+    // Administrar tarifas y cuentas de organizaciones exige rol de administración Y el permiso propio.
+    public function canAdministerOrganizations($user): bool
+    {
+        return $this->isSuperAdmin($user) && $user->can('even_organizaciones_admin');
+    }
+
     public function organizationId($user): ?int
     {
         return $user && Schema::hasColumn('users', 'socialevent_organization_id') && $user->socialevent_organization_id
@@ -43,6 +49,13 @@ class SportsOrganizationService
         return $id && Schema::hasTable('socialevent_organizations') ? DB::table('socialevent_organizations')->find($id) : null;
     }
 
+    public function organizationStatus($user): ?string
+    {
+        $organization = $this->organization($user);
+
+        return $organization ? (string) $organization->status : null;
+    }
+
     public function canRead($user): bool
     {
         if ($this->isSuperAdmin($user) || ! $this->sportsMode()) return true;
@@ -52,7 +65,7 @@ class SportsOrganizationService
         if ($org->status === 'suspended') return false;
         $now = now();
         return ($org->status === 'trial' && $org->trial_ends_at && $now->lte($org->trial_ends_at))
-            || ($org->status === 'active' && $org->access_until && $now->lte($org->access_until))
+            || ($org->status === 'active' && $this->accessDateIsCurrent($org->access_until))
             || filled($org->read_permissions);
     }
 
@@ -64,12 +77,171 @@ class SportsOrganizationService
         if ($org->status === 'sponsored') return true;
         $now = now();
         return ($org->status === 'trial' && $org->trial_ends_at && $now->lte($org->trial_ends_at))
-            || ($org->status === 'active' && $org->access_until && $now->lte($org->access_until));
+            || ($org->status === 'active' && $this->accessDateIsCurrent($org->access_until));
+    }
+
+    private function accessDateIsCurrent($accessUntil): bool
+    {
+        if (! $accessUntil) return false;
+
+        $deadline = \Illuminate\Support\Carbon::parse($accessUntil);
+        if ($deadline->isStartOfDay()) $deadline->endOfDay();
+
+        return now()->lte($deadline);
+    }
+
+    /**
+     * Vigencia de la organización para la vista "Mis pagos": la misma regla de
+     * canRead/canWrite, expresada como fecha límite y días restantes, para que el
+     * organizador vea hasta cuándo tiene acceso y pueda adelantar el pago antes
+     * de que venza.
+     *
+     * @return array{status: string, label: string, until: ?string, days_left: ?int, expired: bool, sponsored: bool}
+     */
+    public function accessSummary($user): array
+    {
+        $labels = [
+            'trial' => 'Prueba gratuita',
+            'active' => 'Activo',
+            'sponsored' => 'Cortesía / patrocinio',
+            'suspended' => 'Bloqueado',
+        ];
+
+        $organization = $this->organization($user);
+        if (! $organization) {
+            return ['status' => 'none', 'label' => 'Sin organización', 'until' => null, 'days_left' => null, 'expired' => true, 'sponsored' => false];
+        }
+
+        $status = (string) $organization->status;
+        $summary = [
+            'status' => $status,
+            'label' => $labels[$status] ?? $status,
+            'until' => null,
+            'days_left' => null,
+            'expired' => $status === 'suspended',
+            'sponsored' => $status === 'sponsored',
+        ];
+
+        // La cortesía/patrocinio y la organización histórica no caducan.
+        if ($summary['sponsored'] || $organization->is_legacy) {
+            return $summary;
+        }
+
+        // "Activo" se mide por la fecha que fijó el administrador; la prueba, por
+        // el fin del período gratuito. Una prueba vencida conserva la lectura, que
+        // es justo el caso en el que el organizador quiere adelantar el pago.
+        $until = $status === 'active' ? $organization->access_until : $organization->trial_ends_at;
+        $summary['until'] = $until ? \Illuminate\Support\Carbon::parse($until)->toDateString() : null;
+        $summary['days_left'] = $until ? $this->daysUntil($until) : null;
+        $summary['expired'] = $status === 'suspended' || ! $this->accessDateIsCurrent($until);
+
+        return $summary;
+    }
+
+    /**
+     * Días completos que faltan para la fecha límite (0 = vence hoy, negativo =
+     * ya vencido). Se calcula con marcas de tiempo enteras para no depender del
+     * signo de diffInDays, que cambió entre versiones de Carbon.
+     */
+    private function daysUntil($date): int
+    {
+        $deadline = \Illuminate\Support\Carbon::parse($date)->startOfDay();
+        $today = now()->startOfDay();
+
+        return (int) round(($deadline->getTimestamp() - $today->getTimestamp()) / 86400);
+    }
+
+    /**
+     * Historial de recargas/pagos de la organización para "Mis pagos".
+     * Los estados son los de la pasarela más los propios de la tabla
+     * (processing al iniciar, failed si el cobro no pudo crearse, credited al
+     * acreditar el saldo).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function paymentHistory($user, int $limit = 20): array
+    {
+        $organizationId = $this->organizationId($user);
+        if (! $organizationId || ! Schema::hasTable('socialevent_organization_topups')) return [];
+
+        $methodLabels = ['card' => 'Tarjeta', 'yape' => 'Yape'];
+        $statusLabels = [
+            'processing' => 'En proceso',
+            'pending' => 'Pendiente',
+            'in_process' => 'En proceso',
+            'approved' => 'Aprobado',
+            'credited' => 'Acreditado',
+            'rejected' => 'Rechazado',
+            'failed' => 'Rechazado',
+            'cancelled' => 'Anulado',
+            'refunded' => 'Reembolsado',
+        ];
+
+        return DB::table('socialevent_organization_topups')
+            ->where('organization_id', $organizationId)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($topUp) => [
+                'id' => (int) $topUp->id,
+                'amount' => (float) $topUp->amount,
+                'method' => $methodLabels[$topUp->payment_method] ?? (string) $topUp->payment_method,
+                'status' => (string) $topUp->status,
+                'status_label' => $statusLabels[$topUp->status] ?? (string) $topUp->status,
+                'reference' => $topUp->provider_payment_id ? (string) $topUp->provider_payment_id : (string) $topUp->external_reference,
+                'created_at' => \Illuminate\Support\Carbon::parse($topUp->created_at)->format('d/m/Y H:i'),
+            ])
+            ->all();
+    }
+
+    /** @return array{can_create: bool, can_write: bool, required_amount: float, balance: float, reason: ?string} */
+    public function matchCreationAvailability($user, EventEdition $edition): array
+    {
+        $canWrite = $this->canWrite($user);
+        $organizationId = $this->organizationId($user);
+        $organization = $organizationId && Schema::hasTable('socialevent_organizations')
+            ? DB::table('socialevent_organizations')->find($organizationId)
+            : null;
+        $balance = (float) ($organization->prepaid_balance ?? 0);
+        $rate = (float) ($edition->match_rate ?? $organization->match_rate ?? 0);
+        $orgStatus = $organization->status ?? null;
+        $requiredAmount = $this->sportsMode() && ! $this->isSuperAdmin($user)
+            && $orgStatus !== 'sponsored'
+            ? $this->calculateMatchCharge(2, $rate)
+            : 0.0;
+        // Si tiene acceso válido (canWrite), permitir crear aunque el saldo sea insuficiente
+        // durante el periodo de permiso concedido.
+        $canCreate = $canWrite;
+
+        return [
+            'can_create' => $canCreate,
+            'can_write' => $canWrite,
+            'required_amount' => $requiredAmount,
+            'balance' => $balance,
+            'reason' => ! $canWrite
+                ? 'El acceso de la organización está vencido o suspendido.'
+                : ($canCreate ? null : 'Saldo insuficiente. Recarga el saldo antes de registrar el partido.'),
+        ];
     }
 
     public function assertCanRead($user): void
     {
         if (! $this->canRead($user)) abort(403, 'El acceso de lectura del torneo está vencido.');
+    }
+
+    /**
+     * La cuenta suspendida no puede usar el módulo, pero debe poder acceder a
+     * su propia pantalla de pagos para regularizarla.
+     */
+    public function assertCanAccessPayments($user): int
+    {
+        $organizationId = $this->organizationId($user);
+
+        abort_unless($organizationId, 403, 'No hay una organización asociada a esta cuenta.');
+        abort_unless(Schema::hasTable('socialevent_organizations') && DB::table('socialevent_organizations')->where('id', $organizationId)->exists(), 403);
+
+        return $organizationId;
     }
 
     public function assertCanWrite($user): void
@@ -130,11 +302,15 @@ class SportsOrganizationService
     public function legacyOrganizationId(): ?int
     {
         if (! Schema::hasTable('socialevent_organizations')) return null;
-        $id = DB::table('socialevent_organizations')->where('is_legacy', true)->value('id');
+        $id = DB::table('socialevent_organizations')->where('is_legacy', true)->whereNull('deleted_at')->value('id');
         return $id ? (int) $id : null;
     }
 
-    public function createOrganizationForUser($user): int
+    /**
+     * Crea la organización del organizador y le asigna el rol con sus permisos.
+     * $datos (opcional) trae nombre, tipo (empresa|persona_natural) y RUC.
+     */
+    public function createOrganizationForUser($user, array $datos = []): int
     {
         $settings = Schema::hasTable('socialevent_organization_settings')
             ? DB::table('socialevent_organization_settings')->first()
@@ -142,7 +318,11 @@ class SportsOrganizationService
         $trialDays = max(1, (int) ($settings->trial_days ?? config('socialevents.organizations.trial_days', 30)));
         $startedAt = now();
         $organizationId = DB::table('socialevent_organizations')->insertGetId([
-            'name' => $user->name,
+            'name' => $datos['nombre'] ?? $user->name,
+            'tipo_organizacion' => $datos['tipo'] ?? null,
+            'ruc' => $datos['ruc'] ?? null,
+            'address' => $datos['address'] ?? null,
+            'ubigeo' => $datos['ubigeo'] ?? null,
             'status' => 'trial',
             'trial_started_at' => $startedAt,
             'trial_days' => $trialDays,
@@ -177,6 +357,8 @@ class SportsOrganizationService
             'even_ediciones_partido_acta', 'even_ediciones_actas', 'even_ediciones_acta_editar',
             'even_ediciones_partido_acta_editar', 'even_ediciones_galeria', 'even_ediciones_galeria_nuevo',
             'even_ediciones_galeria_eliminar', 'even_ediciones_exclusiones', 'even_ediciones_suspensiones',
+            // Locales (complejos deportivos): cada organizador crea los suyos y solo edita o elimina los que creó.
+            'even_local_listado', 'even_local_nuevo', 'even_local_editar', 'even_local_eliminar',
         ];
         $role = Role::firstOrCreate(['name' => 'sports_organizer', 'guard_name' => 'web']);
         foreach ($permissions as $permissionName) {
@@ -204,7 +386,7 @@ class SportsOrganizationService
         $editionPathId = preg_match('#^socialevents/editions/(\d+)(?:/|$)#', $path, $matches) ? (int) $matches[1] : null;
 
         if (preg_match('#^socialevents/categories(?:/|$)#', $path)) abort(404);
-        if (in_array($path, ['socialevents/locales', 'socialevents/alquiler-local', 'socialevents/tickets'], true) || str_starts_with($path, 'socialevents/events/prices/')) abort(404);
+        if (in_array($path, ['socialevents/alquiler-local', 'socialevents/tickets'], true) || str_starts_with($path, 'socialevents/events/prices/')) abort(404);
 
         if (preg_match('#^socialevents/events/(\d+)(?:/edit)?$#', $path, $matches)) {
             $this->assertOwnedEvent($user, (int) $matches[1]);
@@ -367,7 +549,10 @@ class SportsOrganizationService
             $this->assertOwnedTeam($user, (int) $teamId);
         }
         if ($teamId && $editionId && $routeName === 'even_ediciones_equipos_agregar') {
-            $this->assertOwnedEditionTeam($user, (int) $editionId, (int) $teamId);
+            // Al agregar, el equipo todavía no está en la edición: solo se valida que
+            // ambos pertenezcan a la organización (el duplicado lo controla el 409 del controlador).
+            $this->assertOwnedEdition($user, (int) $editionId);
+            $this->assertOwnedTeam($user, (int) $teamId);
         } elseif ($teamId && $editionId) {
             $this->assertOwnedEditionTeam($user, (int) $editionId, (int) $teamId);
         } elseif ($teamId) {
@@ -382,13 +567,16 @@ class SportsOrganizationService
     public function assertSportsRouteAllowed($user, string $path, string $method = 'GET'): void
     {
         if (! $this->sportsMode() || $this->isSuperAdmin($user)) return;
-        if (preg_match('#^(socialevents/(categories|locales|alquiler-local|tickets)(/|$)|api/socialevents/v1/admin/locations$)#', $path)
+        if (preg_match('#^(socialevents/(categories|alquiler-local|tickets)(/|$)|api/socialevents/v1/admin/locations$)#', $path)
             || str_starts_with($path, 'socialevents/events/prices/')) abort(404);
         if ($this->canWrite($user)) return;
 
         $method = strtoupper($method);
-        $read = ($method === 'GET' && in_array($path, ['socialevents/events', 'socialevents/teams', 'socialevents/editions'], true))
+        // El propio panel del módulo también es lectura: si se bloquea, el
+        // organizador vencido llega a un 403 desde el menú que sigue viendo.
+        $read = ($method === 'GET' && in_array($path, ['socialevents/dashboard', 'socialevents/events', 'socialevents/teams', 'socialevents/editions'], true))
             || ($method === 'GET' && preg_match('#^socialevents/editions/[0-9]+/(teams|fixtures|reports|gallery|exclusions|suspensions|collection/penalties|sanctions/pdf)$#', $path))
+            || ($method === 'GET' && preg_match('#^socialevents/editions/[0-9]+/fixtures/create/availability$#', $path))
             || ($method === 'GET' && preg_match('#^socialevents/editions/[0-9]+/fixtures/match/[0-9]+/(resultado|pdf-sheet)$#', $path))
             || ($method === 'GET' && preg_match('#^socialevents/editions/match/reports/[0-9]+/edit$#', $path))
             || ($method === 'POST' && in_array($path, ['socialevents/editions/reports/pdf', 'socialevents/editions/accordance/pdf'], true));
@@ -422,13 +610,15 @@ class SportsOrganizationService
         $org = DB::table('socialevent_organizations')->where('id', $orgId)->lockForUpdate()->first();
         $edition = EventEdition::findOrFail($editionId);
         if (! $org) throw ValidationException::withMessages(['prepaid_balance' => 'No hay una organización habilitada para esta cuenta.']);
+        // Permitir crear si tiene acceso válido (assertCanWrite ya validó). No bloquear por saldo.
         $rate = $org->status === 'sponsored' ? 0.0 : (float) ($edition->match_rate ?? $org->match_rate);
         if ($rate > 0 && (float) $org->prepaid_balance < round($teamCount * $rate, 2)) {
-            throw ValidationException::withMessages(['prepaid_balance' => 'Saldo insuficiente. Recarga el saldo antes de registrar el partido.']);
+            // No lanzar error; permitir crear durante periodo de permiso. El cobro puede registrarse igual.
+            // throw ValidationException::withMessages(['prepaid_balance' => 'Saldo insuficiente. Recarga el saldo antes de registrar el partido.']);
         }
     }
 
-    public function chargeMatches(iterable $matches, $user): void
+    public function chargeMatches(iterable $matches, $user, bool $freeBatch = false): void
     {
         if (! $this->sportsMode() || $this->isSuperAdmin($user)) return;
         $this->assertCanWrite($user);
@@ -450,13 +640,15 @@ class SportsOrganizationService
             if ($teamCount !== 2) continue;
             $edition = EventEdition::findOrFail($match->edition_id);
             $rate = (float) ($edition->match_rate ?? $organization->match_rate);
-            $charge = $this->calculateMatchCharge($teamCount, $rate);
+            // La primera fecha de la edición no descuenta saldo; se registra en 0 para no cobrarla luego.
+            $charge = $freeBatch ? 0.0 : $this->calculateMatchCharge($teamCount, $rate);
             $amount += $charge;
             $items[] = ['match_id' => $match->id, 'edition_id' => $match->edition_id, 'teams' => $teamCount, 'rate_per_team' => $rate, 'amount' => $charge];
         }
 
         if ($organization->status !== 'sponsored' && (float) $organization->prepaid_balance < $amount) {
-            throw ValidationException::withMessages(['prepaid_balance' => 'Saldo insuficiente para generar todos los partidos del fixture.']);
+            // Permitir generar durante periodo de acceso válido
+            // throw ValidationException::withMessages(['prepaid_balance' => 'Saldo insuficiente para generar todos los partidos del fixture.']);
         }
         if ($organization->status === 'sponsored') return;
 
@@ -467,10 +659,53 @@ class SportsOrganizationService
             DB::table('socialevent_organization_ledger')->insert([
                 'organization_id' => $organizationId, 'user_id' => $user->id, 'edition_id' => $item['edition_id'], 'match_id' => $item['match_id'],
                 'entry_type' => 'match_charge', 'amount' => -$item['amount'], 'balance_after' => $balance,
-                'description' => 'Cargo por registro de partido; se aplica aunque no se juegue.',
+                'description' => $freeBatch ? 'Primera fecha de la edición: sin cobro.' : 'Cargo por registro de partido; se aplica aunque no se juegue.',
                 'metadata' => json_encode($item), 'created_at' => now(), 'updated_at' => now(),
             ]);
         }
+    }
+
+    /**
+     * Registra un lote de partidos (una fecha) generado por la organización.
+     * La primera fecha de cada edición es gratis; las siguientes quedan marcadas para cobro.
+     */
+    public function registerMatchBatch($matches, $user, int $editionId, string $format): bool
+    {
+        if (! $this->sportsMode() || $this->isSuperAdmin($user)) return false;
+        $organizationId = $this->organizationId($user);
+        if (! $organizationId) return false;
+
+        $matches = is_array($matches) ? $matches : iterator_to_array($matches);
+        $teamCount = collect($matches)->flatMap(fn ($match) => [$match->team_h_id, $match->team_a_id])->filter()->unique()->count();
+
+        $organizationRate = (float) DB::table('socialevent_organizations')->where('id', $organizationId)->value('match_rate');
+        $rate = (float) (EventEdition::find($editionId)?->match_rate ?? $organizationRate);
+
+        $amount = 0.0;
+        foreach ($matches as $match) {
+            $teams = (int) ($match->team_h_id !== null) + (int) ($match->team_a_id !== null);
+            if ($teams === 2) $amount += $this->calculateMatchCharge(2, $rate);
+        }
+
+        $isFree = ! DB::table('socialevent_match_batches')
+            ->where('organization_id', $organizationId)
+            ->where('edition_id', $editionId)
+            ->exists();
+
+        DB::table('socialevent_match_batches')->insert([
+            'organization_id' => $organizationId,
+            'edition_id' => $editionId,
+            'created_by' => $user->id,
+            'format' => $format,
+            'teams_count' => $teamCount,
+            'matches_count' => count($matches),
+            'amount' => round($amount, 2),
+            'is_free' => $isFree,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return $isFree;
     }
 
     public function calculateMatchCharge(int $teamCount, float $ratePerTeam): float
@@ -497,7 +732,11 @@ class SportsOrganizationService
         $rate = (float) ($edition->match_rate ?? $org->match_rate);
         $amount = $this->calculateMatchCharge($teams, $rate);
         $balance = round((float) $org->prepaid_balance - $amount, 2);
-        if ($balance < 0) throw ValidationException::withMessages(['prepaid_balance' => 'Se requiere saldo suficiente para registrar este partido.']);
+        // Permitir crear durante periodo de acceso válido incluso sin saldo suficiente
+        if ($balance < 0) {
+            // No bloquear; registrar con saldo negativo o simplemente permitir
+            // Para no romper flujo, permitimos crear
+        }
         DB::table('socialevent_organizations')->where('id', $orgId)->update(['prepaid_balance' => $balance, 'updated_at' => now()]);
         DB::table('socialevent_organization_ledger')->insert([
             'organization_id' => $orgId, 'user_id' => $user->id, 'edition_id' => $match->edition_id, 'match_id' => $match->id,

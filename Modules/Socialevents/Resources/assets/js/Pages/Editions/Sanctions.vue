@@ -76,7 +76,7 @@
                     method: 'get',
                     preserveState: true,
                     preserveScroll: true,
-                    only: ['urrentEquipment', 'teams'],
+                    only: ['currentEquipment', 'teams'],
                 });
             }
         });

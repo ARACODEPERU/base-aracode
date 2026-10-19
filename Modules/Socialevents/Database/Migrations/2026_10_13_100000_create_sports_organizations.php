@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('read_permissions')->nullable();
             $table->decimal('match_rate', 10, 2)->default(5.00);
             $table->decimal('prepaid_balance', 12, 2)->default(0);
+            $table->timestamp('deleted_at')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->timestamps();
 

@@ -74,8 +74,17 @@ class EventTeamController extends Controller
 
         $logoPath = null;
 
+        $organizationId = $sports->sportsMode() && ! $sports->isSuperAdmin($request->user()) ? $sports->organizationId($request->user()) : $sports->legacyOrganizationId();
+
+        // El nombre es único dentro de cada organización; otra organización sí puede usar el mismo nombre.
+        if ($organizationId && EventTeam::where('organization_id', $organizationId)->where('name', $request->get('name'))->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'name' => 'Ya existe un equipo con ese nombre en tu organización.',
+            ]);
+        }
+
         $team = EventTeam::create([
-            'organization_id' => $sports->sportsMode() && ! $sports->isSuperAdmin($request->user()) ? $sports->organizationId($request->user()) : $sports->legacyOrganizationId(),
+            'organization_id' => $organizationId,
             'name' => $request->get('name'),
             'short_name' => $request->get('short_name'),
             'ubigeo' => $request->get('ubigeo'),

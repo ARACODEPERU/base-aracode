@@ -28,6 +28,7 @@
     import IconFutbol from '@/Components/vristo/icon/icon-futbol.vue';
     import IconHand from '@/Components/vristo/icon/icon-hand.vue';
     import IconNotesEdit from '@/Components/vristo/icon/icon-notes-edit.vue';
+    import { crucesCompletos, paresDeFases } from '../../../utils/roundRobinPares.js';
 
 
     const props = defineProps({
@@ -60,7 +61,8 @@
     const formTeams = useForm({
         teams: [],
         edition_id: props.edition.id,
-        format: props.edition.competition_format
+        // Generación automática: solo todos contra todos, sin fecha ni hora.
+        format: 'round_robin'
     });
 
     const xhttp =  assetUrl;
@@ -98,10 +100,26 @@
     }, { immediate: true });
 
     const generateFixture = () => {
+        // Con el todos contra todos ya completo no hay nada que generar ni cobrar:
+        // el servidor no crearía ningún cruce, así que se avisa y se cierra el modal.
+        if (crucesCompletos(formTeams.teams, paresDeFases(props.fixture?.league))) {
+            closeModalTeams();
+            Swal2.fire({
+                title: 'Ya está generado',
+                text: 'Todos los partidos del todos contra todos ya fueron generados: no quedan cruces por crear.',
+                icon: 'info',
+                confirmButtonText: 'Entendido',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            return;
+        }
+
         formTeams.put(route('even_ediciones_fixtures_generate', props.edition.id), {
             errorBag: 'generateFixture',
             preserveScroll: true,
             onSuccess: () => {
+                closeModalTeams();
                 Swal2.fire({
                     title: 'Enhorabuena',
                     text: 'Se registró correctamente',
@@ -567,6 +585,17 @@
     const removeReferee = (index) => {
         formMatchReport.referees.splice(index, 1);
     }
+
+    // El botón "Generar todos contra todos" vive en la pantalla de partidos y
+    // abre el modal de equipos a través del ref de este componente. Un
+    // componente con <script setup> es cerrado por defecto: sin defineExpose el
+    // ref no expone nada, la pantalla no encontraba openModalTeams y el clic no
+    // hacía nada (sin ningún error en consola).
+    defineExpose({
+        openModalTeams,
+        closeModalTeams,
+        displayModalTeams,
+    });
 </script>
 <template>
 

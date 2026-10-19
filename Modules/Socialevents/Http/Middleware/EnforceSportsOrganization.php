@@ -15,6 +15,13 @@ class EnforceSportsOrganization
         $service->assertSportsRouteAllowed($request->user(), $request->path(), $request->method());
         $service->assertRequestOwnership($request);
 
+        if (str_starts_with($request->path(), 'socialevents/organizations/topup')
+            || str_starts_with($request->path(), 'socialevents/organizations/accounts/alerts/')) {
+            $service->assertCanAccessPayments($request->user());
+
+            return $next($request);
+        }
+
         if ($mode === 'write' || ! in_array(strtoupper($request->method()), ['GET', 'HEAD', 'OPTIONS'], true)) {
             $service->assertCanWrite($request->user());
         } else {

@@ -7,7 +7,7 @@
     import TextInput from '@/Components/TextInput.vue';
     import Keypad from '@/Components/Keypad.vue';
     import swal from 'sweetalert';
-    import { computed, ref } from 'vue';
+    import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
     import VueCollapsible from 'vue-height-collapsible/vue3';
     import iconCaretDown from '@/Components/vristo/icon/icon-caret-down.vue';
     import iconFolder from '@/Components/vristo/icon/icon-folder.vue';
@@ -68,6 +68,30 @@
     const search = ref('');
     const searchTerm = computed(() => search.value.trim());
 
+    // La barra pegajosa empieza debajo de la cabecera principal, dejando 4 px.
+    const stickyTop = ref(4);
+    let headerResizeObserver = null;
+    const updateStickyTop = () => {
+        const header = document.querySelector('.main-content > header');
+        stickyTop.value = Math.ceil(header?.getBoundingClientRect().height ?? 0) + 4;
+    };
+
+    onMounted(() => {
+        updateStickyTop();
+        window.addEventListener('resize', updateStickyTop);
+
+        const header = document.querySelector('.main-content > header');
+        if (header && typeof ResizeObserver !== 'undefined') {
+            headerResizeObserver = new ResizeObserver(updateStickyTop);
+            headerResizeObserver.observe(header);
+        }
+    });
+
+    onBeforeUnmount(() => {
+        window.removeEventListener('resize', updateStickyTop);
+        headerResizeObserver?.disconnect();
+    });
+
     // Filtro de los botones: todos, solo los habilitados o solo los que faltan
     const estadoFiltro = ref(ESTADO_TODOS);
     const cambiarEstado = (estado) => {
@@ -106,12 +130,10 @@
 </script>
 
 <template>
-    <!--
-        Barra del buscador y los dos filtros de estado: queda centrada y fija
-        arriba para no perderse de vista en una lista larga de permisos.
-    -->
+    <!-- Barra de búsqueda centrada y fijada debajo del header principal. -->
     <div
-        class="sticky top-0 z-30 mb-6 border-b border-gray-200/80 bg-white/95 px-2 py-3 backdrop-blur dark:border-gray-700/60 dark:bg-[#0e1726]/95"
+        class="permissions-search-sticky sticky z-30 mb-6 border-b border-gray-200/80 bg-white/95 px-2 py-3 backdrop-blur dark:border-gray-700/60 dark:bg-[#0e1726]/95"
+        :style="{ top: `${stickyTop}px` }"
     >
         <div class="flex flex-col items-center gap-3">
             <div class="relative w-full max-w-md">

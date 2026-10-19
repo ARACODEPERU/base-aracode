@@ -6,6 +6,7 @@
     import { Link, usePage } from '@inertiajs/vue3';
     import menuData from './MenuData.js';
     import { configureSocialeventsMenu } from 'Modules/Socialevents/Resources/assets/js/Menu.js';
+    import { puedeVerMisPagos } from 'Modules/Socialevents/Resources/assets/js/utils/organizationPaymentsAccess.js';
     import { Tooltip, Popover } from 'ant-design-vue'
     import { useSidebarEditor } from 'Modules/Security/Resources/assets/js/Composables/useSidebarEditor';
 
@@ -68,11 +69,23 @@
         return menuData.value.find((module) => module.text === moduleText && hasPermission(module.permissions));
     };
 
+    const rolesSesion = computed(() => page.props.auth?.roles || []);
+
+    /**
+     * Filas marcadas con `organizationOnly` (por ejemplo "Mis pagos" del módulo
+     * deportivo): solo las ve el organizador con cuenta propia en modo Gestión
+     * Deportiva, no el superadministrador ni la vista clásica de Eventos.
+     */
+    const restriccionOrganizacion = (opcion) => {
+        return ! opcion.organizationOnly || puedeVerMisPagos(sportsOrganization.value, rolesSesion.value);
+    };
+
     const visibleOptions = computed(() => {
         return (moduleSelected.value?.items || []).filter((option) =>
             editor.reveals(option.permissions)
             && !(sportsOrganization.value.mode && option.sportsHidden)
-            && !(option.superAdminOnly && !(page.props.auth?.roles || []).some((role) => ['admin', 'Administrador'].includes(role)))
+            && !(option.superAdminOnly && ! rolesSesion.value.some((role) => ['admin', 'Administrador'].includes(role)))
+            && restriccionOrganizacion(option)
         );
     });
 
@@ -84,7 +97,8 @@
     const visibleSubOptions = (option) => {
         return (option?.items || []).filter((subOption) =>
             editor.reveals(subOption.permissions)
-            && !(subOption.superAdminOnly && !(page.props.auth?.roles || []).some((role) => ['admin', 'Administrador'].includes(role)))
+            && !(subOption.superAdminOnly && ! rolesSesion.value.some((role) => ['admin', 'Administrador'].includes(role)))
+            && restriccionOrganizacion(subOption)
         );
     };
 

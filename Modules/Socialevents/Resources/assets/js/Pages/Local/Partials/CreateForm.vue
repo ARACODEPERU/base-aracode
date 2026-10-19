@@ -74,7 +74,7 @@ const selectCity = (item) => {
 </script>
 
 <template>
-    <FormSection @submitted="createNow" class="">
+    <FormSection @submitted="createNow">
         <template #title>
             Categoría Detalles
         </template>

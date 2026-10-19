@@ -5,9 +5,11 @@ return [
 
     'rankings' => [
         'players' => [
-            'goal' => 3,
-            'assist' => 2,
-            'mvp' => 5,
+            // El goleador ya tiene su propia lista: en "mejor jugador" el gol
+            // pesa poco (sirve de desempate) y mandan asistencias y MVP.
+            'goal' => 1,
+            'assist' => 4,
+            'mvp' => 6,
             'clean_sheet' => 1,
             'sanction_penalty' => 1,
         ],

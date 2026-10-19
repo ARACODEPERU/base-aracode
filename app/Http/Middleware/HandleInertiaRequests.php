@@ -72,9 +72,20 @@ class HandleInertiaRequests extends Middleware
             'sportsOrganization' => fn () => [
                 'mode' => app(\Modules\Socialevents\Services\SportsOrganizationService::class)->sportsMode(),
                 'organization_id' => $request->user()?->socialevent_organization_id,
+                'status' => $request->user() ? app(\Modules\Socialevents\Services\SportsOrganizationService::class)->organizationStatus($request->user()) : null,
                 'can_read' => $request->user() ? app(\Modules\Socialevents\Services\SportsOrganizationService::class)->canRead($request->user()) : false,
                 'can_write' => $request->user() ? app(\Modules\Socialevents\Services\SportsOrganizationService::class)->canWrite($request->user()) : false,
             ],
+            'organizationBillingAlerts' => fn () => $request->user()
+                && ! app(\Modules\Socialevents\Services\SportsOrganizationService::class)->isSuperAdmin($request->user())
+                && \Illuminate\Support\Facades\Schema::hasTable('socialevent_organization_alerts')
+                    ? \Illuminate\Support\Facades\DB::table('socialevent_organization_alerts')
+                        ->where('user_id', $request->user()->id)
+                        ->whereNull('read_at')
+                        ->orderByDesc('created_at')
+                        ->limit(5)
+                        ->get(['id', 'type', 'message', 'created_at'])
+                    : [],
             'hasActiveSubscription' => fn () => JobOffersAccess::hasActiveSubscription(
                 JobOffersAccess::studentId($request->user())
             ),

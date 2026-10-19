@@ -1,6 +1,9 @@
 <script setup>
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import { Link, router } from '@inertiajs/vue3';
+    import axios from 'axios';
+    import Swal2 from 'sweetalert2';
+    import { computed, ref } from 'vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
 
     import RoundRobinPlayoff from './Partials/RoundRobinPlayoff.vue';
@@ -37,6 +40,53 @@
         }
     });
 
+    const roundRobinRef = ref(null);
+
+    const openModalTeams = () => {
+        if (roundRobinRef.value && typeof roundRobinRef.value.openModalTeams === 'function') {
+            roundRobinRef.value.openModalTeams();
+        } else if (roundRobinRef.value?.displayModalTeams) {
+            roundRobinRef.value.displayModalTeams = true;
+        }
+    };
+
+    const checkingNewMatch = ref(false);
+
+    const openNewMatch = async () => {
+        if (checkingNewMatch.value) return;
+        checkingNewMatch.value = true;
+        try {
+            const { data } = await axios.get(route('even_ediciones_fixtures_create_availability', props.edition.id));
+            if (data.can_create) {
+                router.visit(route('even_ediciones_fixtures_create', props.edition.id));
+                return;
+            }
+
+            const result = await Swal2.fire({
+                title: data.can_write ? 'Saldo insuficiente' : 'Acceso vencido',
+                text: data.reason || 'No se puede crear un partido con el acceso actual de la organización.',
+                icon: 'warning',
+                showCancelButton: true,
+                showConfirmButton: Boolean(data.can_write),
+                confirmButtonText: 'Recargar saldo',
+                cancelButtonText: 'Cerrar',
+                customClass: 'sweet-alerts',
+            });
+            if (result.isConfirmed && data.can_write) {
+                router.visit(route('even_organizations.topup.index'));
+            }
+        } catch (error) {
+            await Swal2.fire({
+                title: 'No se pudo validar',
+                text: error.response?.data?.message || 'No se pudo verificar el saldo y el acceso de la organización. Inténtalo nuevamente.',
+                icon: 'error',
+                confirmButtonText: 'Entendido',
+                customClass: 'sweet-alerts',
+            });
+        } finally {
+            checkingNewMatch.value = false;
+        }
+    };
 
 </script>
 <template>
@@ -64,11 +114,11 @@
                     <div class="flex flex-col sm:flex-row items-center justify-end gap-4">
 
                         <button @click="openModalTeams" class="btn btn-success uppercase text-xs">
-                            Generar Automático
+                            Generar todos contra todos
                         </button>
-                        <Link v-can="'even_ediciones_fixtures_nuevo'" :href="route('even_ediciones_fixtures_create', edition.id)" class="btn btn-primary uppercase text-xs">
-                            Nuevo
-                        </Link>
+                        <button v-can="'even_ediciones_fixtures_nuevo'" type="button" :disabled="checkingNewMatch" class="btn btn-primary uppercase text-xs" @click="openNewMatch">
+                            {{ checkingNewMatch ? 'Verificando...' : 'Nuevo' }}
+                        </button>
                         <Link :href="route('even_ediciones_listado')" :preserveState="true" class="btn btn-warning uppercase text-xs">
                             Ir atras
                         </Link>
@@ -88,6 +138,7 @@
                 </template>
                 <template v-else>
                     <RoundRobinPlayoff
+                        ref="roundRobinRef"
                         :fixture="fixture"
                         :teams="teams"
                         :locales="locales"

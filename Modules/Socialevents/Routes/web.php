@@ -20,6 +20,7 @@ use Modules\Socialevents\Http\Controllers\EventEditionTeamPlayerController;
 use Modules\Socialevents\Http\Controllers\EventTeamController;
 use Modules\Socialevents\Http\Controllers\SocialeventsEditorController;
 use Modules\Socialevents\Http\Controllers\SportsOrganizationAdminController;
+use Modules\Socialevents\Http\Controllers\OrganizationTopUpController;
 use Modules\Socialevents\Http\Controllers\TournamentLandingController;
 
 /*
@@ -35,10 +36,22 @@ use Modules\Socialevents\Http\Controllers\TournamentLandingController;
 
 Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('socialevents')->group(function () {
     Route::get('dashboard', 'SocialeventsController@index')->name('even_dashboard');
-    Route::middleware('role:admin|Administrador')->prefix('organizations')->name('even_organizations.')->group(function () {
+    Route::middleware(['role:admin|Administrador', 'permission:even_organizaciones_admin'])->prefix('organizations')->name('even_organizations.')->group(function () {
         Route::get('/', [SportsOrganizationAdminController::class, 'index'])->name('index');
+        Route::get('/accounts', [SportsOrganizationAdminController::class, 'accounts'])->name('accounts');
+        Route::get('/accounts/owner-search', [SportsOrganizationAdminController::class, 'searchOrganizationOwner'])->name('owner-search');
+        Route::post('/accounts', [SportsOrganizationAdminController::class, 'storeOrganization'])->name('store');
+        Route::put('/accounts/{organizationId}/profile', [SportsOrganizationAdminController::class, 'updateOrganizationProfile'])->name('profile.update');
+        Route::delete('/accounts/{organizationId}', [SportsOrganizationAdminController::class, 'destroyOrganization'])->name('destroy');
+        Route::post('/accounts/{organizationId}/payments', [SportsOrganizationAdminController::class, 'storeAdminPayment'])->name('payments.store');
+        Route::post('/accounts/{organizationId}/users', [SportsOrganizationAdminController::class, 'storeOrganizationUser'])->name('users.store');
+        Route::put('/billing-alerts', [SportsOrganizationAdminController::class, 'updateAlertSettings'])->name('alerts.update');
+        Route::post('/accounts/{organizationId}/alerts', [SportsOrganizationAdminController::class, 'sendOrganizationAlert'])->name('alerts.send');
+        Route::post('/rates', [SportsOrganizationAdminController::class, 'storeRate'])->name('rates.store');
         Route::put('/defaults', [SportsOrganizationAdminController::class, 'updateDefaults'])->name('defaults');
         Route::put('/{organizationId}', [SportsOrganizationAdminController::class, 'updateOrganization'])->name('update');
+        Route::post('/{organizationId}/block', [SportsOrganizationAdminController::class, 'block'])->name('block');
+        Route::post('/{organizationId}/unblock', [SportsOrganizationAdminController::class, 'unblock'])->name('unblock');
     });
     Route::post('editor/upload-image', [SocialeventsEditorController::class, 'uploadImage'])->name('even_editor_upload_image');
 
@@ -110,6 +123,8 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
     Route::middleware(['middleware' => 'permission:even_ediciones_equipo_jugadores'])->post('editions/teams/player/image/update', [EventEditionTeamPlayerController::class, 'teamPlayerImageUpdate'])->name('even_team_player_image_update');
     Route::middleware(['middleware' => 'permission:even_ediciones_equipo_jugadores'])->delete('editions/{eId}/teams/{tId}/player/{pId}/destroy', [EventEditionTeamPlayerController::class, 'teamPlayersDestroy'])->name('even_ediciones_equipos_player_destroy');
     Route::middleware(['middleware' => 'permission:even_ediciones_fixtures'])->get('editions/{id}/fixtures', [EventEditionMatchController::class, 'editionFixtures'])->name('even_ediciones_fixtures');
+    Route::middleware(['middleware' => 'permission:even_ediciones_fixtures_nuevo'])->get('editions/{id}/fixtures/create/availability', [EventEditionMatchController::class, 'editionFixturesCreateAvailability'])->name('even_ediciones_fixtures_create_availability');
+    Route::middleware(['middleware' => 'permission:even_ediciones_fixtures_nuevo'])->get('editions/{id}/fixtures/availability', [EventEditionMatchController::class, 'editionFixturesCreateAvailability'])->name('even_ediciones_fixtures_create_availability');
     Route::middleware(['middleware' => 'permission:even_ediciones_fixtures'])->put('editions/{id}/fixtures/generate', [EventEditionMatchController::class, 'editionFixturesGenerate'])->name('even_ediciones_fixtures_generate');
     Route::middleware(['middleware' => 'permission:even_ediciones_fixtures'])->put('editions/fixtures/{fId}/update', [EventEditionMatchController::class, 'editionFixturesUpdate'])->name('even_ediciones_fixtures_update');
     Route::middleware(['middleware' => 'permission:even_ediciones_fixtures_nuevo'])->get('editions/{id}/fixtures/create', [EventEditionMatchController::class, 'editionFixturesCreate'])->name('even_ediciones_fixtures_create');
@@ -143,7 +158,20 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
     Route::middleware(['middleware' => 'permission:even_ediciones_suspensiones'])->delete('editions/{eId}/suspensions/{suspensionId}/destroy', [EventEditionPlayerSuspensionController::class, 'destroy'])->name('even_ediciones_suspensiones_destroy');
 });
 
+// Los organizadores pueden marcar como leídos sus avisos incluso si la cuenta está vencida o suspendida.
+Route::post('socialevents/organizations/accounts/alerts/{alertId}/read', [SportsOrganizationAdminController::class, 'markOrganizationAlertRead'])
+    ->middleware(['auth', 'verified'])
+    ->name('even_organizations.alerts.read');
+
 // Ruta pública para landing de torneos
+Route::middleware(['auth', 'verified'])->prefix('socialevents/organizations/topup')->name('even_organizations.topup.')->group(function () {
+    Route::get('/', [OrganizationTopUpController::class, 'index'])->name('index');
+    Route::post('/card', [OrganizationTopUpController::class, 'createCardPayment'])->name('card');
+    Route::post('/yape', [OrganizationTopUpController::class, 'createYapePayment'])->name('yape');
+});
+Route::post('socialevents/organizations/topup/webhook', [OrganizationTopUpController::class, 'webhook'])
+    ->name('even_organizations.topup.webhook');
+
 Route::get('torneos/{slug}', [TournamentLandingController::class, 'show'])
     ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*|\d+')
     ->name('socialevents_torneos_landing');

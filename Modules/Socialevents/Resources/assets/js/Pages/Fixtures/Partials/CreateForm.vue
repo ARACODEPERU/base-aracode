@@ -42,7 +42,6 @@
     const createNow = () => {
         form.post(route('even_ediciones_fixtures_store'), {
             forceFormData: true,
-            errorBag: 'createNow',
             preserveScroll: true,
             onSuccess: () => {
                 Swal2.fire({
@@ -85,7 +84,7 @@
             </div>
             <div class="col-span-2">
                 <InputLabel for="team_a" value="Equipo Visitante *" class="mb-1" />
-                <select v-model="form.team_a" id="team_h" class="form-select">
+                <select v-model="form.team_a" id="team_a" class="form-select">
                     <template v-for="teamA in teams">
                         <option :value="teamA.id">{{ teamA.name }}</option>
                     </template>
@@ -127,10 +126,10 @@
                 <TextInput
                     id="group_name"
                     v-model="form.group_name"
-                    maxlength="255"
+                    maxlength="1"
                     type="text"
                 />
-                <InputError :message="form.errors.round_number" />
+                <InputError :message="form.errors.group_name" />
             </div>
             <div class="sm:col-span-2">
                 <InputLabel for="location" value="Cancha / lugar (Opcional)" />
@@ -144,6 +143,9 @@
                     </template>
                 </select>
                 <InputError :message="form.errors.location" />
+            </div>
+            <div class="col-span-6">
+                <InputError :message="form.errors.prepaid_balance" />
             </div>
 
             <!-- <div class="col-span-6">

@@ -11,3 +11,2276 @@
     --brand-secondary: 128 93 202; /* #805dca */
     --brand-secondary-light: 235 228 247; /* #ebe4f7 */
 }
+
+/* Mantiene el encabezado principal por encima de las barras pegajosas del contenido. */
+.main-content > header {
+    z-index: 40;
+}
+
+/* Paleta futbolera, activa únicamente cuando el servidor indica PW00001 = 2.
+   Se aplica a la app y también a los diálogos que librerías como SweetAlert
+   montan directamente en el body. */
+html.theme-torneos {
+    --brand-primary: 163 230 53;
+    --brand-primary-light: 240 253 220;
+    --brand-secondary: 16 185 129;
+    --brand-secondary-light: 209 250 229;
+    --torneos-forest: #064e3b;
+    --torneos-deep: #022c22;
+    --torneos-emerald: #047857;
+    --torneos-lime: #a3e635;
+    --torneos-field: #f0fdf4;
+    --torneos-panel-surface: rgb(224 236 229 / 94%);
+    --torneos-panel-header-surface: rgb(210 226 217 / 96%);
+    --torneos-panel-border: rgb(16 120 89 / 28%);
+    --torneos-panel-shadow: inset 0 0 0 1px var(--torneos-panel-border), 0 8px 24px rgb(2 44 34 / 12%);
+    --torneos-panel-text: #17392e;
+    --torneos-panel-muted-text: #435e50;
+    --torneos-panel-error: #b91c1c;
+    --torneos-pitch-image: url('/img/torneos/chaos-soccer-gear-Cjfl8r_eYxY-unsplash.jpg');
+    /* Superficie propia de FormSection: panel esmeralda, textos claros y
+       campos luminosos para que el formulario se lea sobre el estadio. */
+    --torneos-form-surface-start: rgb(6 78 59 / 96%);
+    --torneos-form-surface-end: rgb(2 44 34 / 94%);
+    --torneos-form-border: rgb(167 243 208 / 26%);
+    --torneos-form-text: #ecfdf5;
+    --torneos-form-muted: #a7f3d0;
+    --torneos-form-field: rgb(240 253 244 / 97%);
+    --torneos-form-field-border: rgb(52 211 153 / 55%);
+    --torneos-form-field-text: #0f2e25;
+    --torneos-form-field-placeholder: #4b6b5d;
+    --torneos-form-field-focus: #34d399;
+    --torneos-form-error: #fecaca;
+    --torneos-form-actions-start: rgb(6 78 59 / 92%);
+    --torneos-form-actions-end: rgb(2 44 34 / 96%);
+    /* Tokens centralizados para controles de entrada, selectores, fechas y paginadores */
+    --torneos-control-bg: rgb(240 253 244 / 97%);
+    --torneos-control-border: rgb(16 185 129 / 45%);
+    --torneos-control-hover-border: #10b981;
+    --torneos-control-focus-border: #059669;
+    --torneos-control-focus-ring: rgb(16 185 129 / 28%);
+    --torneos-control-text: #0f2e25;
+    --torneos-control-placeholder: #4b6b5d;
+    --torneos-control-icon: #047857;
+    --torneos-control-disabled-bg: rgb(209 250 229 / 55%);
+    --torneos-control-disabled-border: rgb(16 185 129 / 24%);
+    --torneos-control-disabled-text: #5b7a6c;
+    --torneos-dropdown-bg: #f0fdf4;
+    --torneos-dropdown-border: #6ee7b7;
+    --torneos-dropdown-shadow: 0 12px 32px rgb(2 44 34 / 22%);
+    --torneos-dropdown-option-hover: #dcfce7;
+    --torneos-dropdown-option-selected: #d1fae5;
+    --torneos-dropdown-option-selected-text: #064e3b;
+    --torneos-tag-bg: #dcfce7;
+    --torneos-tag-border: #6ee7b7;
+    --torneos-tag-text: #064e3b;
+    --torneos-switch-off: #9ca3af;
+    --torneos-switch-on: #10b981;
+    --torneos-pagination-surface: rgb(210 226 217 / 96%);
+    --torneos-pagination-border: rgb(16 120 89 / 32%);
+    --torneos-pagination-text: #12372c;
+    --torneos-pagination-muted: #435e50;
+    --torneos-pagination-hover-bg: #047857;
+    --torneos-pagination-hover-text: #f0fdf4;
+    --torneos-pagination-active-bg: linear-gradient(135deg, #047857, #10b981);
+    --torneos-pagination-active-border: #a3e635;
+    --torneos-pagination-active-text: #ffffff;
+    --torneos-pagination-disabled-bg: rgb(224 236 229 / 58%);
+    --torneos-pagination-disabled-text: #7c9a8b;
+    /* Paginador compartido (Pagination.vue): barra esmeralda oscura, botones
+       con borde lima tenue e iconos claros. La página activa usa el verde
+       lima del tema para destacar sobre el fondo futbolero. */
+    --torneos-pager-bar-bg: rgb(2 44 34 / 72%);
+    --torneos-pager-button-bg: rgb(6 78 59 / 88%);
+    --torneos-pager-button-border: rgb(163 230 53 / 30%);
+    --torneos-pager-button-text: #ecfdf5;
+    --torneos-pager-button-hover-bg: #047857;
+    --torneos-pager-button-hover-text: #ffffff;
+    --torneos-pager-active-bg: #a3e635;
+    --torneos-pager-active-border: #bef264;
+    --torneos-pager-active-text: #052e16;
+    --torneos-pager-disabled-bg: rgb(2 44 34 / 55%);
+    --torneos-pager-disabled-text: rgb(209 250 229 / 45%);
+}
+
+html.theme-torneos body.dark {
+    --torneos-panel-surface: rgb(5 46 36 / 90%);
+    --torneos-panel-header-surface: rgb(11 59 48 / 94%);
+    --torneos-panel-border: rgb(52 211 153 / 22%);
+    --torneos-panel-shadow: inset 0 0 0 1px var(--torneos-panel-border), 0 8px 24px rgb(0 0 0 / 18%);
+    --torneos-panel-text: #ecfdf5;
+    --torneos-panel-muted-text: #a7f3d0;
+    --torneos-panel-error: #fca5a5;
+    --torneos-form-surface-start: rgb(2 44 34 / 96%);
+    --torneos-form-surface-end: rgb(1 28 23 / 96%);
+    --torneos-form-border: rgb(52 211 153 / 24%);
+    --torneos-form-text: #ecfdf5;
+    --torneos-form-muted: #a7f3d0;
+    --torneos-form-field: rgb(5 46 36 / 92%);
+    --torneos-form-field-border: rgb(52 211 153 / 32%);
+    --torneos-form-field-text: #ecfdf5;
+    --torneos-form-field-placeholder: #6ee7b7;
+    --torneos-form-field-focus: #34d399;
+    --torneos-form-error: #fca5a5;
+    --torneos-form-actions-start: rgb(1 28 23 / 92%);
+    --torneos-form-actions-end: rgb(5 46 36 / 96%);
+    --torneos-control-bg: rgb(5 46 36 / 92%);
+    --torneos-control-border: rgb(52 211 153 / 34%);
+    --torneos-control-hover-border: #34d399;
+    --torneos-control-focus-border: #a3e635;
+    --torneos-control-focus-ring: rgb(163 230 53 / 25%);
+    --torneos-control-text: #ecfdf5;
+    --torneos-control-placeholder: #6ee7b7;
+    --torneos-control-icon: #6ee7b7;
+    --torneos-control-disabled-bg: rgb(2 44 34 / 65%);
+    --torneos-control-disabled-border: rgb(52 211 153 / 18%);
+    --torneos-control-disabled-text: #6b9b88;
+    --torneos-dropdown-bg: #052e24;
+    --torneos-dropdown-border: #047857;
+    --torneos-dropdown-shadow: 0 14px 36px rgb(0 0 0 / 48%);
+    --torneos-dropdown-option-hover: #064e3b;
+    --torneos-dropdown-option-selected: #047857;
+    --torneos-dropdown-option-selected-text: #ecfccb;
+    --torneos-tag-bg: #064e3b;
+    --torneos-tag-border: #10b981;
+    --torneos-tag-text: #ecfdf5;
+    --torneos-switch-off: #115e49;
+    --torneos-switch-on: #10b981;
+    --torneos-pagination-surface: rgb(11 59 48 / 94%);
+    --torneos-pagination-border: rgb(52 211 153 / 28%);
+    --torneos-pagination-text: #ecfdf5;
+    --torneos-pagination-muted: #a7f3d0;
+    --torneos-pagination-hover-bg: #059669;
+    --torneos-pagination-hover-text: #ffffff;
+    --torneos-pagination-active-bg: linear-gradient(135deg, #047857, #10b981);
+    --torneos-pagination-active-border: #a3e635;
+    --torneos-pagination-active-text: #ffffff;
+    --torneos-pagination-disabled-bg: rgb(2 44 34 / 52%);
+    --torneos-pagination-disabled-text: #4b7561;
+    --torneos-pager-bar-bg: rgb(1 28 23 / 82%);
+    --torneos-pager-button-bg: rgb(6 78 59 / 90%);
+    --torneos-pager-button-border: rgb(163 230 53 / 24%);
+    --torneos-pager-button-text: #ecfdf5;
+    --torneos-pager-button-hover-bg: #059669;
+    --torneos-pager-button-hover-text: #ffffff;
+    --torneos-pager-active-bg: #a3e635;
+    --torneos-pager-active-border: #bef264;
+    --torneos-pager-active-text: #052e16;
+    --torneos-pager-disabled-bg: rgb(1 28 23 / 65%);
+    --torneos-pager-disabled-text: rgb(167 243 208 / 40%);
+}
+
+/* Reproduce el estadio del login como fondo de todo el sistema deportivo. */
+html.theme-torneos body,
+html.theme-torneos .main-container,
+html.theme-torneos .main-content,
+html.theme-torneos .main-content > .p-6.animation {
+    background-color: var(--torneos-deep);
+    background-image:
+        linear-gradient(120deg, rgb(2 44 34 / 88%), rgb(6 78 59 / 76%) 55%, rgb(20 83 45 / 82%)),
+        var(--torneos-pitch-image);
+    background-position: center, center;
+    background-size: cover, cover;
+    background-attachment: fixed, fixed;
+}
+
+html.theme-torneos .main-content > .p-6.animation {
+    background-color: transparent;
+    background-image: none;
+}
+
+/* Conserva el motivo de cancha en el modo oscuro con una superposición mayor. */
+html.theme-torneos .dark body,
+html.theme-torneos .dark .main-container,
+html.theme-torneos .dark .main-content,
+html.theme-torneos .dark .main-content > .p-6.animation {
+    background-color: #011c17;
+    background-image:
+        linear-gradient(120deg, rgb(1 28 23 / 92%), rgb(2 44 34 / 88%) 55%, rgb(6 46 36 / 90%)),
+        var(--torneos-pitch-image);
+}
+
+html.theme-torneos .dark .main-content > .p-6.animation {
+    background-color: transparent;
+    background-image: none;
+}
+
+
+/* El editor de permisos conserva la paleta de cancha también al desplazarse. */
+html.theme-torneos .permissions-search-sticky {
+    background-color: rgb(240 253 244 / 96%);
+    border-color: #bbf7d0;
+    box-shadow: 0 8px 20px rgb(6 78 59 / 8%);
+}
+
+html.theme-torneos .permissions-search-sticky input {
+    background-color: #fff;
+    border-color: #a7f3d0;
+}
+
+html.theme-torneos .permissions-search-sticky button[aria-pressed="true"] {
+    background-color: #047857;
+    border-color: #047857;
+    color: #fff;
+}
+
+html.theme-torneos .permissions-search-sticky button[aria-pressed="false"] {
+    background-color: #dcfce7;
+    border-color: #a7f3d0;
+    color: #064e3b;
+}
+
+html.theme-torneos .permissions-search-sticky button[aria-pressed="false"]:hover {
+    background-color: #bbf7d0;
+}
+
+html.theme-torneos .dark .permissions-search-sticky {
+    background-color: rgb(5 46 36 / 96%);
+    border-color: #047857;
+}
+
+html.theme-torneos .dark .permissions-search-sticky input {
+    background-color: #0b2f27;
+    border-color: #047857;
+}
+
+html.theme-torneos .dark .permissions-search-sticky button[aria-pressed="false"] {
+    background-color: #064e3b;
+    border-color: #047857;
+    color: #d1fae5;
+}
+
+html.theme-torneos .dark .permissions-search-sticky button[aria-pressed="false"]:hover {
+    background-color: #047857;
+}
+
+html.theme-torneos .dark .main-container,
+html.theme-torneos .dark .main-content,
+html.theme-torneos .dark .main-content > .p-6.animation {
+    background-color: #052e24;
+}
+
+/* Header principal: verde estadio, controles claros y acentos lima. */
+html.theme-torneos .main-content > header {
+    background: linear-gradient(110deg, var(--torneos-deep), var(--torneos-forest));
+    color: #f0fdf4;
+    box-shadow: 0 8px 24px rgb(2 44 34 / 18%);
+}
+
+html.theme-torneos .main-content > header > div,
+html.theme-torneos .main-content > header > div > div:first-child {
+    background-color: transparent;
+}
+
+html.theme-torneos .main-content > header .horizontal-menu {
+    background: var(--torneos-forest);
+    color: #ecfccb;
+    border-color: rgb(167 243 208 / 20%);
+}
+
+html.theme-torneos .main-content > header a,
+html.theme-torneos .main-content > header button {
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+
+html.theme-torneos .main-content > header a:hover,
+html.theme-torneos .main-content > header button:hover {
+    color: var(--torneos-lime);
+}
+
+html.theme-torneos .main-content > header .bg-slate-100,
+html.theme-torneos .main-content > header button.bg-slate-100 {
+    background-color: rgb(255 255 255 / 9%);
+    border-color: rgb(167 243 208 / 22%);
+    color: #ecfccb;
+}
+
+html.theme-torneos .main-content > header .bg-slate-100:hover {
+    background-color: rgb(255 255 255 / 16%);
+}
+
+html.theme-torneos .main-content > header .text-slate-600,
+html.theme-torneos .main-content > header .text-slate-500,
+html.theme-torneos .main-content > header .text-slate-400,
+html.theme-torneos .main-content > header .text-blue-700 {
+    color: #d1fae5;
+}
+
+html.theme-torneos .main-content > header .text-slate-600:hover,
+html.theme-torneos .main-content > header .text-blue-700:hover {
+    color: var(--torneos-lime);
+}
+
+/* Sidebar completa: rail verde profundo y navegación sobre verde muy suave. */
+html.theme-torneos nav.sidebar,
+html.theme-torneos nav.sidebar #divSiempreVisible {
+    background-color: #ecfdf5;
+    border-color: #bbf7d0;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child {
+    background: linear-gradient(180deg, var(--torneos-forest), var(--torneos-deep));
+    border-color: rgb(167 243 208 / 20%);
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .bg-blue-50 {
+    background-color: transparent;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .bg-blue-600,
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .bg-blue-700 {
+    background-color: var(--torneos-emerald);
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .group:hover {
+    background-color: rgb(167 243 208 / 18%);
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .text-slate-600,
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child [class~="group-hover:text-blue-600"] {
+    color: #d1fae5;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) {
+    background-color: #f0fdf4;
+}
+
+html.theme-torneos .dark nav.sidebar,
+html.theme-torneos .dark nav.sidebar #divSiempreVisible,
+html.theme-torneos .dark nav.sidebar > #divSiempreVisible > div:nth-child(2) {
+    background-color: #052e24;
+}
+
+html.theme-torneos .dark nav.sidebar > #divSiempreVisible > div:first-child {
+    background: linear-gradient(180deg, #022c22, #011c17);
+}
+
+html.theme-torneos .dark .main-content > header,
+html.theme-torneos .dark .main-content > header > div > div:first-child {
+    background: linear-gradient(110deg, #022c22, #064e3b);
+}
+
+html.theme-torneos nav.sidebar .bg-blue-600,
+html.theme-torneos nav.sidebar .bg-blue-500 {
+    background-color: var(--torneos-emerald);
+}
+
+html.theme-torneos nav.sidebar [class~="from-sky-600"] {
+    background-image: linear-gradient(135deg, var(--torneos-lime), #10b981, var(--torneos-emerald));
+}
+
+html.theme-torneos nav.sidebar .text-blue-800,
+html.theme-torneos nav.sidebar .text-blue-700,
+html.theme-torneos nav.sidebar .text-sky-800,
+html.theme-torneos nav.sidebar .text-sky-600 {
+    color: var(--torneos-forest);
+}
+
+html.theme-torneos nav.sidebar .border-blue-200,
+html.theme-torneos nav.sidebar [class~="border-sky-200/80"] {
+    border-color: #a7f3d0;
+}
+
+/* Panel de opciones: estados activos y hover con verdes/lima de Torneos,
+   sustituyendo los acentos azules y naranjas del tema general. */
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) {
+    background-color: #f0fdf4;
+    color: #12372c;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child,
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:last-child {
+    border-color: #bbf7d0;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child p:first-child {
+    color: #047857;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child h2 {
+    color: #064e3b;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child p:last-child,
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:last-child p:last-child {
+    color: #3f6f5b;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child > div > div:first-child {
+    background: linear-gradient(145deg, #a3e635, #10b981);
+    color: #022c22;
+    box-shadow: 0 5px 14px rgb(6 78 59 / 18%);
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) {
+    background-color: rgb(255 255 255 / 88%);
+    border-color: #d1fae5;
+    color: #12372c;
+    box-shadow: 0 3px 10px rgb(6 78 59 / 6%);
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a):hover {
+    background-color: #dcfce7;
+    border-color: #6ee7b7;
+    color: #064e3b;
+    box-shadow: 0 6px 14px rgb(6 78 59 / 12%);
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a).border-blue-200 {
+    background-color: #d1fae5;
+    border-color: #34d399;
+    color: #064e3b;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a).border-orange-200 {
+    background-color: #ecfccb;
+    border-color: #a3e635;
+    color: #365314;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-white"] {
+    background-image: linear-gradient(135deg, #fff, #dcfce7 58%, #d1fae5);
+    border-color: #a7f3d0;
+    color: #064e3b;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-sky-600"] {
+    background-image: linear-gradient(135deg, #064e3b, #047857 62%, #10b981);
+    border-color: #a3e635;
+    color: #f0fdf4;
+    box-shadow: 0 8px 18px rgb(6 78 59 / 24%);
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item .text-blue-800,
+html.theme-torneos nav.sidebar .sidebar-option-item .text-sky-800,
+html.theme-torneos nav.sidebar .sidebar-option-item .text-sky-600 {
+    color: #064e3b;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a).border-blue-200 .bg-blue-100 {
+    background-color: #a7f3d0;
+    color: #064e3b;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-white"] .bg-sky-100 {
+    background-color: #dcfce7;
+    color: #047857;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-sky-600"] .bg-white\/20 {
+    color: #ecfccb;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .bg-orange-100 {
+    background-color: #d9f99d;
+    color: #365314;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .bg-sky-100 {
+    background-color: #dcfce7;
+    color: #047857;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .bg-slate-100 {
+    background-color: #ecfdf5;
+    color: #047857;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a):hover .group-hover\:bg-orange-100 {
+    background-color: #d9f99d;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .text-slate-400,
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .text-slate-500 {
+    color: #4b7561;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-sky-600"] .bg-sky-300 {
+    background-color: #d9f99d;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > div > .ml-4 {
+    border-color: #86efac;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg {
+    color: #315b48;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg:hover {
+    background-color: #dcfce7;
+    color: #064e3b;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg.bg-blue-50 {
+    background-color: #d1fae5;
+    color: #064e3b;
+    box-shadow: 0 4px 10px rgb(6 78 59 / 10%);
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg .bg-blue-500 {
+    background-color: #047857;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg .bg-slate-300 {
+    background-color: #a7f3d0;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg .text-slate-700,
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg .text-slate-200 {
+    color: #315b48;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item .text-slate-400,
+html.theme-torneos nav.sidebar .sidebar-option-item .text-slate-500 {
+    color: #4b7561;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:last-child {
+    background-color: rgb(236 253 245 / 92%);
+}
+
+html.theme-torneos .dark nav.sidebar > #divSiempreVisible > div:nth-child(2) {
+    background-color: #052e24;
+    color: #ecfdf5;
+}
+
+html.theme-torneos .dark nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child,
+html.theme-torneos .dark nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:last-child {
+    border-color: #047857;
+}
+
+html.theme-torneos .dark nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child h2,
+html.theme-torneos .dark nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:last-child p:first-child {
+    color: #ecfdf5;
+}
+
+html.theme-torneos .dark nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child p:last-child,
+html.theme-torneos .dark nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:last-child p:last-child {
+    color: #a7f3d0;
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item > :is(button, a) {
+    background-color: rgb(11 47 39 / 90%);
+    border-color: #115e49;
+    color: #d1fae5;
+    box-shadow: 0 3px 10px rgb(0 0 0 / 18%);
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item > :is(button, a):hover {
+    background-color: #064e3b;
+    border-color: #34d399;
+    color: #ecfccb;
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item > :is(button, a).border-blue-200 {
+    background-color: #064e3b;
+    border-color: #34d399;
+    color: #ecfdf5;
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item > :is(button, a).border-orange-200 {
+    background-color: #365314;
+    border-color: #84cc16;
+    color: #ecfccb;
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-white"] {
+    background-image: linear-gradient(135deg, #0b2f27, #064e3b 58%, #052e24);
+    border-color: #047857;
+    color: #d1fae5;
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-sky-600"] {
+    background-image: linear-gradient(135deg, #022c22, #047857 62%, #059669);
+    border-color: #a3e635;
+    color: #f0fdf4;
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item .text-blue-800,
+html.theme-torneos .dark nav.sidebar .sidebar-option-item .text-sky-800,
+html.theme-torneos .dark nav.sidebar .sidebar-option-item .text-sky-600 {
+    color: #d9f99d;
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item > :is(button, a) .bg-blue-100,
+html.theme-torneos .dark nav.sidebar .sidebar-option-item > :is(button, a) .bg-sky-100 {
+    background-color: #115e49;
+    color: #d1fae5;
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item > :is(button, a) .bg-slate-100 {
+    background-color: #064e3b;
+    color: #a7f3d0;
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item > :is(button, a) .bg-orange-100 {
+    background-color: #4d7c0f;
+    color: #ecfccb;
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item a.rounded-lg {
+    color: #d1fae5;
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item a.rounded-lg:hover,
+html.theme-torneos .dark nav.sidebar .sidebar-option-item a.rounded-lg.bg-blue-950\/50 {
+    background-color: #064e3b;
+    color: #ecfccb;
+}
+
+html.theme-torneos .dark nav.sidebar .sidebar-option-item a.rounded-lg .text-slate-700,
+html.theme-torneos .dark nav.sidebar .sidebar-option-item a.rounded-lg .text-slate-200 {
+    color: #d1fae5;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item .bg-blue-100,
+html.theme-torneos nav.sidebar .sidebar-option-item .bg-orange-100,
+html.theme-torneos nav.sidebar .sidebar-option-item .bg-sky-100 {
+    border: 1px solid rgb(16 185 129 / 18%);
+}
+
+/* Acciones, campos y diálogos: los modales son accesibles dentro del layout y
+   los que se teletransportan al body porque html también lleva la clase tema. */
+html.theme-torneos .btn-primary,
+html.theme-torneos .btn-success,
+html.theme-torneos button.bg-primary {
+    background-image: linear-gradient(100deg, var(--torneos-lime), #10b981);
+    background-color: var(--torneos-emerald);
+    border-color: transparent;
+    color: var(--torneos-deep);
+}
+
+html.theme-torneos .btn-primary:hover,
+html.theme-torneos .btn-success:hover,
+html.theme-torneos button.bg-primary:hover {
+    background-image: linear-gradient(100deg, #bef264, #34d399);
+    color: var(--torneos-deep);
+}
+
+html.theme-torneos .btn-outline-primary {
+    border-color: #059669;
+    color: #047857;
+}
+
+html.theme-torneos .btn-outline-primary:hover {
+    background-color: #047857;
+    border-color: #047857;
+    color: white;
+}
+
+html.theme-torneos input:focus,
+html.theme-torneos select:focus,
+html.theme-torneos textarea:focus {
+    --tw-ring-color: rgb(16 185 129 / 45%);
+    border-color: #10b981;
+}
+
+html.theme-torneos .panel,
+html.theme-torneos .ant-modal-content,
+html.theme-torneos .swal2-popup,
+html.theme-torneos [role="dialog"] {
+    border-color: #a7f3d0;
+}
+
+/* Superficie contenida del panel: solo cambia cuando está activo el tema Torneos. */
+html.theme-torneos .panel {
+    background-color: var(--torneos-panel-surface);
+    border-color: var(--torneos-panel-border);
+    box-shadow: var(--torneos-panel-shadow);
+    color: var(--torneos-panel-text);
+}
+
+
+html.theme-torneos .team-card {
+    background-color: rgb(240 253 244 / 96%);
+    border-color: #a7f3d0;
+    border-top-color: #a3e635;
+    box-shadow: 0 18px 42px rgb(2 44 34 / 28%);
+}
+
+/* La superficie, los títulos y los controles de FormSection se definen al
+   final del tema, después de las reglas genéricas de .panel. */
+
+/* Corrige únicamente el centrado vertical del conjunto de botones en Torneos. */
+html.theme-torneos .form-section__actions--torneos > .flex {
+    align-items: center;
+}
+
+html.theme-torneos .ant-modal-content,
+html.theme-torneos .ant-drawer-content,
+html.theme-torneos .ant-popover-inner,
+html.theme-torneos .swal2-popup,
+html.theme-torneos .main-content [class~="fixed"][class~="inset-0"] > [class~="rounded-xl"][class~="bg-white"] {
+    background-color: #f0fdf4;
+}
+
+/* Breadcrumb del navegador: vidrio oscuro y estado actual lima, como el header. */
+html.theme-torneos nav[aria-label="Breadcrumb"] > ol {
+    background-color: rgb(2 44 34 / 72%);
+    border-color: rgb(167 243 208 / 42%);
+    box-shadow: 0 8px 24px rgb(2 44 34 / 18%);
+    backdrop-filter: blur(12px);
+}
+
+html.theme-torneos nav[aria-label="Breadcrumb"] > ol a {
+    color: #ecfdf5;
+}
+
+html.theme-torneos nav[aria-label="Breadcrumb"] > ol a:hover {
+    background-color: rgb(167 243 208 / 18%);
+    color: #d9f99d;
+}
+
+html.theme-torneos nav[aria-label="Breadcrumb"] > ol > li > span {
+    color: #a7f3d0;
+}
+
+html.theme-torneos nav[aria-label="Breadcrumb"] > ol > li > div > span:last-child {
+    background-color: #bef264;
+    border-color: #d9f99d;
+    color: #064e3b;
+}
+
+html.theme-torneos .dark .panel {
+    background-color: var(--torneos-panel-surface);
+    border-color: var(--torneos-panel-border);
+    color: var(--torneos-panel-text);
+    box-shadow: var(--torneos-panel-shadow);
+}
+
+html.theme-torneos .dark .team-card {
+    background-color: rgb(5 46 36 / 94%);
+    border-color: #047857;
+    color: #ecfdf5;
+    box-shadow: 0 18px 42px rgb(0 0 0 / 30%);
+}
+
+html.theme-torneos .dark .team-card {
+    border-top-color: #a3e635;
+}
+
+html.theme-torneos .dark nav[aria-label="Breadcrumb"] > ol {
+    background-color: rgb(1 28 23 / 82%);
+    border-color: rgb(52 211 153 / 35%);
+}
+
+html.theme-torneos .dark nav[aria-label="Breadcrumb"] > ol > li > div > span:last-child {
+    background-color: #365314;
+    border-color: #4d7c0f;
+    color: #ecfccb;
+}
+
+html.theme-torneos .main-content [class~="fixed"][class~="inset-0"] > [class~="rounded-xl"][class~="bg-white"] {
+    border: 1px solid #a7f3d0;
+    box-shadow: 0 24px 70px rgb(2 44 34 / 24%);
+}
+
+html.theme-torneos .panel > div:first-of-type {
+    background-color: var(--torneos-panel-header-surface);
+    border-color: var(--torneos-panel-border);
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .ant-modal-header {
+    background-color: #dcfce7;
+    border-color: #bbf7d0;
+}
+
+html.theme-torneos .dark .ant-modal-content,
+html.theme-torneos .dark .ant-drawer-content,
+html.theme-torneos .dark .ant-popover-inner,
+html.theme-torneos .dark .swal2-popup,
+html.theme-torneos .dark .main-content [class~="fixed"][class~="inset-0"] > [class~="rounded-xl"][class~="bg-white"] {
+    background-color: #0b2f27;
+    color: #ecfdf5;
+}
+
+html.theme-torneos .dark .panel > div:first-of-type {
+    background-color: var(--torneos-panel-header-surface);
+    border-color: var(--torneos-panel-border);
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .dark .ant-modal-header {
+    background-color: #064e3b;
+    border-color: #047857;
+}
+
+html.theme-torneos .ant-modal-header,
+html.theme-torneos .swal2-title {
+    color: var(--torneos-forest);
+}
+
+html.theme-torneos .swal2-confirm {
+    background: linear-gradient(100deg, var(--torneos-lime), #10b981);
+    color: var(--torneos-deep);
+}
+
+/* Modales compartidos: el encabezado repite el verde profundo del header
+   principal y el cuerpo queda como una superficie clara de cancha. */
+html.theme-torneos .modal-torneos {
+    background-color: var(--torneos-field);
+    border-color: #6ee7b7;
+    box-shadow: 0 28px 80px rgb(1 28 23 / 48%);
+    color: #12372c;
+}
+
+html.theme-torneos .modal-torneos__header {
+    background: linear-gradient(110deg, var(--torneos-deep), var(--torneos-forest));
+    border-color: rgb(167 243 208 / 24%);
+    color: #f0fdf4;
+}
+
+html.theme-torneos .modal-torneos__icon {
+    background: linear-gradient(145deg, var(--torneos-lime), #34d399);
+    box-shadow: 0 0 0 4px rgb(167 243 208 / 14%);
+}
+
+html.theme-torneos .modal-torneos__title {
+    color: #f0fdf4;
+}
+
+html.theme-torneos .modal-torneos__message {
+    color: #bbf7d0;
+}
+
+html.theme-torneos .modal-torneos__body {
+    background-color: #f0fdf4;
+    color: #12372c;
+}
+
+html.theme-torneos .modal-torneos__actions {
+    border-color: #bbf7d0;
+}
+
+html.theme-torneos .modal-torneos__close {
+    background-color: rgb(255 255 255 / 10%);
+    color: #d1fae5;
+}
+
+html.theme-torneos .modal-torneos__close:hover {
+    background-color: rgb(255 255 255 / 18%);
+    color: var(--torneos-lime);
+}
+
+html.theme-torneos .modal-torneos .btn-primary,
+html.theme-torneos .modal-torneos .btn-success {
+    background-image: linear-gradient(105deg, var(--torneos-lime), #10b981);
+    background-color: var(--torneos-emerald);
+    border-color: transparent;
+    color: var(--torneos-deep);
+    box-shadow: 0 6px 14px rgb(6 78 59 / 18%);
+}
+
+html.theme-torneos .modal-torneos .btn-primary:hover,
+html.theme-torneos .modal-torneos .btn-success:hover {
+    background-image: linear-gradient(105deg, #bef264, #34d399);
+    color: var(--torneos-deep);
+}
+
+html.theme-torneos .modal-torneos .modal-torneos__close-button {
+    background-image: linear-gradient(105deg, #fb7185, #ef4444);
+    background-color: #dc2626;
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 6px 14px rgb(127 29 29 / 18%);
+}
+
+html.theme-torneos .modal-torneos .modal-torneos__close-button:hover {
+    background-image: linear-gradient(105deg, #fda4af, #f87171);
+    color: #fff;
+}
+
+html.theme-torneos .modal-torneos__loading {
+    background-color: rgb(240 253 244 / 90%);
+    color: var(--torneos-forest);
+}
+
+html.theme-torneos .modal-torneos__loading p {
+    color: var(--torneos-forest);
+}
+
+html.theme-torneos .dark .modal-torneos {
+    background-color: #052e24;
+    border-color: #047857;
+    color: #ecfdf5;
+}
+
+html.theme-torneos .dark .modal-torneos__header {
+    background: linear-gradient(110deg, #011c17, #064e3b);
+    border-color: rgb(52 211 153 / 30%);
+}
+
+html.theme-torneos .dark .modal-torneos__body {
+    background-color: #0b2f27;
+    color: #ecfdf5;
+}
+
+html.theme-torneos .dark .modal-torneos__actions {
+    border-color: #047857;
+}
+
+html.theme-torneos .dark .modal-torneos__loading {
+    background-color: rgb(5 46 36 / 92%);
+}
+
+html.theme-torneos .dark .modal-torneos__loading p {
+    color: #d1fae5;
+}
+
+html.theme-torneos .dark .modal-torneos__close-button {
+    color: var(--torneos-deep);
+}
+
+html.theme-torneos .modal-torneos :is(input, select, textarea) {
+    border-color: #a7f3d0;
+}
+
+html.theme-torneos .modal-torneos :is(input, select, textarea):focus {
+    border-color: #10b981;
+    --tw-ring-color: rgb(16 185 129 / 45%);
+}
+
+html.theme-torneos .dark .modal-torneos :is(input, select, textarea) {
+    background-color: #052e24;
+    border-color: #047857;
+    color: #ecfdf5;
+}
+
+html.theme-torneos .dark .modal-torneos :is(input, select, textarea)::placeholder {
+    color: #a7f3d0;
+}
+/* La lista y su panel reutilizan los tokens de Torneos; otras tablas quedan intactas. */
+html.theme-torneos .sports-locals-page .sports-locals-panel {
+    background-color: var(--torneos-panel-surface);
+    border-color: var(--torneos-panel-border);
+    box-shadow: var(--torneos-panel-shadow);
+    color: var(--torneos-panel-text);
+    --table-header-bg: var(--torneos-panel-header-surface);
+    --table-header-text: #315b48;
+    --table-header-border: var(--torneos-panel-border);
+    --table-row-bg: rgb(255 255 255 / 72%);
+    --table-row-hover: rgb(16 185 129 / 12%);
+    --table-border: var(--torneos-panel-border);
+    --table-text-primary: var(--torneos-panel-text);
+    --table-text-secondary: var(--torneos-panel-muted-text);
+}
+
+html.theme-torneos body.dark .sports-locals-page .sports-locals-panel {
+    background-color: var(--torneos-panel-surface);
+    border-color: var(--torneos-panel-border);
+    box-shadow: var(--torneos-panel-shadow);
+    color: var(--torneos-panel-text);
+    --table-dark-header-bg: #0b3b30;
+    --table-dark-header-text: #d1fae5;
+    --table-dark-row-bg: rgb(5 46 36 / 72%);
+    --table-dark-row-hover: rgb(16 185 129 / 20%);
+    --table-dark-border: rgb(52 211 153 / 22%);
+    --table-dark-text-primary: #ecfdf5;
+    --table-dark-text-secondary: #a7f3d0;
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-panel > div:first-of-type {
+    background-color: var(--torneos-panel-header-surface);
+    border-color: var(--torneos-panel-border);
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos body.dark .sports-locals-page .sports-locals-panel > div:first-of-type {
+    background-color: var(--torneos-panel-header-surface);
+    border-color: var(--torneos-panel-border);
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-panel table.table-striped tbody tr:nth-child(odd) td {
+    background-color: rgb(231 242 237 / 72%);
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-panel table.table-striped tbody tr:hover td,
+html.theme-torneos .sports-locals-page .sports-locals-panel table.table-striped tbody tr:nth-child(odd):hover td {
+    background-color: var(--table-row-hover);
+}
+
+html.theme-torneos body.dark .sports-locals-page .sports-locals-panel table.table-striped tbody tr:nth-child(odd) td {
+    background-color: var(--table-dark-row-hover);
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-panel table tbody td {
+    color: var(--table-text-primary);
+    border-color: var(--table-border);
+}
+
+html.theme-torneos body.dark .sports-locals-page .sports-locals-panel table tbody td {
+    color: var(--table-dark-text-primary);
+    border-color: var(--table-dark-border);
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-panel .table-responsive {
+    background-color: var(--torneos-panel-surface);
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-panel [aria-label="Navegación de Paginación"] {
+    border-top: 1px solid var(--torneos-pager-button-border);
+    background-color: var(--torneos-pager-bar-bg);
+    color: var(--torneos-pager-button-text);
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-panel [aria-label="Navegación de Paginación"] a {
+    border: 1px solid var(--torneos-pager-button-border);
+    background-color: var(--torneos-pager-button-bg);
+    color: var(--torneos-pager-button-text);
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-panel [aria-label="Navegación de Paginación"] a:hover {
+    background-color: var(--torneos-pager-button-hover-bg);
+    color: var(--torneos-pager-button-hover-text);
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-panel [aria-label="Navegación de Paginación"] [aria-current="page"] {
+    background-image: none;
+    background-color: var(--torneos-pager-active-bg);
+    border-color: var(--torneos-pager-active-border);
+    color: var(--torneos-pager-active-text);
+    box-shadow: 0 2px 10px rgb(2 44 34 / 28%);
+}
+
+html.theme-torneos body.dark .sports-locals-page .sports-locals-panel [aria-label="Navegación de Paginación"] a {
+    background-color: var(--torneos-pager-button-bg);
+    color: var(--torneos-pager-button-text);
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-panel td a.bg-blue-700 {
+    background-color: var(--torneos-emerald);
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-panel td .bg-blue-100.text-blue-800 {
+    border-color: rgb(16 185 129 / 32%);
+    background-color: rgb(16 185 129 / 14%);
+    color: #065f46;
+}
+
+html.theme-torneos body.dark .sports-locals-page .sports-locals-panel td .bg-blue-100.text-blue-800 {
+    border-color: rgb(52 211 153 / 28%);
+    background-color: rgb(16 185 129 / 20%);
+    color: #d1fae5;
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-search {
+    border-color: var(--torneos-panel-border);
+    background-color: var(--torneos-panel-surface);
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos body.dark .sports-locals-page .sports-locals-search {
+    border-color: var(--torneos-panel-border);
+    background-color: var(--torneos-panel-surface);
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-search::placeholder {
+    color: var(--torneos-panel-muted-text);
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-create-button {
+    background-color: var(--torneos-forest);
+    color: #f0fdf4;
+}
+
+html.theme-torneos .sports-locals-page .sports-locals-create-button:hover,
+html.theme-torneos .sports-locals-page .sports-locals-create-button:focus-visible {
+    background-color: var(--torneos-emerald);
+    color: #fff;
+}
+
+html.theme-torneos body.dark .sports-locals-page .sports-locals-create-button {
+    background-color: var(--torneos-emerald);
+    color: #fff;
+}
+
+html.theme-torneos body.dark .sports-locals-page .sports-locals-create-button:hover,
+html.theme-torneos body.dark .sports-locals-page .sports-locals-create-button:focus-visible {
+    background-color: #059669;
+}
+
+/* La lista y el copyright ganan contraste solo en Aracode Torneos. */
+html.theme-torneos .organization-accounts-list {
+    overflow: hidden;
+    border-radius: 1rem;
+}
+
+html.theme-torneos .main-content > .app-footer {
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: .5rem;
+    padding: .45rem .85rem;
+    border: 1px solid rgb(167 243 208 / 38%);
+    border-radius: 9999px;
+    background-color: rgb(2 44 34 / 78%);
+    color: #f0fdf4;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 45%);
+}
+
+/* FormSection en Aracode Torneos: el panel adopta el verde profundo del
+   estadio, los títulos del encabezado ganan contraste y los controles se
+   mantienen luminosos para que los datos se lean. Todo queda bajo
+   html.theme-torneos, que solo existe con PW00001 = 2; el tema original no
+   recibe ninguna de estas reglas. */
+html.theme-torneos .form-section .form-section__card.panel {
+    background: linear-gradient(145deg, var(--torneos-form-surface-start), var(--torneos-form-surface-end));
+    border: 1px solid var(--torneos-form-border);
+    box-shadow: inset 0 0 0 1px rgb(167 243 208 / 8%), 0 24px 60px rgb(1 28 23 / 45%);
+    color: var(--torneos-form-text);
+}
+
+html.theme-torneos .form-section .form-section-header :is(h1, h2, h3, h4, h5, h6) {
+    color: #f0fdf4;
+    text-shadow: 0 1px 3px rgb(1 28 23 / 55%);
+}
+
+html.theme-torneos .form-section .form-section-header p {
+    color: var(--torneos-form-muted);
+    text-shadow: 0 1px 2px rgb(1 28 23 / 45%);
+}
+
+html.theme-torneos .form-section__card label {
+    color: var(--torneos-form-text);
+}
+
+html.theme-torneos .form-section__card :is(.text-gray-500, .text-gray-600, .text-gray-700) {
+    color: var(--torneos-form-muted);
+}
+
+html.theme-torneos .form-section__card :is(input, select, textarea) {
+    background-color: var(--torneos-form-field);
+    border-color: var(--torneos-form-field-border);
+    color: var(--torneos-form-field-text);
+}
+
+html.theme-torneos .form-section__card :is(input, textarea)::placeholder {
+    color: var(--torneos-form-field-placeholder);
+}
+
+html.theme-torneos .form-section__card :is(input, select, textarea):focus {
+    border-color: var(--torneos-form-field-focus);
+}
+
+html.theme-torneos .form-section__card :is(.text-red-600, .text-red-500) {
+    color: var(--torneos-form-error);
+}
+
+html.theme-torneos .form-section .form-section__actions {
+    background: linear-gradient(110deg, var(--torneos-form-actions-start), var(--torneos-form-actions-end));
+    border-color: var(--torneos-form-border);
+}
+
+/* Un .panel anidado dentro del formulario (p. ej. bloques de renta o de
+   integraciones) conserva su propia paleta clara para no perder contraste. */
+/* Las superficies claras que viven dentro del panel (listas de sugerencias,
+   barras de herramientas o modales internos) mantienen texto oscuro. */
+html.theme-torneos .form-section__card [class*="bg-white"],
+html.theme-torneos .form-section__card :is(.bg-gray-50, .bg-gray-100) {
+    color: var(--torneos-form-field-text);
+}
+
+html.theme-torneos .form-section__card .panel label {
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .form-section__card .panel :is(.text-gray-500, .text-gray-600, .text-gray-700) {
+    color: var(--torneos-panel-muted-text);
+}
+
+html.theme-torneos .form-section__card .panel :is(input, select, textarea) {
+    border-color: var(--torneos-panel-border);
+}
+
+html.theme-torneos .form-section__card .panel :is(.text-red-600, .text-red-500) {
+    color: var(--torneos-panel-error);
+}
+
+/* El tema principal no recibe reglas de estos modales ni del pie. */
+
+/* ============================================================================
+   CONTROLES DE FORMULARIOS, SELECTORES Y PAGINADORES (PW00001 = 2)
+   ----------------------------------------------------------------------------
+   Centraliza la identidad visual futbolera para todos los controles nativos,
+   componentes Vue y bibliotecas externas (Ant Design Vue, vue3-multiselect,
+   Flatpickr, NumberInput, editores de texto, switches y paginadores),
+   estrictamente bajo el selector global `html.theme-torneos`.
+   Cuando `PW00001 != 2`, `html.theme-torneos` no está presente y todos los
+   controles conservan su apariencia original sin alteración.
+   ============================================================================ */
+
+/* A. Campos de texto, B. Áreas de texto, C. Campos numéricos, D. Select nativo y E. Fechas/Horas */
+html.theme-torneos :is(
+    .form-input,
+    .form-textarea,
+    .form-select,
+    .form-multiselect,
+    input[type="text"],
+    input[type="search"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="number"],
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"],
+    input[type="month"],
+    input[type="week"],
+    select,
+    textarea
+):not(.sr-only):not(.multiselect__input):not(.ant-select-selection-search-input):not(.cur-year):not(.flatpickr-hour):not(.flatpickr-minute):not(.flatpickr-second) {
+    background-color: var(--torneos-control-bg);
+    border-color: var(--torneos-control-border);
+    color: var(--torneos-control-text);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+html.theme-torneos :is(
+    .form-input,
+    .form-textarea,
+    input[type="text"],
+    input[type="search"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="number"],
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"],
+    textarea
+):not(.multiselect__input):not(.ant-select-selection-search-input)::placeholder {
+    color: var(--torneos-control-placeholder);
+    opacity: 1;
+}
+
+html.theme-torneos :is(
+    .form-input,
+    .form-textarea,
+    .form-select,
+    .form-multiselect,
+    input[type="text"],
+    input[type="search"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="number"],
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"],
+    select,
+    textarea
+):not(:disabled):not([readonly]):hover {
+    border-color: var(--torneos-control-hover-border);
+}
+
+html.theme-torneos :is(
+    .form-input,
+    .form-textarea,
+    .form-select,
+    .form-multiselect,
+    input[type="text"],
+    input[type="search"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="number"],
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"],
+    select,
+    textarea
+):focus {
+    border-color: var(--torneos-control-focus-border);
+    --tw-ring-color: var(--torneos-control-focus-ring);
+    box-shadow: 0 0 0 3px var(--torneos-control-focus-ring);
+}
+
+/* Estados disabled y readonly */
+html.theme-torneos :is(
+    .form-input,
+    .form-textarea,
+    .form-select,
+    .form-multiselect,
+    input[type="text"],
+    input[type="search"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="number"],
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"],
+    select,
+    textarea
+):disabled {
+    background-color: var(--torneos-control-disabled-bg);
+    border-color: var(--torneos-control-disabled-border);
+    color: var(--torneos-control-disabled-text);
+    cursor: not-allowed;
+}
+
+html.theme-torneos :is(
+    .form-input,
+    .form-textarea,
+    input[type="text"],
+    input[type="number"],
+    textarea
+)[readonly]:not(:disabled):not(.flatpickr-input) {
+    background-color: var(--torneos-control-disabled-bg);
+    border-color: var(--torneos-control-disabled-border);
+    color: var(--torneos-control-text);
+}
+
+/* Opciones desplegadas de <select> nativo y <optgroup> */
+html.theme-torneos select option,
+html.theme-torneos select optgroup {
+    background-color: var(--torneos-dropdown-bg);
+    color: var(--torneos-control-text);
+}
+
+html.theme-torneos select option:checked {
+    background-color: var(--torneos-dropdown-option-selected);
+    color: var(--torneos-dropdown-option-selected-text);
+}
+
+/* Esquema de color para indicadores nativos de fecha/hora y flechas numéricas */
+html.theme-torneos :is(
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"],
+    input[type="number"]
+) {
+    color-scheme: light;
+}
+
+html.theme-torneos body.dark :is(
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"],
+    input[type="number"]
+) {
+    color-scheme: dark;
+}
+
+html.theme-torneos :is(
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"]
+)::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.82;
+    transition: opacity 0.15s ease;
+}
+
+html.theme-torneos :is(
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"]
+)::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* Iconos de búsqueda e indicadores en contenedores de filtros y formularios */
+html.theme-torneos .relative > :is(.pointer-events-none, .peer-focus\:text-primary) svg {
+    color: var(--torneos-control-icon);
+}
+
+/* Controles numéricos con botones (NumberInput.vue y similares) */
+html.theme-torneos .space-x-3 > button.rounded-full {
+    background-color: var(--torneos-control-bg);
+    border-color: var(--torneos-control-border);
+    color: var(--torneos-control-icon);
+}
+
+html.theme-torneos .space-x-3 > button.rounded-full:hover:not(:disabled) {
+    background-color: var(--torneos-dropdown-option-hover);
+    border-color: var(--torneos-control-hover-border);
+    color: var(--torneos-control-text);
+}
+
+/* Casillas checkbox y botones radio nativos / componentes Vue (Checkbox.vue, .form-checkbox, .form-radio) */
+html.theme-torneos :is(
+    input[type="checkbox"]:not(.sr-only):not(.ant-checkbox-input),
+    input[type="radio"]:not(.sr-only):not(.ant-radio-input),
+    .form-checkbox,
+    .form-radio
+) {
+    background-color: var(--torneos-control-bg);
+    border-color: var(--torneos-control-border);
+    color: var(--torneos-emerald);
+    accent-color: var(--torneos-emerald);
+}
+
+html.theme-torneos :is(
+    input[type="checkbox"]:not(.sr-only):not(.ant-checkbox-input),
+    input[type="radio"]:not(.sr-only):not(.ant-radio-input),
+    .form-checkbox,
+    .form-radio
+):hover:not(:disabled) {
+    border-color: var(--torneos-control-hover-border);
+}
+
+html.theme-torneos :is(
+    input[type="checkbox"]:not(.sr-only):not(.ant-checkbox-input),
+    input[type="radio"]:not(.sr-only):not(.ant-radio-input),
+    .form-checkbox,
+    .form-radio
+):checked {
+    background-color: var(--torneos-emerald);
+    border-color: var(--torneos-emerald);
+    color: var(--torneos-emerald);
+}
+
+html.theme-torneos :is(
+    input[type="checkbox"]:not(.sr-only):not(.ant-checkbox-input),
+    input[type="radio"]:not(.sr-only):not(.ant-radio-input),
+    .form-checkbox,
+    .form-radio
+):focus {
+    --tw-ring-color: var(--torneos-control-focus-ring);
+    box-shadow: 0 0 0 3px var(--torneos-control-focus-ring);
+}
+
+html.theme-torneos :is(
+    input[type="checkbox"]:not(.sr-only):not(.ant-checkbox-input),
+    input[type="radio"]:not(.sr-only):not(.ant-radio-input),
+    .form-checkbox,
+    .form-radio
+):disabled {
+    background-color: var(--torneos-control-disabled-bg);
+    border-color: var(--torneos-control-disabled-border);
+    opacity: 0.65;
+}
+
+/* Interruptores (switch peer de Tailwind, switch-mobinkakei y switch-cheerful) */
+html.theme-torneos input[type="checkbox"].peer.sr-only + span {
+    background-color: var(--torneos-switch-off);
+}
+
+html.theme-torneos input[type="checkbox"].peer.sr-only:checked + span {
+    background-color: var(--torneos-switch-on);
+}
+
+html.theme-torneos .vswitch-holder {
+    background-color: var(--torneos-control-bg);
+    border-color: var(--torneos-control-border);
+    color: var(--torneos-control-text);
+}
+
+html.theme-torneos .vswitch-toggle input[type="checkbox"] + label {
+    border-color: var(--torneos-control-border);
+    background-color: var(--torneos-dropdown-option-hover);
+}
+
+html.theme-torneos .vswitch-toggle input[type="checkbox"]:checked + label::before {
+    background-color: var(--torneos-emerald);
+    box-shadow: -3px -3px 5px rgb(255 255 255 / 35%), 3px 3px 5px var(--torneos-emerald);
+}
+
+html.theme-torneos .cheerful-checkbox-wrapper-5 .cheerful-check {
+    background: linear-gradient(90deg, var(--torneos-emerald), var(--torneos-lime));
+}
+
+/* Controles de archivo (input[type="file"], zonas drag-and-drop y custom-file-container) */
+html.theme-torneos input[type="file"]:not(.hidden):not(.sr-only) {
+    background-color: var(--torneos-control-bg);
+    border: 1px solid var(--torneos-control-border);
+    border-radius: 0.375rem;
+    color: var(--torneos-control-text);
+    padding: 0.25rem 0.5rem;
+}
+
+html.theme-torneos input[type="file"]::file-selector-button {
+    margin-right: 0.75rem;
+    border: 1px solid var(--torneos-control-border);
+    border-radius: 0.375rem;
+    background: linear-gradient(110deg, var(--torneos-lime), #10b981);
+    padding: 0.35rem 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--torneos-deep);
+    cursor: pointer;
+    transition: filter 0.15s ease;
+}
+
+html.theme-torneos input[type="file"]::file-selector-button:hover {
+    filter: brightness(1.06);
+}
+
+html.theme-torneos .border-dashed:is(label, div) {
+    background-color: var(--torneos-control-bg);
+    border-color: var(--torneos-control-border);
+    color: var(--torneos-control-text);
+}
+
+html.theme-torneos .border-dashed:is(label, div):hover {
+    background-color: var(--torneos-dropdown-option-hover);
+    border-color: var(--torneos-control-hover-border);
+}
+
+html.theme-torneos .custom-file-container label {
+    color: var(--torneos-emerald);
+}
+
+html.theme-torneos .custom-file-container__custom-file__custom-file-control {
+    background-color: var(--torneos-control-bg);
+    border-color: var(--torneos-control-border);
+    color: var(--torneos-control-text);
+}
+
+html.theme-torneos .custom-file-container__custom-file__custom-file-control__button {
+    background-color: var(--torneos-tag-bg);
+    border-left-color: var(--torneos-control-border);
+    color: var(--torneos-tag-text);
+}
+
+/* Range slider nativo y simple-range-slider */
+html.theme-torneos input[type="range"]::-webkit-slider-runnable-track {
+    background: var(--torneos-dropdown-option-selected);
+}
+
+html.theme-torneos input[type="range"]::-webkit-slider-thumb {
+    background: var(--torneos-emerald);
+}
+
+html.theme-torneos .range-slider .simple-range-slider .simple-range-slider-bg-bar {
+    border-color: var(--torneos-control-border) !important;
+}
+
+/* ============================================================================
+   D. COMBOS Y SELECTORES DE BIBLIOTECAS (@suadelabs/vue3-multiselect)
+   ============================================================================ */
+html.theme-torneos .multiselect {
+    color: var(--torneos-control-text);
+}
+
+html.theme-torneos .multiselect .multiselect__tags {
+    background-color: var(--torneos-control-bg) !important;
+    border-color: var(--torneos-control-border) !important;
+    color: var(--torneos-control-text) !important;
+    border-radius: 0.375rem;
+}
+
+html.theme-torneos .multiselect:hover .multiselect__tags {
+    border-color: var(--torneos-control-hover-border) !important;
+}
+
+html.theme-torneos .multiselect--active .multiselect__tags {
+    border-color: var(--torneos-control-focus-border) !important;
+    box-shadow: 0 0 0 3px var(--torneos-control-focus-ring);
+}
+
+html.theme-torneos .multiselect .multiselect__single,
+html.theme-torneos .multiselect .multiselect__input {
+    background-color: transparent !important;
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos .multiselect .multiselect__placeholder,
+html.theme-torneos .multiselect .multiselect__input::placeholder {
+    color: var(--torneos-control-placeholder) !important;
+}
+
+html.theme-torneos .multiselect .multiselect__select::before {
+    border-color: var(--torneos-control-icon) transparent transparent !important;
+}
+
+html.theme-torneos .multiselect .multiselect__tag {
+    background-color: var(--torneos-tag-bg) !important;
+    border: 1px solid var(--torneos-tag-border);
+    color: var(--torneos-tag-text) !important;
+}
+
+html.theme-torneos .multiselect .multiselect__tag-icon::after {
+    color: var(--torneos-tag-text) !important;
+}
+
+html.theme-torneos .multiselect .multiselect__tag-icon:hover {
+    background-color: var(--torneos-emerald) !important;
+}
+
+html.theme-torneos .multiselect .multiselect__tag-icon:hover::after {
+    color: #ffffff !important;
+}
+
+html.theme-torneos .multiselect .multiselect__content-wrapper {
+    background-color: var(--torneos-dropdown-bg) !important;
+    border-color: var(--torneos-dropdown-border) !important;
+    color: var(--torneos-control-text) !important;
+    box-shadow: var(--torneos-dropdown-shadow);
+}
+
+html.theme-torneos .multiselect .multiselect__option {
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos .multiselect .multiselect__option--highlight {
+    background-color: var(--torneos-dropdown-option-hover) !important;
+    color: var(--torneos-dropdown-option-selected-text) !important;
+}
+
+html.theme-torneos .multiselect .multiselect__option--highlight::after {
+    background-color: transparent !important;
+    color: var(--torneos-control-placeholder) !important;
+}
+
+html.theme-torneos .multiselect .multiselect__option--selected {
+    background-color: var(--torneos-dropdown-option-selected) !important;
+    color: var(--torneos-dropdown-option-selected-text) !important;
+    font-weight: 700;
+}
+
+html.theme-torneos .multiselect .multiselect__option--selected.multiselect__option--highlight {
+    background-color: var(--torneos-dropdown-option-selected) !important;
+    color: var(--torneos-dropdown-option-selected-text) !important;
+}
+
+html.theme-torneos .multiselect--disabled .multiselect__tags,
+html.theme-torneos .multiselect--disabled .multiselect__select {
+    background-color: var(--torneos-control-disabled-bg) !important;
+    color: var(--torneos-control-disabled-text) !important;
+}
+
+/* Listas de autocompletado y sugerencias flotantes en formularios */
+html.theme-torneos ul.absolute.z-50.bg-white,
+html.theme-torneos .max-h-48.overflow-y-auto.rounded-lg.border.bg-white {
+    background-color: var(--torneos-dropdown-bg) !important;
+    border-color: var(--torneos-dropdown-border) !important;
+    color: var(--torneos-control-text) !important;
+    box-shadow: var(--torneos-dropdown-shadow);
+}
+
+html.theme-torneos ul.absolute.z-50.bg-white > li:hover,
+html.theme-torneos .max-h-48.overflow-y-auto.rounded-lg.border.bg-white > button:hover:not(:disabled) {
+    background-color: var(--torneos-dropdown-option-hover) !important;
+    color: var(--torneos-dropdown-option-selected-text) !important;
+}
+
+/* ============================================================================
+   CONTROLES Y PORTALES DE ANT DESIGN VUE (Select, Input, InputNumber, Picker,
+   TreeSelect, Cascader, Checkbox, Radio, Switch, Pagination)
+   ----------------------------------------------------------------------------
+   `ant-design-vue.css` usa `!important` para imponerse al runtime CSS-in-JS de
+   antd. Aquí se usa la misma especificidad + `html.theme-torneos` únicamente
+   en las propiedades que ant-design-vue.css declara con `!important`,
+   incluyendo los menús y portales que se montan directamente en `body`.
+   ============================================================================ */
+
+/* Ant Select & AutoComplete (control cerrado) */
+html.theme-torneos .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+html.theme-torneos .ant-select-multiple .ant-select-selector {
+    background-color: var(--torneos-control-bg) !important;
+    border-color: var(--torneos-control-border) !important;
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos .ant-select-single:not(.ant-select-customize-input) .ant-select-selection-item {
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos .ant-select-single:not(.ant-select-customize-input) .ant-select-selection-placeholder,
+html.theme-torneos .ant-select-multiple .ant-select-selection-placeholder {
+    color: var(--torneos-control-placeholder) !important;
+}
+
+html.theme-torneos .ant-select-multiple .ant-select-selection-item {
+    background-color: var(--torneos-tag-bg) !important;
+    border-color: var(--torneos-tag-border) !important;
+    color: var(--torneos-tag-text) !important;
+}
+
+html.theme-torneos .ant-select-multiple .ant-select-selection-item-remove {
+    color: var(--torneos-tag-text) !important;
+}
+
+html.theme-torneos .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+    border-color: var(--torneos-control-hover-border) !important;
+}
+
+html.theme-torneos .ant-select-focused .ant-select-selector {
+    border-color: var(--torneos-control-focus-border) !important;
+    box-shadow: 0 0 0 3px var(--torneos-control-focus-ring) !important;
+}
+
+html.theme-torneos .ant-select-disabled .ant-select-selector {
+    background-color: var(--torneos-control-disabled-bg) !important;
+    border-color: var(--torneos-control-disabled-border) !important;
+}
+
+html.theme-torneos .ant-select-disabled .ant-select-selection-item,
+html.theme-torneos .ant-select-disabled .ant-select-selection-placeholder {
+    color: var(--torneos-control-disabled-text) !important;
+}
+
+html.theme-torneos .ant-select-arrow,
+html.theme-torneos .ant-select-suffix {
+    color: var(--torneos-control-icon) !important;
+}
+
+html.theme-torneos .ant-select-clear {
+    background-color: var(--torneos-control-bg) !important;
+    color: var(--torneos-control-icon) !important;
+}
+
+/* Ant Select Dropdown & TreeSelect & Cascader (portales en body) */
+html.theme-torneos .ant-select-dropdown,
+html.theme-torneos .ant-cascader-dropdown {
+    background-color: var(--torneos-dropdown-bg) !important;
+    border-color: var(--torneos-dropdown-border) !important;
+    box-shadow: var(--torneos-dropdown-shadow) !important;
+}
+
+html.theme-torneos .ant-select-item,
+html.theme-torneos .ant-select-tree .ant-select-tree-node-content-wrapper,
+html.theme-torneos .ant-cascader-menu-item {
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos .ant-select-item-option-active,
+html.theme-torneos .ant-select-tree .ant-select-tree-node-content-wrapper:hover,
+html.theme-torneos .ant-cascader-menu-item:hover,
+html.theme-torneos .ant-cascader-menu-item-active {
+    background-color: var(--torneos-dropdown-option-hover) !important;
+    color: var(--torneos-dropdown-option-selected-text) !important;
+}
+
+html.theme-torneos .ant-select-item-option-selected,
+html.theme-torneos .ant-select-tree .ant-select-tree-node-selected {
+    background-color: var(--torneos-dropdown-option-selected) !important;
+    color: var(--torneos-dropdown-option-selected-text) !important;
+}
+
+html.theme-torneos .ant-select-item-option-selected .ant-select-item-option-state {
+    color: var(--torneos-emerald) !important;
+}
+
+html.theme-torneos .ant-select-item-empty {
+    color: var(--torneos-control-placeholder) !important;
+}
+
+/* Ant Input & Textarea */
+html.theme-torneos .ant-input,
+html.theme-torneos .ant-input-affix-wrapper {
+    background-color: var(--torneos-control-bg) !important;
+    border-color: var(--torneos-control-border) !important;
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos .ant-input-affix-wrapper .ant-input {
+    background-color: transparent !important;
+}
+
+html.theme-torneos .ant-input::placeholder {
+    color: var(--torneos-control-placeholder) !important;
+}
+
+html.theme-torneos .ant-input:hover,
+html.theme-torneos .ant-input-affix-wrapper:hover {
+    border-color: var(--torneos-control-hover-border) !important;
+}
+
+html.theme-torneos .ant-input:focus,
+html.theme-torneos .ant-input-focused,
+html.theme-torneos .ant-input-affix-wrapper:focus,
+html.theme-torneos .ant-input-affix-wrapper-focused {
+    border-color: var(--torneos-control-focus-border) !important;
+    box-shadow: 0 0 0 3px var(--torneos-control-focus-ring) !important;
+}
+
+html.theme-torneos .ant-input-disabled,
+html.theme-torneos .ant-input[disabled] {
+    background-color: var(--torneos-control-disabled-bg) !important;
+    color: var(--torneos-control-disabled-text) !important;
+}
+
+/* Ant InputNumber */
+html.theme-torneos .ant-input-number {
+    background-color: var(--torneos-control-bg) !important;
+    border-color: var(--torneos-control-border) !important;
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos .ant-input-number-input {
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos .ant-input-number-input::placeholder {
+    color: var(--torneos-control-placeholder) !important;
+}
+
+html.theme-torneos .ant-input-number:hover {
+    border-color: var(--torneos-control-hover-border) !important;
+}
+
+html.theme-torneos .ant-input-number-focused {
+    border-color: var(--torneos-control-focus-border) !important;
+    box-shadow: 0 0 0 3px var(--torneos-control-focus-ring) !important;
+}
+
+html.theme-torneos .ant-input-number-handler-wrap {
+    background-color: var(--torneos-dropdown-option-hover) !important;
+    border-inline-start-color: var(--torneos-control-border) !important;
+}
+
+html.theme-torneos .ant-input-number-handler {
+    border-color: var(--torneos-control-border) !important;
+    color: var(--torneos-control-icon) !important;
+}
+
+html.theme-torneos .ant-input-number-handler:hover .ant-input-number-handler-up-inner,
+html.theme-torneos .ant-input-number-handler:hover .ant-input-number-handler-down-inner {
+    color: var(--torneos-emerald) !important;
+}
+
+/* Ant DatePicker / RangePicker / TimePicker */
+html.theme-torneos .ant-picker {
+    background-color: var(--torneos-control-bg) !important;
+    border-color: var(--torneos-control-border) !important;
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos .ant-picker:hover {
+    border-color: var(--torneos-control-hover-border) !important;
+}
+
+html.theme-torneos .ant-picker-focused,
+html.theme-torneos .ant-picker:focus {
+    border-color: var(--torneos-control-focus-border) !important;
+    box-shadow: 0 0 0 3px var(--torneos-control-focus-ring) !important;
+}
+
+html.theme-torneos .ant-picker-input > input {
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos .ant-picker-input > input::placeholder {
+    color: var(--torneos-control-placeholder) !important;
+}
+
+html.theme-torneos .ant-picker-suffix,
+html.theme-torneos .ant-picker-separator {
+    color: var(--torneos-control-icon) !important;
+}
+
+html.theme-torneos .ant-picker-clear {
+    background-color: var(--torneos-control-bg) !important;
+    color: var(--torneos-control-icon) !important;
+}
+
+html.theme-torneos .ant-picker-dropdown .ant-picker-panel-container {
+    background-color: var(--torneos-dropdown-bg) !important;
+    border-color: var(--torneos-dropdown-border) !important;
+    box-shadow: var(--torneos-dropdown-shadow) !important;
+}
+
+html.theme-torneos .ant-picker-header,
+html.theme-torneos .ant-picker-header-view button,
+html.theme-torneos .ant-picker-content th,
+html.theme-torneos .ant-picker-cell-in-view {
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos .ant-picker-cell:hover:not(.ant-picker-cell-selected) .ant-picker-cell-inner {
+    background-color: var(--torneos-dropdown-option-hover) !important;
+}
+
+html.theme-torneos .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
+html.theme-torneos .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+html.theme-torneos .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
+    background-color: var(--torneos-emerald) !important;
+    color: #ffffff !important;
+}
+
+html.theme-torneos .ant-picker-cell-in-view.ant-picker-cell-in-range::before {
+    background-color: var(--torneos-dropdown-option-hover) !important;
+}
+
+html.theme-torneos .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+    border-color: var(--torneos-emerald) !important;
+}
+
+/* Ant Checkbox, Radio y Switch */
+html.theme-torneos .ant-checkbox-inner,
+html.theme-torneos .ant-radio-inner {
+    background-color: var(--torneos-control-bg) !important;
+    border-color: var(--torneos-control-border) !important;
+}
+
+html.theme-torneos .ant-checkbox-wrapper:hover .ant-checkbox-inner,
+html.theme-torneos .ant-checkbox:hover .ant-checkbox-inner,
+html.theme-torneos .ant-checkbox-input:focus + .ant-checkbox-inner,
+html.theme-torneos .ant-radio:hover .ant-radio-inner,
+html.theme-torneos .ant-radio-wrapper:hover .ant-radio,
+html.theme-torneos .ant-radio-input:focus + .ant-radio-inner {
+    border-color: var(--torneos-control-hover-border) !important;
+}
+
+html.theme-torneos .ant-checkbox-checked .ant-checkbox-inner,
+html.theme-torneos .ant-checkbox-indeterminate .ant-checkbox-inner {
+    background-color: var(--torneos-emerald) !important;
+    border-color: var(--torneos-emerald) !important;
+}
+
+html.theme-torneos .ant-radio-checked .ant-radio-inner {
+    border-color: var(--torneos-emerald) !important;
+}
+
+html.theme-torneos .ant-radio-checked .ant-radio-inner::after {
+    background-color: var(--torneos-emerald) !important;
+}
+
+html.theme-torneos .ant-switch {
+    background-color: var(--torneos-switch-off) !important;
+}
+
+html.theme-torneos .ant-switch-checked,
+html.theme-torneos .ant-switch-checked:hover:not(.ant-switch-disabled) {
+    background-color: var(--torneos-switch-on) !important;
+}
+
+/* Ant Dropdown Menu & Popover (InlineEditable, menús de acciones) */
+html.theme-torneos .ant-dropdown-menu {
+    background-color: var(--torneos-dropdown-bg) !important;
+    border-color: var(--torneos-dropdown-border) !important;
+    box-shadow: var(--torneos-dropdown-shadow) !important;
+}
+
+html.theme-torneos .ant-dropdown-menu-item {
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos .ant-dropdown-menu-item:hover {
+    background-color: var(--torneos-dropdown-option-hover) !important;
+    color: var(--torneos-dropdown-option-selected-text) !important;
+}
+
+html.theme-torneos .ant-popover-inner {
+    background-color: var(--torneos-dropdown-bg) !important;
+    border-color: var(--torneos-dropdown-border) !important;
+}
+
+html.theme-torneos .ant-popover-title,
+html.theme-torneos .ant-popover-inner-content {
+    color: var(--torneos-control-text) !important;
+    border-bottom-color: var(--torneos-dropdown-border) !important;
+}
+
+/* ============================================================================
+   SELECTORES DE FECHA FLATPICKR (calendario emergente en body)
+   ============================================================================ */
+html.theme-torneos .flatpickr-calendar {
+    background: var(--torneos-dropdown-bg);
+    border: 1px solid var(--torneos-dropdown-border);
+    box-shadow: var(--torneos-dropdown-shadow);
+    color: var(--torneos-control-text);
+}
+
+html.theme-torneos .flatpickr-calendar.arrowTop::before,
+html.theme-torneos .flatpickr-calendar.arrowTop::after {
+    border-bottom-color: var(--torneos-dropdown-bg);
+}
+
+html.theme-torneos .flatpickr-calendar.arrowBottom::before,
+html.theme-torneos .flatpickr-calendar.arrowBottom::after {
+    border-top-color: var(--torneos-dropdown-bg);
+}
+
+html.theme-torneos .flatpickr-months .flatpickr-month,
+html.theme-torneos .flatpickr-current-month .flatpickr-monthDropdown-months,
+html.theme-torneos .flatpickr-current-month input.cur-year,
+html.theme-torneos span.flatpickr-weekday {
+    color: var(--torneos-control-text);
+    fill: var(--torneos-control-text);
+}
+
+html.theme-torneos .flatpickr-months .flatpickr-prev-month svg,
+html.theme-torneos .flatpickr-months .flatpickr-next-month svg {
+    fill: var(--torneos-control-icon);
+}
+
+html.theme-torneos .flatpickr-day {
+    color: var(--torneos-control-text);
+}
+
+html.theme-torneos .flatpickr-day:hover,
+html.theme-torneos .flatpickr-day:focus {
+    background: var(--torneos-dropdown-option-hover);
+    border-color: var(--torneos-dropdown-option-hover);
+    color: var(--torneos-dropdown-option-selected-text);
+}
+
+html.theme-torneos .flatpickr-day.today {
+    border-color: var(--torneos-emerald);
+}
+
+html.theme-torneos .flatpickr-day.selected,
+html.theme-torneos .flatpickr-day.startRange,
+html.theme-torneos .flatpickr-day.endRange,
+html.theme-torneos .flatpickr-day.selected:hover,
+html.theme-torneos .flatpickr-day.startRange:hover,
+html.theme-torneos .flatpickr-day.endRange:hover {
+    background: var(--torneos-emerald);
+    border-color: var(--torneos-emerald);
+    color: #ffffff;
+}
+
+html.theme-torneos .flatpickr-day.inRange {
+    background: var(--torneos-dropdown-option-hover);
+    border-color: var(--torneos-dropdown-option-hover);
+    box-shadow: -5px 0 0 var(--torneos-dropdown-option-hover), 5px 0 0 var(--torneos-dropdown-option-hover);
+    color: var(--torneos-dropdown-option-selected-text);
+}
+
+html.theme-torneos .flatpickr-time {
+    border-top-color: var(--torneos-dropdown-border);
+}
+
+html.theme-torneos .flatpickr-time input,
+html.theme-torneos .flatpickr-time .flatpickr-time-separator,
+html.theme-torneos .flatpickr-time .flatpickr-am-pm {
+    color: var(--torneos-control-text);
+}
+
+html.theme-torneos .flatpickr-time input:hover,
+html.theme-torneos .flatpickr-time .flatpickr-am-pm:hover,
+html.theme-torneos .flatpickr-time input:focus,
+html.theme-torneos .flatpickr-time .flatpickr-am-pm:focus {
+    background: var(--torneos-dropdown-option-hover);
+}
+
+/* ============================================================================
+   B. EDITORES DE TEXTO MULTILÍNEA (EditorAracode, Quill, EasyMDE, TinyMCE)
+   ============================================================================ */
+html.theme-torneos .editor-aracode-wrapper :is(.ae-editor, .aracode-editor),
+html.theme-torneos .ql-container.ql-snow,
+html.theme-torneos .markdown-editor .EasyMDEContainer .CodeMirror {
+    background-color: var(--torneos-control-bg);
+    border-color: var(--torneos-control-border) !important;
+    color: var(--torneos-control-text);
+}
+
+html.theme-torneos .editor-aracode-wrapper :is(.ae-toolbar, .aracode-editor-toolbar),
+html.theme-torneos .ql-toolbar.ql-snow,
+html.theme-torneos .markdown-editor .editor-toolbar {
+    background-color: var(--torneos-panel-header-surface);
+    border-color: var(--torneos-control-border) !important;
+    color: var(--torneos-control-text);
+}
+
+html.theme-torneos .editor-aracode-wrapper :is(.ae-content, .ProseMirror, [contenteditable="true"]),
+html.theme-torneos .ql-snow .ql-editor {
+    background-color: var(--torneos-control-bg);
+    color: var(--torneos-control-text);
+}
+
+/* ============================================================================
+   FASE 4: PAGINADORES DEL SISTEMA (Pagination.vue, Ant Pagination,
+   vue3-datatable .bh-pagination, DataTables .dt-paging)
+   ============================================================================ */
+
+/* 1. Componente compartido Pagination.vue (nav[aria-label="Navegación de Paginación"])
+   La barra y los botones usan la paleta oscura del pager: esmeralda profundo,
+   bordes lima tenues e iconos claros. */
+html.theme-torneos [aria-label="Navegación de Paginación"] {
+    border-top: 1px solid var(--torneos-pager-button-border);
+    background-color: var(--torneos-pager-bar-bg);
+    color: var(--torneos-pager-button-text);
+    border-radius: 0 0 0.85rem 0.85rem;
+}
+
+/* Cuando Pagination se renderiza fuera de un .panel (p. ej. tarjetas de Ediciones o Equipos) */
+html.theme-torneos :not(.panel) > div > [aria-label="Navegación de Paginación"],
+html.theme-torneos :not(.panel) > [aria-label="Navegación de Paginación"] {
+    border: 1px solid var(--torneos-pager-button-border);
+    border-radius: 0.85rem;
+    box-shadow: 0 8px 22px rgb(2 44 34 / 30%);
+}
+
+/* Indicador de cantidad de resultados ("Mostrando X a Y de Z resultados") */
+html.theme-torneos [aria-label="Navegación de Paginación"] p {
+    color: #d1fae5;
+}
+
+html.theme-torneos [aria-label="Navegación de Paginación"] p span.font-bold {
+    color: var(--torneos-pager-button-text);
+}
+
+/* Puntos suspensivos (...) */
+html.theme-torneos [aria-label="Navegación de Paginación"] ul li > span {
+    color: rgb(209 250 229 / 70%);
+}
+
+/* Enlaces y botones activos/navegables (Primera, Anterior, Números, Siguiente, Última y versión móvil) */
+html.theme-torneos [aria-label="Navegación de Paginación"] a {
+    background-color: var(--torneos-pager-button-bg);
+    border: 1px solid var(--torneos-pager-button-border);
+    color: var(--torneos-pager-button-text);
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+html.theme-torneos [aria-label="Navegación de Paginación"] a:hover,
+html.theme-torneos [aria-label="Navegación de Paginación"] a:focus-visible {
+    background-color: var(--torneos-pager-button-hover-bg);
+    border-color: var(--torneos-pager-active-border);
+    color: var(--torneos-pager-button-hover-text);
+    box-shadow: 0 4px 12px rgb(2 44 34 / 30%);
+}
+
+html.theme-torneos [aria-label="Navegación de Paginación"] a:focus-visible {
+    outline: 2px solid var(--torneos-pager-active-border);
+    outline-offset: 2px;
+}
+
+/* Página actual: verde lima del tema con número oscuro para máximo contraste */
+html.theme-torneos [aria-label="Navegación de Paginación"] [aria-current="page"] {
+    background-image: none;
+    background-color: var(--torneos-pager-active-bg);
+    border: 1px solid var(--torneos-pager-active-border);
+    color: var(--torneos-pager-active-text);
+    box-shadow: 0 4px 14px rgb(163 230 53 / 25%);
+}
+
+/* Estados deshabilitados (Primera, Anterior, Siguiente, Última no disponibles) */
+html.theme-torneos [aria-label="Navegación de Paginación"] button:disabled {
+    background-color: var(--torneos-pager-disabled-bg);
+    border: 1px solid var(--torneos-pager-button-border);
+    color: var(--torneos-pager-disabled-text);
+    opacity: 0.85;
+    cursor: not-allowed;
+}
+
+/* Selector "Mostrar X registros" de Pagination.vue */
+html.theme-torneos #per-page-select {
+    background-color: var(--torneos-control-bg);
+    border-color: var(--torneos-control-border);
+    color: var(--torneos-control-text);
+}
+
+/* 2. Ant Design Vue Pagination (.ant-pagination) */
+html.theme-torneos .ant-pagination-item,
+html.theme-torneos .ant-pagination-prev .ant-pagination-item-link,
+html.theme-torneos .ant-pagination-next .ant-pagination-item-link {
+    background-color: var(--torneos-pagination-surface) !important;
+    border-color: var(--torneos-pagination-border) !important;
+    color: var(--torneos-pagination-text) !important;
+}
+
+html.theme-torneos .ant-pagination-item a {
+    color: var(--torneos-pagination-text) !important;
+}
+
+html.theme-torneos .ant-pagination-item:hover,
+html.theme-torneos .ant-pagination-prev:hover:not(.ant-pagination-disabled) .ant-pagination-item-link,
+html.theme-torneos .ant-pagination-next:hover:not(.ant-pagination-disabled) .ant-pagination-item-link {
+    background-color: var(--torneos-pagination-hover-bg) !important;
+    border-color: var(--torneos-control-hover-border) !important;
+    color: var(--torneos-pagination-hover-text) !important;
+}
+
+html.theme-torneos .ant-pagination-item:hover a {
+    color: var(--torneos-pagination-hover-text) !important;
+}
+
+html.theme-torneos .ant-pagination-item-active {
+    background-image: var(--torneos-pagination-active-bg) !important;
+    background-color: var(--torneos-emerald) !important;
+    border-color: var(--torneos-pagination-active-border) !important;
+}
+
+html.theme-torneos .ant-pagination-item-active a {
+    color: var(--torneos-pagination-active-text) !important;
+}
+
+html.theme-torneos .ant-pagination-disabled .ant-pagination-item-link {
+    background-color: var(--torneos-pagination-disabled-bg) !important;
+    border-color: var(--torneos-pagination-border) !important;
+    color: var(--torneos-pagination-disabled-text) !important;
+}
+
+/* 3. @bhplugin/vue3-datatable (.bh-pagination y filtros .bh-form-control) */
+html.theme-torneos .datatable .bh-pagination {
+    color: var(--torneos-pagination-muted);
+}
+
+html.theme-torneos .datatable .bh-pagination .bh-page-item {
+    background-color: var(--torneos-pagination-surface);
+    border-color: var(--torneos-pagination-border);
+    color: var(--torneos-pagination-text);
+}
+
+html.theme-torneos .datatable .bh-pagination .bh-page-item:hover:not(.bh-disabled):not([disabled]) {
+    background-color: var(--torneos-pagination-hover-bg);
+    border-color: var(--torneos-control-hover-border);
+    color: var(--torneos-pagination-hover-text);
+}
+
+html.theme-torneos .datatable .bh-pagination .bh-page-item.bh-active {
+    background-image: var(--torneos-pagination-active-bg);
+    background-color: var(--torneos-emerald);
+    border-color: var(--torneos-pagination-active-border);
+    color: var(--torneos-pagination-active-text);
+}
+
+html.theme-torneos .datatable .bh-pagination select,
+html.theme-torneos .datatable .bh-filter .bh-form-control {
+    background-color: var(--torneos-control-bg) !important;
+    border-color: var(--torneos-control-border) !important;
+    color: var(--torneos-control-text) !important;
+}
+
+/* 4. DataTables (.dt-paging y .dt-input) */
+html.theme-torneos .dt-input {
+    background-color: var(--torneos-control-bg) !important;
+    border-color: var(--torneos-control-border) !important;
+    color: var(--torneos-control-text) !important;
+}
+
+html.theme-torneos div.dt-container .dt-paging .dt-paging-button {
+    background-color: var(--torneos-pagination-surface) !important;
+    border-color: var(--torneos-pagination-border) !important;
+    color: var(--torneos-pagination-text) !important;
+}
+
+html.theme-torneos div.dt-container .dt-paging .dt-paging-button:hover:not(.disabled) {
+    background-color: var(--torneos-pagination-hover-bg) !important;
+    border-color: var(--torneos-control-hover-border) !important;
+    color: var(--torneos-pagination-hover-text) !important;
+}
+
+html.theme-torneos div.dt-container .dt-paging .dt-paging-button.current {
+    background-image: var(--torneos-pagination-active-bg) !important;
+    background-color: var(--torneos-emerald) !important;
+    border-color: var(--torneos-pagination-active-border) !important;
+    color: var(--torneos-pagination-active-text) !important;
+}
+
+html.theme-torneos div.dt-container .dt-paging .dt-paging-button.disabled {
+    background-color: var(--torneos-pagination-disabled-bg) !important;
+    color: var(--torneos-pagination-disabled-text) !important;
+}
+
+/* Estados de validación (mensajes de error y campos con error) */
+html.theme-torneos .has-error :is(.form-input, .form-textarea, .form-select, .form-multiselect, .multiselect__tags) {
+    border-color: #ef4444 !important;
+}
+
+html.theme-torneos .panel :is(.text-red-600, .text-red-500, .text-danger) {
+    color: var(--torneos-panel-error);
+}
+
+html.theme-torneos .form-section__card :is(.text-red-600, .text-red-500, .text-danger) {
+    color: var(--torneos-form-error);
+}
+
+html.theme-torneos .form-section__card .panel :is(.text-red-600, .text-red-500, .text-danger) {
+    color: var(--torneos-panel-error);
+}
+

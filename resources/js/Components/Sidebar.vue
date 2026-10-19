@@ -17,6 +17,7 @@ import menuPurchases from '../../../Modules/Purchases/Resources/assets/js/Menu.j
 import menuConfig from '../../../Modules/Security/Resources/assets/js/Menu.js';
 import menuCMS from '../../../Modules/CMS/Resources/assets/js/Menu.js';
 import menuSocialevents, { configureSocialeventsMenu } from '../../../Modules/Socialevents/Resources/assets/js/Menu.js';
+import { puedeVerMisPagos } from '../../../Modules/Socialevents/Resources/assets/js/utils/organizationPaymentsAccess.js';
 import menuHelpdesk from '../../../Modules/Helpdesk/Resources/assets/js/Menu.js';
 import menuHealth from '../../../Modules/Health/Resources/assets/js/Menu.js';
 
@@ -28,6 +29,9 @@ const props = defineProps({
 });
 const page = usePage();
 const sportsMode = Boolean(page.props.sportsOrganization?.mode);
+// Filas como "Mis pagos": solo el organizador con cuenta propia en modo deportivo.
+const rolesSesion = page.props.auth?.roles || [];
+const sportsOrganization = page.props.sportsOrganization || {};
 const emit = defineEmits(['activateCakeButton'])
 const closeSidebarToggle = async () => {
     emit('activateCakeButton', false)
@@ -52,7 +56,8 @@ const menu = ref([
     {
         ...configureSocialeventsMenu(sportsMode),
         items: configureSocialeventsMenu(sportsMode).items.filter((item) =>
-            !item.superAdminOnly || (page.props.auth?.roles || []).some((role) => ['admin', 'Administrador'].includes(role))
+            (!item.superAdminOnly || rolesSesion.some((role) => ['admin', 'Administrador'].includes(role)))
+            && (!item.organizationOnly || puedeVerMisPagos(sportsOrganization, rolesSesion))
         ),
     }
 ]);

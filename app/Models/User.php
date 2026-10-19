@@ -40,7 +40,15 @@ class User extends Authenticatable
         'status',
         'updated_information',
         'api_token',
-        'tour_completed'
+        'tour_completed',
+        // Datos del organizador de torneos (registro en modo deportivo)
+        'apellido_paterno',
+        'apellido_materno',
+        'telefono',
+        'tipo_identidad',
+        'numero_identidad',
+        'sexo',
+        'direccion',
     ];
 
     /**

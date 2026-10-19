@@ -34,6 +34,7 @@ return [
     'mercadopago' => [
         'key' => env('MERCADOPAGO_KEY'),
         'token' => env('MERCADOPAGO_TOKEN'),
+        'webhook_secret' => env('MERCADOPAGO_WEBHOOK_SECRET'),
         'max_installments' => (int) env('MERCADOPAGO_MAX_INSTALLMENTS', 12),
     ],
     'recaptcha' => [

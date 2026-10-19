@@ -50,6 +50,8 @@
     const page = usePage();
     const company = page.props.company;
     const loginRoot = ref(null);
+    // Alerta enviada por el servidor (por ejemplo: cuenta ya registrada al crear la cuenta).
+    const flashError = computed(() => page.props.flash?.error || '');
 
     useAracodeLoginAnimations(loginRoot);
 
@@ -293,6 +295,9 @@
                     <p class="aracode-login__form-desc">Ingresa tus credenciales corporativas</p>
 
                     <div v-if="status" class="aracode-login__status">{{ status }}</div>
+                    <div v-if="flashError" role="alert" class="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                        {{ flashError }}
+                    </div>
 
                     <form class="aracode-login__form" @submit.prevent="submit" novalidate>
                         <div class="aracode-login__field">

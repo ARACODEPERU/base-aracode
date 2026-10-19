@@ -11,6 +11,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Modules\Socialevents\Entities\EvenLocal;
 use Modules\Socialevents\Entities\EventEdition;
@@ -215,6 +216,15 @@ class EventEditionMatchController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+    public function editionFixturesCreateAvailability($id)
+    {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertOwnedEdition(request()->user(), (int) $id);
+        $edition = EventEdition::findOrFail($id);
+
+        return response()->json($sports->matchCreationAvailability(request()->user(), $edition));
+    }
+
     public function editionFixturesCreate($id)
     {
         $sports = app(SportsOrganizationService::class);
@@ -246,7 +256,7 @@ class EventEditionMatchController extends Controller
         $sports->assertOwnedEdition($request->user(), (int) $id);
         $request->validate([
             'teams' => 'required|array|min:2',
-            'format' => 'required|string',
+            'format' => 'nullable|string|in:round_robin',
         ], [
             'teams.required' => 'No se han seleccionado equipos para generar el torneo.',
             'teams.min' => 'Necesitas al menos 2 equipos.'
@@ -260,9 +270,14 @@ class EventEditionMatchController extends Controller
         $registeredTeamIds = EventEditionTeam::where('edition_id', $editionId)->whereIn('team_id', $teamIds)->pluck('team_id')->map(fn ($teamId) => (int) $teamId)->all();
         abort_unless(count($registeredTeamIds) === $teamIds->count(), 404);
 
+        // Solo todos contra todos: crea los cruces que faltan sin tocar los partidos existentes.
         $service = new TournamentService();
-        $service->generate($editionId, $request->get('format'), $teamIds->all(), function ($matches) use ($sports, $request) {
-            $sports->chargeMatches($matches, $request->user());
+        $service->generateMissingRoundRobin($editionId, $teamIds->all(), function ($nuevos) use ($sports, $request, $editionId) {
+            // Sin cruces nuevos no se registra lote ni cobro.
+            if ($nuevos->isEmpty()) return;
+            // Primero se registra el lote: su resultado indica si es la primera fecha (gratis).
+            $isFree = $sports->registerMatchBatch($nuevos, $request->user(), $editionId, 'round_robin');
+            $sports->chargeMatches($nuevos, $request->user(), $isFree);
         });
     }
 
@@ -334,9 +349,9 @@ class EventEditionMatchController extends Controller
             'team_a_id'    => $validated['team_a'],
             'phase'        => $validated['phase'],
             'round_number' => $validated['round_number'] ?? 1,
-            'group_name'   => $validated['group_name'],
-            'match_date'   => $validated['match_date'],
-            'location'     => $validated['location'],
+            'group_name'   => $validated['group_name'] ?? null,
+            'match_date'   => $validated['match_date'] ?? null,
+            'location'     => $validated['location'] ?? null,
             'status'       => 'pending', // Por defecto
             ]);
             $sports->chargeMatch($match, $request->user());
@@ -353,12 +368,20 @@ class EventEditionMatchController extends Controller
         $sports = app(SportsOrganizationService::class);
         $sports->assertCanWrite($request->user());
         $request->validate([
-            'round_number' => 'required|max:2',
+            // El campo del modal usa máscara de dos dígitos: la jornada puede llegar a 99.
+            // Antes era 'required|max:2', que sin una regla numérica cuenta caracteres y
+            // aceptaba cualquier cosa de dos letras como jornada.
+            'round_number' => 'required|numeric|min:1|max:99',
             //'group_name' => 'required|string',
-            'match_date' => 'required|string',
+            // El horario puede quedar vacío: mover un cruce de jornada no obliga a
+            // programarle fecha (los partidos generados aún no la tienen).
+            'match_date' => 'nullable|string',
             //'location' => 'required|string',
             'equipo_h_id' => 'nullable|exists:event_teams,id|different:equipo_a_id',
             'equipo_a_id' => 'nullable|exists:event_teams,id|different:equipo_h_id',
+        ], [
+            'round_number.min' => 'La jornada debe ser 1 o mayor.',
+            'round_number.max' => 'La jornada no puede pasar de 99.',
         ]);
 
         // Validación adicional: si ambos equipos están seleccionados, no pueden ser el mismo
@@ -367,32 +390,50 @@ class EventEditionMatchController extends Controller
         }
 
         $match = $sports->assertOwnedMatch($request->user(), (int) $id);
-        if ($sports->sportsMode() && ! $sports->isSuperAdmin($request->user())) {
-            abort_unless((int) $request->input('round_number') === (int) $match->round_number, 422, 'La edición de una fecha programada no se puede cambiar después de crear el partido.');
-            if ($match->team_h_id && $match->team_a_id) {
-                abort_unless(! DB::table('socialevent_organization_ledger')->where('match_id', $match->id)->where('entry_type', 'match_charge')->exists(), 422, 'No se pueden modificar los equipos de un partido que ya fue cobrado.');
-            }
-        }
+        // Vacío es "sin programar": la columna es datetime y la cadena vacía no es fecha válida.
+        $matchDate = $request->filled('match_date') ? $request->get('match_date') : null;
         $teamH = $request->input('equipo_h_id', $match->team_h_id);
         $teamA = $request->input('equipo_a_id', $match->team_a_id);
+        $teamsChanged = (int) $teamH !== (int) $match->team_h_id || (int) $teamA !== (int) $match->team_a_id;
+        $jornadaChanged = (int) $request->input('round_number') !== (int) $match->round_number;
+
+        // Los rechazos se devuelven como errores de validación para que el modal los
+        // muestre junto al campo en vez de cortar la página con una excepción.
+        if ($sports->sportsMode() && ! $sports->isSuperAdmin($request->user())) {
+            // Un partido ya jugado o en vivo no se reprograma: primero hay que reabrirlo.
+            if (in_array($match->status, ['closed', 'live'], true) && ($jornadaChanged || $teamsChanged)) {
+                throw ValidationException::withMessages([
+                    'round_number' => 'Un partido jugado o en vivo no se puede reprogramar ni cambiar de equipos.',
+                ]);
+            }
+            // La jornada y el horario sí se pueden corregir: el cobro es por partido,
+            // no por fecha, y el organizador necesita reacomodar las fechas del fixture.
+            // Lo que no se puede es cambiar los equipos de un partido ya cobrado.
+            if ($teamsChanged && DB::table('socialevent_organization_ledger')->where('match_id', $match->id)->where('entry_type', 'match_charge')->exists()) {
+                throw ValidationException::withMessages([
+                    'equipo_h_id' => 'No se pueden cambiar los equipos de un partido que ya fue cobrado.',
+                ]);
+            }
+        }
+
         if ($teamH) $sports->assertOwnedEditionTeam($request->user(), (int) $match->edition_id, (int) $teamH);
         if ($teamA) $sports->assertOwnedEditionTeam($request->user(), (int) $match->edition_id, (int) $teamA);
-        $teamsChanged = (int) $teamH !== (int) $match->team_h_id || (int) $teamA !== (int) $match->team_a_id;
         if ($teamsChanged && (! $teamH || ! $teamA) && $sports->sportsMode() && ! $sports->isSuperAdmin($request->user())) {
-            abort(422, 'No se puede dejar un partido sin ambos equipos después de registrarlo.');
+            throw ValidationException::withMessages([
+                'equipo_a_id' => 'No se puede dejar un partido sin ambos equipos después de registrarlo.',
+            ]);
         }
         if ($teamsChanged && $teamH && $teamA) {
             if ($sports->sportsMode() && ! $sports->isSuperAdmin($request->user()) && $match->status === 'pending') {
-                abort_unless(! DB::table('socialevent_organization_ledger')->where('match_id', $match->id)->where('entry_type', 'match_charge')->exists(), 422, 'No se pueden cambiar equipos de un partido ya cobrado.');
                 $sports->assertCanCreateMatch($request->user(), (int) $match->edition_id, 2);
             }
-            DB::transaction(function () use ($match, $teamH, $teamA, $request, $sports) {
+            DB::transaction(function () use ($match, $teamH, $teamA, $request, $sports, $matchDate) {
                 $match->update([
                     'team_h_id' => $teamH,
                     'team_a_id' => $teamA,
                     'round_number' => $request->get('round_number'),
                     'group_name' => $request->get('group_name') ?? null,
-                    'match_date' => $request->get('match_date'),
+                    'match_date' => $matchDate,
                     'location' => $request->get('location') ?? null,
                     'status' => $request->get('status') ?? 'pending',
                     'placeholder_h' => null,
@@ -406,7 +447,7 @@ class EventEditionMatchController extends Controller
                 'team_a_id' => $teamA,
                 'round_number' => $request->get('round_number'),
                 'group_name' => $request->get('group_name') ?? null,
-                'match_date' => $request->get('match_date'),
+                'match_date' => $matchDate,
                 'location' => $request->get('location') ?? null,
                 'status' => $request->get('status') ?? 'pending',
                 'placeholder_h' => null,

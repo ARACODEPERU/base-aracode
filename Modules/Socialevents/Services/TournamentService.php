@@ -42,6 +42,247 @@ class TournamentService
         });
     }
 
+    /**
+     * Crea solo los partidos todos contra todos que aún no existen en la edición.
+     * No borra ni modifica partidos existentes (jugados, cerrados o pendientes)
+     * y no asigna fecha ni hora: el organizador las define después.
+     *
+     * Las jornadas se reparten respetando lo que ya está registrado: el partido
+     * que el organizador guardó en una fecha conserva su fecha y su cupo, y los
+     * cruces que faltan se acomodan buscando que cada jornada quede con la
+     * cantidad de partidos del calendario (con 4 equipos, dos por fecha) y que
+     * ningún equipo juegue dos veces el mismo día. Cada cruce intenta primero la
+     * fecha que le toca en el calendario y, si está completa o uno de sus equipos
+     * ya juega ese día, otra que pueda con él.
+     *
+     * El acomodo se busca con retroceso (no por orden de llegada) porque un
+     * reparto apurado deja fechas incompletas y equipos repetidos cuando el
+     * organizador ya registró partidos en fechas que no son las del calendario.
+     */
+    public function generateMissingRoundRobin($editionId, array $teamIds, ?callable $afterGenerate = null)
+    {
+        if (count($teamIds) < 2) {
+            throw ValidationException::withMessages([
+                'teams' => 'Necesitas al menos 2 equipos.'
+            ]);
+        }
+
+        return DB::transaction(function () use ($editionId, $teamIds, $afterGenerate) {
+            // Orden estable para que regenerar no cambie los cruces ya existentes.
+            $teamIds = array_values(array_unique(array_map('intval', $teamIds)));
+            sort($teamIds);
+
+            $calendario = $this->calendarioBerger($teamIds);
+            $jornadas = $calendario === [] ? 0 : (int) max(array_keys($calendario));
+            $cupoPorJornada = intdiv(count($teamIds), 2);
+
+            // Reservas de cada jornada: los equipos que ya juegan ese día y
+            // cuántos partidos tiene. Un partido registrado en una fecha ocupa
+            // su cupo, de modo que el generador no la deje con un partido de más.
+            $ocupacion = [];
+            $paresExistentes = [];
+
+            $existentes = EventEditionMatch::where('edition_id', $editionId)
+                ->where('phase', 'league')
+                ->get(['team_h_id', 'team_a_id', 'round_number']);
+
+            foreach ($existentes as $match) {
+                // Pares (local-visitante sin importar el orden) ya registrados en la liga.
+                $paresExistentes[$this->claveParEquipos($match->team_h_id, $match->team_a_id)] = true;
+
+                $jornada = (int) $match->round_number;
+                // Sin fecha del calendario no reserva cupo, pero su cruce ya no se repite.
+                if ($jornada < 1 || $jornada > $jornadas) continue;
+
+                $this->reservarCupoEnJornada($ocupacion, $jornada, (int) $match->team_h_id, (int) $match->team_a_id);
+            }
+
+            // Cruces que faltan, en el orden en que los pone el calendario.
+            $faltantes = [];
+            foreach ($calendario as $jornadaCalendario => $cruces) {
+                foreach ($cruces as [$home, $away]) {
+                    if (isset($paresExistentes[$this->claveParEquipos($home, $away)])) continue;
+
+                    $faltantes[] = [
+                        'clave'   => $this->claveParEquipos($home, $away),
+                        'home'    => (int) $home,
+                        'away'    => (int) $away,
+                        'jornada' => (int) $jornadaCalendario,
+                    ];
+                }
+            }
+
+            // Reparto con retroceso: se busca un acomodo donde ninguna jornada
+            // pase de su cupo y ningún equipo juegue dos veces el mismo día.
+            $reparto = $this->repartirCrucesPorJornada($faltantes, $ocupacion, $jornadas, $cupoPorJornada);
+
+            $nuevos = collect();
+            foreach ($faltantes as $faltante) {
+                // Sin reparto posible (lo registrado ya obliga a repetir equipos)
+                // el cruce igual se crea, en la jornada menos cargada.
+                $jornada = $reparto[$faltante['clave']]
+                    ?? $this->jornadaMenosCargada($ocupacion, $faltante['jornada'], $jornadas);
+
+                $this->reservarCupoEnJornada($ocupacion, $jornada, $faltante['home'], $faltante['away']);
+
+                $nuevos->push(EventEditionMatch::create([
+                    'edition_id'   => $editionId,
+                    'team_h_id'    => $faltante['home'],
+                    'team_a_id'    => $faltante['away'],
+                    'round_number' => $jornada,
+                    'group_name'   => null,
+                    'phase'        => 'league',
+                    'match_date'   => null,
+                    'status'       => 'pending',
+                ]));
+            }
+
+            if ($afterGenerate) $afterGenerate($nuevos);
+
+            return $nuevos;
+        });
+    }
+
+    /** Reserva en la jornada a los equipos que juegan y suma el partido. */
+    private function reservarCupoEnJornada(array &$ocupacion, int $jornada, int $home, int $away): void
+    {
+        $ocupacion[$jornada]['equipos'][$home] = true;
+        $ocupacion[$jornada]['equipos'][$away] = true;
+        $ocupacion[$jornada]['partidos'] = ($ocupacion[$jornada]['partidos'] ?? 0) + 1;
+    }
+
+    /**
+     * Reparte los cruces pendientes entre las jornadas y devuelve [clavePar => jornada].
+     * Devuelve null cuando no existe un acomodo que respete el cupo de cada jornada
+     * sin repetir equipos el mismo día (por ejemplo, si lo ya registrado lo impide).
+     *
+     * Se prueba primero el cruce con menos jornadas disponibles, para descartar
+     * temprano los callejones sin salida, y dentro de cada cruce primero la fecha
+     * que le toca en el calendario. El tope de intentos evita que un caso imposible
+     * se demore: al agotarse se usa el reparto de respaldo (jornada menos cargada).
+     */
+    private function repartirCrucesPorJornada(array $faltantes, array $ocupacion, int $jornadas, int $cupo): ?array
+    {
+        $intentos = 0;
+        $topeIntentos = 20000;
+
+        $resolver = function (array $pendientes, array $estado) use (&$resolver, $jornadas, $cupo, &$intentos, $topeIntentos): ?array {
+            if ($pendientes === []) return [$estado, []];
+            if (++$intentos > $topeIntentos) return null;
+
+            $elegido = null;
+            $opciones = null;
+            foreach ($pendientes as $indice => $faltante) {
+                $disponibles = $this->jornadasDisponibles($estado, $jornadas, $cupo, $faltante['home'], $faltante['away'], $faltante['jornada']);
+                if ($disponibles === []) return null;
+
+                if ($opciones === null || count($disponibles) < count($opciones)) {
+                    $elegido = $indice;
+                    $opciones = $disponibles;
+                    if (count($opciones) === 1) break;
+                }
+            }
+
+            $faltante = $pendientes[$elegido];
+            unset($pendientes[$elegido]);
+            $pendientes = array_values($pendientes);
+
+            foreach ($opciones as $jornada) {
+                $estadoSiguiente = $estado;
+                $this->reservarCupoEnJornada($estadoSiguiente, $jornada, $faltante['home'], $faltante['away']);
+
+                $resultado = $resolver($pendientes, $estadoSiguiente);
+                if ($resultado === null) continue;
+
+                [$estadoFinal, $asignaciones] = $resultado;
+                $asignaciones[$faltante['clave']] = $jornada;
+
+                return [$estadoFinal, $asignaciones];
+            }
+
+            return null;
+        };
+
+        $resultado = $resolver(array_values($faltantes), $ocupacion);
+
+        return $resultado === null ? null : $resultado[1];
+    }
+
+    /**
+     * Jornadas donde el cruce puede jugar: primero la que le toca en el calendario
+     * y después las demás, siempre que tengan cupo y ningún equipo juegue ese día.
+     */
+    private function jornadasDisponibles(array $ocupacion, int $jornadas, int $cupo, int $home, int $away, int $preferida): array
+    {
+        $disponibles = [];
+
+        if ($this->cabeElCruceEnJornada($ocupacion, $preferida, $cupo, $home, $away)) {
+            $disponibles[] = $preferida;
+        }
+
+        for ($jornada = 1; $jornada <= $jornadas; $jornada++) {
+            if ($jornada !== $preferida && $this->cabeElCruceEnJornada($ocupacion, $jornada, $cupo, $home, $away)) {
+                $disponibles[] = $jornada;
+            }
+        }
+
+        return $disponibles;
+    }
+
+    /** Jornada con menos partidos: respaldo cuando no existe un reparto posible. */
+    private function jornadaMenosCargada(array $ocupacion, int $preferida, int $jornadas): int
+    {
+        $menosCargada = $preferida;
+
+        for ($jornada = 1; $jornada <= $jornadas; $jornada++) {
+            if (($ocupacion[$jornada]['partidos'] ?? 0) < ($ocupacion[$menosCargada]['partidos'] ?? 0)) {
+                $menosCargada = $jornada;
+            }
+        }
+
+        return $menosCargada;
+    }
+
+    /** true si la jornada todavía tiene cupo y ninguno de los dos equipos juega ese día. */
+    private function cabeElCruceEnJornada(array $ocupacion, int $jornada, int $cupo, int $home, int $away): bool
+    {
+        if (($ocupacion[$jornada]['partidos'] ?? 0) >= $cupo) return false;
+
+        return ! isset($ocupacion[$jornada]['equipos'][$home])
+            && ! isset($ocupacion[$jornada]['equipos'][$away]);
+    }
+
+    private function claveParEquipos($a, $b): string
+    {
+        $a = (int) $a;
+        $b = (int) $b;
+        return min($a, $b) . '-' . max($a, $b);
+    }
+
+    /**
+     * Calendario todos contra todos (método de Berger) como [jornada => [[local, visitante], ...]].
+     */
+    private function calendarioBerger(array $teams): array
+    {
+        $teams = array_values($teams);
+        if (count($teams) % 2 != 0) $teams[] = null;
+
+        $totalTeams = count($teams);
+        $rondas = [];
+        for ($i = 0; $i < $totalTeams - 1; $i++) {
+            for ($j = 0; $j < $totalTeams / 2; $j++) {
+                $home = $teams[$j];
+                $away = $teams[$totalTeams - 1 - $j];
+                if ($home && $away) $rondas[$i + 1][] = [$home, $away];
+            }
+            $pivot = array_shift($teams);
+            array_unshift($teams, array_pop($teams));
+            array_unshift($teams, $pivot);
+        }
+
+        return $rondas;
+    }
+
     // --- FORMATO 1: TODOS CONTRA TODOS ---
     private function generateRoundRobin($teams, $editionId, $groupName = null)
     {

@@ -53,38 +53,38 @@
             </TransitionChild>
             <div class="fixed inset-0 overflow-y-auto">
               <div class="flex min-h-full items-center justify-center px-4 py-8">
-                <DialogPanel @click.stop class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-2xl rounded-xl overflow-hidden w-full max-w-5xl text-black dark:text-white animate__animated animate__zoomInUp transform transition-all">
-                  <button type="button" class="absolute top-4 ltr:right-4 rtl:left-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-2 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 outline-none transition-colors" @click="onClose">
+                <DialogPanel @click.stop class="modal-torneos bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-2xl rounded-xl overflow-hidden w-full max-w-5xl text-black dark:text-white animate__animated animate__zoomInUp transform transition-all">
+                  <button type="button" class="modal-torneos__close absolute top-4 ltr:right-4 rtl:left-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-2 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 outline-none transition-colors" @click="onClose">
                     <icon-x class="w-4 h-4" />
                   </button>
-                  <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <div class="modal-torneos__header bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-center space-x-4">
-                      <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-800">
+                      <div class="modal-torneos__icon flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-800">
                         <img v-if="icon" :src="icon" class="h-8 w-8" />
                         <svg v-else class="h-6 w-6 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
                       </div>
                       <div class="flex-1">
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white" id="modal-title">
+                        <h3 class="modal-torneos__title text-xl font-semibold text-gray-900 dark:text-white" id="modal-title">
                           <slot name="title" />
                         </h3>
-                        <div class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                        <div class="modal-torneos__message mt-1 text-sm text-gray-600 dark:text-gray-300">
                           <slot name="message" />
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div class="px-6 py-5 bg-gray-50 dark:bg-gray-700 relative">
+                  <div class="modal-torneos__body px-6 py-5 bg-gray-50 dark:bg-gray-700 relative">
                     <slot name="content" />
-                    <div class="flex justify-end items-center space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+                    <div class="modal-torneos__actions flex justify-end items-center space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
                         <slot name="buttons" />
-                        <DangerButton @click="onClose" type="button" class="px-4 py-2">
+                        <DangerButton @click="onClose" type="button" class="modal-torneos__close-button px-4 py-2">
                           Cerrar
                         </DangerButton>
                     </div>
                     <!-- Overlay de carga: spinner + mensaje mientras se procesa -->
-                    <div v-if="loading" class="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-b-xl bg-white/85 dark:bg-gray-800/85 backdrop-blur-sm">
+                    <div v-if="loading" class="modal-torneos__loading absolute inset-0 z-10 flex flex-col items-center justify-center rounded-b-xl bg-white/85 dark:bg-gray-800/85 backdrop-blur-sm">
                         <svg class="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>

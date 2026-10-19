@@ -1,7 +1,7 @@
 <script setup>
-    import { Link, router } from '@inertiajs/vue3';
+    import { Link, router, usePage } from '@inertiajs/vue3';
     import { faArrowLeft, faArrowRight, faStepBackward, faStepForward } from "@fortawesome/free-solid-svg-icons";
-    import { ref } from 'vue';
+    import { computed, ref } from 'vue';
 
     const props = defineProps({
         data: {
@@ -9,6 +9,11 @@
             default: () => ({}),
         },
     });
+
+    const page = usePage();
+    // Mismo mecanismo que usan los layouts: el servidor expone el modo
+    // deportivo cuando PW00001 = 2 y el tema de Torneos está activo.
+    const esTemaTorneos = computed(() => page.props.sportsOrganization?.mode === true);
 
     const perPageOptions = [10, 20, 50, 100];
     const selectedPerPage = ref(props.data.per_page || 20);
@@ -18,13 +23,65 @@
         url.searchParams.set('per_page', selectedPerPage.value);
         router.visit(url.toString(), { preserveState: true });
     };
+
+    // Clases compartidas del paginador. La variante de Torneos pinta botones
+    // esmeralda oscuros con iconos claros y deja la página activa en verde
+    // lima; la variante original se conserva intacta para PW00001 != 2.
+    const clasesNavegacion = computed(() => esTemaTorneos.value
+        ? 'flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 px-4 py-4 rounded-xl border border-lime-300/20 bg-emerald-950/70 backdrop-blur-sm'
+        : 'flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 px-4 py-4');
+
+    const clasesEtiquetaMostrar = computed(() => esTemaTorneos.value
+        ? 'text-sm font-bold text-emerald-50'
+        : 'text-sm font-bold text-gray-700 dark:text-gray-300');
+
+    const clasesTextoRegistros = computed(() => esTemaTorneos.value
+        ? 'text-sm text-emerald-100'
+        : 'text-sm text-gray-600 dark:text-gray-400');
+
+    const clasesBotonMovil = computed(() => esTemaTorneos.value
+        ? 'inline-flex items-center px-4 py-3 text-sm font-bold rounded-lg border border-lime-300/30 bg-emerald-900/85 text-emerald-50 transition-all duration-200 hover:bg-emerald-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-950'
+        : 'inline-flex items-center px-4 py-3 text-sm font-bold text-blue-700 bg-white rounded-lg hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all duration-200 dark:bg-gray-700 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white');
+
+    const clasesBotonMovilDeshabilitado = computed(() => esTemaTorneos.value
+        ? 'inline-flex items-center px-4 py-3 text-sm font-bold rounded-lg border border-emerald-300/15 bg-emerald-950/55 text-emerald-100/45 cursor-not-allowed'
+        : 'inline-flex items-center px-4 py-3 text-sm font-bold text-gray-400 bg-gray-200 rounded-lg cursor-not-allowed dark:bg-gray-700 dark:text-gray-500');
+
+    const clasesBotonIcono = computed(() => esTemaTorneos.value
+        ? 'flex items-center justify-center w-9 h-9 rounded-full border border-lime-300/30 bg-emerald-900/85 text-emerald-50 text-sm font-medium transition-colors hover:bg-emerald-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-950'
+        : 'flex items-center justify-center w-9 h-9 rounded-full bg-[#E8EBF3] text-[#4A5E8D] text-sm font-medium transition-colors hover:bg-blue-600 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-blue-600');
+
+    const clasesBotonIconoDeshabilitado = computed(() => esTemaTorneos.value
+        ? 'flex items-center justify-center w-9 h-9 rounded-full border border-emerald-300/15 bg-emerald-950/55 text-emerald-100/40 text-sm cursor-not-allowed'
+        : 'flex items-center justify-center w-9 h-9 rounded-full bg-[#F3F5F9] text-[#BDC5D8] text-sm cursor-not-allowed dark:bg-gray-800/50 dark:text-gray-600');
+
+    // Números y flechas deshabilitados: conservan su propio matiz original.
+    const clasesNumeroDeshabilitado = computed(() => esTemaTorneos.value
+        ? 'flex items-center justify-center w-9 h-9 rounded-full border border-emerald-300/15 bg-emerald-950/55 text-emerald-100/40 text-sm font-medium cursor-not-allowed'
+        : 'flex items-center justify-center w-9 h-9 rounded-full bg-[#E8EBF3] text-[#4A5E8D] text-sm font-medium cursor-not-allowed dark:bg-gray-800 dark:text-gray-300');
+
+    const clasesPaginaActiva = computed(() => esTemaTorneos.value
+        ? 'flex items-center justify-center w-9 h-9 rounded-full border border-lime-200 bg-lime-400 text-emerald-950 text-sm font-bold shadow-lg shadow-emerald-950/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-200 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-950'
+        : 'flex items-center justify-center w-9 h-9 rounded-full bg-[#4466F2] text-white text-sm font-bold shadow-lg shadow-blue-200 dark:shadow-none');
+
+    const clasesPuntos = computed(() => esTemaTorneos.value
+        ? 'flex items-center justify-center w-9 h-9 text-sm text-emerald-100/70'
+        : 'flex items-center justify-center w-9 h-9 text-sm text-gray-400 dark:text-gray-500');
+
+    const clasesResumen = computed(() => esTemaTorneos.value
+        ? 'text-sm text-emerald-100 font-sans'
+        : 'text-sm text-gray-700 dark:text-gray-300 font-sans');
+
+    const clasesResumenNumero = computed(() => esTemaTorneos.value
+        ? 'font-bold text-white'
+        : 'font-bold text-gray-900 dark:text-white');
 </script>
 <template>
     <div v-if="data.links.length > 0" class="p-0">
         <!-- Select for per page if slot is provided -->
         <div v-if="$slots.default" class="flex justify-between items-center px-4 py-3">
             <div class="flex items-center space-x-2">
-                <span for="per-page-select" class="text-sm font-bold text-gray-700 dark:text-gray-300">Mostrar:</span>
+                <span for="per-page-select" :class="clasesEtiquetaMostrar">Mostrar:</span>
                 <select
                     id="per-page-select"
                     v-model="selectedPerPage"
@@ -35,7 +92,7 @@
                         {{ option }}
                     </option>
                 </select>
-                <span class="text-sm text-gray-600 dark:text-gray-400">registros</span>
+                <span :class="clasesTextoRegistros">registros</span>
             </div>
         </div>
 
@@ -45,30 +102,30 @@
         </div>
 
         <!-- Pagination -->
-        <nav role="navigation" aria-label="Navegación de Paginación" class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 px-4 py-4">
+        <nav role="navigation" aria-label="Navegación de Paginación" :class="clasesNavegacion">
             <!-- Mobile Pagination -->
             <div class="flex justify-between w-full sm:hidden space-x-3">
                 <button v-if="data.current_page <= 1"
-                        class="inline-flex items-center px-4 py-3 text-sm font-bold text-gray-400 bg-gray-200 rounded-lg cursor-not-allowed dark:bg-gray-700 dark:text-gray-500"
+                        :class="clasesBotonMovilDeshabilitado"
                         disabled
                         aria-label="Página anterior no disponible">
                     <font-awesome-icon :icon="faArrowLeft" class="w-4 h-4 mr-2" />
                     Anterior
                 </button>
                 <Link v-else :href="data.prev_page_url"
-                    class="inline-flex items-center px-4 py-3 text-sm font-bold text-blue-700 bg-white rounded-lg hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all duration-200 dark:bg-gray-700 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white"
+                    :class="clasesBotonMovil"
                     aria-label="Ir a la página anterior">
                     <font-awesome-icon :icon="faArrowLeft" class="w-4 h-4 mr-2" />
                     Anterior
                 </Link>
                 <Link v-if="data.current_page < data.last_page" :href="data.next_page_url"
-                    class="inline-flex items-center px-4 py-3 text-sm font-bold text-blue-700 bg-white rounded-lg hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all duration-200 dark:bg-gray-700 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white"
+                    :class="clasesBotonMovil"
                     aria-label="Ir a la página siguiente">
                     Siguiente
                     <font-awesome-icon :icon="faArrowRight" class="w-4 h-4 ml-2" />
                 </Link>
                 <button v-else
-                        class="inline-flex items-center px-4 py-3 text-sm font-bold text-gray-400 bg-gray-200 rounded-lg cursor-not-allowed dark:bg-gray-700 dark:text-gray-500"
+                        :class="clasesBotonMovilDeshabilitado"
                         disabled
                         aria-label="Página siguiente no disponible">
                     Siguiente
@@ -78,13 +135,13 @@
             <!-- Desktop Pagination -->
             <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                 <div>
-                    <p class="text-sm text-gray-700 dark:text-gray-300 font-sans">
+                    <p :class="clasesResumen">
                         Mostrando
-                        <span class="font-bold text-gray-900 dark:text-white">{{ data.from }}</span>
+                        <span :class="clasesResumenNumero">{{ data.from }}</span>
                         a
-                        <span class="font-bold text-gray-900 dark:text-white">{{ data.to }}</span>
+                        <span :class="clasesResumenNumero">{{ data.to }}</span>
                         de
-                        <span class="font-bold text-gray-900 dark:text-white">{{ data.total }}</span>
+                        <span :class="clasesResumenNumero">{{ data.total }}</span>
                         resultados
                     </p>
                 </div>
@@ -92,14 +149,14 @@
                     <ul class="flex items-center space-x-1">
                         <li>
                              <Link v-if="data.current_page > 1" :href="data.first_page_url"
-                                 class="flex items-center justify-center w-9 h-9 rounded-full bg-[#E8EBF3] text-[#4A5E8D] text-sm font-medium transition-colors hover:bg-blue-600 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-blue-600"
+                                 :class="clasesBotonIcono"
                                  aria-label="Ir a la primera página">
                                 <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
                                     <path fill="currentColor" d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256 214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160zm352-160l-160 160c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L269.3 256 406.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0z"/>
                                 </svg>
                              </Link>
                              <button v-else type="button"
-                                     class="flex items-center justify-center w-9 h-9 rounded-full bg-[#F3F5F9] text-[#BDC5D8] text-sm cursor-not-allowed dark:bg-gray-800/50 dark:text-gray-600"
+                                     :class="clasesBotonIconoDeshabilitado"
                                      disabled
                                      aria-label="Primera página no disponible">
                                 <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
@@ -109,18 +166,18 @@
                         </li>
                         <template v-for="(link, key) in data.links" :key="key">
                             <li v-if="link.label === '...'">
-                                <span class="flex items-center justify-center w-9 h-9 text-sm text-gray-400 dark:text-gray-500">...</span>
+                                <span :class="clasesPuntos">...</span>
                             </li>
                             <li v-else-if="link.active">
                                 <button type="button"
-                                        class="flex items-center justify-center w-9 h-9 rounded-full bg-[#4466F2] text-white text-sm font-bold shadow-lg shadow-blue-200 dark:shadow-none"
+                                        :class="clasesPaginaActiva"
                                         aria-current="page">
                                     {{ link.label }}
                                 </button>
                             </li>
                             <li v-else-if="link.url === null">
                                 <button type="button"
-                                        class="flex items-center justify-center w-9 h-9 rounded-full bg-[#E8EBF3] text-[#4A5E8D] text-sm font-medium cursor-not-allowed dark:bg-gray-800 dark:text-gray-300"
+                                        :class="clasesNumeroDeshabilitado"
                                         disabled>
                                     <template v-if="link.label.includes('Anterior') || link.label.includes('previous')">
                                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512">
@@ -139,7 +196,7 @@
                             </li>
                             <li v-else>
                                 <Link :href="link.url"
-                                    class="flex items-center justify-center w-9 h-9 rounded-full bg-[#E8EBF3] text-[#4A5E8D] text-sm font-medium transition-colors hover:bg-blue-600 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-blue-600"
+                                    :class="clasesBotonIcono"
                                     :aria-label="`Ir a la página ${link.label}`">
                                     <template v-if="link.label.includes('Anterior') || link.label.includes('previous')">
                                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512">
@@ -159,7 +216,7 @@
                         </template>
                         <li>
                             <Link v-if="data.current_page < data.last_page" :href="data.last_page_url"
-                                class="flex items-center justify-center w-9 h-9 rounded-full bg-[#E8EBF3] text-[#4A5E8D] text-sm font-medium transition-colors hover:bg-blue-600 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-blue-600"
+                                :class="clasesBotonIcono"
                                 aria-label="Ir a la última página">
 
                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
@@ -167,7 +224,7 @@
                             </svg>
                             </Link>
                             <button v-else type="button"
-                                    class="flex items-center justify-center w-9 h-9 rounded-full bg-[#F3F5F9] text-[#BDC5D8] text-sm cursor-not-allowed dark:bg-gray-800/50 dark:text-gray-600"
+                                    :class="clasesBotonIconoDeshabilitado"
                                     disabled
                                     aria-label="Última página no disponible">
                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">

@@ -23,7 +23,9 @@ class EvenLocal extends Model
         'image4',
         'maximum_capacity',
         'status',
-        'ubigeo'
+        'ubigeo',
+        'created_by',
+        'socialevent_organization_id',
     ];
 
     protected static function newFactory(): EvenLocalFactory

@@ -34,8 +34,17 @@ class TeamRegistrationService
                 : $sports->organizationId(auth()->user());
         }
 
+        $organizationId = $sports->sportsMode() ? $organizationId : $sports->legacyOrganizationId();
+
+        // El nombre es único dentro de cada organización; otra organización sí puede usar el mismo nombre.
+        if ($organizationId && EventTeam::where('organization_id', $organizationId)->where('name', $validated['name'])->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'name' => 'Ya existe un equipo con ese nombre en tu organización.',
+            ]);
+        }
+
         $team = EventTeam::create([
-            'organization_id' => $sports->sportsMode() ? $organizationId : $sports->legacyOrganizationId(),
+            'organization_id' => $organizationId,
             'name' => $validated['name'],
             'short_name' => $validated['short_name'],
             'ubigeo' => $validated['ubigeo'] ?? null,

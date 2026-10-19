@@ -36,6 +36,21 @@
     // "Cambio de moneda" en el header.
     const multiCurrencyEnabled = computed(() => pageProps.multiCurrencyEnabled === true);
 
+    // La campana de chat de CRM consulta /crm/chat/notifications al montarse.
+    // La directiva v-can (vue-gates) solo quita el nodo del DOM DESPUÉS de
+    // montarlo, así que el componente se montaba igual y su petición terminaba
+    // en el 403 del middleware permission cuando al usuario no le corresponde
+    // ese módulo (por ejemplo en la instalación de torneos, donde el módulo CRM
+    // no está activo). Con v-if la campana solo se monta si el usuario tiene
+    // alguno de los dos permisos que acepta esa ruta; el v-can se conserva para
+    // no cambiar qué usuarios ven la campana.
+    const canUseCrmChat = computed(() => {
+        const permissions = pageProps.auth?.permissions ?? [];
+
+        return permissions.includes('crm_chat_notifications')
+            || permissions.includes('crm_chat_asistente');
+    });
+
     const hasAnyRole = (rolesToCheck) => {
         return userData.roles.some(role => rolesToCheck.includes(role.name))
     }
@@ -246,7 +261,7 @@
                         </a> -->
                     </div>
 
-                    <div v-can="'crm_chat_notifications'" class="dropdown shrink-0">
+                    <div v-if="canUseCrmChat" v-can="'crm_chat_notifications'" class="dropdown shrink-0">
                         <ChatNotifications />
                     </div>
                     <ShoppingCartMenu />

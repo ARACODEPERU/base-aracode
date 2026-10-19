@@ -10,6 +10,7 @@ use Modules\Socialevents\Entities\EventEditionMatch;
 use Modules\Socialevents\Entities\EventEditionMatchGoal;
 use Modules\Socialevents\Entities\EventEditionMatchParticipation;
 use Modules\Socialevents\Entities\EventEditionMatchPlayerStat;
+use Modules\Socialevents\Entities\EventEditionMatchSanction;
 use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Entities\EventEditionTeamPlayer;
 use Modules\Socialevents\Entities\EventTeam;
@@ -96,7 +97,8 @@ class TournamentRankingsTest extends TestCase
 
         $this->assertCount(1, $players);
         $this->assertSame(20, $players[0]['player_id']);
-        $this->assertSame(3.0, $players[0]['points']);
+        // Un gol pesa 1 punto en "mejor jugador" (el goleador tiene su lista).
+        $this->assertSame(1.0, $players[0]['points']);
     }
 
     public function test_quien_atajo_sin_posicion_registrada_cuenta_como_arquero(): void
@@ -204,21 +206,108 @@ class TournamentRankingsTest extends TestCase
 
         $players = $this->rankings->topPlayersPayload($this->edition->id);
 
-        $this->assertSame(6.0, $players[0]['points']);
+        $this->assertSame(2.0, $players[0]['points']);
+    }
+
+    public function test_los_goles_pesan_menos_que_una_asistencia_y_un_mvp(): void
+    {
+        $this->registerPlayer($this->homeTeam, 70, 'Delantero centro');
+        $this->registerPlayer($this->homeTeam, 71, 'Enganche');
+        $match = $this->makeMatch();
+
+        $this->stat($match, 70, ['goals' => 3]);
+        $this->stat($match, 71, ['assists' => 1, 'is_mvp' => true]);
+
+        $players = $this->rankings->topPlayersPayload($this->edition->id);
+
+        // 3 goles = 3 pts; 1 asistencia + 1 MVP = 10 pts. El goleador no gana
+        // el "mejor jugador" solo por hacer goles.
+        $this->assertSame(71, $players[0]['player_id']);
+        $this->assertSame(10.0, $players[0]['points']);
+        $this->assertSame(3.0, $players[1]['points']);
+    }
+
+    // ─── Sanciones ───────────────────────────────────────────────────
+
+    public function test_una_sancion_descuenta_una_sola_vez_aunque_haya_varios_partidos(): void
+    {
+        // Antes el total de sanciones se restaba en cada acta: una sola tarjeta
+        // en dos partidos costaba 2 puntos en vez de 1.
+        $this->registerPlayer($this->homeTeam, 50, 'Delantero centro');
+
+        $first = $this->makeMatch(1);
+        $second = $this->makeMatch(2);
+
+        $this->stat($first, 50, ['goals' => 2]);
+        $this->stat($second, 50, ['assists' => 1]);
+
+        $this->sanction($first, 50);
+
+        $players = $this->rankings->topPlayersPayload($this->edition->id);
+
+        // 2 goles (2) + 1 asistencia (4) − 1 sanción = 5.
+        $this->assertSame(5.0, $players[0]['points']);
+
+        $detail = $this->rankings->playerDetail($this->edition->id, 50, 'player');
+
+        $this->assertSame(5.0, $detail['summary']['points']);
+        $this->assertSame(
+            5.0,
+            round(array_sum(array_column($detail['breakdown'], 'points')), 2)
+        );
+
+        // La explicación del modal también muestra una sola aplicación.
+        $sanctionsReason = collect($detail['reasons'])->firstWhere('concept', 'Sanciones');
+
+        $this->assertSame(1, $sanctionsReason['count']);
+        $this->assertSame(-1.0, (float) $sanctionsReason['points']);
+    }
+
+    public function test_el_arquero_tambien_descuenta_la_sancion_una_sola_vez(): void
+    {
+        $this->registerPlayer($this->homeTeam, 60, 'Arquero');
+
+        $first = $this->makeMatch(1);
+        $second = $this->makeMatch(2);
+
+        $this->stat($first, 60, ['clean_sheet' => 1]);
+        $this->stat($second, 60, ['clean_sheet' => 1]);
+
+        $this->sanction($first, 60);
+
+        $keepers = $this->rankings->topGoalkeepersPayload($this->edition->id);
+
+        // 2 vallas invictas (10) − 1 sanción = 9.
+        $this->assertSame(9.0, $keepers[0]['points']);
+
+        $detail = $this->rankings->playerDetail($this->edition->id, 60, 'goalkeeper');
+
+        $this->assertSame(9.0, $detail['summary']['points']);
     }
 
     // ─── Utilidades ───────────────────────────────────────────────────────
 
-    private function makeMatch(): EventEditionMatch
+    private function makeMatch(int $round = 1): EventEditionMatch
     {
         return EventEditionMatch::create([
             'edition_id' => $this->edition->id,
             'team_h_id' => $this->homeTeam->id,
             'team_a_id' => $this->awayTeam->id,
             'phase' => 'league',
-            'round_number' => 1,
-            'match_date' => '2026-01-15 10:00:00',
+            'round_number' => $round,
+            'match_date' => $round === 1 ? '2026-01-15 10:00:00' : '2026-01-22 10:00:00',
             'status' => 'finished',
+        ]);
+    }
+
+    private function sanction(EventEditionMatch $match, int $personId): void
+    {
+        EventEditionMatchSanction::create([
+            'match_id' => $match->id,
+            'player_id' => $personId,
+            'type' => 'yellow',
+            'minute' => 20,
+            'amount_fine' => 0,
         ]);
     }
 

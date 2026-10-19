@@ -14,5 +14,6 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         '/webhook',
         'negotiations/registro-de-inscripcion/*',
+        'socialevents/organizations/topup/webhook',
     ];
 }

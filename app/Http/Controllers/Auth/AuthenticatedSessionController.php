@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Company;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -20,6 +21,14 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): Response
     {
+        // Con PW00001 = 2 (torneos) el login usa la vista temática de fútbol.
+        if (app(SportsOrganizationService::class)->availableToRegister()) {
+            return Inertia::render('Auth/LoginOrganizer', [
+                'canResetPassword' => Route::has('password.request'),
+                'status' => session('status'),
+            ]);
+        }
+
         $socialNetworks=null;
         try {
             $company = Company::first(); // O cualquier otro método para obtener el modelo

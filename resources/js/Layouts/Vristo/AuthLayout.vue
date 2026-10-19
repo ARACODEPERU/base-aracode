@@ -1,10 +1,37 @@
 <script setup>
-    import { ref, onMounted } from 'vue';
+    import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
     import { useAppStore } from '@/stores/index';
-    import { Head } from '@inertiajs/vue3';
+    import { Head, usePage } from '@inertiajs/vue3';
+    import { variablesDeMarca } from '@/utils/colorMarca';
 
     const store = useAppStore();
+    const page = usePage();
     const showTopButton = ref(false);
+    const sportsTheme = computed(() => page.props.sportsOrganization?.mode === true);
+    const companyData = page.props.company;
+    const marcaEstilo = computed(() =>
+        variablesDeMarca(sportsTheme.value
+            ? { primary: '#a3e635', secondary: '#10b981' }
+            : {
+                primary: companyData?.brand_primary,
+                secondary: companyData?.brand_secondary,
+            })
+    );
+
+    // Sincroniza el tema futbolero en html también en las pantallas de autenticación
+    // cuando PW00001 = 2.
+    watch(sportsTheme, (enabled) => {
+        if (typeof document !== 'undefined') {
+            document.documentElement.classList.toggle('theme-torneos', enabled);
+        }
+    }, { immediate: true });
+
+    onBeforeUnmount(() => {
+        if (typeof document !== 'undefined') {
+            document.documentElement.classList.remove('theme-torneos');
+        }
+    });
+
     onMounted(() => {
         window.onscroll = () => {
             if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
@@ -31,7 +58,8 @@
     <Head :title="title" />
     <div
         class="main-section antialiased relative font-nunito text-sm font-normal"
-        :class="[store.sidebar ? 'toggle-sidebar' : '', store.menu, store.layout, store.rtlClass]"
+        :class="[store.sidebar ? 'toggle-sidebar' : '', store.menu, store.layout, store.rtlClass, sportsTheme ? 'theme-torneos' : '']"
+        :style="marcaEstilo"
     >
         <div class="text-black dark:text-white-dark">
             <!-- screen loader -->

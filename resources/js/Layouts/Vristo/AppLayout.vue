@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { ref, computed, onMounted } from 'vue';
+    import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
     //import Sidebar from '@/Components/vristo/layout/Sidebar.vue';
     import Header from '@/Components/vristo/layout/Header.vue';
     import Footer from '@/Components/vristo/layout/Footer.vue';
@@ -12,6 +12,10 @@
     import SidebarStudent from '@/Components/vristo/layout/Sidebar-Student.vue';
     import ChatBox from 'Modules/CRM/Resources/assets/js/Components/ChatBox.vue';
     import ForcePinChange from 'Modules/Health/Resources/assets/js/Components/ForcePinChange.vue';
+    // Organizador con el acceso vencido: aviso único en cualquier pantalla con
+    // el botón que lleva a "Mis pagos". Solo se dispara en modo deportivo.
+    import OrganizationAccessAlert from 'Modules/Socialevents/Resources/assets/js/Components/OrganizationAccessAlert.vue';
+    import OrganizationBillingNotice from 'Modules/Socialevents/Resources/assets/js/Components/OrganizationBillingNotice.vue';
     // Modo Super Editor: el engrane y el panel son únicos para toda la app; el
     // modal de contraseña se monta aquí para que exista en cualquier pantalla.
     import SuperEditorGear from 'Modules/Security/Resources/assets/js/Components/SuperEditor/Gear.vue';
@@ -20,19 +24,36 @@
     import { variablesDeMarca } from '@/utils/colorMarca';
 
     const store = useAppStore();
-    const userData = usePage().props.auth.user;
+    const page = usePage();
+    const userData = page.props.auth.user;
     const showTopButton = ref(false);
+    const sportsTheme = computed(() => page.props.sportsOrganization?.mode === true);
 
-    // Colores de marca de la instalación (Configuraciones → Branding). Sin
-    // colores guardados el estilo va vacío y el sistema usa la paleta de
-    // fábrica; con ellos, todo el ERP se pinta con la identidad del cliente.
-    const companyData = usePage().props.company;
+    // Cuando PW00001 selecciona Torneos, usa la paleta del login futbolero y
+    // deja intactos los colores corporativos del modo principal.
+    const companyData = page.props.company;
     const marcaEstilo = computed(() =>
-        variablesDeMarca({
-            primary: companyData?.brand_primary,
-            secondary: companyData?.brand_secondary,
-        })
+        variablesDeMarca(sportsTheme.value
+            ? { primary: '#a3e635', secondary: '#10b981' }
+            : {
+                primary: companyData?.brand_primary,
+                secondary: companyData?.brand_secondary,
+            })
     );
+
+    // Algunos modales (SweetAlert/Ant Design) se montan directamente en body,
+    // fuera del layout. La clase en html permite tematizarlos también.
+    watch(sportsTheme, (enabled) => {
+        if (typeof document !== 'undefined') {
+            document.documentElement.classList.toggle('theme-torneos', enabled);
+        }
+    }, { immediate: true });
+
+    onBeforeUnmount(() => {
+        if (typeof document !== 'undefined') {
+            document.documentElement.classList.remove('theme-torneos');
+        }
+    });
 
 
     onMounted(() => {
@@ -72,7 +93,7 @@
     <Head :title="title" />
     <div
         class="main-section antialiased relative font-nunito text-sm font-normal"
-        :class="[store.sidebar ? 'toggle-sidebar' : '', store.menu, store.layout, store.rtlClass]"
+        :class="[store.sidebar ? 'toggle-sidebar' : '', store.menu, store.layout, store.rtlClass, sportsTheme ? 'theme-torneos' : '']"
         :style="marcaEstilo"
     >
         <!--  BEGIN MAIN CONTAINER  -->
@@ -158,6 +179,8 @@
         </div>
         <ChatBox />
         <ForcePinChange />
+        <OrganizationAccessAlert />
+            <OrganizationBillingNotice />
 
         <!-- Modo Super Editor -->
         <SuperEditorGear />

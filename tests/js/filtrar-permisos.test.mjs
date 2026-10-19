@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 
 import {
     contarPermisos,
@@ -52,6 +53,15 @@ const modulos = [
         permissions: [{ id: 7, name: 'usuarios_nuevo', guard_name: 'web' }],
     },
 ];
+
+test('el buscador pegajoso se posiciona bajo el header y conserva 4 px de separacion', () => {
+    const form = readFileSync(new URL('../../Modules/Security/Resources/assets/js/Pages/Roles/Pertials/editForm.vue', import.meta.url), 'utf8');
+
+    assert.match(form, /const stickyTop = ref\(4\)/);
+    assert.match(form, /getBoundingClientRect\(\)\.height[^;]*\+ 4/);
+    assert.match(form, /ResizeObserver\(updateStickyTop\)/);
+    assert.match(form, /class="permissions-search-sticky sticky z-30[^"]*"\s+:style="\{ top: `\$\{stickyTop\}px` \}"/);
+});
 
 test('sin texto devuelve las carpetas tal como llegan', () => {
     assert.equal(filtrarPermisos(modulos, ''), modulos);

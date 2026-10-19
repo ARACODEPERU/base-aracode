@@ -5,29 +5,66 @@ import { useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     defaults: { type: Object, required: true },
-    organizations: { type: Array, default: () => [] },
+    rates: { type: Array, default: () => [] },
 });
 
 const defaultsForm = useForm({ ...props.defaults });
-const forms = Object.fromEntries(props.organizations.map((organization) => [organization.id, useForm({
-    match_rate: organization.match_rate,
-    status: organization.status,
-    trial_days: organization.trial_days || props.defaults.trial_days,
-    access_until: organization.access_until?.slice(0, 10) || '',
-    credit_amount: null,
-    reason: '',
-})]));
+const rateForm = useForm({ name: '', amount: null, description: '' });
 
 const saveDefaults = () => defaultsForm.put(route('even_organizations.defaults'), { preserveScroll: true });
-const saveOrganization = (organizationId) => forms[organizationId].put(route('even_organizations.update', organizationId), { preserveScroll: true });
+const createRate = () => rateForm.post(route('even_organizations.rates.store'), {
+    preserveScroll: true,
+    onSuccess: () => rateForm.reset(),
+});
 </script>
 
 <template>
-    <AppLayout title="Administración deportiva">
-        <Navigation :routeModule="route('even_dashboard')" titleModule="GESTIÓN DEPORTIVA" :data="[{ title: 'Organizaciones' }]" />
+    <AppLayout title="Tarifas deportivas">
+        <Navigation :routeModule="route('even_dashboard')" titleModule="GESTIÓN DEPORTIVA" :data="[{ title: 'Tarifas' }]" />
         <main class="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
             <section class="panel space-y-4">
-                <h1 class="text-lg font-semibold">Valores predeterminados</h1>
+                <h1 class="text-lg font-semibold">Tarifas por equipo y partido</h1>
+                <p class="text-sm text-gray-500">Cargo que se cobra a cada organización por equipo y partido. Las cuentas se administran en la vista de cuentas.</p>
+
+                <div class="overflow-x-auto">
+                    <table class="table-hover w-full text-sm">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th class="text-right">Monto (S/)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="rate in rates" :key="rate.id">
+                                <td class="font-semibold">{{ rate.name }}</td>
+                                <td>{{ rate.description || '—' }}</td>
+                                <td class="text-right">{{ Number(rate.amount).toFixed(2) }}</td>
+                            </tr>
+                            <tr v-if="!rates.length">
+                                <td colspan="3" class="text-center text-gray-500">Todavía no hay tarifas creadas.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <form class="grid gap-4 md:grid-cols-4" @submit.prevent="createRate">
+                    <label class="space-y-1 text-sm">Nombre
+                        <input v-model="rateForm.name" class="form-input" type="text" maxlength="120" required />
+                    </label>
+                    <label class="space-y-1 text-sm">Monto por equipo y partido (S/)
+                        <input v-model.number="rateForm.amount" class="form-input" type="number" min="0" step="0.01" required />
+                    </label>
+                    <label class="space-y-1 text-sm">Descripción
+                        <input v-model="rateForm.description" class="form-input" type="text" maxlength="255" />
+                    </label>
+                    <button class="btn btn-primary self-end" :disabled="rateForm.processing">Crear tarifa</button>
+                </form>
+                <p v-if="Object.keys(rateForm.errors).length" class="text-sm text-red-600">{{ Object.values(rateForm.errors).join(' ') }}</p>
+            </section>
+
+            <section class="panel space-y-4">
+                <h2 class="text-lg font-semibold">Valores predeterminados</h2>
                 <form class="grid gap-4 md:grid-cols-3" @submit.prevent="saveDefaults">
                     <label class="space-y-1 text-sm">Días de prueba
                         <input v-model.number="defaultsForm.trial_days" class="form-input" type="number" min="1" max="3660" required />
@@ -37,46 +74,8 @@ const saveOrganization = (organizationId) => forms[organizationId].put(route('ev
                     </label>
                     <button class="btn btn-primary self-end" :disabled="defaultsForm.processing">Guardar valores</button>
                 </form>
-            </section>
-
-            <section class="space-y-4">
-                <article v-for="organization in organizations.filter((item) => !item.is_legacy)" :key="organization.id" class="panel space-y-4">
-                    <header class="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                            <h2 class="font-semibold">{{ organization.name }}</h2>
-                            <p class="text-sm text-gray-500">{{ organization.owner_name || 'Sin titular' }} · {{ organization.owner_email || '' }}</p>
-                        </div>
-                        <span class="rounded-full bg-primary/10 px-3 py-1 text-sm">Saldo: S/ {{ Number(organization.prepaid_balance).toFixed(2) }}</span>
-                    </header>
-                    <form class="grid gap-4 md:grid-cols-3" @submit.prevent="saveOrganization(organization.id)">
-                        <label class="space-y-1 text-sm">Estado
-                            <select v-model="forms[organization.id].status" class="form-select">
-                                <option value="trial">Prueba</option>
-                                <option value="active">Activo</option>
-                                <option value="sponsored">Cortesía / patrocinio</option>
-                                <option value="suspended">Suspendido</option>
-                            </select>
-                        </label>
-                        <label class="space-y-1 text-sm">Tarifa por equipo y partido (S/)
-                            <input v-model.number="forms[organization.id].match_rate" class="form-input" type="number" min="0" step="0.01" required />
-                        </label>
-                        <label class="space-y-1 text-sm">Días de prueba
-                            <input v-model.number="forms[organization.id].trial_days" class="form-input" type="number" min="1" max="3660" required />
-                        </label>
-                        <label class="space-y-1 text-sm">Acceso hasta
-                            <input v-model="forms[organization.id].access_until" class="form-input" type="date" />
-                        </label>
-                        <label class="space-y-1 text-sm">Crédito manual (S/)
-                            <input v-model.number="forms[organization.id].credit_amount" class="form-input" type="number" min="0" step="0.01" placeholder="0.00" />
-                        </label>
-                        <label class="space-y-1 text-sm md:col-span-2">Motivo obligatorio para auditoría
-                            <input v-model="forms[organization.id].reason" class="form-input" maxlength="1000" required />
-                        </label>
-                        <button class="btn btn-primary self-end" :disabled="forms[organization.id].processing">Guardar y auditar</button>
-                    </form>
-                    <p class="text-xs text-gray-500">Prueba hasta: {{ organization.trial_ends_at || 'No configurada' }} · Acceso hasta: {{ organization.access_until || 'No configurado' }}</p>
-                </article>
-                <div v-if="!organizations.some((item) => !item.is_legacy)" class="panel text-sm text-gray-500">Todavía no hay organizaciones registradas.</div>
+                <p v-if="defaultsForm.recentlySuccessful" class="text-sm text-green-600">Valores guardados correctamente.</p>
+                <p v-if="Object.keys(defaultsForm.errors).length" class="text-sm text-red-600">{{ Object.values(defaultsForm.errors).join(' ') }}</p>
             </section>
         </main>
     </AppLayout>

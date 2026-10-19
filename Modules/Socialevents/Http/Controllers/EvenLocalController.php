@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Modules\Socialevents\Entities\EvenLocal;
+use Modules\Socialevents\Services\SportsOrganizationService;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -24,11 +25,19 @@ class EvenLocalController extends Controller
     {
         $locales = (new EvenLocal())->newQuery();
 
+        // En modo deportivo, cada organización solo ve sus propios complejos.
+        $sports = app(SportsOrganizationService::class);
+        if ($sports->sportsMode() && ! $sports->isSuperAdmin(request()->user())) {
+            $locales->where('socialevent_organization_id', $sports->organizationId(request()->user()));
+        }
+
         if (request()->has('search')) {
             $locales->where('names', 'Like', '%' . request()->input('search') . '%');
         }
 
-        $locales = $locales->paginate(10);
+        $locales = $locales->paginate(10)->through(fn (EvenLocal $local) => array_merge($local->toArray(), [
+            'can_manage' => $this->puedeGestionarLocal($local),
+        ]));
         return Inertia::render('Socialevents::Local/List', [
             'locales' => $locales,
             'filters' => request()->all('search')
@@ -76,7 +85,9 @@ class EvenLocalController extends Controller
             'map_code' => $request->get('map_code'),
             'maximum_capacity' => $request->get('maximum_capacity'),
             'status' => $request->get('status') ? $request->get('status') : false,
-            'ubigeo' => $request->get('ubigeo')
+            'ubigeo' => $request->get('ubigeo'),
+            'created_by' => $request->user()?->id,
+            'socialevent_organization_id' => $this->organizacionDelUsuario($request),
         ]);
 
         $path = null;
@@ -140,7 +151,8 @@ class EvenLocalController extends Controller
                 'departments.name AS department_name'
             )
             ->get();
-        $local = EvenLocal::find($id);
+        $local = EvenLocal::findOrFail($id);
+        $this->autorizarGestionLocal($local);
 
         return Inertia::render('Socialevents::Local/Edit', [
             'ubigeo' => $ubigeo,
@@ -164,7 +176,8 @@ class EvenLocalController extends Controller
             ]
         );
 
-        $local = EvenLocal::find($request->get('id'));
+        $local = EvenLocal::findOrFail($request->get('id'));
+        $this->autorizarGestionLocal($local);
 
         $local->update([
             'names' => $request->get('names'),
@@ -218,6 +231,7 @@ class EvenLocalController extends Controller
     {
         $message = null;
         $success = false;
+        $this->autorizarGestionLocal(EvenLocal::findOrFail($id));
         try {
             // Usamos una transacción para asegurarnos de que la operación se realice de manera segura.
             DB::beginTransaction();
@@ -244,5 +258,41 @@ class EvenLocalController extends Controller
             'success' => $success,
             'message' => $message
         ]);
+    }
+
+    /**
+     * En modo deportivo, un organizador solo edita o elimina los locales que él creó.
+     * Fuera de ese modo, se mantiene el comportamiento anterior.
+     */
+    private function puedeGestionarLocal(EvenLocal $local): bool
+    {
+        $servicio = app(SportsOrganizationService::class);
+        $usuario = request()->user();
+
+        if (! $servicio->sportsMode() || $servicio->isSuperAdmin($usuario)) {
+            return true;
+        }
+
+        return $usuario && (int) $local->created_by === (int) $usuario->id;
+    }
+
+    /**
+     * Organización del usuario en modo deportivo; null para administradores y fuera de ese modo.
+     */
+    private function organizacionDelUsuario(Request $request): ?int
+    {
+        $servicio = app(SportsOrganizationService::class);
+        $usuario = $request->user();
+
+        if (! $servicio->sportsMode() || $servicio->isSuperAdmin($usuario)) {
+            return null;
+        }
+
+        return $servicio->organizationId($usuario);
+    }
+
+    private function autorizarGestionLocal(EvenLocal $local): void
+    {
+        abort_unless($this->puedeGestionarLocal($local), 403, 'Solo puedes editar o eliminar los complejos que creaste.');
     }
 }

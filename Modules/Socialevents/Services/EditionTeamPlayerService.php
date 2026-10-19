@@ -107,15 +107,13 @@ class EditionTeamPlayerService
             'father_lastname' => 'required|string|max:255',
             'mother_lastname' => 'required|string|max:255',
             'names' => 'required|string|max:255',
-            'dni' => 'required|string|max:20|unique:people,number',
+            'dni' => 'required|string|max:20',
             'telephone' => 'nullable|string|max:20',
             'gender' => 'required|in:M,F',
             'jersey_number' => 'nullable|string|max:10',
             'position' => 'nullable|string|max:100',
             'role_in_team' => 'nullable|in:Ninguno,Capitán,Sub-Capitán',
             'image' => 'nullable|string',
-        ], [
-            'dni.unique' => 'El DNI ya está registrado en el sistema',
         ])->validate();
 
         $existingPlayer = EventEditionTeamPlayer::where('edition_id', $editionId)
@@ -126,10 +124,13 @@ class EditionTeamPlayerService
             throw new RuntimeException('El jugador con este DNI ya está registrado en otro equipo para esta edición.');
         }
 
-        $person = Person::create([
+        // Si la persona ya existe (por ejemplo, jugó en otro torneo), se reutiliza
+        // su registro en lugar de intentar crear otro con el mismo DNI.
+        $dni = trim($validated['dni']);
+        $person = Person::where('number', $dni)->first() ?? Person::create([
             'full_name' => trim($validated['father_lastname'].' '.$validated['mother_lastname'].' '.$validated['names']),
             'document_type_id' => '1',
-            'number' => trim($validated['dni']),
+            'number' => $dni,
             'telephone' => ! empty($validated['telephone']) ? trim($validated['telephone']) : null,
             'father_lastname' => trim($validated['father_lastname']),
             'mother_lastname' => trim($validated['mother_lastname']),

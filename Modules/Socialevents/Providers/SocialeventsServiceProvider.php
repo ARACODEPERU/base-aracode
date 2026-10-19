@@ -37,7 +37,7 @@ class SocialeventsServiceProvider extends ServiceProvider
      */
     protected function registerCommands(): void
     {
-        // $this->commands([]);
+        $this->commands([\Modules\Socialevents\Console\CheckOrganizationBillingAlerts::class]);
     }
 
     /**
@@ -45,10 +45,13 @@ class SocialeventsServiceProvider extends ServiceProvider
      */
     protected function registerCommandSchedules(): void
     {
-        // $this->app->booted(function () {
-        //     $schedule = $this->app->make(Schedule::class);
-        //     $schedule->command('inspire')->hourly();
-        // });
+        $this->app->booted(function () {
+            $schedule = $this->app->make(\Illuminate\Console\Scheduling\Schedule::class);
+            $schedule->command('socialevents:check-organization-billing-alerts')
+                ->everyMinute()
+                ->withoutOverlapping()
+                ->timezone('America/Lima');
+        });
     }
 
     /**

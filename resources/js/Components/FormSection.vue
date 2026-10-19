@@ -39,6 +39,7 @@ const hasActions = computed(() => !!useSlots().actions);
                 <div
                     v-if="hasActions"
                     class="form-section__actions flex flex-wrap items-center justify-end gap-2 border-t border-gray-200/80 bg-gray-50/95 px-4 py-3.5 sm:gap-3 sm:px-6 sm:py-4 lg:px-8 lg:py-4 dark:border-gray-700/70 dark:bg-[#0e1726]/80"
+                    :class="{ 'form-section__actions--torneos': $page.props.sportsOrganization?.mode === true }"
                 >
                     <slot name="actions" />
                 </div>
