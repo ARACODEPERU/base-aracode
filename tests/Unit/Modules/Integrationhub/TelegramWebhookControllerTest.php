@@ -35,6 +35,9 @@ class TelegramWebhookControllerTest extends TestCase
 
     private const URI = '/api/integrationhub/telegram/webhook';
 
+    /** Contador de updates: Telegram siempre entrega un update_id distinto. */
+    private int $lastUpdateId = 0;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -560,7 +563,7 @@ class TelegramWebhookControllerTest extends TestCase
     private function message(string $text, string $username = 'ana_tg', string $chatId = '555'): array
     {
         return [
-            'update_id' => 1,
+            'update_id' => ++$this->lastUpdateId,
             'message' => [
                 'message_id' => 5,
                 'chat' => ['id' => $chatId, 'type' => 'private'],

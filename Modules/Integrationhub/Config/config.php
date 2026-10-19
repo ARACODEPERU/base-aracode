@@ -39,6 +39,17 @@ return [
         // largo del texto); si hay mas, se indica cuantos quedaron fuera.
         'courses_max_items' => (int) env('TELEGRAM_COURSES_MAX_ITEMS', 25),
 
+        // Freno anti-abuso del webhook: updates por minuto permitidos a un
+        // mismo chat y al bot completo. El exceso se descarta con HTTP 200
+        // para que Telegram no lo reintente.
+        'webhook_per_chat_per_minute' => (int) env('TELEGRAM_WEBHOOK_PER_CHAT_PER_MINUTE', 20),
+        'webhook_global_per_minute' => (int) env('TELEGRAM_WEBHOOK_GLOBAL_PER_MINUTE', 600),
+
+        // Conexiones simultaneas que Telegram puede abrir contra el webhook
+        // (1-100). Bajarlo evita que una rafaga de mensajes abra decenas de
+        // procesos PHP a la vez.
+        'webhook_max_connections' => (int) env('TELEGRAM_WEBHOOK_MAX_CONNECTIONS', 10),
+
         'endpoints' => [
             'get_me' => 'telegram_get_me',
             'send_message' => 'telegram_send_message',

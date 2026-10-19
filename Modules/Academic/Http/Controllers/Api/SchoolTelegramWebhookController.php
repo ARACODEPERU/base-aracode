@@ -3,6 +3,7 @@
 namespace Modules\Academic\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\TelegramWebhookGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -52,6 +53,19 @@ class SchoolTelegramWebhookController extends Controller
         }
 
         $update = $request->all();
+
+        // Freno anti-abuso: deduplica los reintentos de Telegram y descarta el
+        // exceso de mensajes de un mismo chat o del bot completo. Se responde
+        // 200 para que Telegram no reintente lo descartado.
+        $guard = new TelegramWebhookGuard(
+            'academic',
+            (int) config('academic.school_notices.telegram.webhook_per_chat_per_minute', 20),
+            (int) config('academic.school_notices.telegram.webhook_global_per_minute', 600)
+        );
+
+        if (! $guard->allows($update, $this->chatId($update))) {
+            return response()->json(['ok' => true]);
+        }
 
         // Pulsación de un botón inline.
         $callback = $update['callback_query'] ?? null;
@@ -107,6 +121,23 @@ class SchoolTelegramWebhookController extends Controller
         }
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * chat_id del update, venga como mensaje o como pulsación de un botón.
+     *
+     * Se usa para aplicar el límite por chat antes de procesar nada.
+     *
+     * @param array<string, mixed> $update
+     */
+    private function chatId(array $update): string
+    {
+        $message = $update['callback_query']['message']
+            ?? $update['message']
+            ?? $update['edited_message']
+            ?? null;
+
+        return is_array($message) ? trim((string) ($message['chat']['id'] ?? '')) : '';
     }
 
     /**

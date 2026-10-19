@@ -174,7 +174,21 @@ return [
             // Intentos fallidos maximos durante el registro antes de reiniciar.
             'max_attempts' => (int) env('ACA_SCHOOL_TELEGRAM_MAX_ATTEMPTS', 5),
             'api_base' => env('ACA_SCHOOL_TELEGRAM_API_BASE', 'https://api.telegram.org'),
-            'timeout' => (int) env('ACA_SCHOOL_TELEGRAM_TIMEOUT', 30),
+            // Espera maxima de la API de Telegram, en segundos. Corta a proposito:
+            // cada mensaje al bot ocupa un proceso PHP mientras Telegram responde,
+            // asi que una espera larga multiplica el dano de una inundacion.
+            'timeout' => (int) env('ACA_SCHOOL_TELEGRAM_TIMEOUT', 10),
+            // Espera maxima para abrir la conexion con Telegram, en segundos.
+            'connect_timeout' => (int) env('ACA_SCHOOL_TELEGRAM_CONNECT_TIMEOUT', 5),
+            // Freno anti-abuso del webhook: updates por minuto permitidos a un
+            // mismo chat y al bot completo. El exceso se descarta con HTTP 200
+            // para que Telegram no lo reintente.
+            'webhook_per_chat_per_minute' => (int) env('ACA_SCHOOL_TELEGRAM_WEBHOOK_PER_CHAT_PER_MINUTE', 20),
+            'webhook_global_per_minute' => (int) env('ACA_SCHOOL_TELEGRAM_WEBHOOK_GLOBAL_PER_MINUTE', 600),
+            // Conexiones simultaneas que Telegram puede abrir contra el webhook
+            // (1-100). Bajarlo evita que una rafaga de mensajes abra decenas de
+            // procesos PHP a la vez.
+            'webhook_max_connections' => (int) env('ACA_SCHOOL_TELEGRAM_WEBHOOK_MAX_CONNECTIONS', 10),
         ],
     ],
 ];

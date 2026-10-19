@@ -266,6 +266,9 @@ class SchoolTelegramBotService
             'url' => $url,
             'secret_token' => $secret,
             'drop_pending_updates' => $dropPendingUpdates,
+            // Limita cuantas conexiones simultaneas abre Telegram contra
+            // nuestro webhook (ver docs/BOT_TELEGRAM_LIMITES.md).
+            'max_connections' => max(1, min(100, (int) config('academic.school_notices.telegram.webhook_max_connections', 10))),
         ]);
 
         $this->setMyCommands($this->defaultCommands());
@@ -323,10 +326,11 @@ class SchoolTelegramBotService
 
         $base = rtrim((string) config('academic.school_notices.telegram.api_base', 'https://api.telegram.org'), '/');
         $url = "{$base}/bot{$token}/" . ltrim($action, '/');
-        $timeout = max(5, (int) config('academic.school_notices.telegram.timeout', 30));
+        $timeout = max(5, (int) config('academic.school_notices.telegram.timeout', 10));
+        $connectTimeout = max(1, (int) config('academic.school_notices.telegram.connect_timeout', 5));
 
         try {
-            $request = Http::timeout($timeout)->acceptJson();
+            $request = Http::timeout($timeout)->connectTimeout($connectTimeout)->acceptJson();
 
             $response = strtoupper($method) === 'GET'
                 ? $request->get($url, $payload)
