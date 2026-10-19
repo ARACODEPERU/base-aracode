@@ -812,9 +812,10 @@ const reloadData = () => router.reload({ only: ['deliveries', 'subscriptions'] }
                                 <ul class="mt-1 list-disc space-y-1 pl-5">
                                     <li>El bot le pedirá primero su <b>DNI de padre, madre o apoderado</b> y verificará que exista en el colegio.</li>
                                     <li>Luego le pedirá el <b>DNI de su hijo(a) estudiante</b> y validará que esté vinculado a ese apoderado.</li>
-                                    <li>Al confirmarse el registro del primer hijo, el bot le preguntará: <i>"¿Tienes otro hijo o hija en el colegio o escuela que quieras registrar?"</i>.</li>
-                                    <li>Si responde <b>SÍ</b>, el bot le pedirá el DNI del segundo hijo y, tras registrarlo, volverá a preguntar si tiene otro hijo más (permitiendo registrar 2, 3 o más hijos en el mismo chat).</li>
-                                    <li>Si responde <b>NO</b>, finaliza el proceso y desde ese instante recibirá avisos automáticos cuando cualquiera de sus hijos entre o salga del colegio.</li>
+                                    <li>Al confirmarse el registro del primer hijo, el bot le preguntará: <i>"¿Tienes otro hijo o hija en el colegio o escuela que quieras registrar?"</i> con dos botones: <b>✅ Sí, tengo otro hijo(a)</b> y <b>🏁 No, finalizar</b> (también puede responder escribiendo SÍ o NO).</li>
+                                    <li>Si elige <b>Sí</b>, el bot le pedirá el DNI del segundo hijo y, tras registrarlo, volverá a preguntar si tiene otro hijo más (permitiendo registrar 2, 3 o más hijos en el mismo chat).</li>
+                                    <li>Si elige <b>No</b>, finaliza el proceso y desde ese instante recibirá avisos automáticos cuando cualquiera de sus hijos entre o salga del colegio.</li>
+                                    <li>Además, los mensajes del bot incluyen botones para ejecutar los comandos principales (<b>Registrarme</b>, <b>Info del colegio</b>, <b>Mi Chat ID</b> y <b>Darme de baja</b>) sin necesidad de escribir el comando; la baja siempre pide confirmación antes de desvincular el chat.</li>
                                 </ul>
                             </li>
                         </ol>

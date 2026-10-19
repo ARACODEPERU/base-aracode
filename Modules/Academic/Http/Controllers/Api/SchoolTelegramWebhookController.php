@@ -25,6 +25,13 @@ use Modules\Academic\Services\SchoolTelegramRegistrationService;
  *   - /info (o /informacion, /ayuda): muestra el nombre del colegio, dirección,
  *     teléfono, correo, año lectivo, horarios de jornada y los hijos
  *     actualmente registrados en este chat.
+ *
+ * Botones inline: además del texto, el bot ofrece botones que ejecutan los
+ * comandos principales (/registrar, /info, /chatid y /baja) y que responden a
+ * la pregunta de si tiene otro hijo. Cada pulsación llega como
+ * callback_query; se responde siempre con answerCallbackQuery para apagar el
+ * indicador de carga y luego se ejecuta la misma acción que el comando o el
+ * texto equivalente, de modo que ambos caminos compartan la lógica.
  */
 class SchoolTelegramWebhookController extends Controller
 {
@@ -45,6 +52,35 @@ class SchoolTelegramWebhookController extends Controller
         }
 
         $update = $request->all();
+
+        // Pulsación de un botón inline.
+        $callback = $update['callback_query'] ?? null;
+
+        if (is_array($callback)) {
+            $chatId = trim((string) ($callback['message']['chat']['id'] ?? ''));
+
+            if ($chatId !== '') {
+                try {
+                    $this->handleCallback(
+                        $bot,
+                        $registration,
+                        $chatId,
+                        trim((string) ($callback['id'] ?? '')),
+                        trim((string) ($callback['data'] ?? '')),
+                        $callback['from']['username'] ?? null,
+                        $callback['from']['first_name'] ?? null
+                    );
+                } catch (\Throwable $exception) {
+                    Log::error('Bot escolar de Telegram: fallo al procesar un botón', [
+                        'chat_id' => $chatId,
+                        'error' => $exception->getMessage(),
+                    ]);
+                }
+            }
+
+            return response()->json(['ok' => true]);
+        }
+
         $message = $update['message'] ?? $update['edited_message'] ?? null;
 
         if (! is_array($message)) {
@@ -125,6 +161,199 @@ class SchoolTelegramWebhookController extends Controller
             SchoolTelegramRegistrationService::STEP_ANOTHER_CHILD => $this->handleAnotherChild($bot, $registration, $session, $chatId, $text),
             default => $this->handleGuardianDni($bot, $registration, $session, $chatId, $text),
         };
+    }
+
+    /**
+     * Atiende la pulsación de un botón inline.
+     *
+     * Los datos viajan en callback_data con el formato "accion:valor":
+     *   - another:yes / another:no responde la pregunta del registro.
+     *   - cmd:<comando> ejecuta uno de los comandos principales.
+     *   - baja:si / baja:no confirma (o cancela) la baja del chat.
+     */
+    private function handleCallback(
+        SchoolTelegramBotService $bot,
+        SchoolTelegramRegistrationService $registration,
+        string $chatId,
+        string $callbackQueryId,
+        string $data,
+        ?string $username,
+        ?string $firstName
+    ): void {
+        $registration->touch($chatId);
+
+        [$action, $value] = array_pad(explode(':', $data, 2), 2, '');
+        $action = strtolower(trim($action));
+        $value = strtolower(trim($value));
+
+        if ($action === 'cmd') {
+            $this->acknowledge($bot, $callbackQueryId);
+            $this->executeCommand($bot, $registration, $chatId, $value, $username, $firstName);
+
+            return;
+        }
+
+        if ($action === 'another') {
+            $session = $registration->sessionFor($chatId);
+
+            if ($session === null || $session->step !== SchoolTelegramRegistrationService::STEP_ANOTHER_CHILD) {
+                $this->acknowledge(
+                    $bot,
+                    $callbackQueryId,
+                    'La sesión de registro ya no está activa. Escribe /registrar para comenzar de nuevo.',
+                    true
+                );
+
+                return;
+            }
+
+            if (! in_array($value, ['yes', 'no'], true)) {
+                $this->acknowledge($bot, $callbackQueryId, 'Opción no reconocida.', true);
+
+                return;
+            }
+
+            $this->acknowledge($bot, $callbackQueryId, $value === 'yes' ? 'Sí, tengo otro hijo(a)' : 'No, finalizar');
+            $this->answerAnotherChild($bot, $registration, $session, $chatId, $value);
+
+            return;
+        }
+
+        if ($action === 'baja') {
+            if ($value === 'si') {
+                $this->acknowledge($bot, $callbackQueryId, 'Registro dado de baja');
+                $this->handleOptOut($bot, $registration, $chatId);
+
+                return;
+            }
+
+            $this->acknowledge($bot, $callbackQueryId, 'No se realizaron cambios');
+            $bot->sendFormatted(
+                $chatId,
+                "👍 No se realizaron cambios. Tu registro sigue activo.",
+                true,
+                $this->mainMenuKeyboard()
+            );
+
+            return;
+        }
+
+        $this->acknowledge($bot, $callbackQueryId, 'Opción no reconocida.', true);
+    }
+
+    /**
+     * Ejecuta un comando principal como si se hubiera escrito en el chat.
+     */
+    private function executeCommand(
+        SchoolTelegramBotService $bot,
+        SchoolTelegramRegistrationService $registration,
+        string $chatId,
+        string $command,
+        ?string $username,
+        ?string $firstName
+    ): void {
+        if ($command === 'baja') {
+            // La baja es irreversible desde el chat: se pide confirmación.
+            $bot->sendFormatted(
+                $chatId,
+                "🚪 <b>¿Confirmas que quieres dejar de recibir los avisos de asistencia?</b>\n\n"
+                . "Dejarás de recibir los mensajes de entrada y salida de todos los estudiantes vinculados a este chat.",
+                true,
+                $this->keyboard([
+                    [
+                        ['text' => '✅ Sí, darme de baja', 'callback_data' => 'baja:si'],
+                        ['text' => '↩️ Cancelar', 'callback_data' => 'baja:no'],
+                    ],
+                ])
+            );
+
+            return;
+        }
+
+        if (! in_array($command, ['registrar', 'start', 'registro', 'chatid', 'miid', 'michatid', 'info', 'informacion', 'colegio'], true)) {
+            $bot->sendFormatted(
+                $chatId,
+                "🤔 No reconozco esa opción. Elige una de las siguientes:",
+                true,
+                $this->mainMenuKeyboard()
+            );
+
+            return;
+        }
+
+        $this->handleMessage($bot, $registration, $chatId, '/' . $command, $username, $firstName);
+    }
+
+    /**
+     * Envía la respuesta silenciosa (o con aviso) del botón pulsado.
+     *
+     * Un fallo al responder no debe impedir que se ejecute la acción.
+     */
+    private function acknowledge(
+        SchoolTelegramBotService $bot,
+        string $callbackQueryId,
+        ?string $text = null,
+        bool $alert = false
+    ): void {
+        try {
+            $bot->answerCallbackQuery($callbackQueryId, $text, $alert);
+        } catch (\Throwable $exception) {
+            Log::warning('Bot escolar de Telegram: no se pudo responder el callback_query', [
+                'error' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Teclado inline de comandos principales.
+     *
+     * @return array<string, string>
+     */
+    private function mainMenuKeyboard(): array
+    {
+        return $this->keyboard([
+            [
+                ['text' => '📝 Registrarme', 'callback_data' => 'cmd:registrar'],
+                ['text' => 'ℹ️ Info del colegio', 'callback_data' => 'cmd:info'],
+            ],
+            [
+                ['text' => '🆔 Mi Chat ID', 'callback_data' => 'cmd:chatid'],
+                ['text' => '🚪 Darme de baja', 'callback_data' => 'cmd:baja'],
+            ],
+        ]);
+    }
+
+    /**
+     * Teclado inline para responder si tiene otro hijo en el colegio.
+     *
+     * @return array<string, string>
+     */
+    private function anotherChildKeyboard(): array
+    {
+        return $this->keyboard([
+            [
+                ['text' => '✅ Sí, tengo otro hijo(a)', 'callback_data' => 'another:yes'],
+                ['text' => '🏁 No, finalizar', 'callback_data' => 'another:no'],
+            ],
+        ]);
+    }
+
+    /**
+     * Prepara el reply_markup inline en el formato que espera Telegram.
+     *
+     * Se envía como cadena JSON porque la petición viaja como formulario.
+     *
+     * @param  array<int, array<int, array{text: string, callback_data: string}>> $rows
+     * @return array<string, string>
+     */
+    private function keyboard(array $rows): array
+    {
+        return [
+            'reply_markup' => (string) json_encode(
+                ['inline_keyboard' => $rows],
+                JSON_UNESCAPED_UNICODE
+            ),
+        ];
     }
 
     /**
@@ -307,7 +536,7 @@ class SchoolTelegramWebhookController extends Controller
             . "❓ <b>¿Tienes otro hijo o hija en el colegio o escuela que quieras registrar?</b>\n"
             . "Responde <b>SÍ</b> para registrar el DNI de otro hijo(a) o <b>NO</b> para finalizar.";
 
-        $bot->sendFormatted($chatId, $reply, true);
+        $bot->sendFormatted($chatId, $reply, true, $this->anotherChildKeyboard());
     }
 
     /**
@@ -322,35 +551,8 @@ class SchoolTelegramWebhookController extends Controller
     ): void {
         $answer = $this->parseYesNo($text);
 
-        if ($answer === 'yes') {
-            $context = $registration->context($session);
-            $registration->advanceStep($session, SchoolTelegramRegistrationService::STEP_STUDENT_DNI, $context);
-
-            $bot->sendFormatted(
-                $chatId,
-                "🎒 ¡Perfecto! Escribe ahora el <b>número de DNI de tu otro hijo(a) estudiante</b> del colegio.",
-                true
-            );
-
-            return;
-        }
-
-        if ($answer === 'no') {
-            $registration->closeSession($chatId);
-            $subscriptions = $registration->activeSubscriptionsForChat($chatId);
-
-            $lines = array_map(
-                fn (array $sub) => '• <b>' . $sub['name'] . '</b>' . ($sub['section'] !== '' ? " ({$sub['section']})" : ''),
-                $subscriptions
-            );
-
-            $listBlock = $lines !== [] ? "\n\n👨‍👩‍👧‍👦 <b>Estudiantes registrados en este chat:</b>\n" . implode("\n", $lines) : '';
-
-            $reply = "✅ ¡Todo listo! Tu registro ha finalizado correctamente.{$listBlock}\n\n"
-                . "🔔 A partir de ahora recibirás un mensaje por aquí cada vez que se registre la entrada o la salida en portería.\n\n"
-                . "Si en el futuro deseas dejar de recibir mensajes, escribe /baja.";
-
-            $bot->sendFormatted($chatId, $reply, true);
+        if ($answer !== null) {
+            $this->answerAnotherChild($bot, $registration, $session, $chatId, $answer);
 
             return;
         }
@@ -376,8 +578,51 @@ class SchoolTelegramWebhookController extends Controller
         $bot->sendFormatted(
             $chatId,
             "🤔 Por favor, responde <b>SÍ</b> si tienes otro hijo(a) en el colegio para registrar su DNI, o <b>NO</b> para terminar el registro.",
-            true
+            true,
+            $this->anotherChildKeyboard()
         );
+    }
+
+    /**
+     * Resuelve la respuesta (Sí / No) sobre si tiene otro hijo en el colegio.
+     *
+     * Se usa tanto para el texto escrito como para los botones inline.
+     */
+    private function answerAnotherChild(
+        SchoolTelegramBotService $bot,
+        SchoolTelegramRegistrationService $registration,
+        AcaSchoolTelegramSession $session,
+        string $chatId,
+        string $answer
+    ): void {
+        if ($answer === 'yes') {
+            $context = $registration->context($session);
+            $registration->advanceStep($session, SchoolTelegramRegistrationService::STEP_STUDENT_DNI, $context);
+
+            $bot->sendFormatted(
+                $chatId,
+                "🎒 ¡Perfecto! Escribe ahora el <b>número de DNI de tu otro hijo(a) estudiante</b> del colegio.",
+                true
+            );
+
+            return;
+        }
+
+        $registration->closeSession($chatId);
+        $subscriptions = $registration->activeSubscriptionsForChat($chatId);
+
+        $lines = array_map(
+            fn (array $sub) => '• <b>' . $sub['name'] . '</b>' . ($sub['section'] !== '' ? " ({$sub['section']})" : ''),
+            $subscriptions
+        );
+
+        $listBlock = $lines !== [] ? "\n\n👨‍👩‍👧‍👦 <b>Estudiantes registrados en este chat:</b>\n" . implode("\n", $lines) : '';
+
+        $reply = "✅ ¡Todo listo! Tu registro ha finalizado correctamente.{$listBlock}\n\n"
+            . "🔔 A partir de ahora recibirás un mensaje por aquí cada vez que se registre la entrada o la salida en portería.\n\n"
+            . "Si en el futuro deseas dejar de recibir mensajes, escribe /baja.";
+
+        $bot->sendFormatted($chatId, $reply, true, $this->mainMenuKeyboard());
     }
 
     /**
@@ -397,7 +642,8 @@ class SchoolTelegramWebhookController extends Controller
                 "👍 Se ha dado de baja tu registro en este chat ({$count} estudiante(s) desvinculado(s)).\n\n"
                 . "Ya no recibirás notificaciones de entrada ni de salida.\n"
                 . "Si deseas volver a registrarte más adelante, escribe /registrar.",
-                true
+                true,
+                $this->mainMenuKeyboard()
             );
 
             return;
@@ -406,7 +652,8 @@ class SchoolTelegramWebhookController extends Controller
         $bot->sendFormatted(
             $chatId,
             "ℹ️ Este chat no tenía estudiantes activos registrados.\n\nSi deseas activar las notificaciones de asistencia, escribe /registrar.",
-            true
+            true,
+            $this->mainMenuKeyboard()
         );
     }
 
@@ -420,7 +667,7 @@ class SchoolTelegramWebhookController extends Controller
             . "<code>{$chatId}</code>\n\n"
             . "Puedes copiarlo y compartirlo con la administración del colegio si necesitan realizar una prueba o verificar tu conexión.";
 
-        $bot->sendFormatted($chatId, $reply, true);
+        $bot->sendFormatted($chatId, $reply, true, $this->mainMenuKeyboard());
     }
 
     /**
@@ -482,7 +729,7 @@ class SchoolTelegramWebhookController extends Controller
         $lines[] = "/chatid – Ver Mi Chat ID";
         $lines[] = "/info – Ver esta información del colegio";
 
-        $bot->sendFormatted($chatId, implode("\n", $lines), true);
+        $bot->sendFormatted($chatId, implode("\n", $lines), true, $this->mainMenuKeyboard());
     }
 
     /**
@@ -502,7 +749,7 @@ class SchoolTelegramWebhookController extends Controller
             . "🔹 /chatid – Consultar Mi Chat ID.\n"
             . "🔹 /info – Ver información del colegio y tus hijos vinculados.";
 
-        $bot->sendFormatted($chatId, $reply, true);
+        $bot->sendFormatted($chatId, $reply, true, $this->mainMenuKeyboard());
     }
 
     /**
@@ -523,7 +770,8 @@ class SchoolTelegramWebhookController extends Controller
             $bot->sendFormatted(
                 $chatId,
                 "🚫 Has superado el número máximo de intentos ({$max}).\n\nVerifica los datos y escribe /registrar cuando quieras volver a intentarlo.",
-                true
+                true,
+                $this->mainMenuKeyboard()
             );
 
             return;

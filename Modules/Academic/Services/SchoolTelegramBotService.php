@@ -223,6 +223,31 @@ class SchoolTelegramBotService
     }
 
     /**
+     * Responde a la pulsación de un botón inline.
+     *
+     * Telegram exige esta respuesta para que el botón deje de mostrar el
+     * indicador de carga. El texto es opcional: sin texto el aviso es silencioso.
+     */
+    public function answerCallbackQuery(string $callbackQueryId, ?string $text = null, bool $alert = false): array
+    {
+        $callbackQueryId = trim($callbackQueryId);
+
+        if ($callbackQueryId === '') {
+            throw new RuntimeException('El identificador del callback_query está vacío.');
+        }
+
+        $payload = ['callback_query_id' => $callbackQueryId];
+        $text = trim((string) $text);
+
+        if ($text !== '') {
+            $payload['text'] = mb_substr($text, 0, 200);
+            $payload['show_alert'] = $alert;
+        }
+
+        return $this->request('POST', 'answerCallbackQuery', $payload);
+    }
+
+    /**
      * Registra el webhook del bot escolar y publica el menú de comandos.
      */
     public function registerWebhook(bool $dropPendingUpdates = true): string

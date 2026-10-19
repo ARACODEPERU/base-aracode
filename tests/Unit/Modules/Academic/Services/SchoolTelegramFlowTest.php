@@ -167,6 +167,144 @@ class SchoolTelegramFlowTest extends TestCase
         $this->assertSame(0, AcaSchoolTelegramSubscription::active()->count());
     }
 
+    public function test_botones_inline_responden_otro_hijo_y_ejecutan_los_comandos_principales(): void
+    {
+        $requests = [];
+
+        Http::fake(function ($request) use (&$requests) {
+            $requests[] = ['url' => $request->url(), 'data' => $request->data()];
+
+            return Http::response(['ok' => true, 'result' => ['message_id' => count($requests)]], 200);
+        });
+
+        DB::table('aca_schools')->insert(['id' => 1, 'name' => 'I.E. San Martín', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('aca_school_grades')->insert(['id' => 1, 'name' => 'Primaria 3°', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('aca_school_sections')->insert(['id' => 1, 'school_id' => 1, 'grade_id' => 1, 'name' => 'A', 'created_at' => now(), 'updated_at' => now()]);
+
+        $guardianPersonId = (int) DB::table('people')->insertGetId([
+            'full_name' => 'Carlos Gómez',
+            'number' => '40506070',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $children = [];
+
+        foreach ([['Mateo Gómez', '70809011'], ['Lucía Gómez', '70809022']] as $index => [$name, $document]) {
+            $personId = (int) DB::table('people')->insertGetId([
+                'full_name' => $name,
+                'number' => $document,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $studentId = (int) DB::table('aca_school_students')->insertGetId([
+                'school_id' => 1,
+                'person_id' => $personId,
+                'student_code' => '2026-000' . ($index + 1),
+                'status' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('aca_school_enrollments')->insert([
+                'school_id' => 1,
+                'year_id' => 1,
+                'student_id' => $studentId,
+                'section_id' => 1,
+                'status' => 'activo',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('aca_school_student_guardians')->insert([
+                'school_id' => 1,
+                'student_id' => $studentId,
+                'guardian_person_id' => $guardianPersonId,
+                'relationship' => 'padre',
+                'is_primary' => true,
+                'status' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $children[] = ['student_id' => $studentId, 'document' => $document];
+        }
+
+        $bot = new SchoolTelegramBotService();
+        $registration = new SchoolTelegramRegistrationService();
+        $controller = new SchoolTelegramWebhookController();
+        $chatId = '11223344';
+
+        // Registro hasta la pregunta de si tiene otro hijo.
+        $this->sendWebhook($controller, $bot, $registration, $chatId, '/registrar');
+        $this->sendWebhook($controller, $bot, $registration, $chatId, '40506070');
+        $this->sendWebhook($controller, $bot, $registration, $chatId, $children[0]['document']);
+
+        $keyboard = $this->keyboardOf($this->lastMessage($requests));
+
+        $this->assertSame('✅ Sí, tengo otro hijo(a)', $keyboard[0][0]['text']);
+        $this->assertSame('another:yes', $keyboard[0][0]['callback_data']);
+        $this->assertSame('another:no', $keyboard[0][1]['callback_data']);
+
+        // Pulsar "Sí" equivale a escribir "Sí": avanza al DNI del siguiente hijo.
+        $this->sendCallback($controller, $bot, $registration, $chatId, 'another:yes', 'cb-yes');
+
+        $this->assertNotNull($this->callbackAnswer($requests, 'cb-yes'));
+        $this->assertStringContainsString('DNI de tu otro hijo', $this->lastMessage($requests)['text']);
+        $this->assertSame(
+            SchoolTelegramRegistrationService::STEP_STUDENT_DNI,
+            $registration->sessionFor($chatId)->step
+        );
+
+        // Se registra el segundo hijo y se pulsa "No" para finalizar.
+        $this->sendWebhook($controller, $bot, $registration, $chatId, $children[1]['document']);
+        $this->sendCallback($controller, $bot, $registration, $chatId, 'another:no', 'cb-no');
+
+        $this->assertNotNull($this->callbackAnswer($requests, 'cb-no'));
+        $this->assertNull($registration->sessionFor($chatId));
+        $this->assertSame(2, AcaSchoolTelegramSubscription::active()->count());
+
+        $finalKeyboard = $this->keyboardOf($this->lastMessage($requests));
+        $this->assertSame('cmd:registrar', $finalKeyboard[0][0]['callback_data']);
+        $this->assertSame('cmd:info', $finalKeyboard[0][1]['callback_data']);
+        $this->assertSame('cmd:chatid', $finalKeyboard[1][0]['callback_data']);
+        $this->assertSame('cmd:baja', $finalKeyboard[1][1]['callback_data']);
+
+        // Los botones de comandos ejecutan la misma lógica que el comando escrito.
+        $this->sendCallback($controller, $bot, $registration, $chatId, 'cmd:info', 'cb-info');
+        $this->assertStringContainsString('I.E. San Martín', $this->lastMessage($requests)['text']);
+        $this->assertStringContainsString('Mateo Gómez', $this->lastMessage($requests)['text']);
+
+        $this->sendCallback($controller, $bot, $registration, $chatId, 'cmd:chatid', 'cb-chatid');
+        $this->assertStringContainsString($chatId, $this->lastMessage($requests)['text']);
+
+        // /baja pide confirmación: el botón aún no da de baja el chat.
+        $this->sendCallback($controller, $bot, $registration, $chatId, 'cmd:baja', 'cb-baja');
+
+        $this->assertSame(2, AcaSchoolTelegramSubscription::active()->count());
+
+        $confirmKeyboard = $this->keyboardOf($this->lastMessage($requests));
+        $this->assertSame('baja:si', $confirmKeyboard[0][0]['callback_data']);
+        $this->assertSame('baja:no', $confirmKeyboard[0][1]['callback_data']);
+
+        // Cancelar la baja no cambia nada.
+        $this->sendCallback($controller, $bot, $registration, $chatId, 'baja:no', 'cb-baja-no');
+        $this->assertSame(2, AcaSchoolTelegramSubscription::active()->count());
+
+        // Confirmar la baja desvincula a todos los estudiantes del chat.
+        $this->sendCallback($controller, $bot, $registration, $chatId, 'baja:si', 'cb-baja-si');
+        $this->assertSame(0, AcaSchoolTelegramSubscription::active()->count());
+
+        // Un botón viejo de una sesión terminada avisa sin romper el webhook.
+        $this->sendCallback($controller, $bot, $registration, $chatId, 'another:yes', 'cb-stale');
+
+        $stale = $this->callbackAnswer($requests, 'cb-stale');
+        $this->assertNotNull($stale);
+        $this->assertTrue(filter_var($stale['show_alert'] ?? false, FILTER_VALIDATE_BOOLEAN));
+        $this->assertStringContainsString('sesión de registro ya no está activa', $stale['text']);
+    }
+
     public function test_encola_y_envia_aviso_de_entrada_y_salida_por_telegram(): void
     {
         Queue::fake();
@@ -227,5 +365,87 @@ class SchoolTelegramFlowTest extends TestCase
 
         $response = $controller($request, $bot, $registration);
         $this->assertSame(200, $response->getStatusCode());
+    }
+
+    /**
+     * Simula la pulsación de un botón inline del bot escolar.
+     */
+    private function sendCallback(
+        SchoolTelegramWebhookController $controller,
+        SchoolTelegramBotService $bot,
+        SchoolTelegramRegistrationService $registration,
+        string $chatId,
+        string $data,
+        string $callbackId
+    ): void {
+        $request = Request::create('/api/academic/school/telegram/webhook', 'POST', [
+            'callback_query' => [
+                'id' => $callbackId,
+                'data' => $data,
+                'from' => ['username' => 'padre_tg', 'first_name' => 'Carlos'],
+                'message' => ['chat' => ['id' => $chatId]],
+            ],
+        ]);
+        $request->headers->set('X-Telegram-Bot-Api-Secret-Token', (string) $bot->secret());
+
+        $response = $controller($request, $bot, $registration);
+        $this->assertSame(200, $response->getStatusCode());
+    }
+
+    /**
+     * Último mensaje enviado a Telegram (sendMessage), con sus datos.
+     *
+     * @param  array<int, array{url: string, data: array<string, mixed>}> $requests
+     * @return array<string, mixed>
+     */
+    private function lastMessage(array $requests): array
+    {
+        $messages = array_values(array_filter(
+            $requests,
+            fn (array $request) => str_contains($request['url'], '/sendMessage')
+        ));
+
+        $this->assertNotSame([], $messages, 'No se envió ningún mensaje a Telegram.');
+
+        return (array) end($messages)['data'];
+    }
+
+    /**
+     * Decodifica el teclado inline del mensaje indicado.
+     *
+     * @param  array<string, mixed> $message
+     * @return array<int, array<int, array{text: string, callback_data: string}>>
+     */
+    private function keyboardOf(array $message): array
+    {
+        $this->assertArrayHasKey('reply_markup', $message, 'El mensaje no incluye botones inline.');
+
+        $markup = json_decode((string) $message['reply_markup'], true);
+
+        $this->assertIsArray($markup);
+        $this->assertArrayHasKey('inline_keyboard', $markup);
+
+        return $markup['inline_keyboard'];
+    }
+
+    /**
+     * Datos de la respuesta answerCallbackQuery del botón indicado.
+     *
+     * @param  array<int, array{url: string, data: array<string, mixed>}> $requests
+     * @return array<string, mixed>|null
+     */
+    private function callbackAnswer(array $requests, string $callbackId): ?array
+    {
+        foreach ($requests as $request) {
+            if (! str_contains($request['url'], '/answerCallbackQuery')) {
+                continue;
+            }
+
+            if (($request['data']['callback_query_id'] ?? null) === $callbackId) {
+                return (array) $request['data'];
+            }
+        }
+
+        return null;
     }
 }
