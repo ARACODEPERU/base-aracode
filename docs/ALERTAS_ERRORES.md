@@ -30,6 +30,23 @@ Reglas que se respetan al guardar:
 - Nunca se lanza una excepción al guardar: si la base falla (puede ser el propio
   error), la alerta sale igual, sin enlace.
 
+## Mensajes del formulario de contacto
+
+El mismo bot y los mismos destinatarios activos reciben también un aviso cuando
+alguien envía el formulario de contacto del sitio (`/contacto` y el modal
+«Solicitar Asesoría»). El mensaje lleva nombre, email, teléfono, empresa,
+servicio, fecha y el texto de la consulta.
+
+- El texto de la persona se escapa: una etiqueta escrita en el mensaje se ve
+  literal en Telegram y no rompe el HTML del aviso.
+- Solo se envía cuando el envío pasó el captcha, el campo trampa y el límite de
+  envíos por IP; un intento descartado no llega al chat.
+- No depende del interruptor `enabled` de las alertas de error ni del nivel
+  mínimo: son contactos comerciales, no fallos del sistema.
+- Se encola (`SendContactMessageTelegram`). Si Telegram falla, el mensaje ya
+  quedó guardado en `contact_messages` y el correo al admin ya se encoló.
+- Sin destinatarios activos no se envía nada y el formulario responde igual.
+
 ## Fallos al usar una integración (Integrationhub)
 
 Cuando una llamada a un endpoint de **Integrationhub** falla, el error se avisa

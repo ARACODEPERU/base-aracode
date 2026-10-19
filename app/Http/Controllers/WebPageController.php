@@ -1349,7 +1349,7 @@ class WebPageController extends Controller
 
         try {
             // Guardar en base de datos
-            \App\Models\ContactMessage::create($validated);
+            $contactMessage = \App\Models\ContactMessage::create($validated);
 
             // Email al admin (no bloquea el registro)
             try {
@@ -1361,6 +1361,10 @@ class WebPageController extends Controller
                     'email' => $validated['email'],
                 ]);
             }
+
+            // Aviso por Telegram a los destinatarios de Seguridad → Alertas.
+            // El servicio nunca lanza: el mensaje ya quedo guardado.
+            app(\Modules\Security\Services\ContactMessageTelegramNotifier::class)->notify($contactMessage);
 
             return $this->respuestaDeContactoCorrecto($request);
         } catch (\Throwable $e) {

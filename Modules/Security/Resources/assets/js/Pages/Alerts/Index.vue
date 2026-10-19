@@ -286,6 +286,11 @@
                     </button>
                 </div>
 
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Además de las alertas de error, estos chat_id reciben un aviso cuando alguien
+                    envía el formulario de contacto del sitio.
+                </p>
+
                 <div v-if="showForm" class="mt-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div>

@@ -3,9 +3,12 @@
 use App\Mail\ContactFormMailable;
 use App\Models\ContactMessage;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
+use Modules\Security\Entities\SecurityAlertRecipient;
+use Modules\Security\Jobs\SendContactMessageTelegram;
 use Tests\TestCase;
 
 /*
@@ -109,6 +112,39 @@ it('guarda la solicitud del modal en el buzón que lista /cms/contact-messages',
 
     // Y dispara el mismo aviso por correo que el formulario de /contacto.
     Mail::assertQueued(ContactFormMailable::class);
+});
+
+it('avisa por Telegram a los destinatarios de alertas del sistema', function () {
+    Mail::fake();
+    Bus::fake();
+
+    // El aviso usa los chat_id de Seguridad → Alertas: la tabla la crea su
+    // migración real, igual que en producción.
+    (require base_path('Modules/Security/Database/Migrations/2026_09_30_000030_create_security_alert_recipients_table.php'))->up();
+
+    SecurityAlertRecipient::create([
+        'name' => 'Equipo',
+        'chat_id' => '123456',
+        'is_active' => true,
+    ]);
+
+    $this->postJson(route('contacto_store'), [
+        'name' => 'Ana Quispe',
+        'email' => 'ana@empresa.test',
+        'service' => 'otro',
+        'message' => 'Consulta que debe llegar al chat.',
+        'acepto' => '1',
+    ], [
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])->assertOk()->assertJson(['success' => true]);
+
+    // El job lleva el chat de los destinatarios y los datos del contacto.
+    Bus::assertDispatched(SendContactMessageTelegram::class, function ($job) {
+        return $job->chatIds === ['123456']
+            && str_contains($job->text, 'Ana Quispe')
+            && str_contains($job->text, 'ana@empresa.test')
+            && str_contains($job->text, 'Consulta que debe llegar al chat.');
+    });
 });
 
 it('no guarda ni avisa por correo si falta la aceptación de la política', function () {
