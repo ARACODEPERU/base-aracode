@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Tema claro / oscuro.
+
+    Se aplica aquí, antes de pintar nada: al recargar en oscuro no se ve el
+    destello claro, y el interruptor y los controles del carrusel quedan
+    ocultos hasta que haya JavaScript. Sin nada guardado la tienda arranca en
+    claro aunque el sistema del visitante esté en oscuro.
+-->
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('nexora-market-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    })();
+</script>
+
+<!--
+    Demostración de la plantilla «NÉXORA MARKET» del Banco de Plantillas Web de
+    ARACODE Smart Solutions.
+
+    Proyecto web independiente: no comparte CSS, JavaScript ni componentes con
+    el sitio corporativo ni con el catálogo. Sus archivos viven en esta carpeta
+    y las rutas son relativas, así que la carpeta se puede copiar a cualquier
+    servidor sin cambiar una línea.
+
+    La marca, los productos, los precios, las promociones, las opiniones, la
+    dirección y el teléfono son ficticios y están declarados como tales. No hay
+    pasarela de pago, ni pedidos reales, ni peticiones a terceros.
+
+    noindex: la página que se indexa es la ficha de la plantilla en el catálogo,
+    la demo existe para verla funcionando.
+-->
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Tres guías de compra de demostración de la plantilla NÉXORA Market, con contenido editorial de ejemplo enlazado al catálogo.">
+<title>Guías de compra — NÉXORA Market · Demostración de plantilla</title>
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 48 48%27><rect width=%2748%27 height=%2748%27 rx=%2713%27 fill=%27%23101D30%27/><path d=%27M15 34V14l18 20V14%27 fill=%27none%27 stroke=%27%23F56A2A%27 stroke-width=%274.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="aviso-demo" data-aviso>
+    <div class="aviso-demo__interior">
+        <p class="aviso-demo__texto"><strong>Demostración de plantilla.</strong> NÉXORA Market es una marca ficticia: los productos, precios, promociones, opiniones y datos de contacto son de ejemplo.</p>
+        <button class="aviso-demo__cerrar" type="button" data-aviso-cerrar aria-label="Cerrar el aviso de demostración">×</button>
+    </div>
+</div>
+
+<div class="cinta">
+    <div class="cinta__interior">
+        <p class="cinta__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>
+            Envíos según cobertura · promociones de temporada · atención al cliente
+        </p>
+        <ul class="cinta__enlaces">
+            <li><a href="catalogo.html">Catálogo completo</a></li>
+            <li><a href="catalogo.html?oferta=1">Ofertas de demostración</a></li>
+            <li><a href="carrito.html">Mi canasta</a></li>
+        </ul>
+    </div>
+</div>
+
+<header class="cabecera" data-cabecera>
+    <div class="cabecera__principal">
+        <a class="marca" href="index.html">
+            <img class="marca__logo" src="img/logo.svg" alt="" width="44" height="44">
+            <span>
+                <span class="marca__nombre">NÉXORA</span>
+                <span class="marca__lema">Market · tu mundo, a un clic</span>
+            </span>
+        </a>
+
+        <form class="buscador" role="search" data-buscador>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+            <label class="oculto" for="buscador-cabecera">Buscar productos</label>
+            <input id="buscador-cabecera" type="search" name="q" placeholder="Busca por producto o categoría: «audio», «cocina», «juguetes»" autocomplete="off">
+            <button type="submit">Buscar</button>
+            <ul class="buscador__sugerencias" data-sugerencias hidden></ul>
+        </form>
+
+        <div class="herramientas">
+            <button class="menu-boton" type="button" data-menu-boton aria-expanded="false" aria-controls="nav-principal" aria-label="Abrir el menú de categorías">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+            <a class="accion" href="catalogo.html?favoritos=1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.3-7.5-9.4A4.1 4.1 0 0 1 12 8.4a4.1 4.1 0 0 1 7.5 2.7c0 5.1-7.5 9.4-7.5 9.4Z"/></svg>
+                <span class="accion__texto">Favoritos</span>
+                <span class="accion__cuenta esta-vacia" data-favoritos-cuenta>0</span>
+            </a>
+            <a class="accion" href="carrito.html">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20c.6-3.7 3.6-5.9 7.2-5.9s6.6 2.2 7.2 5.9"/></svg>
+                <span class="accion__texto">Mi cuenta</span>
+            </a>
+            <button class="accion accion--carrito" type="button" data-canasta-abrir>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h2.2l2.4 10.5h10.2L20 7.5H6"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>
+                <span class="accion__texto">Canasta</span>
+                <span class="accion__cuenta esta-vacia" data-canasta-cuenta>0</span>
+            </button>
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false" aria-label="Cambiar a modo oscuro">
+                <svg class="tema-switch__icono tema-switch__icono--luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M20 13.4A8.2 8.2 0 0 1 10.6 4a8.4 8.4 0 1 0 9.4 9.4Z"/></svg>
+                <svg class="tema-switch__icono tema-switch__icono--sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2.2M12 19v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.8 12H5M19 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <nav class="nav" id="nav-principal" data-nav aria-label="Categorías de la tienda">
+        <div class="nav__interior">
+            <button class="nav__categorias" type="button" data-mega-boton aria-expanded="false" aria-controls="mega-panel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>
+                Todas las categorías
+            </button>
+            <ul class="nav__lista">
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="catalogo.html">Catálogo</a></li>
+                <li><a href="catalogo.html?categoria=tecnologia">Tecnología</a></li><li><a href="catalogo.html?categoria=moda">Moda</a></li><li><a href="catalogo.html?categoria=hogar">Hogar</a></li><li><a href="catalogo.html?categoria=belleza">Belleza</a></li><li><a href="catalogo.html?categoria=deportes">Deportes</a></li><li><a href="catalogo.html?categoria=juguetes">Juguetes y entretenimiento</a></li>
+                <li><a class="esta-activo" href="revista.html">Guías de compra</a></li>
+                <li><a class="nav__oferta" href="catalogo.html?oferta=1">Ofertas</a></li>
+                <li><a href="carrito.html">Canasta</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="mega" id="mega-panel" data-mega>
+        <div class="mega__interior">
+            <div class="mega__grupo"><h3><a href="catalogo.html?categoria=tecnologia">Tecnología</a></h3><ul><li><a href="catalogo.html?categoria=tecnologia&amp;coleccion=Audio" data-filtro-categoria-padre="tecnologia" data-filtro-coleccion="Audio">Audio</a></li><li><a href="catalogo.html?categoria=tecnologia&amp;coleccion=C%C3%A1maras%20y%20drones" data-filtro-categoria-padre="tecnologia" data-filtro-coleccion="Cámaras y drones">Cámaras y drones</a></li><li><a href="catalogo.html?categoria=tecnologia&amp;coleccion=Accesorios%20de%20computadora" data-filtro-categoria-padre="tecnologia" data-filtro-coleccion="Accesorios de computadora">Accesorios de computadora</a></li><li><a href="catalogo.html?categoria=tecnologia&amp;coleccion=Telefon%C3%ADa" data-filtro-categoria-padre="tecnologia" data-filtro-coleccion="Telefonía">Telefonía</a></li></ul><h3><a href="catalogo.html?categoria=moda">Moda</a></h3><ul><li><a href="catalogo.html?categoria=moda&amp;coleccion=Calzado" data-filtro-categoria-padre="moda" data-filtro-coleccion="Calzado">Calzado</a></li><li><a href="catalogo.html?categoria=moda&amp;coleccion=Bolsos%20y%20mochilas" data-filtro-categoria-padre="moda" data-filtro-coleccion="Bolsos y mochilas">Bolsos y mochilas</a></li><li><a href="catalogo.html?categoria=moda&amp;coleccion=Gafas" data-filtro-categoria-padre="moda" data-filtro-coleccion="Gafas">Gafas</a></li></ul></div><div class="mega__grupo"><h3><a href="catalogo.html?categoria=hogar">Hogar</a></h3><ul><li><a href="catalogo.html?categoria=hogar&amp;coleccion=Cocina" data-filtro-categoria-padre="hogar" data-filtro-coleccion="Cocina">Cocina</a></li><li><a href="catalogo.html?categoria=hogar&amp;coleccion=Decoraci%C3%B3n" data-filtro-categoria-padre="hogar" data-filtro-coleccion="Decoración">Decoración</a></li></ul><h3><a href="catalogo.html?categoria=belleza">Belleza</a></h3><ul><li><a href="catalogo.html?categoria=belleza&amp;coleccion=Perfumer%C3%ADa" data-filtro-categoria-padre="belleza" data-filtro-coleccion="Perfumería">Perfumería</a></li><li><a href="catalogo.html?categoria=belleza&amp;coleccion=Cabello" data-filtro-categoria-padre="belleza" data-filtro-coleccion="Cabello">Cabello</a></li><li><a href="catalogo.html?categoria=belleza&amp;coleccion=Cuidado%20bucal" data-filtro-categoria-padre="belleza" data-filtro-coleccion="Cuidado bucal">Cuidado bucal</a></li></ul></div><div class="mega__grupo"><h3><a href="catalogo.html?categoria=deportes">Deportes</a></h3><ul><li><a href="catalogo.html?categoria=deportes&amp;coleccion=Entrenamiento%20en%20casa" data-filtro-categoria-padre="deportes" data-filtro-coleccion="Entrenamiento en casa">Entrenamiento en casa</a></li><li><a href="catalogo.html?categoria=deportes&amp;coleccion=F%C3%BAtbol" data-filtro-categoria-padre="deportes" data-filtro-coleccion="Fútbol">Fútbol</a></li><li><a href="catalogo.html?categoria=deportes&amp;coleccion=Yoga%20y%20estiramiento" data-filtro-categoria-padre="deportes" data-filtro-coleccion="Yoga y estiramiento">Yoga y estiramiento</a></li></ul><h3><a href="catalogo.html?categoria=juguetes">Juguetes y entretenimiento</a></h3><ul><li><a href="catalogo.html?categoria=juguetes&amp;coleccion=Did%C3%A1cticos" data-filtro-categoria-padre="juguetes" data-filtro-coleccion="Didácticos">Didácticos</a></li><li><a href="catalogo.html?categoria=juguetes&amp;coleccion=Veh%C3%ADculos" data-filtro-categoria-padre="juguetes" data-filtro-coleccion="Vehículos">Vehículos</a></li><li><a href="catalogo.html?categoria=juguetes&amp;coleccion=Peluches" data-filtro-categoria-padre="juguetes" data-filtro-coleccion="Peluches">Peluches</a></li></ul></div>
+            <div class="mega__grupo">
+                <h3>Ofertas de la semana</h3>
+                <a class="mega__destacado" href="producto.html?p=auriculares-nexora-studio">
+                    <img src="img/p-auriculares.webp" alt="" width="84" height="84" loading="lazy">
+                    <span><strong>Auriculares NEXORA Studio</strong><small>S/ 349.90 · antes S/ 429.90</small></span>
+                </a>
+                <a class="mega__destacado" href="producto.html?p=smartphone-nexora-one">
+                    <img src="img/p-smartphone.webp" alt="" width="84" height="84" loading="lazy">
+                    <span><strong>Smartphone NEXORA One</strong><small>S/ 1190.00 · antes S/ 1390.00</small></span>
+                </a>
+                <p class="mega__nota">Precios de demostración: no hay promoción vigente.</p>
+            </div>
+        </div>
+    </div>
+</header>
+<main id="contenido">
+
+    <section class="seccion">
+        <div class="contenedor">
+            <nav class="migaja" aria-label="Ruta de navegación">
+                <a href="index.html">Inicio</a>
+                <span aria-hidden="true">/</span>
+                <span>Guías de compra</span>
+            </nav>
+
+            <p class="etiqueta-seccion">Revista de demostración</p>
+            <h1 class="catalogo__titulo">Guías de compra NÉXORA</h1>
+            <p class="catalogo__cuenta">Tres artículos de ejemplo que muestran cómo se enlaza el contenido editorial con el catálogo. Los textos y las fotos son de demostración.</p>
+        </div>
+    </section>
+
+    <section class="seccion seccion--gris">
+        <div class="contenedor">
+            <article class="articulo" id="guia-tecnologia">
+                <p class="etiqueta-seccion">Tecnología</p>
+                <h2>Cómo elegir accesorios tecnológicos sin equivocarse</h2>
+                <p>Antes de comparar precios conviene responder tres preguntas: para qué se va a usar, dónde se va a usar y cuánto se quiere gastar. Con esas tres respuestas, la lista de candidatos baja sola.</p>
+
+                <h3>1. Para qué se usa</h3>
+                <p>No es lo mismo un auricular para viajar en transporte público que uno para grabar en casa. El uso manda sobre la ficha técnica: la cancelación de ruido o la resistencia al agua solo valen si el aparato va a estar en ese escenario.</p>
+
+                <h3>2. Dónde se guarda y cuánto dura</h3>
+                <p>En accesorios pequeños, la autonomía y el estuche pesan más que cualquier otro dato. Un producto con buena batería y un estuche de bolsillo se usa todos los días; uno incómodo de transportar se queda en el cajón.</p>
+
+                <h3>3. Qué se revisa en la ficha</h3>
+                <p>En esta plantilla la ficha muestra precio, precio anterior cuando corresponde, disponibilidad, plazo de entrega de ejemplo y una tabla de especificaciones. Es la información que evita la devolución.</p>
+
+                <p><a class="seccion__enlace" href="catalogo.html?categoria=tecnologia">Ver la categoría Tecnología</a></p>
+            </article>
+        </div>
+    </section>
+
+    <section class="seccion">
+        <div class="contenedor">
+            <article class="articulo" id="guia-hogar">
+                <p class="etiqueta-seccion">Hogar</p>
+                <h2>Ideas para renovar los espacios sin mudarse</h2>
+                <p>Renovar no siempre significa cambiar los muebles. Casi siempre basta con intervenir lo que se usa a diario: la cocina, los textiles y el orden.</p>
+
+                <h3>Empieza por la cocina</h3>
+                <p>Es el cuarto donde más se nota un cambio pequeño: un juego de ollas que calienta parejo, un hervidor que no se queda encendido o una licuadora que se limpia rápido.</p>
+
+                <h3>Textiles y luz</h3>
+                <p>Cambiar la ropa de cama y la funda de los cojines cambia la sensación del cuarto completo con un presupuesto bajo. Si además entra luz natural, el efecto se multiplica.</p>
+
+                <h3>Orden visible</h3>
+                <p>Un jarrón con flores secas o una bandeja que reúne las cosas sueltas resuelven más de lo que parece. Menos objetos a la vista, más sensación de espacio.</p>
+
+                <p><a class="seccion__enlace" href="catalogo.html?categoria=hogar">Ver la categoría Hogar</a></p>
+            </article>
+        </div>
+    </section>
+
+    <section class="seccion seccion--gris">
+        <div class="contenedor">
+            <article class="articulo" id="guia-estilo">
+                <p class="etiqueta-seccion">Estilo</p>
+                <h2>Tendencias de estilo para la temporada</h2>
+                <p>La forma más económica de actualizar el look es sumar una o dos piezas a lo que ya se tiene, en lugar de reemplazar el armario completo.</p>
+
+                <h3>Una pieza que ancla</h3>
+                <p>Un calzado neutro o un bolso de color sólido combinan con casi todo y ordenan el resto del conjunto. Es la compra que más veces se usa por temporada.</p>
+
+                <h3>Un accesorio que cambia el tono</h3>
+                <p>Gafas, correas de reloj o pañuelos permiten pasar de un look de oficina a uno de fin de semana sin volver a casa.</p>
+
+                <h3>Comparar antes de comprar</h3>
+                <p>Esta plantilla permite marcar favoritos y volver a la lista días después: el carrito y los favoritos se guardan en el navegador, así que la comparación se retoma donde se dejó.</p>
+
+                <p><a class="seccion__enlace" href="catalogo.html?categoria=moda">Ver la categoría Moda</a></p>
+            </article>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor">
+        <div class="pie__rejilla">
+            <div>
+                <div class="pie__marca">
+                    <img src="img/logo.svg" alt="" width="44" height="44">
+                    <span>
+                        <strong>NÉXORA</strong>
+                        <small>Market · marca ficticia</small>
+                    </span>
+                </div>
+                <p>Plantilla de tienda en línea con buscador, seis categorías, filtros, ficha de producto, favoritos y canasta que simula el pedido.</p>
+                <p class="pie__aviso">NÉXORA Market es una demostración de plantilla de ARACODE Smart Solutions. La marca, los productos, los precios, las promociones, las opiniones, la dirección y el teléfono son ficticios: no se ejecuta ningún cobro, no se genera ningún pedido y no se envía ningún dato.</p>
+                <ul class="redes">
+                    <li><a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram (perfil de ejemplo: la demostración no tiene redes reales)">IG</a></li>
+                    <li><a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook (perfil de ejemplo: la demostración no tiene redes reales)">FB</a></li>
+                    <li><a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok (perfil de ejemplo: la demostración no tiene redes reales)">TT</a></li>
+                    <li><a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de ejemplo: el número no existe">WA</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Tienda</h3>
+                <ul>
+                    <li><a href="catalogo.html">Catálogo completo</a></li>
+                    <li><a href="catalogo.html?oferta=1">Ofertas de demostración</a></li>
+                    <li><a href="catalogo.html?categoria=tecnologia&amp;coleccion=Audio">Audio y accesorios</a></li>
+                    <li><a href="catalogo.html?favoritos=1">Mis favoritos</a></li>
+                    <li><a href="carrito.html">Mi canasta</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Categorías</h3>
+                <ul>
+                    <li><a href="catalogo.html?categoria=tecnologia">Tecnología</a></li>
+                    <li><a href="catalogo.html?categoria=moda">Moda</a></li>
+                    <li><a href="catalogo.html?categoria=hogar">Hogar</a></li>
+                    <li><a href="catalogo.html?categoria=belleza">Belleza</a></li>
+                    <li><a href="catalogo.html?categoria=deportes">Deportes</a></li>
+                    <li><a href="catalogo.html?categoria=juguetes">Juguetes y entretenimiento</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Atención al cliente</h3>
+                <ul>
+                    <li>Envíos: cobertura y plazos de ejemplo</li>
+                    <li>Cambios y devoluciones: 30 días de ejemplo</li>
+                    <li>Medios de pago: solo representación visual</li>
+                    <li>Preguntas frecuentes de la plantilla</li>
+                    <li><a href="revista.html">Guías de compra</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Contacto de ejemplo</h3>
+                <ul>
+                    <li>Dirección ficticia: Av. Los Álamos 1240, piso 3</li>
+                    <li>Teléfono ficticio: (01) 000 0000</li>
+                    <li>Correo ficticio: hola@nexoramarket.demo</li>
+                    <li>Horario de ejemplo: lunes a domingo, 9:00 a 21:00</li>
+                </ul>
+                <ul class="pagos" aria-label="Medios de pago de muestra">
+                    <li>Tarjeta</li>
+                    <li>Transferencia</li>
+                    <li>Efectivo al recibir</li>
+                    <li>Billetera digital</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pie__legal">
+            <p>© <span data-anio>2026</span> NÉXORA Market (marca ficticia) · Demostración de plantilla de ARACODE Smart Solutions.</p>
+            <p>Los medios de pago se muestran solo como referencia visual: la demostración no cobra ni procesa operaciones.</p>
+        </div>
+    </div>
+</footer>
+
+<aside class="panel" data-canasta-panel hidden aria-label="Canasta de la demostración">
+    <div class="panel__cabecera">
+        <h2>Tu canasta</h2>
+        <button class="panel__cerrar" type="button" data-canasta-cerrar aria-label="Cerrar la canasta">×</button>
+    </div>
+
+    <div class="panel__cuerpo">
+        <p class="canasta-vacia" data-canasta-vacia>La canasta está vacía. Añade productos desde el <a href="catalogo.html">catálogo</a>; se guardan solo en tu navegador.</p>
+        <ul data-canasta-lista></ul>
+    </div>
+
+    <div class="panel__pie" data-canasta-pie hidden>
+        <p class="panel__total"><span>Subtotal de prueba</span><strong data-canasta-total>S/ 0.00</strong></p>
+        <p class="panel__nota">Precios ficticios y sin impuestos. La demostración no cobra ni envía pedidos.</p>
+        <a class="boton boton--principal boton--ancho" href="carrito.html">Revisar la canasta</a>
+    </div>
+</aside>
+
+<button class="panel__fondo" type="button" data-panel-fondo hidden aria-label="Cerrar la canasta"></button>
+
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%20NÉXORA%20Market%20(demostraci%C3%B3n)%3A%20quiero%20consultar%20por%20un%20producto." target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 1.8a8.2 8.2 0 0 1 0 16.4 8.1 8.1 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 0 1 12 3.8Zm-3 4c-.2 0-.5.1-.7.4-.3.3-.9 1-.9 2.1s.9 2.3 1 2.5c.1.2 1.7 2.7 4.2 3.7 2.1.8 2.5.7 3 .6.5-.1 1.6-.7 1.8-1.3.2-.7.2-1.2.2-1.3-.1-.1-.3-.2-.6-.4l-1.5-.7c-.2-.1-.4-.1-.5.1l-.6.8c-.1.2-.3.2-.5.1a6.5 6.5 0 0 1-1.9-1.2 7.3 7.3 0 0 1-1.3-1.7c-.1-.2 0-.3.1-.4l.6-.7c.1-.2.1-.3 0-.5l-.6-1.6c-.2-.4-.4-.4-.5-.4H9Z"/></svg>
+    <span>Escríbenos</span>
+</a>
+
+<p class="aviso-canasta" data-aviso-canasta role="status" aria-live="polite" hidden></p>
+
+<noscript>
+    <p class="contenedor" style="padding:1.5rem 0;color:#647084">La demostración arma el catálogo, los filtros y la canasta con JavaScript. Actívalo para ver la tienda completa; los textos y las fotos se leen igual sin él.</p>
+</noscript>
+
+<script src="js/app.js"></script>
+</body>
+</html>

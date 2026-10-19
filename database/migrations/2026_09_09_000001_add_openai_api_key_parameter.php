@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Crea (si no existe) el parametro P000025 con la API Key de OpenAI
+     * Crea (si no existe) el parametro IA-00001 con la API Key de OpenAI
      * usada por el chat del sistema y la censura de texto.
      *
      * Idempotente: si el parametro ya existe en la base de datos, no se toca
@@ -19,18 +19,19 @@ return new class extends Migration
             return;
         }
 
-        $exists = Parameter::where('parameter_code', 'P000025')->exists();
+        $exists = Parameter::where('parameter_code', 'IA-00001')->exists();
 
         if ($exists) {
             return;
         }
 
         Parameter::create([
-            'parameter_code' => 'P000025',
+            'parameter_code' => 'IA-00001',
             'description' => 'API Key de OpenAI para consultas de IA del sistema',
-            'control_type' => 'tx',
+            // Confidencial: la pantalla de Parametros no vuelve a mostrar el valor.
+            'control_type' => 'pwd',
             'json_query_data' => null,
-            'value_default' => env('API_KEY_IA', env('OPENAI_API_KEY')) ?: null,
+            'value_default' => config('academic.openai.api_key') ?: null,
         ]);
     }
 
@@ -40,6 +41,6 @@ return new class extends Migration
             return;
         }
 
-        Parameter::where('parameter_code', 'P000025')->delete();
+        Parameter::where('parameter_code', 'IA-00001')->delete();
     }
 };

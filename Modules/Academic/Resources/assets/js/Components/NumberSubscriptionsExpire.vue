@@ -22,7 +22,7 @@
 </script>
 <template>
     <div class="space-y-5">
-        <div class="w-full flex flex-col bg-white border border-gray-200 border-t-4 border-t-blue-600 shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:border-t-blue-500 dark:shadow-neutral-700/70">
+        <div class="w-full flex flex-col bg-white border border-gray-200 border-t-4 border-t-primary shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:border-t-primary dark:shadow-neutral-700/70">
             <div class="p-4 md:p-5">
                 <div class="flex items-start justify-between dark:text-white-light mb-5 -mx-5 p-5 pt-0">
                     <h3 class="text-lg font-bold text-gray-800 dark:text-white uppercase">

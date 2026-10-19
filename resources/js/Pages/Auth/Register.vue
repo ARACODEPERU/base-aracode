@@ -39,10 +39,19 @@ const form = useForm({
     email: '',
     password: '',
     password_confirmation: '',
-    terms: false,
+    // Aceptacion de los terminos y la politica de privacidad: el servidor la
+    // exige (regla "acepto" accepted), y aqui ademas bloquea el envio.
+    acepto: false,
 });
 
 const submit = () => {
+    // El formulario lleva novalidate, asi que el navegador no valida nada por su
+    // cuenta: sin este corte, un Enter en un campo enviaria la peticion sin
+    // aceptacion y el servidor tendria que rechazarla.
+    if (! form.acepto) {
+        return;
+    }
+
     form.post(route('register'), {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
@@ -205,11 +214,14 @@ const company = usePage().props.company;
                                 </div>
                                 <div>
                                     <label class="flex cursor-pointer items-center">
-                                        <input type="checkbox" class="form-checkbox bg-white dark:bg-black" />
-                                        <span class="text-white-dark">Al crear tu cuenta aceptas los terminos y condiciones</span>
+                                        <input v-model="form.acepto" type="checkbox" class="form-checkbox bg-white dark:bg-black" />
+                                        <span class="text-white-dark">
+                                            Al crear tu cuenta aceptas los Términos y Condiciones y la Política de Privacidad
+                                        </span>
                                     </label>
+                                    <InputError class="mt-2" :message="form.errors.acepto" />
                                 </div>
-                                <button type="submit" :class="{ 'opacity-25': form.processing }" :disabled="form.processing" class="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+                                <button type="submit" :class="{ 'opacity-25': form.processing || ! form.acepto }" :disabled="form.processing || ! form.acepto" class="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
                                     Guardar
                                 </button>
                             </form>

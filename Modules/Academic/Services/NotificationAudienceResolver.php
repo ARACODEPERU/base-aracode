@@ -2,7 +2,6 @@
 
 namespace Modules\Academic\Services;
 
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCourse;
@@ -157,8 +156,7 @@ class NotificationAudienceResolver
     }
 
     /**
-     * Alumnos con suscripcion activa (status true) o vigente por fechas,
-     * replicando la regla de App\Services\JobOffersAccess::hasActiveSubscription().
+     * Alumnos con suscripcion vigente hoy (ver AcaStudentSubscription::scopeActiveNow).
      */
     private function subscriptionRows(): Collection
     {
@@ -173,22 +171,21 @@ class NotificationAudienceResolver
     }
 
     /**
-     * Alumnos con suscripcion activa (status true) o vigente por fechas,
-     * replicando la regla de App\Services\JobOffersAccess::hasActiveSubscription().
+     * Alumnos con suscripcion vigente hoy (ver AcaStudentSubscription::scopeActiveNow).
      *
      * @return array<int, int>
      */
     private function subscriptionStudentIds(): array
     {
         return AcaStudentSubscription::query()
-            ->where($this->activeSubscriptionFilter())
+            ->activeNow()
             ->pluck('student_id')
             ->unique()
             ->all();
     }
 
     /**
-     * Misma regla de suscripcion, para una sola persona.
+     * Misma regla de suscripcion vigente, para una sola persona.
      *
      * La usa el registro del bot de Telegram, que valida a un alumno a la vez.
      */
@@ -196,25 +193,8 @@ class NotificationAudienceResolver
     {
         return AcaStudentSubscription::query()
             ->where('student_id', $studentId)
-            ->where($this->activeSubscriptionFilter())
+            ->activeNow()
             ->exists();
-    }
-
-    /**
-     * Condicion compartida de suscripcion vigente: activa por estado o por
-     * fechas.
-     */
-    private function activeSubscriptionFilter(): \Closure
-    {
-        $today = Carbon::today();
-
-        return function ($query) use ($today) {
-            $query->where('status', true)
-                ->orWhere(function ($q) use ($today) {
-                    $q->whereDate('date_start', '<=', $today)
-                        ->whereDate('date_end', '>=', $today);
-                });
-        };
     }
 
     /**

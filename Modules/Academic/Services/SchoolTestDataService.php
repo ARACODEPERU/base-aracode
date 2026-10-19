@@ -91,6 +91,54 @@ class SchoolTestDataService
     private const SCHEDULE_BLOCKS_PER_DAY = 2;
     private const SCHEDULE_FIRST_BLOCK = '08:00:00';
 
+    /**
+     * Estructura de niveles SOLO del modo prueba (no toca el sistema):
+     * Estimulación, Inicial, Primaria y Secundaria con sus grados.
+     */
+    private const TEST_LEVEL_STRUCTURE = [
+        ['code' => 'estimulacion', 'name' => 'Estimulación', 'grades' => ['1 año', '2 años']],
+        ['code' => 'inicial', 'name' => 'Inicial', 'grades' => ['3 años', '4 años', '5 años']],
+        ['code' => 'primaria', 'name' => 'Primaria', 'grades' => ['1°', '2°', '3°', '4°', '5°', '6°']],
+        ['code' => 'secundaria', 'name' => 'Secundaria', 'grades' => ['1°', '2°', '3°', '4°', '5°']],
+    ];
+
+    /**
+     * Areas del nivel Estimulación SOLO para el modo prueba (el CNEB del
+     * sistema no define areas para ese nivel, así que se usan estas para que
+     * sus secciones también tengan horario).
+     */
+    private const TEST_ESTIMULACION_AREAS = [
+        'Desarrollo psicomotor',
+        'Comunicación temprana',
+        'Descubrimiento del entorno',
+    ];
+
+    /** Nombres de pila para las personas de prueba (se combinan al azar). */
+    private const TEST_FIRST_NAMES_MALE = [
+        'Adrián', 'Alejandro', 'Alonso', 'Bruno', 'César', 'Cristhofer', 'Damián', 'Diego',
+        'Emmanuel', 'Fabricio', 'Gabriel', 'Gonzalo', 'Hugo', 'Iván', 'Joaquín', 'Jorge',
+        'Leonardo', 'Luis', 'Marco', 'Martín', 'Mateo', 'Miguel', 'Nicolás', 'Paolo',
+        'Renato', 'Rodrigo', 'Santiago', 'Sebastián', 'Thiago', 'Valentino',
+    ];
+
+    /** Nombres de pila para las personas de prueba (se combinan al azar). */
+    private const TEST_FIRST_NAMES_FEMALE = [
+        'Abril', 'Aitana', 'Alessandra', 'Antonia', 'Ariana', 'Bianca', 'Camila', 'Daniela',
+        'Danna', 'Emma', 'Fabiana', 'Fernanda', 'Gianna', 'Jimena', 'Kiara', 'Lucía',
+        'Luciana', 'María', 'Mía', 'Miranda', 'Nicole', 'Paula', 'Rafaella', 'Regina',
+        'Renata', 'Sofía', 'Valentina', 'Valeria', 'Victoria', 'Ximena',
+    ];
+
+    /** Apellidos para las personas de prueba (se combinan al azar). */
+    private const TEST_LAST_NAMES = [
+        'Aguilar', 'Alvarado', 'Apaza', 'Arévalo', 'Barreto', 'Cabrera', 'Cáceres', 'Campos',
+        'Cárdenas', 'Carrasco', 'Castillo', 'Céspedes', 'Chávez', 'Condori', 'Cruz', 'Delgado',
+        'Espinoza', 'Fernández', 'Flores', 'García', 'Gonzales', 'Gutiérrez', 'Huamán', 'León',
+        'López', 'Mamani', 'Medina', 'Mendoza', 'Miranda', 'Morales', 'Núñez', 'Paredes',
+        'Quispe', 'Ramírez', 'Ramos', 'Reyes', 'Rojas', 'Salazar', 'Sánchez', 'Silva',
+        'Soto', 'Torres', 'Vargas', 'Vásquez', 'Vega', 'Velásquez', 'Vera', 'Yupanqui',
+    ];
+
     private int $documentSequence = 0;
     private int $studentSequence = 0;
     private int $personSequence = 0;
@@ -304,9 +352,10 @@ class SchoolTestDataService
     }
 
     /**
-     * Los tres niveles de la educacion basica regular. Reutiliza el nivel real
-     * que ya tenga ese codigo (no lo registra: no es nuestro) y crea solo los
-     * que falten.
+     * Los cuatro niveles del modo prueba (Estimulación, Inicial, Primaria y
+     * Secundaria). Es estructura solo de prueba: no usa ni modifica la del
+     * sistema. Reutiliza el nivel real que ya tenga ese codigo (no lo
+     * registra: no es nuestro) y crea solo los que falten.
      *
      * @return Collection<int, AcaSchoolLevel>
      */
@@ -314,7 +363,7 @@ class SchoolTestDataService
     {
         $levels = new Collection();
 
-        foreach (AcaSchoolLevel::standardPeruStructure() as $index => $definition) {
+        foreach (self::TEST_LEVEL_STRUCTURE as $index => $definition) {
             $level = AcaSchoolLevel::where('school_id', $school->id)
                 ->where('code', $definition['code'])
                 ->first();
@@ -326,7 +375,7 @@ class SchoolTestDataService
                     'name' => $definition['name'],
                     'sort_order' => $index + 1,
                     'status' => true,
-                    'scale' => $definition['code'] === AcaSchoolLevel::INICIAL
+                    'scale' => in_array($definition['code'], ['estimulacion', AcaSchoolLevel::INICIAL], true)
                         ? AcaSchoolGradeCompetency::SCALE_LITERAL
                         : AcaSchoolGradeCompetency::SCALE_VIGESIMAL,
                 ]);
@@ -354,7 +403,7 @@ class SchoolTestDataService
         $auxiliaries = $teachers->filter(fn (AcaTeacher $teacher) => str_contains((string) $teacher->teacher_code, '-A'))->values();
 
         foreach ($levels as $level) {
-            $definition = collect(AcaSchoolLevel::standardPeruStructure())->firstWhere('code', $level->code);
+            $definition = collect(self::TEST_LEVEL_STRUCTURE)->firstWhere('code', $level->code);
             $gradeNames = $definition['grades'] ?? ['1°'];
 
             $existing = $registeredGrades->where('level_id', $level->id);
@@ -378,7 +427,9 @@ class SchoolTestDataService
                 $gradeSections = $sections->where('grade_id', $grade->id);
 
                 for ($index = $gradeSections->count(); $index < $sectionsPerGrade; $index++) {
-                    $name = self::MARK.' '.chr(65 + $index);
+                    // Secciones de la A a la Z según el caso (nombres reales,
+                    // sin marca: el registro de prueba sabe cuáles son suyas).
+                    $name = chr(65 + ($index % 26));
 
                     $section = AcaSchoolSection::create([
                         'school_id' => $school->id,
@@ -432,11 +483,14 @@ class SchoolTestDataService
 
     /**
      * Areas curriculares estandar del nivel (CNEB). Si el colegio ya tiene el
-     * area, se reutiliza; las que se crean quedan registradas.
+     * area, se reutiliza; las que se crean quedan registradas. Para el nivel
+     * Estimulación (solo existe en el modo prueba) se usan areas propias de
+     * prueba, sin tocar el catálogo del sistema.
      */
     private function ensureAreas(AcaSchool $school, AcaSchoolLevel $level, callable $register): void
     {
-        $names = AcaSchoolArea::standardCnebAreas()[$level->code] ?? [];
+        $names = AcaSchoolArea::standardCnebAreas()[$level->code]
+            ?? ($level->code === 'estimulacion' ? self::TEST_ESTIMULACION_AREAS : []);
 
         foreach ($names as $index => $name) {
             $exists = AcaSchoolArea::where('school_id', $school->id)
@@ -478,14 +532,19 @@ class SchoolTestDataService
             $codes['A'.str_pad((string) $index, 2, '0', STR_PAD_LEFT)] = 'Auxiliar';
         }
 
+        $position = 0;
+
         foreach ($codes as $suffix => $role) {
             $code = self::MARK.'-'.$suffix;
 
             if ($teachers->contains(fn (AcaTeacher $teacher) => $teacher->teacher_code === $code)) {
+                $position++;
+
                 continue;
             }
 
-            $person = $this->createPerson($role, 'M');
+            $person = $this->createPerson($role, $position % 2 === 0 ? 'M' : 'F');
+            $position++;
 
             $register(self::ENTITY_PERSON, $person->id, $person->full_name);
 
@@ -694,6 +753,11 @@ class SchoolTestDataService
                 'gate_attendance_id' => $gateIds,
             ]);
 
+            $deleted['Suscripciones Telegram de asistencia'] = $this->deleteRelated('aca_school_telegram_subscriptions', [
+                'student_id' => $studentIds,
+                'guardian_person_id' => $personIds,
+            ]);
+
             $deleted['Asistencias de puerta'] = $this->deleteByIds('aca_school_gate_attendances', 'id', $gateIds);
 
             // 2) Asistencia de aula (mes a mes).
@@ -837,21 +901,29 @@ class SchoolTestDataService
         return $modelClass::whereIn('id', $ids)->get();
     }
 
-    /** Persona de prueba (people) con documento, nombre y genero marcados. */
+    /**
+     * Persona de prueba con nombre realista: combina al azar un nombre de pila
+     * (según el género) con dos apellidos, para no ver "PRUEBA PRUEBA" en la
+     * ficha. El documento sigue marcado (TEST...) y el registro de prueba sabe
+     * que la persona es suya, así el borrado no depende del nombre.
+     */
     private function createPerson(string $role, string $gender): Person
     {
         $number = $this->nextDocumentNumber();
         $this->personSequence++;
-        $name = trim($role.' '.str_pad((string) $this->personSequence, 3, '0', STR_PAD_LEFT));
+
+        $firstName = $this->randomFirstName($gender);
+        $fatherLastname = $this->randomLastName();
+        $motherLastname = $this->randomLastName();
 
         return Person::create([
             'document_type_id' => self::DOCUMENT_TYPE_ID,
             'number' => $number,
-            'names' => $name,
-            'father_lastname' => self::MARK,
-            'mother_lastname' => self::MARK,
-            'short_name' => $name,
-            'full_name' => trim(self::MARK.' '.self::MARK.' '.$name),
+            'names' => $firstName,
+            'father_lastname' => $fatherLastname,
+            'mother_lastname' => $motherLastname,
+            'short_name' => trim($firstName.' '.$fatherLastname),
+            'full_name' => trim($fatherLastname.' '.$motherLastname.' '.$firstName),
             'gender' => $gender,
             'status' => true,
             'country_id' => 1,
@@ -859,6 +931,20 @@ class SchoolTestDataService
             'is_provider' => false,
             'ubigeo_description' => self::MARK,
         ]);
+    }
+
+    /** Nombre de pila al azar según el género (M = masculinos, otro = femeninos). */
+    private function randomFirstName(string $gender): string
+    {
+        $pool = strtoupper($gender) === 'M' ? self::TEST_FIRST_NAMES_MALE : self::TEST_FIRST_NAMES_FEMALE;
+
+        return $pool[array_rand($pool)];
+    }
+
+    /** Apellido al azar de la lista de prueba. */
+    private function randomLastName(): string
+    {
+        return self::TEST_LAST_NAMES[array_rand(self::TEST_LAST_NAMES)];
     }
 
     /** Codigo de documento unico para las personas de prueba. */
@@ -996,6 +1082,7 @@ class SchoolTestDataService
             ['aca_school_students', 'person_id'],
             ['aca_school_enrollments', 'guardian_person_id'],
             ['aca_school_student_guardians', 'guardian_person_id'],
+            ['aca_school_telegram_subscriptions', 'guardian_person_id'],
             ['aca_school_sections', 'tutor_person_id'],
             ['aca_school_sections', 'auxiliary_person_id'],
             ['aca_school_schedules', 'teacher_person_id'],

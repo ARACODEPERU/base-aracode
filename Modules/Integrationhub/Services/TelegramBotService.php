@@ -258,6 +258,9 @@ class TelegramBotService
             'url' => $url,
             'secret_token' => $secret,
             'drop_pending_updates' => $dropPendingUpdates,
+            // Limita cuantas conexiones simultaneas abre Telegram contra
+            // nuestro webhook (ver docs/BOT_TELEGRAM_LIMITES.md).
+            'max_connections' => max(1, min(100, (int) config('integrationhub.telegram.webhook_max_connections', 10))),
         ]);
     }
 

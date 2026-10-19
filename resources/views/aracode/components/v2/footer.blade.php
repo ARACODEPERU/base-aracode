@@ -33,6 +33,10 @@
                     <li><a href="{{ route('solucion_kapta') }}" class="ara-footer-link">KAPTA LMS</a></li>
                     <li><a href="{{ route('solucion_facturacion') }}" class="ara-footer-link">KIRAFACT</a></li>
                     <li><a href="{{ route('solucion_pichanguero') }}" class="ara-footer-link">Pichanguero</a></li>
+                    {{-- Gestión de Clínica es el producto del módulo Salud. Se enlaza
+                         aquí, junto al resto del ecosistema, y abre en la misma
+                         pestaña: su página vive en este sitio. --}}
+                    <li><a href="{{ route('solucion_clinica') }}" class="ara-footer-link">Gestión de Clínica</a></li>
                     <li><a href="{{ route('solucion_desarrollo') }}" class="ara-footer-link">Desarrollo a Medida</a></li>
                     <li><a href="{{ route('plantillas.catalogo') }}" class="ara-footer-link">Banco de Plantillas</a></li>
                     <li><a href="{{ route('soluciones') }}" class="ara-footer-link">Todas las Soluciones</a></li>

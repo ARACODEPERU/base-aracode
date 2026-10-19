@@ -23,7 +23,7 @@
     });
 </script>
 <template>
-    <div class="flex flex-col bg-white border border-gray-200 border-t-4 border-t-blue-600 shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:border-t-blue-500 dark:shadow-neutral-700/70">
+    <div class="flex flex-col bg-white border border-gray-200 border-t-4 border-t-primary shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:border-t-primary dark:shadow-neutral-700/70">
         <div v-if="displayCardData" class="p-4 md:p-5">
             <div class="flex items-center gap-x-2">
                 <div class="h-3 bg-gray-200 rounded-full dark:bg-gray-700 w-32"></div>

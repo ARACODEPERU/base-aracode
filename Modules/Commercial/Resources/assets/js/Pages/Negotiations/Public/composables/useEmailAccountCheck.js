@@ -35,6 +35,10 @@ export function useEmailAccountCheck({ form, token, loadPerson }) {
 
     // Verifica si el correo ya tiene cuenta registrada: pregunta y carga los datos.
     const checkEmailAccount = () => {
+        // El correo es un dato personal: no se consulta si ya tiene cuenta hasta que
+        // el titular acepta la politica de privacidad del formulario.
+        if (! form.accepted_privacidad) return;
+
         const email = String(form.email || "").trim();
         if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return;
 

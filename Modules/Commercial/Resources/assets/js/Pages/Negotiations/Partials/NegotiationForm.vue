@@ -8,11 +8,12 @@ import EditorAracode from "@/Components/EditorAracode.vue";
 import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
 
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { Select } from "ant-design-vue";
 import Swal2 from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { faCalculator, faCalendarPlus, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { faCalculator, faCalendarPlus, faGift, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { FREE_PAYMENT_METHOD, isFreeNegotiation } from "../Support/freeNegotiation.js";
 
 const props = defineProps({
     negotiation: { type: Object, default: null },
@@ -29,6 +30,15 @@ const props = defineProps({
 });
 
 const isEdit = computed(() => !!props.negotiation?.id);
+
+// Negociacion gratuita: se entregan cursos o suscripciones que tienen costo, pero el
+// precio acordado es 0. No hay nada que cobrar, asi que el formulario deja de pedir los
+// datos de pago y el cliente solo completa sus datos en el enlace publico.
+const isFree = computed(() => isFreeNegotiation(form.total_price));
+
+// Estado de la negociacion al abrir el formulario: en edicion sirve para no volver a
+// pedir confirmacion cuando ya era gratuita antes de este guardado.
+const wasFree = isFreeNegotiation(props.negotiation?.total_price);
 
 const currentUserName = usePage().props.auth?.user?.name ?? null;
 
@@ -64,6 +74,28 @@ const subscriptionOptions = computed(() => props.subscriptions.map((item) => ({
 })));
 
 
+// Al quedar el total en 0 se limpian los datos de cobro que ya no aplican: si viajaran
+// igual quedarian guardados en la negociacion sin que el cliente llegue a usarlos.
+// Los campos de pago no se ocultan: se muestran inhabilitados, para que el asesor vea
+// que existen y que no aplican.
+watch(isFree, (gratis) => {
+    if (gratis) {
+        form.payment_type = "single";
+        form.payment_method = FREE_PAYMENT_METHOD;
+        form.schedule = [];
+        form.company_billetera_ids = [];
+        form.payment_link = null;
+        form.single_payment_days = null;
+
+        return;
+    }
+
+    // Volvio a tener precio: se recupera un medio de pago elegible por el asesor.
+    if (form.payment_method === FREE_PAYMENT_METHOD) {
+        form.payment_method = "billetera_digital";
+    }
+});
+
 // Una sola opcion por moneda: si la tabla de monedas llega con filas repetidas,
 // el select mostraba la misma moneda tres veces.
 const currencyOptions = computed(() => {
@@ -83,10 +115,14 @@ const currencyOptions = computed(() => {
 
 });
 
-const paymentMethodOptions = computed(() => props.paymentMethods.map((item) => ({
-    value: item.value,
-    label: item.label,
-})));
+// El catalogo incluye 'gratis' para las etiquetas del listado y el detalle, pero no es una
+// opcion elegible: solo se ofrece mientras la negociacion no tiene cobro (y esta bloqueada).
+const paymentMethodOptions = computed(() => props.paymentMethods
+    .filter((item) => isFree.value || item.value !== FREE_PAYMENT_METHOD)
+    .map((item) => ({
+        value: item.value,
+        label: item.label,
+    })));
 
 // Equivalente en soles del monto ingresado, para que el asesor vea a cuanto
 // equivale el precio total (y cada cuota) cuando elige trabajar en dolares.
@@ -258,7 +294,34 @@ const negotiationFormError = () => {
     return first ?? "No se pudo registrar la negociacion. Verifica los datos e intentalo nuevamente.";
 };
 
-const submit = () => {
+/**
+ * Aviso previo del guardado gratis: el cliente no pagara nada ni subira voucher, asi
+ * que se pide confirmacion antes de crear la negociacion.
+ *
+ * No se vuelve a preguntar cuando la negociacion ya era gratuita (edicion): solo se
+ * confirma el cambio real, es decir el paso de una negociacion con cobro a gratis.
+ */
+const confirmFreeNegotiation = async () => {
+    if (!isFree.value) return true;
+    if (isEdit.value && wasFree) return true;
+
+    const result = await Swal2.fire({
+        title: "Vas a generar una negociacion Gratis",
+        html: '<p class="text-sm text-gray-500">El precio acordado es <strong>0</strong>: el cliente recibira los cursos o suscripciones sin costo y al abrir el enlace solo completara sus datos, sin voucher ni datos de pago. ¿Estas seguro?</p>',
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Si, generar gratis",
+        cancelButtonText: "No, revisar",
+        reverseButtons: true,
+        allowOutsideClick: false,
+        padding: "2em",
+        customClass: "sweet-alerts",
+    });
+
+    return result.isConfirmed;
+};
+
+const submit = async () => {
     form.clearErrors();
 
     const items = buildItems();
@@ -283,6 +346,9 @@ const submit = () => {
 
     form.items = items;
 
+    // Ultima confirmacion antes de guardar: solo despues del "Si" se envia la peticion.
+    if (! (await confirmFreeNegotiation())) return;
+
     const options = {
         preserveScroll: true,
         onSuccess: () => {
@@ -305,6 +371,9 @@ const submit = () => {
                 }
             });
         },
+        // Un solo manejador de error: habia dos claves onError y la segunda anulaba a la
+        // primera, de modo que el modal bloqueante nunca se cerraba y el formulario
+        // quedaba atrapado detras de el cuando el guardado fallaba.
         onError: () => {
             closeContractLoader();
 
@@ -317,18 +386,6 @@ const submit = () => {
             }).then(() => {
                 router.visit(route("comm_negotiations"));
             });
-        },
-        onError: () => {
-            if (form.errors.items) {
-                Swal2.fire({
-                    title: "Atencion",
-                    text: form.errors.items,
-                    icon: "warning",
-                    padding: "2em",
-                    customClass: "sweet-alerts",
-                });
-            }
-
         },
     };
 
@@ -418,7 +475,7 @@ const submit = () => {
                 />
                 <InputError :message="form.errors.currency" class="mt-2" />
             </div>
-            <div v-if="multiCurrencyEnabled && isUsd && tcValido && equivalentPenTotal !== null" class="col-span-6 sm:col-span-3">
+            <div v-if="multiCurrencyEnabled && isUsd && tcValido && equivalentPenTotal !== null && !isFree" class="col-span-6 sm:col-span-3">
                 <div class="rounded-md bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 px-3 py-2 text-xs text-blue-800 dark:text-blue-300">
                     💱 Cambio a soles: <strong>S/ {{ equivalentPenTotal }}</strong>
                     <span class="block mt-0.5">(TC SUNAT: S/ {{ Number(props.exchangeRate).toFixed(4) }} por $1)</span>
@@ -428,12 +485,28 @@ const submit = () => {
                 </div>
             </div>
 
+            <!-- Negociacion Gratis: los campos de cobro siguen visibles pero inhabilitados,
+                 para que el asesor vea que no aplican; el cliente solo completara sus datos. -->
+            <div v-if="isFree" class="col-span-6">
+                <div class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                    <FontAwesomeIcon :icon="faGift" class="mr-1 h-3.5 w-3.5" />
+                    <strong>Negociacion Gratis:</strong> el total acordado es 0, asi que no se pedira ningun pago.
+                    <span class="block mt-0.5">El tipo de pago, las cuotas y el medio de pago quedan inhabilitados. El cliente recibira los cursos y suscripciones seleccionados y en el enlace solo completara sus datos, sin voucher, sin comprobante y sin datos de pago.</span>
+                </div>
+            </div>
+
             <div class="col-span-6 sm:col-span-2">
                 <InputLabel value="Tipo de pago *" />
-                <select v-model="form.payment_type" class="form-select text-white-dark">
+                <select
+                    v-model="form.payment_type"
+                    class="form-select text-white-dark"
+                    :disabled="isFree"
+                    :class="{ 'cursor-not-allowed opacity-60': isFree }"
+                >
                     <option value="single">Pago unico</option>
                     <option value="installments">Cuotas</option>
                 </select>
+                <p v-if="isFree" class="text-xs text-gray-500 mt-1">Inhabilitado: una negociacion gratuita no se cobra, ni al contado ni en cuotas.</p>
                 <InputError :message="form.errors.payment_type" class="mt-2" />
             </div>
 
@@ -445,7 +518,15 @@ const submit = () => {
 
             <div v-else class="col-span-6 sm:col-span-2">
                 <InputLabel for="single_payment_days" value="Plazo de pago (dias)" />
-                <TextInput id="single_payment_days" v-model="form.single_payment_days" type="number" min="1" />
+                <TextInput
+                    id="single_payment_days"
+                    v-model="form.single_payment_days"
+                    type="number"
+                    min="1"
+                    :disabled="isFree"
+                    :class="{ 'cursor-not-allowed bg-gray-100 dark:bg-gray-800': isFree }"
+                />
+                <p v-if="isFree" class="text-xs text-gray-500 mt-1">Inhabilitado: no hay pago que programar.</p>
                 <InputError :message="form.errors.single_payment_days" class="mt-2" />
             </div>
 
@@ -456,7 +537,7 @@ const submit = () => {
                 <p class="text-xs text-gray-500 mt-1">Pasado este plazo el enlace se desactiva y la negociacion pasa a "No hubo respuesta".</p>
             </div>
 
-            <template v-if="form.payment_type === 'installments'">
+            <template v-if="!isFree && form.payment_type === 'installments'">
                 <div class="col-span-6">
                     <div class="flex flex-wrap items-center gap-3 border-t border-gray-200 dark:border-gray-700 pt-4">
                         <h3 class="font-semibold text-gray-800 dark:text-white">Cronograma provisional de cuotas</h3>
@@ -499,24 +580,26 @@ const submit = () => {
 
             <div
                 class="col-span-6"
-                :class="form.payment_method === 'billetera_digital' ? 'sm:col-span-2' : 'sm:col-span-3'"
+                :class="!isFree && form.payment_method === 'billetera_digital' ? 'sm:col-span-2' : 'sm:col-span-3'"
             >
                 <InputLabel value="Medio de pago *" />
                 <Select
                     v-model:value="form.payment_method"
                     :options="paymentMethodOptions"
+                    :disabled="isFree"
                     style="width: 100%"
                 />
+                <p v-if="isFree" class="text-xs text-gray-500 mt-1">Inhabilitado: la negociacion no tiene cobro, no habra ningun medio de pago que el cliente use.</p>
                 <InputError :message="form.errors.payment_method" class="mt-2" />
             </div>
 
-            <div v-if="form.payment_method === 'enlace'" class="col-span-6 sm:col-span-3">
+            <div v-if="!isFree && form.payment_method === 'enlace'" class="col-span-6 sm:col-span-3">
                 <InputLabel for="payment_link" value="Enlace de pago" />
                 <TextInput id="payment_link" v-model="form.payment_link" type="url" placeholder="https://..." />
                 <InputError :message="form.errors.payment_link" class="mt-2" />
             </div>
 
-            <div v-if="form.payment_method === 'billetera_digital'" class="col-span-6 sm:col-span-4">
+            <div v-if="!isFree && form.payment_method === 'billetera_digital'" class="col-span-6 sm:col-span-4">
                 <InputLabel value="Billetera digital *" />
                 <Select
                     v-model:value="form.company_billetera_ids"
@@ -534,7 +617,7 @@ const submit = () => {
                 <p class="text-xs text-gray-500 mt-1">En la confirmacion del cliente se mostrara el titular y el codigo QR de cada billetera seleccionada.</p>
             </div>
 
-            <div v-if="form.payment_method !== 'billetera_digital'" class="col-span-6 sm:col-span-3">
+            <div v-if="!isFree && form.payment_method !== 'billetera_digital'" class="col-span-6 sm:col-span-3">
                 <div class="pt-5 text-xs text-gray-500">
                     <template v-if="form.payment_method === 'transferencia'">
                         Se mostraran las cuentas bancarias de la empresa al cliente.

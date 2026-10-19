@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('supermercado-online-verdia-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    })();
+</script>
+
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Ficha de producto de demostración de VERDIA Market: presentación, precio de referencia, detalle de conservación y productos del mismo pasillo.">
+
+<title>Producto — VERDIA Market · Demostración de plantilla</title>
+
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=\u0027http://www.w3.org/2000/svg\u0027 viewBox=\u00270 0 100 100\u0027><rect width=\u0027100\u0027 height=\u0027100\u0027 rx=\u002728\u0027 fill=\u0027%2317633D\u0027/><path d=\u0027M50 20c15 5 24 16 24 30 0 14-10 24-24 30-14-6-24-16-24-30 0-14 9-25 24-30Z\u0027 fill=\u0027%23EAF4E7\u0027/><path d=\u0027M50 24c12 5 19 14 19 26 0 12-8 21-19 26-11-5-19-14-19-26 0-12 7-21 19-26Z\u0027 fill=\u0027%2355A85B\u0027/></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="aviso-demo" data-aviso>
+    <div class="aviso-demo__interior">
+        <p class="aviso-demo__texto"><strong>Demostración de plantilla.</strong> VERDIA Market es una marca ficticia: los productos, precios, promociones, datos de contacto y pedidos son de ejemplo.</p>
+        <button class="aviso-demo__cerrar" type="button" data-aviso-cerrar aria-label="Cerrar el aviso de demostración">×</button>
+    </div>
+</div>
+
+<div class="barra">
+    <div class="barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h13v10H4zM17 10h3l1 3v4h-4"/><circle cx="8" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>
+            Productos frescos y ofertas para todos los días · entrega de ejemplo en 24 h
+        </p>
+        <ul class="barra__enlaces">
+            <li><a href="index.html">Inicio</a></li>
+            <li><a href="tienda.html">Catálogo</a></li>
+            <li><a href="canasta.html">Mi canasta</a></li>
+        </ul>
+    </div>
+</div>
+
+<header class="cabecera">
+    <div class="cabecera__principal">
+        <a class="marca" href="index.html">
+            <img class="marca__logo" src="img/logo.svg" alt="" width="40" height="40">
+            <span>
+                <span class="marca__nombre">VERDIA Market</span>
+                <span class="marca__lema">Supermercado en línea</span>
+            </span>
+        </a>
+
+        <form class="buscador" role="search" data-buscador>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+            <label class="oculto" for="buscar-producto">Buscar productos</label>
+            <input id="buscar-producto" type="search" name="q" placeholder="¿Qué necesitas hoy? Prueba «pan», «huevos» o «fresas»" autocomplete="off">
+            <button type="submit">Buscar</button>
+            <ul class="buscador__sugerencias" data-sugerencias hidden></ul>
+        </form>
+
+        <div class="cuenta">
+            <button class="menu-movil" type="button" data-menu-boton aria-expanded="false" aria-controls="pasillos-menu" aria-label="Abrir los pasillos">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+            <a class="icono-boton icono-boton--secundario" href="tienda.html">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 5h16l-1.6 9.5H6.2L4 5Zm0 0-.8-1.6H1.5"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="17" cy="18.5" r="1.5"/></svg>
+                <span>Pasillos</span>
+            </a>
+            <a class="icono-boton icono-boton--secundario" href="tienda.html?necesidad=ahorro">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.3-7.5-9.4A4.1 4.1 0 0 1 12 8.4a4.1 4.1 0 0 1 7.5 2.7c0 5.1-7.5 9.4-7.5 9.4Z"/></svg>
+                <span>Favoritos</span>
+            </a>
+            <button class="icono-boton" type="button" data-canasta-abrir>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 5h2.2l2.4 10.5h10.2L20 7.5H6"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>
+                <span>Canasta</span>
+                <span class="icono-boton__cuenta esta-vacia" data-canasta-cuenta>0</span>
+            </button>
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false" aria-label="Cambiar a modo oscuro">
+                <svg class="tema-switch__icono tema-switch__icono--luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M20 13.4A8.2 8.2 0 0 1 10.6 4a8.4 8.4 0 1 0 9.4 9.4Z"/></svg>
+                <svg class="tema-switch__icono tema-switch__icono--sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2.2M12 19v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.8 12H5M19 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <nav class="pasillos" id="pasillos-menu" data-menu aria-label="Pasillos de la tienda">
+        <div class="pasillos__interior">
+            <a class="esta-activo" href="tienda.html">Todo</a>
+            <a href="tienda.html?rubro=frutas">Frutas y verduras</a>
+            <a href="tienda.html?rubro=lacteos">Lácteos y huevos</a>
+            <a href="tienda.html?rubro=carnes">Carnes y pescados</a>
+            <a href="tienda.html?rubro=panaderia">Panadería</a>
+            <a href="tienda.html?rubro=abarrotes">Abarrotes</a>
+            <a href="tienda.html?rubro=bebidas">Bebidas</a>
+            <a href="tienda.html?rubro=snacks">Snacks</a>
+            <a href="tienda.html?rubro=limpieza">Limpieza</a>
+            <a href="tienda.html?rubro=cuidado">Cuidado personal</a>
+            <a class="destacado" href="tienda.html?necesidad=ahorro">Ofertas</a>
+        </div>
+    </nav>
+</header>
+
+<main id="contenido">
+    <!--
+        FICHA DE PRODUCTO: el contenido se arma con el parámetro `?p=` desde
+        js/datos.js. Sin parámetro se abre el primer producto del catálogo, para
+        que la página nunca quede vacía si alguien entra por el enlace pelado.
+    -->
+    <section class="contenedor" data-ficha>
+        <a class="ficha__volver" href="tienda.html">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14 6 8 12l6 6"/></svg>
+            Volver al catálogo
+        </a>
+
+        <div class="ficha">
+            <div class="ficha__foto">
+                <img src="img/p-naranjas.webp" alt="" width="700" height="700" data-ficha-imagen>
+                <span data-ficha-insignia></span>
+            </div>
+
+            <div>
+                <p class="ficha__rubro" data-ficha-rubro></p>
+                <h1 data-ficha-nombre>Producto de la demostración</h1>
+                <p class="ficha__resumen" data-ficha-resumen></p>
+
+                <p class="ficha__precio">
+                    <span class="ficha__monto" data-ficha-precio>S/ 0.00</span>
+                    <span data-ficha-precio-antes></span>
+                </p>
+                <p class="bienvenida__nota" style="color:inherit">Precio de referencia de la demostración, sin IGV. No hay promoción real vigente.</p>
+
+                <ul class="ficha__datos">
+                    <li><span>Presentación</span><strong data-ficha-presentacion>—</strong></li>
+                    <li><span>Disponibilidad</span><strong>Stock de ejemplo: se repone cada mañana</strong></li>
+                    <li><span>Entrega</span><strong>Recojo en tienda o entrega a domicilio (ejemplo)</strong></li>
+                    <li><span>Pago</span><strong>Solo simulación: no se solicita ningún dato bancario</strong></li>
+                </ul>
+
+                <div class="ficha__compra">
+                    <button class="boton boton--principal" type="button" data-agregar="naranjas" data-ficha-agregar>Añadir al carrito</button>
+                    <a class="boton boton--linea" href="canasta.html">Ir a la canasta</a>
+                </div>
+
+                <div class="ficha__detalle" style="margin-top:2rem">
+                    <h2>Detalle del producto</h2>
+                    <p data-ficha-detalle></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="seccion seccion--marfil">
+        <div class="contenedor">
+            <div class="seccion__cabecera">
+                <div>
+                    <h2>Del mismo pasillo</h2>
+                    <p>Otros productos de demostración que se compran junto con este.</p>
+                </div>
+            </div>
+
+            <div class="piezas" data-ficha-relacionados></div>
+        </div>
+    </section>
+</main>
+
+<footer class="pie">
+    <div class="contenedor">
+        <div class="pie__rejilla">
+            <div>
+                <div class="pie__marca">
+                    <img src="img/logo.svg" alt="" width="44" height="44">
+                    <span>
+                        <strong>VERDIA Market</strong>
+                        <small>Marca ficticia de demostración</small>
+                    </span>
+                </div>
+                <p>Plantilla de supermercado en línea con buscador de productos, filtros por pasillo, ofertas y canasta de prueba.</p>
+                <p class="pie__aviso">VERDIA Market es una demostración de plantilla de ARACODE Smart Solutions. Los productos, precios, promociones, datos de contacto, políticas y pedidos son ficticios: no se ejecuta ningún cobro ni se envían pedidos.</p>
+            </div>
+
+            <div>
+                <h3>Tienda</h3>
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="tienda.html">Catálogo completo</a></li>
+                    <li><a href="tienda.html?necesidad=ahorro">Ofertas de demostración</a></li>
+                    <li><a href="canasta.html">Mi canasta</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Pasillos</h3>
+                <ul>
+                    <li><a href="tienda.html?rubro=lacteos">Lácteos y huevos</a></li>
+                    <li><a href="tienda.html?rubro=panaderia">Panadería</a></li>
+                    <li><a href="tienda.html?rubro=snacks">Snacks</a></li>
+                    <li><a href="tienda.html?rubro=bebidas">Bebidas</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Información de ejemplo</h3>
+                <ul>
+                    <li>Dirección ficticia: Av. Los Fresnos 245, Nuevo Chimbote</li>
+                    <li>Teléfono ficticio: (043) 000 000</li>
+                    <li>Correo ficticio: hola@verdiamarket.pe</li>
+                    <li>Atención de ejemplo: lunes a domingo, 7:00 a 22:00</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pie__legal">
+            <p>© <span data-anio>2026</span> VERDIA Market (marca ficticia) · Demostración de plantilla de ARACODE Smart Solutions.</p>
+            <p>Políticas de ejemplo: envíos, cambios y privacidad se redactan al publicar la tienda real.</p>
+        </div>
+    </div>
+</footer>
+
+<aside class="panel" data-canasta-panel hidden aria-label="Canasta de la demostración">
+    <div class="panel__cabecera">
+        <h2>Tu canasta</h2>
+        <button class="panel__cerrar" type="button" data-canasta-cerrar aria-label="Cerrar la canasta">×</button>
+    </div>
+
+    <div class="panel__cuerpo">
+        <p class="canasta-vacia" data-canasta-vacia>La canasta está vacía. Añade productos desde el <a href="tienda.html">catálogo</a>; se guardan solo en tu navegador.</p>
+        <ul class="lista-lineas" data-canasta-lista></ul>
+    </div>
+
+    <div class="panel__pie" data-canasta-pie hidden>
+        <p class="panel__total"><span>Subtotal de prueba</span><strong data-canasta-total>S/ 0.00</strong></p>
+        <p class="bienvenida__nota">Precios ficticios, sin IGV. La demostración no cobra ni envía pedidos.</p>
+        <a class="boton boton--principal" href="canasta.html">Revisar la canasta</a>
+    </div>
+</aside>
+
+<noscript>
+    <p class="contenedor" style="padding:1.5rem 1.25rem;color:#68736B">La demostración arma la ficha de producto y el carrito con JavaScript. Actívalo para ver el producto completo.</p>
+</noscript>
+
+<script src="js/datos.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -35,6 +35,9 @@ class TelegramWebhookControllerTest extends TestCase
 
     private const URI = '/api/integrationhub/telegram/webhook';
 
+    /** Contador de updates: Telegram siempre entrega un update_id distinto. */
+    private int $lastUpdateId = 0;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -441,7 +444,7 @@ class TelegramWebhookControllerTest extends TestCase
                     'person_id' => 100,
                     'name' => 'Ana',
                     'courses' => [],
-                    'subscription' => ['vip' => false, 'ends_at' => null],
+                    'subscription' => ['includes_specialization_programs' => false, 'ends_at' => null],
                     'certificates' => [],
                 ],
             ],
@@ -453,12 +456,12 @@ class TelegramWebhookControllerTest extends TestCase
 
         $text = $hub->calls[2]['values']['text'];
 
-        $this->assertStringContainsString('excepto los Programas de Especialización', $text);
+        $this->assertStringContainsString('Tienes una suscripción activa', $text);
         // Sin fecha de vigencia, su linea no se envia.
         $this->assertStringNotContainsString('Vigencia:', $text);
     }
 
-    public function test_la_consulta_informa_la_suscripcion_premium_vip(): void
+    public function test_la_consulta_informa_la_suscripcion_con_especializacion(): void
     {
         $hub = $this->bindHub();
         $this->bindAccountDirectory([
@@ -468,7 +471,7 @@ class TelegramWebhookControllerTest extends TestCase
                     'person_id' => 100,
                     'name' => 'Ana',
                     'courses' => [],
-                    'subscription' => ['vip' => true, 'ends_at' => '2026-12-31'],
+                    'subscription' => ['includes_specialization_programs' => true, 'ends_at' => '2026-12-31'],
                     'certificates' => [],
                 ],
             ],
@@ -480,9 +483,10 @@ class TelegramWebhookControllerTest extends TestCase
 
         $text = $hub->calls[2]['values']['text'];
 
-        $this->assertStringContainsString('Premium VIP', $text);
         $this->assertStringContainsString('Programas de Especialización', $text);
         $this->assertStringContainsString('2026-12-31', $text);
+        // El texto ya no depende del nombre del plan.
+        $this->assertStringNotContainsString('Premium VIP', $text);
     }
 
     public function test_certificados_lista_sin_descarga_y_manda_a_la_plataforma(): void
@@ -559,7 +563,7 @@ class TelegramWebhookControllerTest extends TestCase
     private function message(string $text, string $username = 'ana_tg', string $chatId = '555'): array
     {
         return [
-            'update_id' => 1,
+            'update_id' => ++$this->lastUpdateId,
             'message' => [
                 'message_id' => 5,
                 'chat' => ['id' => $chatId, 'type' => 'private'],

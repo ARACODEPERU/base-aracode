@@ -539,11 +539,17 @@ class SaleDocumentController extends Controller
                 ->values();
 
             if ($healthChargeIds->isNotEmpty()) {
-                HealPatientCharge::whereIn('id', $healthChargeIds)->update([
-                    'sale_id' => $res->sale_id,
-                    'sale_document_id' => $res->id,
-                    'status' => 'paid',
-                ]);
+                // Solo cobros que todavia no tienen documento: si el mismo
+                // health_charge_id llegara repetido, no se pisa el comprobante
+                // ya emitido ni se duplica la facturacion de un cobro de Salud.
+                HealPatientCharge::whereIn('id', $healthChargeIds)
+                    ->whereNull('sale_document_id')
+                    ->update([
+                        'sale_id' => $res->sale_id,
+                        'sale_document_id' => $res->id,
+                        'status' => 'paid',
+                        'billed_at' => null,
+                    ]);
             }
 
             return response()->json($res);

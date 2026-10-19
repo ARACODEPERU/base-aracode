@@ -133,6 +133,22 @@
                             @endif
                         @endif
 
+                        {{-- Consentimiento del titular: se exige antes de enviar y el
+                             servidor lo vuelve a validar (regla "acepto" accepted),
+                             asi que el mensaje no se guarda si no esta marcada.
+                             Los enlaces abren en otra pestana para no perder lo escrito. --}}
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" id="contactoAcepto" name="acepto" value="1" required class="mt-1">
+                            <label for="contactoAcepto" class="text-sm text-ara-slate-500">
+                                He leído y acepto la
+                                <a href="{{ route('politica_privacidad') }}" target="_blank" rel="noopener" class="text-ara-blue hover:underline">Política de Privacidad</a>
+                                para que ARACODE trate mis datos con la finalidad de atender esta consulta. *
+                            </label>
+                        </div>
+                        @error('acepto')
+                            <p class="text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+
                         <button type="submit" class="ara-btn ara-btn-primary ara-btn-lg w-full">
                             Enviar Mensaje
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

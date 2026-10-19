@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Parameter;
 use App\Models\Person;
+use App\Support\ModoAlumno;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +30,10 @@ class DashboardController extends Controller
     }
     public function index()
     {
-        if (Auth::user()->hasRole('Alumno')) {
+        // El campus del alumno solo se muestra cuando 'Alumno' es el único rol
+        // de peso: una cuenta con rol de panel (por ejemplo admin) entra al
+        // panel aunque también estudie. Ver App\Support\ModoAlumno.
+        if (ModoAlumno::activo(Auth::user())) {
             return Inertia::render('Academic::Dashboard/knowledge-base', [
                 'interests' => $this->getDataStudent(),
                 'expiring'  => $this->getExpiringItems()
@@ -123,9 +127,40 @@ class DashboardController extends Controller
                     ->from('aca_cap_registrations AS i')
                     ->where('student_id', $student_id);
             })
+            ->with('landing:id,course_id,url_slug,is_published')
             ->orderByDesc('registrations')
             ->take(8)
             ->get();
+
+        // Destino del boton "Ingresar" de cada curso popular:
+        // 1) Si el alumno ya tiene acceso (matricula, suscripcion, VIP o curso
+        //    gratis) se entra directo a los modulos del curso.
+        // 2) Si no, se ofrece la landing publica (/curso/{slug}) solo cuando
+        //    esta activa (publicada y curso activo).
+        // 3) En cualquier otro caso se ofrece la descripcion (/curso-descripcion/{slug}).
+        $accessChecker = app(\Modules\Academic\Http\Controllers\AcaStudentController::class);
+        $popularCourses->each(function ($course) use ($student_id, $accessChecker) {
+            $hasAccess = $student_id
+                ? $accessChecker->checkCourseAccess((int) $student_id, (int) $course->id)
+                : false;
+
+            $landing = $course->landing;
+            $hasActiveLanding = $landing
+                && $landing->is_published
+                && filled($landing->url_slug)
+                && (bool) $course->status;
+
+            if ($hasAccess) {
+                $course->entry_url = route('aca_mycourses_lessons', $course->id);
+            } elseif ($hasActiveLanding) {
+                $course->entry_url = route('course_url_slug', $landing->url_slug);
+            } else {
+                $course->entry_url = route('web_curso_descripcion', $course->slug ?: $course->onitem_id);
+            }
+
+            $course->has_access = $hasAccess;
+            $course->unsetRelation('landing');
+        });
 
         $articles = BlogArticle::orderByDesc('views')->take('4')->get();
 

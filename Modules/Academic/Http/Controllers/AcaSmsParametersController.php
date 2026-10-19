@@ -18,7 +18,8 @@ use Modules\Integrationhub\Exceptions\SmsgateRejectedException;
  * Configura el canal propio de los avisos de asistencia del colegio: la URL,
  * el usuario y la contraseña de SMSGate (parametros SC-00020, SC-00021 y
  * SC-00022), el interruptor general, los avisos por entrada, salida, tardanza
- * y salida anticipada, las plantillas del mensaje y el limite diario.
+ * y salida anticipada, las plantillas del mensaje, el limite diario y la
+ * pausa mínima entre mensajes (SC-00032, anti-SPAM).
  *
  * La contraseña nunca viaja al navegador: si el campo llega vacio o con la
  * mascara se conserva la guardada. La pantalla tambien permite ver la vista
@@ -71,6 +72,7 @@ class AcaSmsParametersController extends Controller
             'notify_early_exit' => ['required', 'boolean'],
             'primary_only' => ['required', 'boolean'],
             'daily_limit' => ['nullable', 'integer', 'min:0', 'max:999'],
+            'interval_ms' => ['nullable', 'integer', 'min:0', 'max:60000'],
             'entry_message' => ['nullable', 'string', 'max:480'],
             'exit_message' => ['nullable', 'string', 'max:480'],
         ]);
@@ -93,6 +95,7 @@ class AcaSmsParametersController extends Controller
         $this->notices->saveParameter('entry_message_parameter', 'SC-00028', $this->blankToNull($data['entry_message'] ?? null));
         $this->notices->saveParameter('exit_message_parameter', 'SC-00029', $this->blankToNull($data['exit_message'] ?? null));
         $this->notices->saveParameter('daily_limit_parameter', 'SC-00031', (string) max(0, (int) ($data['daily_limit'] ?? 0)));
+        $this->notices->saveParameter('interval_ms_parameter', 'SC-00032', (string) max(0, min(60000, (int) ($data['interval_ms'] ?? 2000))));
 
         return back()->with('message', 'Parámetros de los avisos por SMS guardados.');
     }

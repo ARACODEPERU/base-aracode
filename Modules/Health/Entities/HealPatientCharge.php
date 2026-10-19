@@ -30,6 +30,7 @@ class HealPatientCharge extends Model
         'currency_type_id',
         'status',
         'charged_at',
+        'billed_at',
         'notes',
         'created_by',
     ];
@@ -40,6 +41,7 @@ class HealPatientCharge extends Model
         'quantity' => 'decimal:2',
         'total' => 'decimal:2',
         'charged_at' => 'datetime',
+        'billed_at' => 'datetime',
     ];
 
     public function patient(): BelongsTo

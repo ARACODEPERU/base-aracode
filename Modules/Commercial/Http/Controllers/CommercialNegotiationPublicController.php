@@ -154,7 +154,13 @@ class CommercialNegotiationPublicController extends Controller
             'invoice_distrito' => ['nullable', 'string', 'max:255'],
             'invoice_provincia' => ['nullable', 'string', 'max:255'],
             'invoice_departamento' => ['nullable', 'string', 'max:255'],
-            'voucher' => [Rule::requiredIf(fn () => $this->voucherRequired($negotiation, $request->input('payment_option'))), 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            // 'nullable' no es decorativo: el navegador envia la clave aunque el bloque del
+            // voucher este oculto (Inertia manda los null del formulario como cadena vacia)
+            // y con la clave presente la regla 'file' se ejecuta igual sobre el valor nulo
+            // y rechaza el envio con un error sobre un campo que el cliente no ve. Con
+            // 'nullable' las reglas de archivo solo corren cuando de verdad hay un archivo
+            // adjunto; que sea obligatorio o no lo sigue decidiendo 'requiredIf'.
+            'voucher' => [Rule::requiredIf(fn () => $this->voucherRequired($negotiation, $request->input('payment_option'))), 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $isRuc = (string) $data['document_type_id'] === '6';
@@ -290,24 +296,32 @@ class CommercialNegotiationPublicController extends Controller
                 && ! empty($data['boleta_numero'])
                 && ! empty($data['boleta_nombre']);
 
-            CommercialNegotiationInvoice::updateOrCreate(
-                ['negotiation_id' => $negotiation->id],
-                [
-                    'invoice_type' => $data['invoice_type'],
-                    'boleta_documento_tipo' => $boletaTercero ? $data['boleta_documento_tipo'] : null,
-                    'boleta_numero' => $boletaTercero ? trim($data['boleta_numero']) : null,
-                    'boleta_nombre' => $boletaTercero ? trim($data['boleta_nombre']) : null,
-                    'ruc' => $data['invoice_type'] === 'factura' ? trim($data['ruc']) : null,
-                    'razon_social' => $data['invoice_razon_social'] ?? null,
-                    'direccion' => $data['invoice_direccion'] ?? null,
-                    'estado' => $data['invoice_estado'] ?? null,
-                    'condicion' => $data['invoice_condicion'] ?? null,
-                    'ubigeo' => $data['invoice_ubigeo'] ?? null,
-                    'distrito' => $data['invoice_distrito'] ?? null,
-                    'provincia' => $data['invoice_provincia'] ?? null,
-                    'departamento' => $data['invoice_departamento'] ?? null,
-                ]
-            );
+            // Negociacion gratuita: no se emite comprobante, asi que no se guarda el pedido
+            // de boleta o factura (el cliente ya no elige el tipo en el formulario).
+            $isFree = (float) $negotiation->total_price === 0.0;
+
+            if ($isFree) {
+                CommercialNegotiationInvoice::where('negotiation_id', $negotiation->id)->delete();
+            } else {
+                CommercialNegotiationInvoice::updateOrCreate(
+                    ['negotiation_id' => $negotiation->id],
+                    [
+                        'invoice_type' => $data['invoice_type'],
+                        'boleta_documento_tipo' => $boletaTercero ? $data['boleta_documento_tipo'] : null,
+                        'boleta_numero' => $boletaTercero ? trim($data['boleta_numero']) : null,
+                        'boleta_nombre' => $boletaTercero ? trim($data['boleta_nombre']) : null,
+                        'ruc' => $data['invoice_type'] === 'factura' ? trim($data['ruc']) : null,
+                        'razon_social' => $data['invoice_razon_social'] ?? null,
+                        'direccion' => $data['invoice_direccion'] ?? null,
+                        'estado' => $data['invoice_estado'] ?? null,
+                        'condicion' => $data['invoice_condicion'] ?? null,
+                        'ubigeo' => $data['invoice_ubigeo'] ?? null,
+                        'distrito' => $data['invoice_distrito'] ?? null,
+                        'provincia' => $data['invoice_provincia'] ?? null,
+                        'departamento' => $data['invoice_departamento'] ?? null,
+                    ]
+                );
+            }
 
             DB::commit();
         } catch (\Exception $e) {
@@ -549,9 +563,16 @@ class CommercialNegotiationPublicController extends Controller
      * Mercado Pago pagando con tarjeta. En Mercado Pago el cliente puede declarar
      * que ya pago por fuera ('evidence'): ahi la imagen vuelve a ser obligatoria,
      * igual que en una transferencia o billetera.
+     *
+     * En una negociacion gratuita (precio total 0) no hay pago que acreditar, asi que
+     * el cliente envia solo sus datos y no se le pide ninguna evidencia.
      */
     private function voucherRequired(CommercialNegotiation $negotiation, ?string $paymentOption): bool
     {
+        if ((float) $negotiation->total_price === 0.0) {
+            return false;
+        }
+
         if ($negotiation->payment_method !== 'mercadopago') {
             return true;
         }

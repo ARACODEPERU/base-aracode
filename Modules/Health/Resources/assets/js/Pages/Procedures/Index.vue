@@ -39,6 +39,11 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    // Solo quien administra la configuración del módulo cambia el catálogo.
+    canManageProcedures: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const activeTab = ref('charges');
@@ -156,7 +161,8 @@ const statusLabel = (charge) => {
 
     return ({
     pending: 'Pendiente',
-    billed: 'Facturado',
+    // Reservado mientras Sales arma el documento de venta.
+    billed: 'En preparación',
     paid: 'Pagado',
     cancelled: 'Anulado',
     }[charge.status] || charge.status);
@@ -428,6 +434,46 @@ const changeStatus = (charge, status) => {
     router.put(route('heal_patient_charges_status', charge.id), { status }, {
         preserveScroll: true,
         onSuccess: () => router.reload({ only: ['charges'] }),
+    });
+};
+
+const confirmReleaseCharge = (charge) => {
+    Swal.fire({
+        icon: 'question',
+        title: '¿Liberar cobro?',
+        html: `<p class="text-sm">El cobro <strong>${escapeHtml(charge.name_snapshot || 'seleccionado')}</strong> volverá a la lista de pendientes por documentar.</p>`,
+        showCancelButton: true,
+        confirmButtonText: 'Sí, liberar',
+        cancelButtonText: 'Cancelar',
+        padding: '2em',
+        customClass: 'sweet-alerts',
+    }).then((result) => {
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        router.put(route('heal_patient_charges_release', charge.id), {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload({ only: ['charges'] });
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Cobro liberado',
+                    text: 'El cobro vuelve a estar pendiente por documentar.',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            },
+            onError: (errors) => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No se pudo liberar',
+                    text: errors.status || 'El cobro no está en preparación.',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            },
+        });
     });
 };
 
@@ -762,7 +808,7 @@ const prepareSelectedSalesReview = () => {
                                 <select v-model="filters.status" class="form-select w-40" :disabled="filters.only_pending" @change="search">
                                     <option value="">Todos</option>
                                     <option value="pending">Pendientes</option>
-                                    <option value="billed">Facturados</option>
+                                    <option value="billed">En preparación</option>
                                     <option value="paid">Pagados</option>
                                     <option value="cancelled">Anulados</option>
                                 </select>
@@ -824,6 +870,13 @@ const prepareSelectedSalesReview = () => {
                                             </div>
                                             <div class="md:col-span-2">
                                                 <div class="flex flex-wrap justify-end gap-1">
+                                                    <button
+                                                        v-if="charge.status === 'billed'"
+                                                        type="button"
+                                                        class="btn btn-sm btn-outline-info"
+                                                        v-tippy="{ content: 'Devolver el cobro a la lista de pendientes por documentar', placement: 'left' }"
+                                                        @click="confirmReleaseCharge(charge)"
+                                                    >Liberar</button>
                                                     <button v-if="charge.status !== 'cancelled'" type="button" class="btn btn-sm btn-outline-danger" @click="changeStatus(charge, 'cancelled')">Anular</button>
                                                 </div>
                                             </div>
@@ -842,7 +895,7 @@ const prepareSelectedSalesReview = () => {
 
             <template v-else>
                 <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
-                    <div class="panel">
+                    <div v-if="canManageProcedures" class="panel">
                         <div class="mb-4 flex items-center gap-2 font-semibold">
                             <IconPlus class="h-5 w-5 text-primary" />
                             {{ editingProcedure ? 'Editar procedimiento' : 'Nuevo procedimiento' }}
@@ -888,7 +941,15 @@ const prepareSelectedSalesReview = () => {
                         </form>
                     </div>
 
-                    <div class="panel xl:col-span-2 p-0 overflow-hidden">
+                    <div v-else class="panel">
+                        <div class="mb-4 font-semibold">Catálogo de procedimientos</div>
+                        <p class="text-sm text-white-dark">
+                            Puedes consultar los procedimientos y sus precios. Para agregar o cambiar precios,
+                            un administrador debe hacerlo desde Salud &gt; Configuración.
+                        </p>
+                    </div>
+
+                    <div class="panel p-0 overflow-hidden" :class="canManageProcedures ? 'xl:col-span-2' : 'xl:col-span-3'">
                         <div class="table-responsive">
                             <table class="table-striped table-hover">
                                 <thead>
@@ -911,9 +972,10 @@ const prepareSelectedSalesReview = () => {
                                         <td><span class="badge" :class="procedure.is_active ? 'bg-success' : 'bg-danger'">{{ procedure.is_active ? 'Activo' : 'Inactivo' }}</span></td>
                                         <td>
                                             <div class="flex justify-center">
-                                                <button type="button" class="btn btn-sm btn-outline-primary" @click="editProcedure(procedure)">
+                                                <button v-if="canManageProcedures" type="button" class="btn btn-sm btn-outline-primary" @click="editProcedure(procedure)">
                                                     <IconPencil class="h-4 w-4" />
                                                 </button>
+                                                <span v-else class="text-xs text-white-dark">Solo lectura</span>
                                             </div>
                                         </td>
                                     </tr>

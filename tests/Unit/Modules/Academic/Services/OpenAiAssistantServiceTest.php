@@ -20,6 +20,8 @@ class OpenAiAssistantServiceTest extends TestCase
         config([
             'academic.openai.api_key' => 'sk-test-env-key',
             'academic.openai.api_key_parameter' => null,
+            'academic.openai.provider_parameter' => null,
+            'academic.openai.agent_id_parameter' => null,
         ]);
     }
 
@@ -59,7 +61,7 @@ class OpenAiAssistantServiceTest extends TestCase
 
     public function test_resolves_api_key_from_system_parameter(): void
     {
-        config(['academic.openai.api_key_parameter' => 'P000025']);
+        config(['academic.openai.api_key_parameter' => 'IA-00001']);
 
         $service = new class extends OpenAiAssistantService {
             protected function apiKeyFromParameter(): ?string
@@ -142,12 +144,22 @@ class OpenAiAssistantServiceTest extends TestCase
 
     public function test_throws_clear_error_when_parameter_and_env_key_are_missing(): void
     {
-        config(['academic.openai.api_key' => null]);
+        config([
+            'academic.openai.api_key' => null,
+            'academic.openai.api_key_parameter' => 'IA-00001',
+        ]);
 
-        $service = app(OpenAiAssistantService::class);
+        // Se simula que el parametro no tiene valor para no depender de la
+        // tabla parameters en esta prueba del mensaje de error.
+        $service = new class extends OpenAiAssistantService {
+            protected function apiKeyFromParameter(): ?string
+            {
+                return null;
+            }
+        };
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('P000025');
+        $this->expectExceptionMessage('IA-00001');
 
         $service->sendPrompt(11, 'hola');
     }
@@ -245,6 +257,201 @@ class OpenAiAssistantServiceTest extends TestCase
 
         Http::assertSent(function ($request) {
             return $request->header('Authorization')[0] === 'Bearer sk-testkeyx';
+        });
+    }
+
+    public function test_answers_with_saved_agent_when_agent_id_is_configured(): void
+    {
+        config([
+            'academic.openai.agent_id' => 'agent_test',
+            'academic.openai.agent_timeout' => 5,
+            'academic.openai.agent_poll_interval_ms' => 200,
+        ]);
+
+        Http::fake([
+            'api.openai.com/v1/agents/sessions' => Http::response(['id' => 'sess_1']),
+            'api.openai.com/v1/agents/sessions/sess_1/items*' => Http::response([
+                'data' => [[
+                    'id' => 'item_1',
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'phase' => 'final_answer',
+                    'status' => 'completed',
+                    'content' => [
+                        ['type' => 'output_text', 'text' => 'Respuesta del agente'],
+                    ],
+                ]],
+            ]),
+            'api.openai.com/v1/agents/sessions/sess_1' => Http::response([
+                'id' => 'sess_1',
+                'status' => 'idle',
+            ]),
+        ]);
+
+        $result = app(OpenAiAssistantService::class)->sendPromptWithAgent(30, '¿Que es el activo?');
+
+        $this->assertTrue($result['agent_used']);
+        $this->assertSame('agent', $result['source']);
+        $this->assertSame('Respuesta del agente', $result['text']);
+        $this->assertNull($result['notice']);
+
+        Http::assertSent(function ($request) {
+            return str_ends_with($request->url(), '/agents/sessions')
+                && $request->hasHeader('OpenAI-Beta', 'agents=v1')
+                && $request['agent_id'] === 'agent_test'
+                && $request['environment']['type'] === 'none'
+                && $request['input'][0]['content'][0]['text'] === '¿Que es el activo?';
+        });
+
+        $this->assertSame('sess_1', Cache::get('academic:openai-agent-session:30'));
+    }
+
+    public function test_uses_agent_id_from_system_parameter(): void
+    {
+        config([
+            'academic.openai.agent_id_parameter' => 'IA-00003',
+            'academic.openai.agent_id' => null,
+            'academic.openai.agent_timeout' => 5,
+            'academic.openai.agent_poll_interval_ms' => 200,
+        ]);
+
+        $service = new class extends OpenAiAssistantService {
+            protected function parameterValue(?string $parameterCode): ?string
+            {
+                return $parameterCode === 'IA-00003' ? 'agent_from_parameter' : null;
+            }
+        };
+
+        Http::fake([
+            'api.openai.com/v1/agents/sessions' => Http::response(['id' => 'sess_param']),
+            'api.openai.com/v1/agents/sessions/sess_param/items*' => Http::response([
+                'data' => [[
+                    'id' => 'item_param',
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'phase' => 'final_answer',
+                    'status' => 'completed',
+                    'content' => [['type' => 'output_text', 'text' => 'Respuesta parametrizada']],
+                ]],
+            ]),
+            'api.openai.com/v1/agents/sessions/sess_param' => Http::response([
+                'id' => 'sess_param',
+                'status' => 'idle',
+            ]),
+        ]);
+
+        $result = $service->sendPromptWithAgent(33, 'consulta');
+
+        $this->assertTrue($result['agent_used']);
+        $this->assertSame('Respuesta parametrizada', $result['text']);
+
+        Http::assertSent(function ($request) {
+            return str_ends_with($request->url(), '/agents/sessions')
+                && $request['agent_id'] === 'agent_from_parameter';
+        });
+    }
+
+    public function test_provider_reads_system_parameter(): void
+    {
+        config(['academic.openai.provider_parameter' => 'IA-00002']);
+
+        $service = new class extends OpenAiAssistantService {
+            protected function parameterValue(?string $parameterCode): ?string
+            {
+                return $parameterCode === 'IA-00002' ? '1' : null;
+            }
+        };
+
+        $this->assertSame('1', $service->provider());
+    }
+
+    public function test_provider_defaults_to_gemini_when_parameter_is_missing(): void
+    {
+        config(['academic.openai.provider_parameter' => 'IA-00002']);
+
+        $service = new class extends OpenAiAssistantService {
+            protected function parameterValue(?string $parameterCode): ?string
+            {
+                return null;
+            }
+        };
+
+        $this->assertSame('2', $service->provider());
+    }
+
+    public function test_falls_back_to_default_model_when_agent_fails(): void
+    {
+        config([
+            'academic.openai.agent_id' => 'agent_test',
+            'academic.openai.model' => 'gpt-4.1-mini',
+            'academic.openai.agent_timeout' => 5,
+            'academic.openai.agent_poll_interval_ms' => 200,
+        ]);
+
+        Http::fake([
+            'api.openai.com/v1/agents/sessions' => Http::response([
+                'error' => ['message' => 'You do not have access to this agent.'],
+            ], 403),
+            'api.openai.com/v1/responses' => Http::response([
+                'id' => 'resp_fallback',
+                'output' => [
+                    ['content' => [['type' => 'output_text', 'text' => 'Respuesta del modelo']]],
+                ],
+            ]),
+        ]);
+
+        $result = app(OpenAiAssistantService::class)->sendPromptWithAgent(31, 'consulta');
+
+        $this->assertFalse($result['agent_used']);
+        $this->assertSame('model', $result['source']);
+        $this->assertSame('Respuesta del modelo', $result['text']);
+        $this->assertStringContainsString('Agente de OpenAI no respondió', $result['notice']);
+        $this->assertStringContainsString('gpt-4.1-mini', $result['notice']);
+        $this->assertNull(Cache::get('academic:openai-agent-session:31'));
+    }
+
+    public function test_reuses_agent_session_for_follow_up_questions(): void
+    {
+        config([
+            'academic.openai.agent_id' => 'agent_test',
+            'academic.openai.agent_timeout' => 5,
+            'academic.openai.agent_poll_interval_ms' => 200,
+        ]);
+
+        $answer = fn (string $id, string $text) => [
+            'id' => $id,
+            'type' => 'message',
+            'role' => 'assistant',
+            'phase' => 'final_answer',
+            'status' => 'completed',
+            'content' => [['type' => 'output_text', 'text' => $text]],
+        ];
+
+        Http::fake([
+            'api.openai.com/v1/agents/sessions' => Http::response(['id' => 'sess_2']),
+            'api.openai.com/v1/agents/sessions/sess_2/items*' => Http::sequence()
+                ->push(['data' => [$answer('item_1', 'Primera respuesta')]])
+                ->push(['data' => [$answer('item_1', 'Primera respuesta')]])
+                ->push(['data' => [$answer('item_2', 'Segunda respuesta')]]),
+            'api.openai.com/v1/agents/sessions/sess_2' => Http::response([
+                'id' => 'sess_2',
+                'status' => 'idle',
+            ]),
+            'api.openai.com/v1/agents/sessions/sess_2/events' => Http::response(['ok' => true]),
+        ]);
+
+        $service = app(OpenAiAssistantService::class);
+
+        $first = $service->sendPromptWithAgent(32, 'primera pregunta');
+        $second = $service->sendPromptWithAgent(32, 'segunda pregunta');
+
+        $this->assertSame('Primera respuesta', $first['text']);
+        $this->assertSame('Segunda respuesta', $second['text']);
+
+        Http::assertSent(function ($request) {
+            return str_ends_with($request->url(), '/agents/sessions/sess_2/events')
+                && $request['events'][0]['type'] === 'agent.session.input.message'
+                && $request['events'][0]['input'][0]['content'][0]['text'] === 'segunda pregunta';
         });
     }
 }

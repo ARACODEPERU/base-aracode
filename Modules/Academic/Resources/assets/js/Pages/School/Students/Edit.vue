@@ -6,6 +6,7 @@ import Swal2 from 'sweetalert2';
 import { ref, reactive, onMounted, computed } from 'vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import ModalSmall from '@/Components/ModalSmall.vue';
+import ModalLarge from '@/Components/ModalLarge.vue';
 import GuardianSearchModal from './../../../Components/GuardianSearchModal.vue';
 import iconLoader from '@/Components/vristo/icon/icon-loader.vue';
 
@@ -65,6 +66,7 @@ const updateStudent = () => {
 
 const guardians = ref(props.student.guardians ?? []);
 const loadingGuardians = ref(false);
+const guardiansError = ref('');
 const showGuardianSearchModal = ref(false);
 const showGuardianAssignModal = ref(false);
 const selectedGuardianPerson = ref(null);
@@ -74,12 +76,122 @@ const assignForm = reactive({
     is_primary: false,
 });
 
+/* ---------- Editar apoderado (datos de la persona + vinculo) ---------- */
+
+// El boton Editar solo se muestra con el permiso propio de apoderados.
+const canEditGuardianData = computed(() => hasPermission('aca_school_alumno_apoderados_editar'));
+const showGuardianEditModal = ref(false);
+const editingGuardian = ref(null);
+const savingGuardianEdit = ref(false);
+const guardianEditErrors = reactive({});
+
+const guardianEditForm = reactive({
+    document_type_id: '',
+    number: '',
+    names: '',
+    father_lastname: '',
+    mother_lastname: '',
+    gender: '',
+    birthdate: '',
+    telephone: '',
+    email: '',
+    address: '',
+    relationship: 'otro',
+    is_primary: false,
+    status: true,
+});
+
+const clearGuardianEditErrors = () => {
+    Object.keys(guardianEditErrors).forEach((key) => delete guardianEditErrors[key]);
+};
+
+// `birthdate` puede llegar como fecha con hora: el input type=date solo acepta YYYY-MM-DD.
+const toDateInput = (value) => (value ? String(value).substring(0, 10) : '');
+
+const openGuardianEditModal = (guardian) => {
+    const p = guardian.person ?? {};
+
+    editingGuardian.value = guardian;
+    clearGuardianEditErrors();
+
+    guardianEditForm.document_type_id = p.document_type_id ?? '';
+    guardianEditForm.number = p.number ?? '';
+    guardianEditForm.names = p.names ?? p.short_name ?? '';
+    guardianEditForm.father_lastname = p.father_lastname ?? '';
+    guardianEditForm.mother_lastname = p.mother_lastname ?? '';
+    guardianEditForm.gender = p.gender ?? '';
+    guardianEditForm.birthdate = toDateInput(p.birthdate);
+    guardianEditForm.telephone = p.telephone ?? '';
+    guardianEditForm.email = p.email ?? '';
+    guardianEditForm.address = p.address ?? '';
+    guardianEditForm.relationship = guardian.relationship ?? 'otro';
+    guardianEditForm.is_primary = !!guardian.is_primary;
+    guardianEditForm.status = !!guardian.status;
+
+    showGuardianEditModal.value = true;
+};
+
+const closeGuardianEditModal = () => {
+    showGuardianEditModal.value = false;
+    editingGuardian.value = null;
+    clearGuardianEditErrors();
+};
+
+const saveGuardianEdit = () => {
+    if (! editingGuardian.value) return;
+
+    savingGuardianEdit.value = true;
+    clearGuardianEditErrors();
+
+    axios.put(route('aca_school_students_guardians_person_update', editingGuardian.value.id), guardianEditForm)
+        .then((res) => {
+            Swal2.fire({
+                title: 'Enhorabuena',
+                text: res.data.message ?? 'Apoderado actualizado correctamente',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false,
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            closeGuardianEditModal();
+            loadGuardians();
+        })
+        .catch((error) => {
+            const data = error.response?.data;
+
+            if (data?.errors) {
+                Object.entries(data.errors).forEach(([field, messages]) => {
+                    guardianEditErrors[field] = Array.isArray(messages) ? messages[0] : messages;
+                });
+            }
+
+            const firstError = data?.errors ? Object.values(data.errors)[0] : null;
+            Swal2.fire({
+                icon: 'error',
+                text: (Array.isArray(firstError) ? firstError[0] : firstError)
+                    ?? data?.message
+                    ?? 'No se pudo actualizar el apoderado',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        })
+        .finally(() => {
+            savingGuardianEdit.value = false;
+        });
+};
+
 const loadGuardians = () => {
     loadingGuardians.value = true;
+    guardiansError.value = '';
     axios.get(route('aca_school_students_guardians_list', props.student.id)).then((res) => {
         if (res.data.success) {
             guardians.value = res.data.guardians;
         }
+    }).catch((error) => {
+        // Si la lista no carga hay que decirlo: sin esto el panel mostraba
+        // "sin apoderados" y parecia que el alta no habia guardado nada.
+        guardiansError.value = error.response?.data?.message ?? 'No se pudieron cargar los apoderados.';
     }).finally(() => {
         loadingGuardians.value = false;
     });
@@ -275,6 +387,9 @@ const removeGuardian = (guardian) => {
                     <p v-if="loadingGuardians" class="text-sm text-gray-500 flex items-center gap-2">
                         <icon-loader class="w-4 h-4 animate-spin" /> Cargando apoderados...
                     </p>
+                    <p v-else-if="guardiansError" class="text-sm text-danger">
+                        {{ guardiansError }}
+                    </p>
                     <p v-else-if="guardians.length === 0" class="text-sm text-gray-500">
                         El alumno aún no tiene apoderados registrados.
                     </p>
@@ -310,6 +425,7 @@ const removeGuardian = (guardian) => {
                                     <input type="checkbox" :checked="guardian.status" @change="toggleGuardianStatus(guardian)" class="form-checkbox" />
                                 </td>
                                 <td class="text-center whitespace-nowrap">
+                                    <button v-if="canEditGuardianData" type="button" class="btn btn-outline-primary btn-sm mr-1" @click="openGuardianEditModal(guardian)">Editar</button>
                                     <button type="button" class="btn btn-outline-danger btn-sm" @click="removeGuardian(guardian)">Quitar</button>
                                 </td>
                             </tr>
@@ -326,6 +442,97 @@ const removeGuardian = (guardian) => {
             :ubigeo="ubigeo"
             @selected="onGuardianSelected"
         />
+
+        <ModalLarge :show="showGuardianEditModal" :onClose="closeGuardianEditModal" :icon="'/img/comunidad.png'">
+            <template #title>
+                Editar apoderado
+            </template>
+            <template #message>
+                {{ editingGuardian?.person?.full_name ?? '' }}
+            </template>
+            <template #content>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="form-label">Tipo de documento *</label>
+                        <select v-model="guardianEditForm.document_type_id" class="form-select">
+                            <option v-for="doc in documentTypes" :key="doc.id" :value="doc.id">{{ doc.description }}</option>
+                        </select>
+                        <p v-if="guardianEditErrors.document_type_id" class="text-danger text-xs mt-1">{{ guardianEditErrors.document_type_id }}</p>
+                    </div>
+                    <div>
+                        <label class="form-label">N° de documento *</label>
+                        <input v-model="guardianEditForm.number" type="text" class="form-input" maxlength="12" />
+                        <p v-if="guardianEditErrors.number" class="text-danger text-xs mt-1">{{ guardianEditErrors.number }}</p>
+                    </div>
+                    <div>
+                        <label class="form-label">Sexo</label>
+                        <select v-model="guardianEditForm.gender" class="form-select">
+                            <option value="">Sin especificar</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Nombres *</label>
+                        <input v-model="guardianEditForm.names" type="text" class="form-input" />
+                        <p v-if="guardianEditErrors.names" class="text-danger text-xs mt-1">{{ guardianEditErrors.names }}</p>
+                    </div>
+                    <div>
+                        <label class="form-label">Apellido paterno *</label>
+                        <input v-model="guardianEditForm.father_lastname" type="text" class="form-input" />
+                        <p v-if="guardianEditErrors.father_lastname" class="text-danger text-xs mt-1">{{ guardianEditErrors.father_lastname }}</p>
+                    </div>
+                    <div>
+                        <label class="form-label">Apellido materno *</label>
+                        <input v-model="guardianEditForm.mother_lastname" type="text" class="form-input" />
+                        <p v-if="guardianEditErrors.mother_lastname" class="text-danger text-xs mt-1">{{ guardianEditErrors.mother_lastname }}</p>
+                    </div>
+                    <div>
+                        <label class="form-label">Fecha de nacimiento</label>
+                        <input v-model="guardianEditForm.birthdate" type="date" class="form-input" />
+                        <p v-if="guardianEditErrors.birthdate" class="text-danger text-xs mt-1">{{ guardianEditErrors.birthdate }}</p>
+                    </div>
+                    <div>
+                        <label class="form-label">Teléfono</label>
+                        <input v-model="guardianEditForm.telephone" type="text" class="form-input" maxlength="12" />
+                        <p v-if="guardianEditErrors.telephone" class="text-danger text-xs mt-1">{{ guardianEditErrors.telephone }}</p>
+                    </div>
+                    <div>
+                        <label class="form-label">Email</label>
+                        <input v-model="guardianEditForm.email" type="email" class="form-input" />
+                        <p v-if="guardianEditErrors.email" class="text-danger text-xs mt-1">{{ guardianEditErrors.email }}</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="form-label">Dirección</label>
+                        <input v-model="guardianEditForm.address" type="text" class="form-input" />
+                        <p v-if="guardianEditErrors.address" class="text-danger text-xs mt-1">{{ guardianEditErrors.address }}</p>
+                    </div>
+                    <div>
+                        <label class="form-label">Parentesco *</label>
+                        <select v-model="guardianEditForm.relationship" class="form-select">
+                            <option v-for="(label, value) in guardianRelationships" :key="value" :value="value">{{ label }}</option>
+                        </select>
+                        <p v-if="guardianEditErrors.relationship" class="text-danger text-xs mt-1">{{ guardianEditErrors.relationship }}</p>
+                    </div>
+                    <div class="flex items-end gap-6 pb-1 sm:col-span-3">
+                        <div class="flex items-center">
+                            <input id="guardian_edit_primary" v-model="guardianEditForm.is_primary" type="checkbox" class="form-checkbox" />
+                            <label for="guardian_edit_primary" class="ml-2 text-sm">Apoderado principal</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="guardian_edit_status" v-model="guardianEditForm.status" type="checkbox" class="form-checkbox" />
+                            <label for="guardian_edit_status" class="ml-2 text-sm">Activo</label>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <template #buttons>
+                <PrimaryButton type="button" @click="saveGuardianEdit" :disabled="savingGuardianEdit">
+                    <icon-loader v-if="savingGuardianEdit" class="w-4 h-4 animate-spin mr-1" />
+                    Guardar
+                </PrimaryButton>
+            </template>
+        </ModalLarge>
 
         <ModalSmall :show="showGuardianAssignModal" :onClose="closeAssignModal" :icon="'/img/comunidad.png'">
             <template #title>

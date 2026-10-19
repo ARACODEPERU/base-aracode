@@ -127,6 +127,22 @@ test('el Administrador ve Portería y los parámetros SMS', async () => {
         has(group.items.find((item) => item.text === 'Parámetros SMS').permissions),
         true
     );
+    assert.equal(
+        has(group.items.find((item) => item.text === 'Parámetros Telegram').permissions),
+        false,
+        'Parámetros Telegram es exclusivo del rol admin (aca_school_telegram_configuracion).'
+    );
+});
+
+test('solo el rol admin con aca_school_telegram_configuracion ve Parámetros Telegram', async () => {
+    const menu = await loadMenu('5');
+    const has = checker(['aca_school_telegram_configuracion']);
+    const group = menu.items.find((item) => item.text === 'Colegio');
+    const telegramItem = group.items.find((item) => item.text === 'Parámetros Telegram');
+
+    assert.equal(has(menu.permissions), true);
+    assert.equal(has(group.permissions), true);
+    assert.equal(has(telegramItem.permissions), true);
 });
 
 test('fuera del modo colegio (tipo de negocio distinto de 5 y 6) no existe el grupo Colegio', async () => {

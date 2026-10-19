@@ -78,10 +78,15 @@ trait BuildsTelegramStudentSchema
             $table->timestamps();
         });
 
-        // Planes de suscripcion: la marca Premium VIP sale de su titulo.
+        // Planes de suscripcion: su alcance sale de los flags, nunca del titulo.
         Schema::create('aca_subscription_types', function (Blueprint $table) {
             $table->id();
             $table->string('title')->nullable();
+            $table->boolean('access_all_courses')->default(false);
+            $table->boolean('access_specialization_programs')->default(false);
+            $table->boolean('access_all_webinars')->default(false);
+            $table->boolean('can_view_specialization_zooms')->default(false);
+            $table->boolean('can_view_specialization_webinars')->default(false);
             $table->timestamps();
         });
 

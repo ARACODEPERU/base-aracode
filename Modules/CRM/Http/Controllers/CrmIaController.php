@@ -80,6 +80,8 @@ class CrmIaController extends Controller
         // El alumno nunca ve quien respondio realmente (auditoria interna).
         $messages->each(function ($message) {
             $message->makeHidden('sent_by_user_id');
+            $message->edited = $message->updated_at && $message->created_at
+                && $message->updated_at->gt($message->created_at);
         });
 
         return Inertia::render('CRM::Chat/studentDashboard', [
@@ -210,11 +212,21 @@ class CrmIaController extends Controller
         try {
             $messageText = $request->input('messageText');
             $instructions = $request->input('instructions');
-            $response = $this->sendPromptOpenAI($messageText, $instructions, null, $this->usuarioEfectivo($request));
+
+            // Respuesta del chat a alumnos: primero el agente guardado y, si
+            // no responde, el modelo por defecto con un aviso informativo.
+            $result = app(OpenAiAssistantService::class)->sendPromptWithAgent(
+                $this->usuarioEfectivo($request) ?: Auth::id(),
+                (string) $messageText,
+                $instructions
+            );
 
             return response()->json([
                 'success' => true,
-                'responseText' => $response,
+                'responseText' => $result['text'],
+                'agent_used' => $result['agent_used'],
+                'ai_source' => $result['source'],
+                'notice' => $result['notice'],
             ]);
         } catch (\Throwable $e) {
             Log::error('CRM basicQuestionService: ' . $e->getMessage());

@@ -398,7 +398,7 @@ class AcaSchoolStudentController extends Controller
     {
         $guardians = AcaSchoolStudentGuardian::query()
             ->where('student_id', $studentId)
-            ->with('person:id,document_type_id,number,names,father_lastname,mother_lastname,full_name,telephone,email,address')
+            ->with('person:id,document_type_id,number,names,father_lastname,mother_lastname,short_name,full_name,gender,birthdate,telephone,email,address')
             ->orderByDesc('is_primary')
             ->orderBy('id')
             ->get();
@@ -423,7 +423,7 @@ class AcaSchoolStudentController extends Controller
         $guardian = AcaSchoolStudentGuardian::updateOrCreate(
             ['student_id' => $student->id, 'guardian_person_id' => $validated['person_id']],
             [
-                'school_id' => $school->id ?? $student->school_id,
+                'school_id' => $school?->id ?? $student->school_id,
                 'relationship' => $validated['relationship'],
                 'is_primary' => (bool) ($validated['is_primary'] ?? false),
                 'status' => true,
@@ -464,6 +464,96 @@ class AcaSchoolStudentController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => 'Apoderado actualizado correctamente']);
+    }
+
+    /**
+     * Edita los datos del apoderado desde la ficha del alumno: la persona
+     * (documento, nombres, contacto, direccion) y su vinculo con el alumno
+     * (parentesco, principal, activo). El permiso es propio de apoderados, para
+     * no obligar a tener el permiso de edicion del alumno.
+     */
+    public function updateGuardianPerson(Request $request, int $guardianId)
+    {
+        $guardian = AcaSchoolStudentGuardian::with('person')->findOrFail($guardianId);
+
+        if (! $guardian->person) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El apoderado no tiene una persona asociada.',
+            ], 422);
+        }
+
+        $validated = $this->validate($request, [
+            'document_type_id' => 'required|integer|exists:identity_document_type,id',
+            'number' => 'required|max:12',
+            'names' => 'required|max:255',
+            'father_lastname' => 'required|max:255',
+            'mother_lastname' => 'required|max:255',
+            'gender' => 'nullable|in:M,F',
+            'birthdate' => 'nullable|date',
+            'telephone' => 'nullable|max:12',
+            'email' => 'nullable|email|max:255',
+            'address' => 'nullable|max:255',
+            'relationship' => 'required|in:'.implode(',', array_keys(AcaSchoolStudentGuardian::relationshipLabels())),
+            'is_primary' => 'nullable|boolean',
+            'status' => 'nullable|boolean',
+        ]);
+
+        // El documento no puede quedar repetido en otra persona distinta.
+        $duplicated = Person::where('document_type_id', $validated['document_type_id'])
+            ->where('number', $validated['number'])
+            ->where('id', '!=', $guardian->guardian_person_id)
+            ->exists();
+
+        if ($duplicated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ese numero de documento ya pertenece a otra persona.',
+            ], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($validated, $guardian) {
+                $guardian->person->update([
+                    'document_type_id' => $validated['document_type_id'],
+                    'number' => $validated['number'],
+                    'names' => $validated['names'],
+                    'short_name' => $validated['names'],
+                    'father_lastname' => $validated['father_lastname'],
+                    'mother_lastname' => $validated['mother_lastname'],
+                    'full_name' => trim($validated['father_lastname'].' '.$validated['mother_lastname'].' '.$validated['names']),
+                    'gender' => $validated['gender'] ?? $guardian->person->gender,
+                    'birthdate' => $validated['birthdate'] ?? $guardian->person->birthdate,
+                    'telephone' => $validated['telephone'] ?? null,
+                    'email' => $validated['email'] ?? null,
+                    'address' => $validated['address'] ?? null,
+                ]);
+
+                $guardian->update([
+                    'relationship' => $validated['relationship'],
+                    'is_primary' => (bool) ($validated['is_primary'] ?? false),
+                    'status' => (bool) ($validated['status'] ?? true),
+                ]);
+            });
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo actualizar el apoderado: '.$e->getMessage(),
+            ], 500);
+        }
+
+        // Solo puede haber un apoderado principal por alumno.
+        if ($guardian->fresh()->is_primary) {
+            AcaSchoolStudentGuardian::where('student_id', $guardian->student_id)
+                ->where('id', '!=', $guardian->id)
+                ->update(['is_primary' => false]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Apoderado actualizado correctamente',
+            'guardian' => $guardian->fresh()->load('person'),
+        ]);
     }
 
     /**

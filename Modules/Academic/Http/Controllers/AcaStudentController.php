@@ -28,6 +28,7 @@ use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaModule;
 use Illuminate\Http\RedirectResponse;
 use Modules\Academic\Entities\AcaStudentSubscription;
+use Modules\Academic\Services\SubscriptionContentPermissions;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -479,7 +480,7 @@ class AcaStudentController extends Controller
         $mycourses = [];
 
         $studentSubscribed = AcaStudentSubscription::where('student_id', $student_id)
-            ->where('status', true)
+            ->activeNow()
             ->first();
 
         // roles superiores que no sea alumno pueden ver todos los curso
@@ -669,19 +670,9 @@ class AcaStudentController extends Controller
 
         $today = Carbon::today();
 
-        // 1. Verificar si el estudiante tiene una suscripción activa
-        $hasActiveSubscription = AcaStudentSubscription::where('student_id', $studentId)
-            ->where(function ($query) use ($today) {
-                $query->where('status', true)
-                    ->orWhere(function ($q) use ($today) {
-                        $q->whereDate('date_start', '<=', $today)
-                            ->whereDate('date_end', '>=', $today);
-                    });
-            })
-            ->exists();
-
-        // 1.1 Verificar si el estudiante tiene Premium VIP
-        $hasPremiumVip = $this->hasPremiumVipSubscription($studentId);
+        // 1. Permisos que otorgan las suscripciones activas del alumno: qué
+        // categorías de cursos incluye cada plan.
+        $subscriptionAccess = SubscriptionContentPermissions::forStudent($studentId);
 
         // 2. Obtener los IDs de los cursos en los que el estudiante está matriculado
         $registeredCourseIds = AcaCapRegistration::where('student_id', $studentId)
@@ -715,24 +706,18 @@ class AcaStudentController extends Controller
                 ->get();
 
         // 5. Procesar cada curso para determinar 'can_view'
-        $coursesWithAccess = $allCourses->map(function ($course) use ($hasActiveSubscription, $hasPremiumVip, $registeredCourseIds, $webProductCourseIds) {
+        $coursesWithAccess = $allCourses->map(function ($course) use ($subscriptionAccess, $registeredCourseIds, $webProductCourseIds) {
             $canView = false; // Valor por defecto
 
-            // Condición VIP: Si tiene Premium VIP, puede ver TODOS los cursos (incluido especialización)
-            if ($hasPremiumVip) {
+            // Condición 3: La suscripción incluye la categoría del curso
+            // (cursos/talleres, Programas de Especialización o webinars)
+            if (SubscriptionContentPermissions::canAccessCourse($subscriptionAccess, $course->type_description)) {
                 $canView = true;
             }
-            // Condición 4: Si el tipo es 'Programas de especialización', solo matriculados
-            elseif (strcasecmp($course->type_description, 'Programas de Especialización') === 0) {
-                if (in_array($course->id, $registeredCourseIds)) {
-                    $canView = true;
-                } else {
-                    $canView = false;
-                }
-            }
-            // Condición 3: Suscripción activa (siempre puede ver, excepto los de especialización)
-            elseif ($hasActiveSubscription) {
-                $canView = true;
+            // Condición 4: Los Programas de Especialización que no entran por
+            // la suscripción solo se ven con matrícula
+            elseif (SubscriptionContentPermissions::isSpecializationCourse($course->type_description)) {
+                $canView = in_array($course->id, $registeredCourseIds);
             }
             // Condición 2: El estudiante está matriculado en el curso
             elseif (in_array($course->id, $registeredCourseIds)) {
@@ -764,19 +749,6 @@ class AcaStudentController extends Controller
         return $coursesWithAccess;
     }
 
-    /**
-     * Verificar si el estudiante tiene una suscripción Premium VIP activa
-     */
-    private function hasPremiumVipSubscription(int $studentId): bool
-    {
-        return AcaStudentSubscription::where('student_id', $studentId)
-            ->where('status', true)
-            ->whereHas('subscription', function ($query) {
-                $query->where('title', 'LIKE', '%Premium VIP%');
-            })
-            ->exists();
-    }
-
     public function checkCourseAccess(int $studentId, int $courseId): bool
     {
         // Obtener la información del curso
@@ -787,34 +759,19 @@ class AcaStudentController extends Controller
             return false;
         }
 
-        // Verificar si el estudiante tiene Premium VIP
-        $hasPremiumVip = $this->hasPremiumVipSubscription($studentId);
+        $subscriptionAccess = SubscriptionContentPermissions::forStudent($studentId);
 
-        // Condición VIP: Si tiene Premium VIP, puede ver TODOS los cursos (incluido especialización)
-        if ($hasPremiumVip) {
+        // Condición 3: La suscripción incluye la categoría del curso
+        if (SubscriptionContentPermissions::canAccessCourse($subscriptionAccess, $course->type_description)) {
             return true;
         }
 
-        // Condición 4: Si el tipo es 'Programas de especialización', NO pasa (a menos que haya lógica de compra/pago específica)
-        if ($course->type_description === 'Programas de especialización') {
-
-            $isRegistered = AcaCapRegistration::where('student_id', $studentId)
-                                          ->where('course_id', $courseId)
-                                          ->exists();
-            if ($isRegistered) {
-                return true;
-            }else{
-                 return false;
-            }
-        }
-
-        // Condición 3: Si el estudiante tiene una suscripción activa, pasa
-        $hasActiveSubscription = AcaStudentSubscription::where('student_id', $studentId)
-                                                      ->where('status', true)
-                                                      ->exists();
-
-        if ($hasActiveSubscription) {
-            return true;
+        // Condición 4: Los Programas de Especialización que no entran por la
+        // suscripción requieren matrícula en el programa
+        if (SubscriptionContentPermissions::isSpecializationCourse($course->type_description)) {
+            return AcaCapRegistration::where('student_id', $studentId)
+                ->where('course_id', $courseId)
+                ->exists();
         }
 
         $today = Carbon::today();
@@ -973,7 +930,7 @@ class AcaStudentController extends Controller
         $nextModule = $currentModuleIndex !== false ? $courseModules->get($currentModuleIndex + 1) : null;
 
         $isEnrolled = false;
-        $isVipStudent = false;
+        $contentPermissions = SubscriptionContentPermissions::forStudent(null);
         $isMatriculated = false;
         $isSpecializationCourse = strcasecmp($course->type_description, 'Programas de Especialización') === 0;
 
@@ -984,7 +941,7 @@ class AcaStudentController extends Controller
 
         if($studentId){
             $isEnrolled = $this->checkCourseAccess($studentId, $course->id);
-            $isVipStudent = $this->hasPremiumVipSubscription($studentId);
+            $contentPermissions = SubscriptionContentPermissions::forStudent($studentId);
             $isMatriculated = AcaCapRegistration::where('student_id', $studentId)
                 ->where('course_id', $course->id)
                 ->exists();
@@ -996,8 +953,8 @@ class AcaStudentController extends Controller
         }
 
         // Filtrar contenido según reglas de acceso
-        $module->themes->each(function ($theme) use ($isVipStudent, $isMatriculated, $isSpecializationCourse, $user) {
-            $theme->contents = $theme->contents->filter(function ($content) use ($isVipStudent, $isMatriculated, $isSpecializationCourse, $user) {
+        $module->themes->each(function ($theme) use ($contentPermissions, $isMatriculated, $isSpecializationCourse, $user) {
+            $theme->contents = $theme->contents->filter(function ($content) use ($contentPermissions, $isMatriculated, $isSpecializationCourse, $user) {
                 // Admin/Docentes ven todo
                 if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
                     return true;
@@ -1005,21 +962,26 @@ class AcaStudentController extends Controller
 
                 // Zoom/Meet (is_file = 3)
                 if ($content->is_file == 3) {
-                    // VIP en programa de especialización NO ve Zoom/Meet
-                    if ($isVipStudent && $isSpecializationCourse) {
+                    // En Programas de Especialización solo lo ven los matriculados
+                    // o las suscripciones con el permiso habilitado.
+                    if ($isSpecializationCourse && ! $isMatriculated && ! $contentPermissions[SubscriptionContentPermissions::CAN_VIEW_SPECIALIZATION_ZOOMS]) {
                         return false;
                     }
-                    // Matriculados SÍ ven Zoom/Meet
+                    // Matriculados y cursos normales SÍ ven Zoom/Meet
                     return true;
                 }
 
                 // Webinars (is_file = 5)
                 if ($content->is_file == 5) {
-                    // Matriculados NO ven webinars (ellos tienen Zoom/Meet)
+                    // Matriculados NO ven webinars (ellos tienen Zoom/Meet en vivo)
                     if ($isMatriculated) {
                         return false;
                     }
-                    // VIP SÍ ven webinars
+                    // En Programas de Especialización solo con el permiso habilitado
+                    if ($isSpecializationCourse) {
+                        return $contentPermissions[SubscriptionContentPermissions::CAN_VIEW_SPECIALIZATION_WEBINARS];
+                    }
+                    // Fuera de especialización se mantiene el comportamiento de siempre
                     return true;
                 }
 
@@ -1040,7 +1002,8 @@ class AcaStudentController extends Controller
             'module' => $module,
             'previousModule' => $previousModule,
             'nextModule' => $nextModule,
-            'isVipStudent' => $isVipStudent,
+            'canViewSpecializationZooms' => $contentPermissions[SubscriptionContentPermissions::CAN_VIEW_SPECIALIZATION_ZOOMS],
+            'canViewSpecializationWebinars' => $contentPermissions[SubscriptionContentPermissions::CAN_VIEW_SPECIALIZATION_WEBINARS],
             'isSpecializationCourse' => $isSpecializationCourse,
         ]);
     }

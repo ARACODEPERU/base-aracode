@@ -70,6 +70,12 @@ class SendSchoolGateNotice implements ShouldQueue
             return;
         }
 
+        if ($delivery->channel === AcaSchoolNoticeDelivery::CHANNEL_TELEGRAM) {
+            $this->handleTelegram($delivery, $gate, $notices);
+
+            return;
+        }
+
         // El canal pudo apagarse entre el escaneo y el envío.
         if (! $notices->isConfigured() || ! $notices->isChannelActive()) {
             $delivery->update([
@@ -88,7 +94,7 @@ class SendSchoolGateNotice implements ShouldQueue
                 $notices->noticeVariables($gate, $delivery->event, $delivery->guardian?->full_name)
             );
 
-            $notices->sendTo($delivery->phone, $text);
+            $notices->sendTo((string) $delivery->phone, $text);
 
             $delivery->update([
                 'status' => 'sent',
@@ -118,6 +124,58 @@ class SendSchoolGateNotice implements ShouldQueue
 
             // Se relanza para que la cola lo reintente; el estado queda en failed
             // hasta que un reintento tenga éxito.
+            throw $exception;
+        }
+    }
+
+    /**
+     * Procesa una entrega del canal Telegram escolar.
+     */
+    private function handleTelegram(
+        AcaSchoolNoticeDelivery $delivery,
+        AcaSchoolGateAttendance $gate,
+        SchoolGateNoticeService $notices
+    ): void {
+        $telegram = $notices->telegram();
+
+        if (! $telegram->isConfigured() || ! $telegram->isChannelActive()) {
+            $delivery->update([
+                'status' => 'skipped',
+                'error_message' => 'El canal de avisos por Telegram está desactivado o sin token.',
+            ]);
+
+            return;
+        }
+
+        $delivery->update(['status' => 'processing', 'error_message' => null]);
+
+        try {
+            $text = $telegram->renderNoticeText(
+                $delivery->event,
+                $telegram->noticeVariables($gate, $delivery->event, $delivery->guardian?->full_name)
+            );
+
+            $telegram->sendTo((string) $delivery->chat_id, $text);
+
+            $delivery->update([
+                'status' => 'sent',
+                'sent_at' => now(),
+                'error_message' => null,
+            ]);
+        } catch (\Throwable $exception) {
+            $delivery->update([
+                'status' => 'failed',
+                'error_message' => mb_substr($exception->getMessage(), 0, 500),
+            ]);
+
+            Log::warning('Aviso de asistencia por Telegram no enviado', [
+                'delivery_id' => $this->deliveryId,
+                'gate_attendance_id' => $delivery->gate_attendance_id,
+                'event' => $delivery->event,
+                'chat_id' => $delivery->chat_id,
+                'error' => $exception->getMessage(),
+            ]);
+
             throw $exception;
         }
     }

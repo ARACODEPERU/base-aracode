@@ -34,6 +34,11 @@ Route::get('/kapta', [WebPageController::class, 'solucionKapta'])->name('solucio
 Route::get('/kirafact', [WebPageController::class, 'solucionFacturacion'])->name('solucion_facturacion');
 Route::get('/pichanguero', [WebPageController::class, 'solucionPichanguero'])->name('solucion_pichanguero');
 
+// Gestión de Clínica: el sistema de gestión para consultorios y clínicas que
+// vive en el módulo Salud. Todavía no tiene web propia, así que su página es la
+// de este sitio (como Desarrollo a Medida) y se abre en la misma pestaña.
+Route::get('/clinica', [WebPageController::class, 'solucionClinica'])->name('solucion_clinica');
+
 // Servicio y redirecciones desde las URLs anteriores bajo /soluciones
 Route::get('/soluciones/desarrollo', [WebPageController::class, 'solucionDesarrollo'])->name('solucion_desarrollo');
 Route::get('/soluciones/kapta', fn () => redirect()->route('solucion_kapta', [], 301));

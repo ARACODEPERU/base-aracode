@@ -20,7 +20,7 @@ use Modules\Integrationhub\Services\SmsgateService;
  *
  * Reúne lo que necesitan la portería, el job y la pantalla de configuración:
  * el estado del canal SMSGate propio del módulo escolar (parámetros SC-00020 a
- * SC-00031), los destinatarios de cada alumno, la plantilla del mensaje y el
+ * SC-00032), los destinatarios de cada alumno, la plantilla del mensaje y el
  * encolado del envío.
  *
  * El envío real lo hace SendSchoolGateNotice en la cola: la portería registra
@@ -37,10 +37,21 @@ class SchoolGateNoticeService
 
     private SmsgateService $smsgate;
 
-    public function __construct()
+    private SchoolTelegramNoticeService $telegramNotices;
+
+    public function __construct(?SchoolTelegramNoticeService $telegramNotices = null)
     {
         // Credenciales propias del módulo escolar (SC-00020, SC-00021 y SC-00022).
         $this->smsgate = new SmsgateService('academic.school_notices.smsgate');
+        $this->telegramNotices = $telegramNotices ?? new SchoolTelegramNoticeService();
+    }
+
+    /**
+     * Servicio de avisos por Telegram del colegio.
+     */
+    public function telegram(): SchoolTelegramNoticeService
+    {
+        return $this->telegramNotices;
     }
 
     /**
@@ -63,6 +74,7 @@ class SchoolGateNoticeService
             'exit_message' => $this->parameterCode('exit_message_parameter', 'SC-00029'),
             'primary_only' => $this->parameterCode('primary_only_parameter', 'SC-00030'),
             'daily_limit' => $this->parameterCode('daily_limit_parameter', 'SC-00031'),
+            'interval_ms' => $this->parameterCode('interval_ms_parameter', 'SC-00032'),
         ];
     }
 
@@ -118,6 +130,7 @@ class SchoolGateNoticeService
             'entry_message' => $this->messageTemplate(self::EVENT_ENTRY),
             'exit_message' => $this->messageTemplate(self::EVENT_EXIT),
             'daily_limit' => $this->dailyLimit(),
+            'interval_ms' => $this->intervalMs(),
         ];
     }
 
@@ -145,6 +158,26 @@ class SchoolGateNoticeService
         $value = (int) ($this->parameterValue('daily_limit_parameter', 'SC-00031') ?? 0);
 
         return max(0, min(999, $value));
+    }
+
+    /**
+     * Pausa mínima entre cada mensaje SMS, en milisegundos (anti-SPAM de los
+     * operadores). Por defecto 2000 ms. Se limita a 0-60000 para que un valor
+     * mal cargado no bloquee la cola por horas.
+     */
+    public function intervalMs(): int
+    {
+        $raw = $this->parameterValue('interval_ms_parameter', 'SC-00032');
+
+        if ($raw === null) {
+            return max(0, min(60000, (int) $this->config('interval_ms', 2000)));
+        }
+
+        if (! is_numeric(trim($raw))) {
+            return 2000;
+        }
+
+        return max(0, min(60000, (int) $raw));
     }
 
     /** true si los avisos se envían solo al apoderado marcado como principal. */
@@ -266,9 +299,21 @@ class SchoolGateNoticeService
      * Devuelve cuántos avisos se encolaron (0 si el canal está apagado, sin
      * credenciales, el evento está desactivado o el alumno alcanzó el límite
      * diario). Es idempotente: repetir el mismo evento y destinatario no crea
-     * otra entrega.
+     * otra entrega. Cada envío se separa al menos el intervalo anti-SPAM
+     * (SC-00032) del anterior para que los operadores no lo marquen como SPAM.
      */
     public function notify(AcaSchoolGateAttendance $gate, string $event): int
+    {
+        $smsQueued = $this->notifySms($gate, $event);
+        $telegramQueued = $this->telegramNotices->notify($gate, $event);
+
+        return $smsQueued + $telegramQueued;
+    }
+
+    /**
+     * Encola los avisos del evento por el canal SMSGate.
+     */
+    private function notifySms(AcaSchoolGateAttendance $gate, string $event): int
     {
         if (! $this->isConfigured() || ! $this->isChannelActive()) {
             return 0;
@@ -285,6 +330,7 @@ class SchoolGateNoticeService
         }
 
         $limit = $this->dailyLimit();
+        $intervalMs = $this->intervalMs();
         $queued = 0;
 
         foreach ($recipients as $recipient) {
@@ -322,7 +368,12 @@ class SchoolGateNoticeService
                 continue;
             }
 
-            SendSchoolGateNotice::dispatch($delivery->id);
+            $pending = SendSchoolGateNotice::dispatch($delivery->id);
+
+            if ($intervalMs > 0 && $queued > 0) {
+                $pending->delay(now()->addMilliseconds($queued * $intervalMs));
+            }
+
             $queued++;
         }
 
@@ -414,11 +465,16 @@ class SchoolGateNoticeService
      */
     public function recentDeliveries(int $limit = 50): array
     {
-        return AcaSchoolNoticeDelivery::query()
+        $query = AcaSchoolNoticeDelivery::query()
             ->with(['student.person', 'guardian'])
             ->orderByDesc('id')
-            ->limit($limit)
-            ->get()
+            ->limit($limit);
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('aca_school_notice_deliveries', 'channel')) {
+            $query->where('channel', AcaSchoolNoticeDelivery::CHANNEL_SMS);
+        }
+
+        return $query->get()
             ->map(fn (AcaSchoolNoticeDelivery $delivery) => [
                 'id' => $delivery->id,
                 'student' => $delivery->student?->person?->full_name,
@@ -448,10 +504,15 @@ class SchoolGateNoticeService
     /** Avisos ya encolados hoy para el alumno (límite diario). */
     private function deliveriesToday(int $studentId): int
     {
-        return AcaSchoolNoticeDelivery::query()
+        $query = AcaSchoolNoticeDelivery::query()
             ->where('student_id', $studentId)
-            ->whereDate('created_at', now()->toDateString())
-            ->count();
+            ->whereDate('created_at', now()->toDateString());
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('aca_school_notice_deliveries', 'channel')) {
+            $query->where('channel', AcaSchoolNoticeDelivery::CHANNEL_SMS);
+        }
+
+        return $query->count();
     }
 
     /** Nombre completo del alumno de la asistencia. */

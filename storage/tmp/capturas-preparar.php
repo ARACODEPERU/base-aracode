@@ -29,6 +29,8 @@ $slugs = [
     'inmobiliaria-propiedades',
     'portafolio-creativo',
     'tienda-online',
+    'supermercado-online-verdia',
+    'nexora-market',
 ];
 
 if (! is_dir(DESTINO) && ! mkdir(DESTINO, 0775, true) && ! is_dir(DESTINO)) {

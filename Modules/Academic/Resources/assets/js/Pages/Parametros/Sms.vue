@@ -35,6 +35,7 @@ const form = useForm({
     notify_early_exit: !!props.channel.early_exit,
     primary_only: !!props.channel.primary_only,
     daily_limit: Number(props.settings.daily_limit || 0),
+    interval_ms: Number(props.settings.interval_ms ?? 2000),
     entry_message: props.settings.entry_message || '',
     exit_message: props.settings.exit_message || '',
 });
@@ -290,6 +291,13 @@ const reloadDeliveries = () => router.reload({ only: ['deliveries'] });
                         <input v-model.number="form.daily_limit" type="number" min="0" max="999" class="form-input w-32" />
                         <span class="mt-1 block text-xs text-gray-500">0 = sin límite.</span>
                         <p v-if="form.errors.daily_limit" class="mt-1 text-xs text-danger">{{ form.errors.daily_limit }}</p>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Pausa mínima entre mensajes (ms) <span class="text-xs text-gray-400">({{ codes.interval_ms }})</span></label>
+                        <input v-model.number="form.interval_ms" type="number" min="0" max="60000" step="100" class="form-input w-40" />
+                        <span class="mt-1 block text-xs text-gray-500">2000 ms = 2 segundos. Evita que los operadores lo marquen como SPAM.</span>
+                        <p v-if="form.errors.interval_ms" class="mt-1 text-xs text-danger">{{ form.errors.interval_ms }}</p>
                     </div>
                 </div>
             </div>

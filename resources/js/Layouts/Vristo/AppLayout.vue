@@ -1,5 +1,7 @@
 <script setup lang="ts">
-    import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+
+    import { ref, computed, onMounted, onBeforeUnmount, watch, onUnmounted, watchEffect } from 'vue';
+
     //import Sidebar from '@/Components/vristo/layout/Sidebar.vue';
     import Header from '@/Components/vristo/layout/Header.vue';
     import Footer from '@/Components/vristo/layout/Footer.vue';
@@ -22,6 +24,9 @@
     import SuperEditorPanel from 'Modules/Security/Resources/assets/js/Components/SuperEditor/Panel.vue';
     import SuperEditorPasswordModal from 'Modules/Security/Resources/assets/js/Components/SuperEditor/PasswordModal.vue';
     import { variablesDeMarca } from '@/utils/colorMarca';
+    // Una cuenta con rol de panel entra al panel aunque también tenga el rol
+    // 'Alumno'; el campus del alumno se muestra solo cuando es su único rol.
+    import { esModoAlumno } from '@/utils/modoAlumno';
 
     const store = useAppStore();
     const page = usePage();
@@ -40,18 +45,48 @@
                 secondary: companyData?.brand_secondary,
             })
     );
-
-    // Algunos modales (SweetAlert/Ant Design) se montan directamente en body,
-    // fuera del layout. La clase en html permite tematizarlos también.
+// 1. Control de la clase para el tema de torneos
     watch(sportsTheme, (enabled) => {
         if (typeof document !== 'undefined') {
             document.documentElement.classList.toggle('theme-torneos', enabled);
         }
     }, { immediate: true });
 
-    onBeforeUnmount(() => {
+    // 2. Variables de marca que publica el layout
+    const VARIABLES_DE_MARCA = [
+        '--brand-primary',
+        '--brand-primary-light',
+        '--brand-secondary',
+        '--brand-secondary-light',
+    ];
+
+    watchEffect(() => {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        const variables = marcaEstilo.value;
+        const raiz = document.documentElement;
+
+        for (const nombre of VARIABLES_DE_MARCA) {
+            if (variables && variables[nombre]) {
+                raiz.style.setProperty(nombre, variables[nombre]);
+            } else {
+                raiz.style.removeProperty(nombre);
+            }
+        }
+    });
+
+    // 3. Limpieza de ambas configuraciones al desmontar el componente/layout
+    onUnmounted(() => {
         if (typeof document !== 'undefined') {
+            // Limpiar la clase del tema
             document.documentElement.classList.remove('theme-torneos');
+
+            // Limpiar las variables de marca
+            for (const nombre of VARIABLES_DE_MARCA) {
+                document.documentElement.style.removeProperty(nombre);
+            }
         }
     });
 
@@ -84,9 +119,7 @@
 
     const baseURL = assetUrl;
 
-    const hasAnyRole = (rolesToCheck) => {
-        return userData.roles.some(role => rolesToCheck.includes(role.name))
-    }
+    const modoAlumno = computed(() => esModoAlumno(userData.roles));
 </script>
 
 <template>
@@ -151,7 +184,7 @@
 
             <div class="main-container text-black dark:text-white-dark min-h-screen" :class="[store.navbar]">
                 <!--  BEGIN SIDEBAR  -->
-                <template v-if="hasAnyRole(['Alumno'])">
+                <template v-if="modoAlumno">
                     <SidebarStudent />
                 </template>
                 <template v-else>

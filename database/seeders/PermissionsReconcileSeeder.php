@@ -70,8 +70,36 @@ class PermissionsReconcileSeeder extends Seeder
             'roles'  => ['admin', 'Administrador'],
         ],
         [
+            'name'   => 'crm_chatbot',
+            'module' => 'M008',
+            'roles'  => ['admin', 'Administrador'],
+        ],
+        [
             'name'   => 'invo_documento_anular',
             'module' => 'M002',
+            'roles'  => ['admin', 'Administrador'],
+        ],
+        [
+            'name'   => 'aca_school_alumno_apoderados_editar',
+            'module' => 'M007',
+            'roles'  => ['admin', 'Administrador'],
+        ],
+        [
+            // Pantalla Parametros Telegram del colegio: exclusiva del rol admin.
+            'name'   => 'aca_school_telegram_configuracion',
+            'module' => 'M007',
+            'roles'  => ['admin'],
+        ],
+        [
+            // Pantalla Errores (contexto completo de los fallos avisados por
+            // Telegram): verla y, solo para administración, borrarla.
+            'name'   => 'conf_errores',
+            'module' => 'M019',
+            'roles'  => ['admin', 'Administrador'],
+        ],
+        [
+            'name'   => 'conf_errores_eliminar',
+            'module' => 'M019',
             'roles'  => ['admin', 'Administrador'],
         ],
     ];

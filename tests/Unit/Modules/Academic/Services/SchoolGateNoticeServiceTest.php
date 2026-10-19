@@ -245,4 +245,46 @@ class SchoolGateNoticeServiceTest extends TestCase
         $this->assertStringContainsString('INGRESO', $text);
         $this->assertStringContainsString('I.E. San Martín', $text);
     }
+
+    public function test_el_intervalo_anti_spam_vale_2000_ms_por_defecto(): void
+    {
+        $this->enableSchoolNoticeChannel();
+
+        $this->assertSame(2000, $this->notices->intervalMs());
+        $this->assertSame(2000, $this->notices->settings()['interval_ms']);
+        $this->assertSame('SC-00032', $this->notices->parameterCodes()['interval_ms']);
+    }
+
+    public function test_el_intervalo_respeta_el_valor_guardado_y_sus_limites(): void
+    {
+        $this->enableSchoolNoticeChannel();
+
+        $this->setChannelParameter('SC-00032', '5000');
+        $this->assertSame(5000, $this->notices->intervalMs());
+
+        $this->setChannelParameter('SC-00032', '0');
+        $this->assertSame(0, $this->notices->intervalMs());
+
+        // Un valor mal cargado no bloquea la cola: se recorta a 0-60000.
+        $this->setChannelParameter('SC-00032', '999999');
+        $this->assertSame(60000, $this->notices->intervalMs());
+
+        $this->setChannelParameter('SC-00032', 'no-numérico');
+        $this->assertSame(2000, $this->notices->intervalMs());
+    }
+
+    public function test_el_aviso_se_encola_con_el_intervalo_configurado(): void
+    {
+        $this->enableSchoolNoticeChannel();
+        $this->setChannelParameter('SC-00032', '3000');
+
+        $ids = $this->createEnrolledStudent();
+        $this->addGuardian($ids['student_id'], 'Luis Pérez', '987654321', true);
+        $this->addGuardian($ids['student_id'], 'Rosa Díaz', '987111222');
+        $gate = $this->createGate($ids['student_id'], $ids['enrollment_id']);
+
+        $this->assertSame(2, $this->notices->notify($gate, SchoolGateNoticeService::EVENT_ENTRY));
+
+        Queue::assertPushed(SendSchoolGateNotice::class, 2);
+    }
 }

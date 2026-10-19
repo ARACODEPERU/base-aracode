@@ -39,6 +39,7 @@ use Modules\Academic\Http\Controllers\AcaSchoolEnrollmentController;
 use Modules\Academic\Http\Controllers\AcaSchoolFeeController;
 use Modules\Academic\Http\Controllers\AcaSchoolGateController;
 use Modules\Academic\Http\Controllers\AcaSmsParametersController;
+use Modules\Academic\Http\Controllers\AcaTelegramParametersController;
 use Modules\Academic\Http\Controllers\AcaSchoolScheduleController;
 use Modules\Academic\Http\Controllers\AcaSchoolStudentController;
 use Modules\Academic\Http\Controllers\AcaSchoolStructureController;
@@ -959,12 +960,18 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     // Apoderados de alumnos escolares
     Route::middleware(['middleware' => 'permission:aca_school_alumno_editar|aca_school_alumno_apoderados'])
         ->get('school/students/{studentId}/guardians', [AcaSchoolStudentController::class, 'listGuardians'])->name('aca_school_students_guardians_list');
-    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+    // Vincular y desvincular apoderados usa el mismo permiso que abre el panel
+    // (antes exigian aca_school_alumno_editar: ver el panel sin ese permiso hacia
+    // que el boton "Agregar apoderado" fallara al guardar).
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar|aca_school_alumno_apoderados'])
         ->post('school/students/{studentId}/guardians/store', [AcaSchoolStudentController::class, 'storeGuardian'])->name('aca_school_students_guardians_store');
     Route::middleware(['middleware' => 'permission:aca_school_alumno_editar|aca_school_alumno_apoderados'])
         ->put('school/students/guardians/{guardianId}/update', [AcaSchoolStudentController::class, 'updateGuardian'])->name('aca_school_students_guardians_update');
-    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar|aca_school_alumno_apoderados'])
         ->delete('school/students/guardians/{guardianId}/destroy', [AcaSchoolStudentController::class, 'destroyGuardian'])->name('aca_school_students_guardians_destroy');
+    // Editar los datos del apoderado (persona + vinculo) desde la ficha del alumno.
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_apoderados_editar'])
+        ->put('school/students/guardians/{guardianId}/person', [AcaSchoolStudentController::class, 'updateGuardianPerson'])->name('aca_school_students_guardians_person_update');
 
     // Matriculas escolares
     Route::middleware(['middleware' => 'permission:aca_school_matricula_listado'])
@@ -1032,6 +1039,27 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
             ->name('aca_school_sms_parameters_preview');
         Route::post('school/sms/test', [AcaSmsParametersController::class, 'test'])
             ->name('aca_school_sms_parameters_test');
+    });
+
+    /*
+     * Parametros / Telegram del colegio: canal de avisos de asistencia
+     * (entrada y salida) por bot de Telegram, con registro conversacional de
+     * apoderado y uno o mas hijos. Exclusivo del rol admin (permiso
+     * aca_school_telegram_configuracion).
+     */
+    Route::middleware(['middleware' => 'permission:aca_school_telegram_configuracion'])->group(function () {
+        Route::get('school/telegram', [AcaTelegramParametersController::class, 'index'])
+            ->name('aca_school_telegram_parameters');
+        Route::post('school/telegram/update', [AcaTelegramParametersController::class, 'update'])
+            ->name('aca_school_telegram_parameters_update');
+        Route::post('school/telegram/webhook', [AcaTelegramParametersController::class, 'webhook'])
+            ->name('aca_school_telegram_parameters_webhook');
+        Route::get('school/telegram/link', [AcaTelegramParametersController::class, 'link'])
+            ->name('aca_school_telegram_parameters_link');
+        Route::post('school/telegram/preview', [AcaTelegramParametersController::class, 'preview'])
+            ->name('aca_school_telegram_parameters_preview');
+        Route::post('school/telegram/test', [AcaTelegramParametersController::class, 'test'])
+            ->name('aca_school_telegram_parameters_test');
     });
 
     /*

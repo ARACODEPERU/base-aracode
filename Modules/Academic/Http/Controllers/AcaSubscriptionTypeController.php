@@ -63,6 +63,11 @@ class AcaSubscriptionTypeController extends Controller
             'status' => $request->get('status') ?? false,
             'period' => $request->get('period'),
             'order_number' => $request->get('order_number'),
+            'access_all_courses' => $request->boolean('access_all_courses'),
+            'access_specialization_programs' => $request->boolean('access_specialization_programs'),
+            'access_all_webinars' => $request->boolean('access_all_webinars'),
+            'can_view_specialization_zooms' => $request->boolean('can_view_specialization_zooms'),
+            'can_view_specialization_webinars' => $request->boolean('can_view_specialization_webinars'),
         ]);
 
         return redirect()->route('aca_subscriptions_list')
@@ -118,6 +123,11 @@ class AcaSubscriptionTypeController extends Controller
             'status' => $request->get('status') ?? false,
             'period' => $request->get('period'),
             'order_number' => $request->get('order_number'),
+            'access_all_courses' => $request->boolean('access_all_courses'),
+            'access_specialization_programs' => $request->boolean('access_specialization_programs'),
+            'access_all_webinars' => $request->boolean('access_all_webinars'),
+            'can_view_specialization_zooms' => $request->boolean('can_view_specialization_zooms'),
+            'can_view_specialization_webinars' => $request->boolean('can_view_specialization_webinars'),
         ]);
     }
 

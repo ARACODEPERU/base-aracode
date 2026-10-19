@@ -427,7 +427,7 @@ class AcaCertificateController extends Controller
         //     return $course->can_view;
         // });
         $studentSubscribed = AcaStudentSubscription::where('student_id', $student_id)
-            ->where('status', true)
+            ->activeNow()
             ->first();
         // dd($studentSubscribed);
         $courses = AcaCourse::with('registrations') // Para validar los cursos registrados

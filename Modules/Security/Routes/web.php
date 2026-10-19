@@ -3,6 +3,7 @@
 use App\Http\Controllers\PersonController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Modules\Security\Http\Controllers\ErrorLogController;
 use Modules\Security\Http\Controllers\PermissionController;
 use Modules\Security\Http\Controllers\RolesController;
 use Modules\Security\Http\Controllers\SecurityAlertController;
@@ -53,6 +54,28 @@ Route::middleware(['auth','user_activity_log'])->prefix('security')->group(funct
         Route::delete('recipients/{id}', [SecurityAlertController::class, 'destroyRecipient'])->name('security_alerts_recipients_destroy');
         Route::put('settings', [SecurityAlertController::class, 'updateSettings'])->name('security_alerts_settings_update');
         Route::post('test', [SecurityAlertController::class, 'sendTest'])->name('security_alerts_test');
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | Errores guardados (contexto completo)
+    |----------------------------------------------------------------------
+    | Es el destino del enlace que va en el aviso de Telegram: muestra el
+    | detalle del error (traza, contexto, petición) y permite limpiarlo. Ver
+    | exige conf_errores; borrar exige conf_errores_eliminar, que solo tienen
+    | los roles de administración. 'data' va antes de '{id}' para que no se
+    | confunda con un identificador.
+    */
+    Route::middleware('permission:conf_errores')->prefix('errors')->group(function () {
+        Route::get('/', [ErrorLogController::class, 'index'])->name('security_errors');
+        Route::get('data', [ErrorLogController::class, 'data'])->name('security_errors_data');
+        Route::get('{id}', [ErrorLogController::class, 'show'])->whereNumber('id')->name('security_errors_show');
+    });
+
+    Route::middleware('permission:conf_errores_eliminar')->prefix('errors')->group(function () {
+        Route::delete('/', [ErrorLogController::class, 'clear'])->name('security_errors_clear');
+        Route::post('purge', [ErrorLogController::class, 'prune'])->name('security_errors_purge');
+        Route::delete('{id}', [ErrorLogController::class, 'destroy'])->whereNumber('id')->name('security_errors_destroy');
     });
 
     /*

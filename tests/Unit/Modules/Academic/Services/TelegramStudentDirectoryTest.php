@@ -106,6 +106,19 @@ class TelegramStudentDirectoryTest extends TestCase
         $this->assertFalse($result['subscription']);
     }
 
+    public function test_una_suscripcion_vencida_no_basta_aunque_su_estado_siga_activo(): void
+    {
+        // El comando de vencimiento todavía no la apagó: las fechas mandan.
+        $studentId = $this->student('12345678', 'Luis');
+        $this->subscription($studentId, [
+            'status' => true,
+            'date_start' => now()->subMonths(3)->toDateString(),
+            'date_end' => now()->subMonth()->toDateString(),
+        ]);
+
+        $this->assertFalse($this->directory->resolveByDocument('12345678')['subscription']);
+    }
+
     public function test_el_estado_activo_de_la_suscripcion_tambien_basta(): void
     {
         $studentId = $this->student('12345678', 'Luis');

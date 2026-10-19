@@ -32,7 +32,7 @@ class TelegramStudentAccount implements TelegramAccountResolver
      *     person_id: int,
      *     name: string,
      *     courses: array<int, array{description: string, type: string|null, time_limit: string|null}>,
-     *     subscription: array{vip: bool, ends_at: string|null}|null,
+     *     subscription: array{includes_specialization_programs: bool, ends_at: string|null}|null,
      *     certificates: array<int, array{id: int, course: string, module: string|null}>,
      *     platform_url: string
      * }|null
@@ -191,23 +191,16 @@ class TelegramStudentAccount implements TelegramAccountResolver
     }
 
     /**
-     * Suscripcion activa o vigente por fechas, con la marca de Premium VIP.
+     * Suscripcion vigente hoy (ver AcaStudentSubscription::scopeActiveNow), con
+     * la marca de si incluye los Programas de Especializacion.
      *
-     * @return array{vip: bool, ends_at: string|null}|null
+     * @return array{includes_specialization_programs: bool, ends_at: string|null}|null
      */
     private function subscription(int $studentId): ?array
     {
-        $today = Carbon::today();
-
         $subscriptions = AcaStudentSubscription::query()
             ->where('student_id', $studentId)
-            ->where(function ($query) use ($today) {
-                $query->where('status', true)
-                    ->orWhere(function ($q) use ($today) {
-                        $q->whereDate('date_start', '<=', $today)
-                            ->whereDate('date_end', '>=', $today);
-                    });
-            })
+            ->activeNow()
             ->get(['subscription_id', 'date_end']);
 
         if ($subscriptions->isEmpty()) {
@@ -219,12 +212,12 @@ class TelegramStudentAccount implements TelegramAccountResolver
             ->unique()
             ->all();
 
-        // El plan Premium VIP es el unico que incluye los programas de
-        // especializacion: mismo criterio que el portal del alumno.
-        $vip = $subscriptionIds !== []
+        // El alcance sale del propio plan (no de su titulo): renombrar una
+        // suscripcion no cambia lo que incluye. Mismo criterio que el portal.
+        $includesSpecialization = $subscriptionIds !== []
             && AcaSubscriptionType::query()
                 ->whereIn('id', $subscriptionIds)
-                ->where('title', 'LIKE', '%Premium VIP%')
+                ->where('access_specialization_programs', true)
                 ->exists();
 
         $endsAt = $subscriptions->pluck('date_end')
@@ -234,7 +227,7 @@ class TelegramStudentAccount implements TelegramAccountResolver
             ->last();
 
         return [
-            'vip' => $vip,
+            'includes_specialization_programs' => $includesSpecialization,
             'ends_at' => $endsAt ?: null,
         ];
     }

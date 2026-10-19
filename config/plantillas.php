@@ -299,6 +299,84 @@ return [
             'actualizada' => '2026-10-12',
         ],
 
+        // Supermercado en línea: la segunda tienda del banco. Vive en el mismo
+        // formato (`tienda`) y la misma categoría (`comercio`) que Tienda en
+        // línea, pero con identidad, estructura y demostración propias: pasillos
+        // de supermercado, ofertas con precio anterior y canasta con simulación
+        // de pedido. La subcategoría «Supermercados y minimarkets» del encargo no
+        // existe en el catálogo y no se crea una nueva: el catálogo tiene una
+        // sola categoría de comercio y las etiquetas de esta plantilla son las
+        // que hacen que el buscador la encuentre por «supermercado» o
+        // «minimarket».
+        'supermercado-online-verdia' => [
+            'nombre' => 'Supermercado Online — VERDIA Market',
+            'categoria' => 'comercio',
+            'tipo' => 'tienda',
+            'etiquetas' => ['supermercado', 'minimarket', 'abarrotes', 'frutas y verduras', 'tienda de alimentos', 'ecommerce', 'canasta'],
+            'resumen' => 'Tienda de supermercado con buscador de productos, filtros por pasillo y por necesidad, ofertas del día, ficha de producto y canasta que simula el pedido.',
+            'incluye' => [
+                'Diseño «supermercado de barrio contemporáneo»: marfil de fondo, superficies blancas, verde bosque de la marca para la acción y naranja reservado a las ofertas',
+                'Aviso de demostración en la cabecera y en el pie: marca, productos, precios, promociones y contacto ficticios',
+                'Hero a pantalla completa con slider de tres fotos, tarjetas de sugerencia y controles con flechas y puntos',
+                'Modo claro y oscuro con interruptor, recordado entre las cuatro páginas de la tienda',
+                'Buscador de productos con sugerencias mientras se escribe, disponible en la cabecera de todas las páginas',
+                'Nueve pasillos (frutas y verduras, lácteos y huevos, carnes y pescados, panadería, abarrotes, bebidas, snacks, limpieza y cuidado personal)',
+                'Veintiún productos de demostración con presentación, precio de referencia y precio anterior cuando corresponde',
+                'Catálogo con filtros por pasillo y por necesidad, búsqueda por nombre, orden por precio o nombre y el filtro guardado en la URL',
+                'Secciones de productos populares, ofertas del día con etiqueta estática, lo más vendido con pestañas que cambian los productos y compra por necesidad',
+                'Ficha de producto con precio anterior, ahorro, datos de entrega y productos del mismo pasillo',
+                'Canasta guardada en el navegador con cantidades, subtotales, total y simulación de pedido que no cobra ni envía nada',
+                'Estados vacíos en el catálogo y en la canasta, boletín con validación de correo y bloque de confianza sin certificados inventados',
+            ],
+            'tecnologias' => ['HTML5', 'CSS3', 'JavaScript'],
+            'imagen' => 'themes/plantillas/images/supermercado-online-verdia.jpg',
+            'demo' => 'supermercado-online-verdia',
+            'destacada' => false,
+            'publicada' => true,
+            'actualizada' => '2026-10-13',
+        ],
+
+        // Tienda de escaparate amplio: la tercera del formato `tienda` y la
+        // segunda de la categoría `comercio`. Comparte formato con Tienda en
+        // línea y Supermercado VERDIA, pero ni la identidad ni la arquitectura:
+        // cabecera azul noche a sangre, mega panel de categorías con sus
+        // colecciones, tarjetas de producto con valoración y precio anterior,
+        // marcas ficticias, opiniones de ejemplo, guías de compra con su propia
+        // página y canasta lateral en las cinco páginas con pedido simulado.
+        // La subcategoría «Tiendas online y comercio electrónico» del encargo no
+        // existe en el catálogo y no se crea una nueva: dentro de `comercio`, las
+        // etiquetas son las que hacen que el buscador la encuentre por
+        // «marketplace», «carrito» o «favoritos».
+        'nexora-market' => [
+            'nombre' => 'NÉXORA MARKET',
+            'categoria' => 'comercio',
+            'tipo' => 'tienda',
+            'etiquetas' => ['tienda', 'ecommerce', 'marketplace', 'catálogo', 'carrito', 'canasta', 'productos', 'favoritos', 'mega menú'],
+            'resumen' => 'Tienda de escaparate amplio: buscador con sugerencias, mega panel de seis categorías, catálogo con filtros, ficha de producto, favoritos y canasta que simula el pedido.',
+            'incluye' => [
+                'Diseño «escaparate de gran almacén»: azul noche estructural en cabecera, franjas y pie, papel blanco para el producto y un solo naranja de acción, con rejilla ancha y filetes finos en vez de sombras altas',
+                'Aviso de demostración en la cabecera y en el pie: marca, productos, precios, promociones, opiniones y datos de contacto ficticios',
+                'Hero a pantalla completa con slider de tres fotos, garantías y tarjeta de oferta de la semana',
+                'Modo claro y oscuro con interruptor, recordado entre las cinco páginas',
+                'Cabecera con buscador de productos con sugerencias mientras se escribe, favoritos y canasta con contador de unidades',
+                'Mega panel de categorías con las seis categorías y sus colecciones, más dos ofertas destacadas',
+                'Seis categorías y veintisiete productos de demostración, con precio de referencia y precio anterior cuando corresponde',
+                'Catálogo con filtros por categoría, colección, solo ofertas, solo favoritos y precio máximo, búsqueda por texto, cuatro órdenes y el filtro guardado en la URL',
+                'Ficha de producto con precio anterior, ahorro, disponibilidad, plazo de entrega, tabla de especificaciones y hasta cuatro relacionados de la misma categoría',
+                'Canasta lateral en las cinco páginas, con cantidades, subtotal y total, más página de canasta con entrega de ejemplo y pedido simulado',
+                'Canasta y favoritos guardados en el navegador, con la cantidad y el estado visible en toda la tienda',
+                'Seis marcas ficticias, dos bloques editoriales, tres opiniones de ejemplo y una página de guías de compra con tres artículos',
+                'Boletín con validación de correo, ubicación con plano propio, enlace a Google Maps y botón flotante de WhatsApp',
+                'Sin pasarela de pago, sin pedidos reales, sin datos personales y sin peticiones a terceros: todo el JavaScript vive en un solo archivo',
+            ],
+            'tecnologias' => ['HTML5', 'CSS3', 'JavaScript'],
+            'imagen' => 'themes/plantillas/images/nexora-market.jpg',
+            'demo' => 'nexora-market',
+            'destacada' => false,
+            'publicada' => true,
+            'actualizada' => '2026-10-14',
+        ],
+
     ],
 
 ];

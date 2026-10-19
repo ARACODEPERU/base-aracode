@@ -3,6 +3,7 @@
 namespace Modules\Integrationhub\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\TelegramWebhookGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -70,6 +71,20 @@ class TelegramWebhookController extends Controller
         }
 
         $update = $request->all();
+
+        // Freno anti-abuso: deduplica los reintentos de Telegram y descarta el
+        // exceso de mensajes de un mismo chat o del bot completo. Se responde
+        // 200 para que Telegram no reintente lo descartado.
+        $guard = new TelegramWebhookGuard(
+            'integrationhub',
+            (int) config('integrationhub.telegram.webhook_per_chat_per_minute', 20),
+            (int) config('integrationhub.telegram.webhook_global_per_minute', 600)
+        );
+
+        if (! $guard->allows($update, $this->chatId($update))) {
+            return response()->json(['ok' => true]);
+        }
+
         $message = $update['message'] ?? $update['edited_message'] ?? null;
 
         // Updates que no son mensajes (adjuntos, callbacks, etc.).
@@ -102,6 +117,23 @@ class TelegramWebhookController extends Controller
         }
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * chat_id del update, venga como mensaje o como pulsación de un botón.
+     *
+     * Se usa para aplicar el límite por chat antes de procesar nada.
+     *
+     * @param array<string, mixed> $update
+     */
+    private function chatId(array $update): string
+    {
+        $message = $update['callback_query']['message']
+            ?? $update['message']
+            ?? $update['edited_message']
+            ?? null;
+
+        return is_array($message) ? trim((string) ($message['chat']['id'] ?? '')) : '';
     }
 
     /**
@@ -424,13 +456,14 @@ class TelegramWebhookController extends Controller
     }
 
     /**
-     * Nota de suscripcion: el texto cambia segun sea Premium VIP o no.
+     * Nota de suscripcion: el texto cambia segun si el plan incluye los
+     * Programas de Especializacion (nunca por el nombre del plan).
      *
-     * @param array{vip?: bool, ends_at?: string|null} $subscription
+     * @param array{includes_specialization_programs?: bool, ends_at?: string|null} $subscription
      */
     private function subscriptionNote(TelegramMessageService $messages, array $subscription): string
     {
-        $code = ! empty($subscription['vip'])
+        $code = ! empty($subscription['includes_specialization_programs'])
             ? TelegramMessages::COURSES_SUBSCRIPTION_VIP
             : TelegramMessages::COURSES_SUBSCRIPTION;
 

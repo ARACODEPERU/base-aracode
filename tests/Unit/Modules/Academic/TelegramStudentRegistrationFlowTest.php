@@ -97,13 +97,16 @@ class TelegramStudentRegistrationFlowTest extends TestCase
         $this->assertStringContainsString('no tiene un programa activo', $hub->calls[1]['values']['text']);
     }
 
+    /** Contador de updates: Telegram siempre entrega un update_id distinto. */
+    private int $lastUpdateId = 0;
+
     /**
      * @return array<string, mixed>
      */
     private function message(string $text): array
     {
         return [
-            'update_id' => 1,
+            'update_id' => ++$this->lastUpdateId,
             'message' => [
                 'message_id' => 5,
                 'chat' => ['id' => '555', 'type' => 'private'],

@@ -22,6 +22,8 @@ trait BuildsSchoolNoticeSchema
 {
     private const SCHOOL_NOTICE_TABLES = [
         'aca_school_notice_deliveries',
+        'aca_school_telegram_sessions',
+        'aca_school_telegram_subscriptions',
         'aca_school_gate_attendances',
         'aca_school_student_guardians',
         'aca_school_enrollments',
@@ -132,6 +134,9 @@ trait BuildsSchoolNoticeSchema
         // La migración real, no una copia: si cambia la tabla, la prueba lo nota.
         $migration = require base_path('Modules/Academic/Database/Migrations/2026_10_12_000002_create_aca_school_notice_deliveries_table.php');
         $migration->up();
+
+        $telegramTablesMigration = require base_path('Modules/Academic/Database/Migrations/2026_10_18_000002_create_aca_school_telegram_tables.php');
+        $telegramTablesMigration->up();
     }
 
     private function dropSchoolNoticeSchema(): void
@@ -163,6 +168,7 @@ trait BuildsSchoolNoticeSchema
         $this->setChannelParameter('SC-00027', '1');
         $this->setChannelParameter('SC-00030', '0');
         $this->setChannelParameter('SC-00031', '0');
+        $this->setChannelParameter('SC-00032', '2000');
     }
 
     /** Persona con su nombre y su teléfono. Devuelve el id de la persona. */

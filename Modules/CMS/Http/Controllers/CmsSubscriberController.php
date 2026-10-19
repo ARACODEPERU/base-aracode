@@ -185,6 +185,9 @@ class CmsSubscriberController extends Controller
                 'email' => 'required|max:255',
                 'phone' => 'required|max:255',
                 'message' => 'required',
+                // Consentimiento del titular: sin aceptar la politica de privacidad
+                // el mensaje no se guarda.
+                'acepto' => ['required', 'accepted'],
             ],
             [
                 'full_name.required' => 'El nombre completo es requerido',
@@ -194,6 +197,8 @@ class CmsSubscriberController extends Controller
                 'full_name.max' => 'La cantidad maxima es de 255 caracteres',
                 'email.max' => 'La cantidad maxima es de 255 caracteres',
                 'phone.max' => 'La cantidad maxima es de 255 caracteres',
+                'acepto.required' => 'Debe aceptar la Política de Privacidad para enviar sus datos.',
+                'acepto.accepted' => 'Debe aceptar la Política de Privacidad para enviar sus datos.',
             ]
         );
 

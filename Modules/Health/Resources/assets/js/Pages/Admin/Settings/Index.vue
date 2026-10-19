@@ -10,7 +10,34 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    // Opciones de facturación de los cobros y catálogos SUNAT para elegirlas.
+    billingOptions: {
+        type: Object,
+        default: () => ({}),
+    },
+    affectations: {
+        type: Array,
+        default: () => [],
+    },
+    unitTypes: {
+        type: Array,
+        default: () => [],
+    },
 });
+
+// Si el catálogo SUNAT no estuviera disponible se ofrecen las tres afectaciones
+// estándar, para que la pantalla siga siendo usable.
+const affectationsList = computed(() => (props.affectations.length
+    ? props.affectations
+    : [
+        { id: '10', description: 'Gravado - Operación Onerosa' },
+        { id: '20', description: 'Exonerado - Operación Onerosa' },
+        { id: '30', description: 'Inafecto - Operación Onerosa' },
+    ]));
+
+const unitTypesList = computed(() => (props.unitTypes.length
+    ? props.unitTypes
+    : [{ id: 'ZZ', symbol: null, description: 'Servicio' }]));
 
 const page = usePage();
 const extra = computed(() => props.settings?.settings || {});
@@ -38,6 +65,12 @@ const form = useForm({
     ruc: extra.value?.ruc || '',
     print_footer: extra.value?.print_footer || '',
     recipe_template: extra.value?.recipe_template || '',
+    // Cobros y comprobantes (grupo `billing` de heal_settings.settings).
+    igv_affectation: props.billingOptions?.igv_affectation || '10',
+    unit_type: props.billingOptions?.unit_type || 'ZZ',
+    billing_description: props.billingOptions?.billing_description || '',
+    consultation_recobro_months: props.billingOptions?.consultation_recobro_months ?? 2,
+    allow_cancel_with_document: Boolean(props.billingOptions?.allow_cancel_with_document),
 });
 
 const addTimeRange = () => {
@@ -431,6 +464,65 @@ refreshTestDataSummary();
                                     <textarea v-model="form.recipe_template" rows="3" class="form-textarea" placeholder="Texto que aparecerá por defecto en las recetas..."></textarea>
                                     <p class="mt-1 text-xs text-white-dark">Texto predefinido para recetas médicas. Se puede editar al generar.</p>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Cobros y comprobantes -->
+                        <div class="panel">
+                            <div class="mb-4">
+                                <div class="font-semibold">Cobros y comprobantes</div>
+                                <p class="text-xs text-white-dark">
+                                    Cómo se convierten los cobros de Procedimientos/cobros en el documento de venta.
+                                </p>
+                            </div>
+                            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div>
+                                    <label class="mb-1 block text-sm font-semibold">Afectación del IGV de los cobros</label>
+                                    <select v-model="form.igv_affectation" class="form-select">
+                                        <option v-for="affectation in affectationsList" :key="affectation.id" :value="String(affectation.id)">
+                                            {{ affectation.id }} - {{ affectation.description }}
+                                        </option>
+                                    </select>
+                                    <p class="mt-1 text-xs text-white-dark">
+                                        Los servicios médicos y odontológicos suelen ir exonerados (20).
+                                        Con gravado (10) cada boleta o factura suma 18% de IGV.
+                                    </p>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-sm font-semibold">Unidad de medida SUNAT del cobro</label>
+                                    <select v-model="form.unit_type" class="form-select">
+                                        <option v-for="unit in unitTypesList" :key="unit.id" :value="unit.id">
+                                            {{ unit.id }} - {{ unit.description }}
+                                        </option>
+                                    </select>
+                                    <p class="mt-1 text-xs text-white-dark">
+                                        ZZ (servicio) es lo habitual para consultas y tratamientos.
+                                    </p>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-sm font-semibold">Meses para volver a sugerir la consulta</label>
+                                    <input v-model="form.consultation_recobro_months" type="number" min="1" max="60" class="form-input" />
+                                    <p class="mt-1 text-xs text-white-dark">
+                                        Si el paciente no viene desde hace más de estos meses, se sugiere cobrar consulta otra vez.
+                                    </p>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-sm font-semibold">Texto del documento de venta</label>
+                                    <input v-model="form.billing_description" type="text" class="form-input" placeholder="Cobros generados desde Salud. Revisar antes de emitir." />
+                                    <p class="mt-1 text-xs text-white-dark">
+                                        Acompaña al comprobante que se arma desde Procedimientos/cobros.
+                                    </p>
+                                </div>
+                                <label class="flex items-start gap-2 md:col-span-2">
+                                    <input v-model="form.allow_cancel_with_document" type="checkbox" class="form-checkbox mt-1" />
+                                    <span class="text-sm">
+                                        Permitir anular un cobro que ya generó un comprobante vigente
+                                        <span class="block text-xs text-white-dark">
+                                            No se recomienda: la venta y la tesorería quedan descuadradas.
+                                            Lo normal es anular o acreditar primero el documento en Sales.
+                                        </span>
+                                    </span>
+                                </label>
                             </div>
                         </div>
 

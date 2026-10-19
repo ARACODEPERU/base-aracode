@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -25,6 +25,41 @@ import { canalesRgb } from '../../resources/js/utils/colorMarca.js';
 
 const raiz = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const leer = (rutaRelativa) => readFileSync(path.join(raiz, rutaRelativa), 'utf8');
+
+/** Tarjetas del panel y módulos que rematan su cabecera con una franja de color. */
+const TARJETAS_CON_FRANJA = [
+    'resources/js/Pages/Person/Partials/BirthDays.vue',
+    'Modules/Academic/Resources/assets/js/Components/CoursesTotalStudents.vue',
+    'Modules/Academic/Resources/assets/js/Components/NumberSubscriptionsExpire.vue',
+    'Modules/Academic/Resources/assets/js/Components/StudentsEnrolledMonth.vue',
+    'Modules/Onlineshop/Resources/assets/js/Components/TotalSales.vue',
+    'Modules/Sales/Resources/assets/js/Components/SalesSummary.vue',
+    'Modules/Security/Resources/assets/js/Pages/Dashboard/OnlineUsersCard.vue',
+    'Modules/Security/Resources/assets/js/Pages/Dashboard/StorageIndicator.vue',
+    'Modules/Socialevents/Resources/assets/js/Pages/Teams/List.vue',
+];
+
+/** Todos los .vue del proyecto, saltando lo que no es código de la aplicación. */
+function archivosVue(directorio) {
+    const omitidos = ['node_modules', 'vendor', 'public', 'storage', '.git', 'build', 'dist'];
+    const encontrados = [];
+
+    for (const entrada of readdirSync(directorio, { withFileTypes: true })) {
+        if (omitidos.includes(entrada.name)) {
+            continue;
+        }
+
+        const ruta = path.join(directorio, entrada.name);
+
+        if (entrada.isDirectory()) {
+            encontrados.push(...archivosVue(ruta));
+        } else if (entrada.name.endsWith('.vue')) {
+            encontrados.push(ruta);
+        }
+    }
+
+    return encontrados;
+}
 
 const config = leer('tailwind.config.js');
 const appCss = leer('resources/css/app.css');
@@ -107,6 +142,57 @@ test('la ruta y el controlador guardan los colores en la empresa', () => {
 test('el layout aplica la marca guardada a todo el ERP', () => {
     assert.match(layout, /variablesDeMarca/, 'El layout dejó de convertir los colores guardados en variables CSS.');
     assert.match(layout, /:style="marcaEstilo"/, 'El layout dejó de inyectar las variables en el contenedor principal.');
+});
+
+test('el layout publica la marca en el documento para los portales', () => {
+    // Los tooltips, modales y desplegables de ant-design-vue se montan fuera del
+    // contenedor de la página: sin las variables en `:root` quedarían con colores
+    // fijos y el globito del menú, por ejemplo, no tomaría el color secundario.
+    assert.match(
+        layout,
+        /const VARIABLES_DE_MARCA = \[[\s\S]*?'--brand-secondary',[\s\S]*?\];/,
+        'El layout dejó de publicar la lista de variables de marca en el documento.'
+    );
+    assert.match(layout, /document\.documentElement/, 'El layout dejó de apuntar al documento para publicar la marca.');
+    assert.match(
+        layout,
+        /\.style\.setProperty\(nombre, variables\[nombre\]\)/,
+        'El layout dejó de escribir las variables de marca en :root.'
+    );
+    assert.match(
+        layout,
+        /\.style\.removeProperty\(nombre\)/,
+        'El layout dejó de limpiar la marca al salir: otro layout heredaría los colores de la empresa anterior.'
+    );
+});
+
+test('las franjas de las tarjetas del panel usan el color primario de la marca', () => {
+    for (const ruta of TARJETAS_CON_FRANJA) {
+        const codigo = leer(ruta);
+
+        assert.match(
+            codigo,
+            /border-t-4 border-t-primary/,
+            `${ruta} dejó de pintar su franja superior con el color primario.`
+        );
+    }
+});
+
+test('ningún componente vuelve a una franja superior de azul fijo', () => {
+    const conFranja = archivosVue(raiz).filter((ruta) => /border-t-4/.test(readFileSync(ruta, 'utf8')));
+
+    assert.ok(conFranja.length >= TARJETAS_CON_FRANJA.length, 'El barrido de componentes con franja superior dejó de encontrar archivos.');
+
+    for (const ruta of conFranja) {
+        const codigo = readFileSync(ruta, 'utf8');
+        const relativa = path.relative(raiz, ruta).replace(/\\/g, '/');
+
+        assert.doesNotMatch(
+            codigo,
+            /border-t-blue|border-t-sky|border-t-indigo/,
+            `${relativa} volvió a un azul fijo en su franja superior: debe usar el color primario de la marca.`
+        );
+    }
 });
 
 test('los colores de fábrica de la vista coinciden con app.css', () => {

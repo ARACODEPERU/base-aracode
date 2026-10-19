@@ -196,6 +196,20 @@
                                             </div>
                                         </div>
                                         </div>
+                                        {{-- Consentimiento del titular: se pide aqui, antes de que
+                                             salga cualquier dato personal (el telefono alimenta la
+                                             recuperacion de carritos y los datos de facturacion se
+                                             envian al finalizar). El servidor tambien lo valida. --}}
+                                        <div class="flex items-start gap-3 mb-3">
+                                            <input type="checkbox" id="acepto" name="acepto" value="1" required class="mt-1">
+                                            <label for="acepto" class="text-sm text-ara-slate-500">
+                                                He leído y acepto los
+                                                <a href="{{ route('terminos_condiciones') }}" target="_blank" rel="noopener" class="text-ara-blue hover:underline">Términos y Condiciones</a>
+                                                y la
+                                                <a href="{{ route('politica_privacidad') }}" target="_blank" rel="noopener" class="text-ara-blue hover:underline">Política de Privacidad</a>,
+                                                y autorizo el tratamiento de mis datos para completar esta compra. *
+                                            </label>
+                                        </div>
                                         <div id="cardPaymentBrick_container"></div>
                                         <div class="secure-payment-note">
                                             <span class="secure-payment-icon" aria-hidden="true">
@@ -3856,6 +3870,13 @@
                 return;
             }
 
+            // El corte va aqui y no solo en el servidor: sin la aceptacion no salen
+            // del navegador los datos de la cuenta ni los del comprobante.
+            if (! cartConsentGiven()) {
+                showAlert('Debes aceptar los Términos y Condiciones y la Política de Privacidad para finalizar la compra.');
+                return;
+            }
+
             setBusy("btn-finalize", true);
             const accountMode = document.getElementById("account_mode").value;
             const payload = {
@@ -3874,6 +3895,9 @@
                 invoice_ruc: value("invoice_ruc"),
                 invoice_business_name: value("invoice_business_name"),
                 invoice_address: value("invoice_address"),
+                // Aceptacion de terminos y politica: el servidor la exige para
+                // registrar la cuenta y los datos de facturacion.
+                acepto: document.getElementById('acepto')?.checked ? 1 : 0,
                 ...JSON.parse(localStorage.getItem('traffic_tracking') || '{}')
             };
 
@@ -4330,7 +4354,18 @@
 
         let abandonedTimer = null;
 
+        // La casilla de consentimiento vive en el paso de pago: mientras no este
+        // marcada, el navegador no manda a recuperacion de carritos el telefono,
+        // el nombre ni el correo.
+        function cartConsentGiven() {
+            return document.getElementById('acepto')?.checked === true;
+        }
+
         function trackAbandonedCart() {
+            if (! cartConsentGiven()) {
+                return;
+            }
+
             const phoneState = getPaymentPhoneState();
 
             if (!phoneState.isComplete) {
@@ -4374,6 +4409,9 @@
             });
             document.getElementById('create_names')?.addEventListener('input', scheduleAbandonedTracking);
             document.getElementById('create_email')?.addEventListener('input', scheduleAbandonedTracking);
+            // Al marcar la casilla se reintenta el envio: el consentimiento pudo
+            // llegar despues de que el visitante escribiera sus datos.
+            document.getElementById('acepto')?.addEventListener('change', scheduleAbandonedTracking);
         });
 
         // ==================== PASSWORD RECOVERY ====================

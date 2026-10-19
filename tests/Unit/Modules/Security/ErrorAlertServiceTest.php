@@ -2,12 +2,18 @@
 
 namespace Tests\Unit\Modules\Security;
 
+use Exception;
+use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Log\Events\MessageLogged;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Mockery;
 use Modules\Integrationhub\Services\TelegramBotService;
+use Modules\Security\Services\ErrorLogService;
 use Modules\Security\Entities\SecurityAlertRecipient;
 use Modules\Security\Entities\SecurityAlertSetting;
+use Modules\Security\Entities\SecurityErrorLog;
 use Modules\Security\Jobs\SendSecurityErrorAlert;
 use Modules\Security\Services\ErrorAlertService;
 use RuntimeException;
@@ -28,6 +34,10 @@ class ErrorAlertServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // La ventana de anti-duplicados vive en caché (driver array): sin
+        // limpiarla, una huella de otra prueba silenciaría la alerta.
+        Cache::flush();
 
         $this->dropSecurityAlertSchema();
         $this->createSecurityAlertSchema();
@@ -63,6 +73,32 @@ class ErrorAlertServiceTest extends TestCase
         app(ErrorAlertService::class)->handle(new MessageLogged('error', 'Fallo', []));
 
         Queue::assertNothingPushed();
+    }
+
+    public function test_no_encola_si_los_avisos_de_errores_estan_apagados(): void
+    {
+        Queue::fake();
+
+        SecurityAlertSetting::current()->update(['errors_enabled' => false]);
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        app(ErrorAlertService::class)->handle(new MessageLogged('error', 'Fallo', []));
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_apagar_los_contactos_no_silencia_las_alertas_de_error(): void
+    {
+        Queue::fake();
+
+        SecurityAlertSetting::current()->update(['contacts_enabled' => false]);
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        app(ErrorAlertService::class)->handle(
+            new MessageLogged('error', 'Fallo grave', ['exception' => new RuntimeException('Fallo grave')])
+        );
+
+        Queue::assertPushed(SendSecurityErrorAlert::class, 1);
     }
 
     public function test_no_encola_si_no_hay_destinatarios_activos(): void
@@ -156,6 +192,214 @@ class ErrorAlertServiceTest extends TestCase
         $this->assertSame(0, $result['failed']);
         $this->assertCount(1, $result['results']);
         $this->assertTrue($result['results'][0]['ok']);
+    }
+
+    public function test_guarda_el_contexto_del_error_y_avisa_con_el_enlace(): void
+    {
+        Queue::fake();
+
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        app(ErrorAlertService::class)->handle(new MessageLogged('error', 'Fallo al matricular', [
+            'exception' => new RuntimeException('Fallo al matricular'),
+        ]));
+
+        $log = SecurityErrorLog::query()->first();
+
+        $this->assertNotNull($log, 'El error no se guardó con su contexto.');
+        $this->assertSame('ERROR', $log->level);
+        $this->assertSame('RuntimeException', $log->exception_class);
+        $this->assertNotSame('', (string) $log->trace);
+
+        Queue::assertPushed(SendSecurityErrorAlert::class, function (SendSecurityErrorAlert $job) use ($log) {
+            return str_contains($job->text, '/security/errors/' . $log->id)
+                && str_contains($job->text, 'Nivel:')
+                && str_contains($job->text, 'RuntimeException');
+        });
+    }
+
+    public function test_la_repeticion_suma_en_el_mismo_error_sin_volver_a_avisar(): void
+    {
+        Queue::fake();
+
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        $service = app(ErrorAlertService::class);
+        $event = new MessageLogged('error', 'Error que se repite', [
+            'exception' => new RuntimeException('Error que se repite'),
+        ]);
+
+        $service->handle($event);
+        $service->handle($event);
+
+        Queue::assertPushed(SendSecurityErrorAlert::class, 1);
+        $this->assertSame(1, SecurityErrorLog::query()->count());
+        $this->assertSame(2, (int) SecurityErrorLog::query()->first()->occurrences);
+    }
+
+    public function test_la_repeticion_despues_de_la_ventana_avisa_de_nuevo_pero_no_duplica_la_fila(): void
+    {
+        Queue::fake();
+
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        $service = app(ErrorAlertService::class);
+        $event = new MessageLogged('error', 'Fallo persistente del planificador', [
+            'exception' => new RuntimeException('Fallo persistente del planificador'),
+        ]);
+
+        $service->handle($event);
+
+        // Pasa la ventana de anti-duplicados: el admin quiere saber que el
+        // error sigue vivo, pero el contexto no se vuelve a guardar.
+        $this->travel(10)->minutes();
+        $service->handle($event);
+
+        Queue::assertPushed(SendSecurityErrorAlert::class, 2);
+        $this->assertSame(1, SecurityErrorLog::query()->count());
+
+        $log = SecurityErrorLog::query()->first();
+        $this->assertSame(2, (int) $log->occurrences);
+
+        // El segundo aviso apunta al MISMO contexto y dice que ya van 2.
+        $textos = collect(Queue::pushed(SendSecurityErrorAlert::class))->map(fn ($job) => $job->text);
+        $this->assertStringContainsString('/security/errors/' . $log->id, $textos->last());
+        $this->assertStringContainsString('2', $textos->last());
+    }
+
+    public function test_el_fallo_de_un_comando_programado_se_avisa_una_sola_vez(): void
+    {
+        Queue::fake();
+
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        $service = app(ErrorAlertService::class);
+
+        // 1) El comando explica el motivo real (es el aviso útil).
+        $service->handle(new MessageLogged('error', 'health:sync-google-calendar: la sincronizacion fallo: invalid_grant', [
+            ErrorAlertService::SCHEDULED_COMMAND_MARKER => 'health:sync-google-calendar',
+            'exception' => new RuntimeException('invalid_grant'),
+        ]));
+
+        // 2) El planificador agrega su linea generica, que no dice nada del motivo.
+        $service->handle(new MessageLogged(
+            'error',
+            "Scheduled command ['/usr/bin/php8.3' 'artisan' health:sync-google-calendar] failed with exit code [1].",
+            ['exception' => new Exception('Scheduled command [...] failed with exit code [1].')]
+        ));
+
+        Queue::assertPushed(SendSecurityErrorAlert::class, 1);
+        $this->assertSame(1, SecurityErrorLog::query()->count());
+    }
+
+    public function test_la_linea_del_planificador_si_avisa_cuando_nadie_explico_el_fallo(): void
+    {
+        Queue::fake();
+
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        app(ErrorAlertService::class)->handle(new MessageLogged(
+            'error',
+            "Scheduled command ['/usr/bin/php8.3' 'artisan' sales:daily-tasks] failed with exit code [1].",
+            ['exception' => new Exception('Scheduled command [...] failed with exit code [1].')]
+        ));
+
+        Queue::assertPushed(SendSecurityErrorAlert::class, 1);
+    }
+
+    public function test_el_contexto_guardado_oculta_los_datos_sensibles(): void
+    {
+        $payload = app(ErrorAlertService::class)->buildPayload(new MessageLogged('error', 'Fallo con secreto', [
+            'exception' => new RuntimeException('Fallo con secreto'),
+            'password' => 'secreta123',
+            'datos' => ['access_token' => 'token-abc-123', 'alumno' => 'Ana'],
+        ]));
+
+        $this->assertStringNotContainsString('secreta123', $payload['context']);
+        $this->assertStringNotContainsString('token-abc-123', $payload['context']);
+        $this->assertStringContainsString('oculto', $payload['context']);
+        $this->assertStringContainsString('Ana', $payload['context']);
+
+        // La excepción se guarda aparte (clase, archivo, línea y traza).
+        $this->assertSame('RuntimeException', $payload['class']);
+        $this->assertNotSame('', $payload['trace_full']);
+    }
+
+    public function test_el_mensaje_incluye_la_traza_resumida(): void
+    {
+        config(['security.alerts.trace_lines' => 4]);
+
+        $service = app(ErrorAlertService::class);
+        $payload = $service->buildPayload(new MessageLogged('error', 'Error con traza', [
+            'exception' => new RuntimeException('Error con traza'),
+        ]));
+
+        $message = $service->renderMessage($payload);
+
+        $this->assertStringContainsString('Traza:', $message);
+        $this->assertStringNotContainsString('{', $message);
+    }
+
+    public function test_sin_guardado_de_contexto_el_aviso_sale_sin_enlace(): void
+    {
+        Queue::fake();
+
+        SecurityAlertSetting::current()->update(['store_context' => false]);
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        app(ErrorAlertService::class)->handle(new MessageLogged('error', 'Fallo sin contexto', [
+            'exception' => new RuntimeException('Fallo sin contexto'),
+        ]));
+
+        $this->assertSame(0, SecurityErrorLog::query()->count());
+
+        Queue::assertPushed(SendSecurityErrorAlert::class, function (SendSecurityErrorAlert $job) {
+            return ! str_contains($job->text, '/security/errors/');
+        });
+    }
+
+    public function test_un_fallo_al_encolar_la_alerta_solo_queda_en_el_log(): void
+    {
+        Log::spy();
+
+        // El peor escenario del canal de avisos: la cola no está disponible.
+        // Ni así el aviso puede detener al sistema que venía fallando, ni
+        // generar una alerta por el fallo de la alerta.
+        $dispatcher = Mockery::mock(Dispatcher::class);
+        $dispatcher->shouldReceive('dispatch')->andThrow(new RuntimeException('la cola no está disponible'));
+        $this->app->instance(Dispatcher::class, $dispatcher);
+
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        app(ErrorAlertService::class)->handle(new MessageLogged('error', 'Fallo grave', [
+            'exception' => new RuntimeException('Fallo grave'),
+        ]));
+
+        Log::shouldHaveReceived('warning')
+            ->withArgs(fn ($message, $context = []) => $message === 'No se pudo encolar la alerta de error'
+                && ($context[ErrorAlertService::CONTEXT_MARKER] ?? false) === true)
+            ->once();
+    }
+
+    public function test_un_fallo_al_preparar_la_alerta_no_detiene_y_queda_en_el_log(): void
+    {
+        Log::spy();
+
+        // Guardar el contexto revienta (base de datos caída). El aviso no sale,
+        // pero tampoco se propaga ni se deja sin rastro en el log.
+        $errorLogs = Mockery::mock(ErrorLogService::class);
+        $errorLogs->shouldReceive('record')->andThrow(new RuntimeException('base de datos caída'));
+
+        $service = new ErrorAlertService($errorLogs);
+
+        SecurityAlertRecipient::create(['chat_id' => '123', 'is_active' => true]);
+
+        $service->handle(new MessageLogged('error', 'Fallo con contexto roto', []));
+
+        Log::shouldHaveReceived('warning')
+            ->withArgs(fn ($message, $context = []) => $message === 'La alerta de error no se pudo preparar'
+                && ($context[ErrorAlertService::CONTEXT_MARKER] ?? false) === true)
+            ->once();
     }
 
     public function test_el_envio_de_prueba_reporta_los_fallos_por_destinatario(): void

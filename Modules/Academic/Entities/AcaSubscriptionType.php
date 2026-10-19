@@ -21,11 +21,21 @@ class AcaSubscriptionType extends Model
         'prices',
         'status',
         'period',
-        'order_number'
+        'order_number',
+        'access_all_courses',
+        'access_specialization_programs',
+        'access_all_webinars',
+        'can_view_specialization_zooms',
+        'can_view_specialization_webinars'
     ];
 
     protected $casts = [
         'details' => 'array',
         'prices' => 'array',
+        'access_all_courses' => 'boolean',
+        'access_specialization_programs' => 'boolean',
+        'access_all_webinars' => 'boolean',
+        'can_view_specialization_zooms' => 'boolean',
+        'can_view_specialization_webinars' => 'boolean',
     ];
 }

@@ -122,7 +122,7 @@
                     <div class="flex items-start gap-3">
                         <input type="checkbox" name="terms" required class="mt-1" id="terms">
                         <label for="terms" class="text-sm text-ara-slate-500">
-                            He leído y acepto la <a href="#" class="text-ara-blue hover:underline">Política de Privacidad</a> y los <a href="#" class="text-ara-blue hover:underline">Términos y Condiciones</a>.
+                            He leído y acepto la <a href="{{ route('politica_privacidad') }}" target="_blank" rel="noopener" class="text-ara-blue hover:underline">Política de Privacidad</a> y los <a href="{{ route('terminos_condiciones') }}" target="_blank" rel="noopener" class="text-ara-blue hover:underline">Términos y Condiciones</a>.
                         </label>
                     </div>
 

@@ -4,6 +4,9 @@
     import { usePage } from '@inertiajs/vue3';
     import { onMounted, nextTick, ref, onUnmounted } from 'vue';
     import { useAppStore } from '@/stores/index';
+    import Swal from 'sweetalert2';
+    import IconPencil from '@/Components/vristo/icon/icon-pencil.vue';
+    import { useMessageEdition } from '../../useMessageEdition';
     const store = useAppStore();
 
     const company = usePage().props.company;
@@ -40,10 +43,30 @@
         });
 
         window.socketIo.on(channelListenChat, (result) => {
-            let participants = result.data.participants;
-            let tempConversationId = result.data.message.conversation_id;
+            const mensajeEco = result.data.message ?? {};
+            const accion = result.data.action ?? mensajeEco.action ?? 'created';
+            const participants = result.data.participants ?? [];
+            const participa = participants.some((item) => user.id == item);
 
-            const newmsg = result.data.message;
+            // Una edición actualiza el contenido ya pintado en vez de agregar
+            // un mensaje nuevo.
+            if (accion === 'updated') {
+                if (participa && String(mensajeEco.conversation_id) === String(props.conversationId)) {
+                    const existente = dataMessages.value.find((m) => String(m.id) === String(mensajeEco.id));
+
+                    if (existente) {
+                        existente.content = mensajeEco.content;
+                        existente.edited = true;
+                        if (mensajeEco.updated_at) existente.updated_at = mensajeEco.updated_at;
+                    }
+                }
+
+                return;
+            }
+
+            let tempConversationId = mensajeEco.conversation_id;
+
+            const newmsg = mensajeEco;
 
             participants.forEach(item => {
                 if(user.id == item){
@@ -103,6 +126,30 @@
             padding: '10px 20px',
         });
     };
+
+    // Edición de mensajes propios durante los primeros 90 segundos.
+    const {
+        editingText,
+        isSavingEdit,
+        canEditMessage,
+        isEditingMessage,
+        startEditMessage,
+        cancelEditMessage,
+        saveEditedMessage,
+    } = useMessageEdition({
+        isOwnMessage: (message) => String(user.person_id) === String(message.person_id),
+        getMessageText: (message) => message.content ?? '',
+        setMessageText: (message, text) => {
+            message.content = text;
+        },
+        requestUpdate: (message, text) => axios.put(route('crm_chat_message_update'), {
+            message_id: message.id,
+            text,
+        }, {
+            headers: { 'Content-Type': 'application/json' },
+        }).then((response) => response.data),
+        notify: showMessage,
+    });
 </script>
 <template>
     <AppLayout title="Contactos">
@@ -123,11 +170,52 @@
                                 <div class="w-full sm:w-4/5 ml-auto">
                                     <div class="flex items-start gap-3 justify-end">
                                         <div class="space-y-2">
-                                        <div class="flex items-center gap-3">
-                                            <div v-html="message.content" class="dark:bg-gray-800 p-4 py-2 rounded-md bg-black/10 ltr:rounded-br-none rtl:rounded-bl-none">
+                                        <div class="flex items-center gap-3 justify-end group">
+                                            <button
+                                                v-if="canEditMessage(message)"
+                                                type="button"
+                                                class="hidden group-hover:flex items-center gap-1 text-white-dark hover:text-primary"
+                                                title="Editar mensaje (disponible 90 segundos)"
+                                                @click="startEditMessage(message)"
+                                            >
+                                                <IconPencil class="w-4.5 h-4.5" />
+                                                <span class="text-xs">Editar</span>
+                                            </button>
+                                            <div v-if="isEditingMessage(message)" class="min-w-[220px] space-y-2 text-left dark:bg-gray-800 p-4 py-2 rounded-md bg-black/10 ltr:rounded-br-none rtl:rounded-bl-none">
+                                                <textarea
+                                                    v-model="editingText"
+                                                    class="form-textarea text-gray-900"
+                                                    rows="3"
+                                                    autofocus
+                                                    @keydown.enter.exact.prevent="saveEditedMessage(message)"
+                                                    @keydown.esc.prevent="cancelEditMessage"
+                                                ></textarea>
+                                                <p class="text-[11px] opacity-70">Enter guarda · Shift+Enter agrega una línea · Esc cancela</p>
+                                                <div class="flex items-center justify-end gap-2">
+                                                    <button
+                                                        type="button"
+                                                        class="rounded bg-gray-200 px-3 py-1 text-xs text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                                                        :disabled="isSavingEdit"
+                                                        @click="cancelEditMessage"
+                                                    >
+                                                        Cancelar
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        class="rounded bg-primary px-3 py-1 text-xs text-white hover:bg-primary-dark disabled:opacity-50"
+                                                        :disabled="isSavingEdit || !editingText.trim()"
+                                                        @click="saveEditedMessage(message)"
+                                                    >
+                                                        Guardar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div v-else v-html="message.content" class="dark:bg-gray-800 p-4 py-2 rounded-md bg-black/10 ltr:rounded-br-none rtl:rounded-bl-none">
                                             </div>
                                         </div>
-                                        <div class="text-xs text-white-dark ltr:text-right rtl:text-left">{{ message.time }}</div>
+                                        <div class="text-xs text-white-dark ltr:text-right rtl:text-left">
+                                            {{ message.time }}<span v-if="message.edited"> · Editado</span>
+                                        </div>
                                         </div>
                                     </div>
                                 </div>

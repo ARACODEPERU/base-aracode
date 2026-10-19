@@ -176,6 +176,15 @@
                             @csrf
                             <input type="email" name="email" placeholder="Tu correo electrónico" required
                                    class="w-full px-3 py-2.5 rounded-lg bg-white/15 border border-white/25 text-sm text-white placeholder-white/60 focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all">
+                            {{-- Consentimiento para comunicaciones comerciales: sin marcar,
+                                 el navegador no envia y el servidor responde 422. --}}
+                            <label class="flex items-start gap-2 text-xs text-white/80">
+                                <input type="checkbox" name="acepto" value="1" required class="mt-0.5">
+                                <span>
+                                    Acepto recibir el newsletter y he leído la
+                                    <a href="{{ route('politica_privacidad') }}" target="_blank" rel="noopener" class="underline">Política de Privacidad</a>.
+                                </span>
+                            </label>
                             <button type="submit" 
                                     class="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors" style="background-color: #ffffff; color: #060E2D;">
                                 Suscribirme

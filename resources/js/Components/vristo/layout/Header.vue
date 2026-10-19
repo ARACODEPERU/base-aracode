@@ -26,6 +26,9 @@
     import ChatNotifications from 'Modules/CRM/Resources/assets/js/Components/ChatNotifications.vue';
     import ShoppingCartMenu from 'Modules/Onlineshop/Resources/assets/js/Components/ShoppingCartMenu.vue';
     import menuData from './MenuData.js'
+    // Misma regla que el layout: el panel gana cuando la cuenta tiene un rol de
+    // trabajo además de 'Alumno'.
+    import { esModoAlumno } from '@/utils/modoAlumno'
 
 
     const userData = usePage().props.auth.user;
@@ -35,6 +38,7 @@
     // Interruptor multi-moneda (PTM0004): sin dólares no se muestra el botón
     // "Cambio de moneda" en el header.
     const multiCurrencyEnabled = computed(() => pageProps.multiCurrencyEnabled === true);
+
 
     // La campana de chat de CRM consulta /crm/chat/notifications al montarse.
     // La directiva v-can (vue-gates) solo quita el nodo del DOM DESPUÉS de
@@ -51,9 +55,9 @@
             || permissions.includes('crm_chat_asistente');
     });
 
-    const hasAnyRole = (rolesToCheck) => {
-        return userData.roles.some(role => rolesToCheck.includes(role.name))
-    }
+    // Campus del alumno: solo si 'Alumno' es su único rol de peso.
+    const modoAlumno = computed(() => esModoAlumno(userData.roles));
+
 
     const logout = () => {
         router.post(route('logout'));
@@ -85,7 +89,7 @@
 
     onMounted(() => {
         setActiveDropdown();
-        if(hasAnyRole(['Alumno'])){
+        if(modoAlumno.value){
             loadTeachers();
         }
     });
@@ -405,7 +409,7 @@
                         </li>
                     </template>
                 </template>
-                <template v-if="hasAnyRole(['Alumno'])">
+                <template v-if="modoAlumno">
                     <li v-can="menuChatAI.permissions" class="menu nav-item relative">
                         <a href="javascript:;" class="nav-link">
                             <div class="flex items-center">

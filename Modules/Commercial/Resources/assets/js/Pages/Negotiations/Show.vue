@@ -7,6 +7,7 @@ import { computed, ref } from "vue";
 import Swal2 from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faCheckCircle, faFileArchive, faFileCode, faFilePdf, faLink, faPaperPlane, faTrashAlt, faXmarkCircle } from "@fortawesome/free-solid-svg-icons";
+import { isFreeNegotiation, totalPriceLabel } from "./Support/freeNegotiation.js";
 
 const props = defineProps({
     negotiation: { type: Object, default: () => ({}) },
@@ -45,6 +46,13 @@ const deleteBlocked = computed(() => props.negotiation.status === "confirmada" &
 const statusByValue = (value) => props.statuses.find((item) => item.value === value);
 
 const paymentMethodLabel = (value) => props.paymentMethods.find((item) => item.value === value)?.label || value;
+
+// Negociacion gratuita (precio total 0): no hubo pago, asi que no hay voucher que revisar
+// ni comprobante que emitir.
+const isFree = computed(() => isFreeNegotiation(props.negotiation.total_price));
+const totalPriceText = computed(() =>
+    totalPriceLabel(props.negotiation.currency, props.negotiation.total_price)
+);
 
 const clientName = computed(() => props.negotiation.client_data?.full_name || props.negotiation.client?.full_name || "Sin cliente");
 
@@ -541,7 +549,7 @@ const reactivate = () => {
                         {{ statusByValue(negotiation.status)?.label || negotiation.status }}
                     </span>
                     <span class="text-sm text-gray-500">
-                        {{ negotiation.currency }} {{ negotiation.total_price }}
+                        {{ totalPriceText }}
                     </span>
                     <span class="text-sm text-gray-500">
                         {{ paymentMethodLabel(negotiation.payment_method) }}
@@ -570,10 +578,12 @@ const reactivate = () => {
                     <div>
                         <p class="font-semibold text-amber-800 dark:text-amber-200">Negociacion confirmada por el cliente</p>
                         <p class="text-sm text-amber-700 dark:text-amber-300">
-                            Revisa el voucher y los datos del cliente para aprobar o rechazar.
+                            {{ isFree
+                                ? 'Revisa los datos del cliente para aprobar o rechazar. Es una inscripcion gratuita: no hay voucher ni comprobante.'
+                                : 'Revisa el voucher y los datos del cliente para aprobar o rechazar.' }}
                         </p>
 
-                        <div class="mt-3">
+                        <div v-if="!isFree" class="mt-3">
                             <label for="emission_date" class="block text-xs font-semibold uppercase text-amber-800 dark:text-amber-200">
                                 Fecha de emision del comprobante
                             </label>
@@ -764,7 +774,11 @@ const reactivate = () => {
                         </div>
                         <div>
                             <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Comprobante</dt>
-                            <dd class="dark:text-white">{{ negotiation.invoice?.invoice_type === 'factura' ? 'Factura electronica' : 'Boleta electronica' }}</dd>
+                            <dd class="dark:text-white">
+                                {{ isFree
+                                    ? 'Sin comprobante (inscripcion gratuita)'
+                                    : (negotiation.invoice?.invoice_type === 'factura' ? 'Factura electronica' : 'Boleta electronica') }}
+                            </dd>
                         </div>
                         <div v-if="negotiation.invoice?.invoice_type === 'factura'">
                             <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">RUC</dt>
@@ -805,7 +819,7 @@ const reactivate = () => {
                     </dl>
                 </div>
 
-                <div class="panel">
+                <div v-if="!isFree" class="panel">
                     <template v-if="isMercadoPago && mercadoPaymentData && !paymentDeclared">
                         <h3 class="mb-4 font-semibold dark:text-white">Pago con tarjeta (Mercado Pago)</h3>
                         <dl class="space-y-2 text-sm">

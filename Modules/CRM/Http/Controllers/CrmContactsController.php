@@ -25,9 +25,12 @@ use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Entities\AcaTeacher;
 use Modules\CRM\Emails\MailwithUserAccount;
 use Modules\CRM\Emails\PersonalizedEmailStudent;
+use Modules\CRM\Http\Controllers\Concerns\ResuelveIdentidadAsistente;
 
 class CrmContactsController extends Controller
 {
+    use ResuelveIdentidadAsistente;
+
     /**
      * Display a listing of the resource.
      */
@@ -443,8 +446,19 @@ class CrmContactsController extends Controller
 
     public function contactsDocentsChat()
     {
-        //dd(Auth::user()->person_id);
         $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
+
+        // Quien no es alumno (administradores, asistentes, empleados) no tiene
+        // chat de docentes. El header consulta esta ruta en todas las pantallas,
+        // asi que antes de llegar aqui se respondia con la lista vacia y no con
+        // un error 500 a quien no es alumno.
+        if (! $student) {
+            return response()->json([
+                'success' => true,
+                'docents' => []
+            ], 200);
+        }
+
         $docents = [];
 
         $existeActiva = AcaStudentSubscription::where('student_id', $student->id)
@@ -452,8 +466,10 @@ class CrmContactsController extends Controller
             ->exists();
 
         if($existeActiva){
-            $docents = User::with('person')
-                ->role('Asistente') // Método de Spatie
+            // usuariosConRol tolera que el rol Asistente aun no exista en la
+            // instalacion (Spatie lanzaria RoleDoesNotExist).
+            $docents = $this->usuariosConRol('Asistente')
+                ->with('person')
                 ->get();
         }
 

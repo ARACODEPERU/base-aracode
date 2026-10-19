@@ -640,11 +640,41 @@ class GoogleCalendarService
     {
         $response = $this->send('get', $this->eventsUrl(), ['query' => $params]);
 
-        if ($response->status() === 410) {
+        // Google responde 410 y, en algunos casos, 400 con el motivo
+        // "fullSyncRequired" cuando el token de sincronizacion ya no sirve. Los
+        // dos casos significan lo mismo: hay que olvidar el token y volver a
+        // leer la ventana completa. Si no se tratan como caducado, la
+        // reconciliacion programada falla en cada corrida (cada 5 minutos) para
+        // siempre, en lugar de recuperarse sola.
+        if ($response->status() === 410 || $this->needsFullSync($response)) {
             throw new GoogleCalendarSyncTokenExpiredException('El sync token de Google Calendar caduco.');
         }
 
         return $this->decode($response, 'leer los eventos');
+    }
+
+    /**
+     * true si Google pide una lectura completa porque el token de sincronizacion
+     * ya no le sirve (responde el motivo "fullSyncRequired").
+     */
+    private function needsFullSync(Response $response): bool
+    {
+        if ($response->successful()) {
+            return false;
+        }
+
+        $data = $response->json();
+
+        if (! is_array($data)) {
+            return false;
+        }
+
+        $errors = $data['error']['errors'] ?? null;
+        $reason = is_array($errors) && isset($errors[0]['reason'])
+            ? (string) $errors[0]['reason']
+            : (string) ($data['error']['status'] ?? '');
+
+        return str_contains(strtolower($reason), 'fullsyncrequired');
     }
 
     /**

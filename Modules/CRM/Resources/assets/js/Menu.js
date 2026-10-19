@@ -46,6 +46,13 @@ const menuCRM = {
             icom: faComments,
         },
         {
+            route: route("crm_dasboard_chatbot"),
+            status: false,
+            text: "Chatbot",
+            permissions: "crm_chatbot",
+            icom: faHeadset,
+        },
+        {
             route: route("crm_mailbox_dashboard"),
             status: false,
             text: "Buzón de correo",
