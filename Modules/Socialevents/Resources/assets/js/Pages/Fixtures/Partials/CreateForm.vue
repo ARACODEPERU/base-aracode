@@ -7,11 +7,12 @@
     import TextInput from '@/Components/TextInput.vue';
     import Keypad from '@/Components/Keypad.vue';
     import Swal2 from 'sweetalert2';
-    import { ref, watch, onMounted } from 'vue';
+    import { ref, watch, onMounted, computed } from 'vue';
     import flatPickr from 'vue-flatpickr-component';
     import 'flatpickr/dist/flatpickr.css';
     import { Spanish } from "flatpickr/dist/l10n/es.js"
     import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
+    import { jornadaVuelta } from '../../../utils/fixtureJornadas.js';
 
     const props = defineProps({
         edition: {
@@ -25,18 +26,80 @@
         locales: {
             type: Object,
             default: () => ({}),
-        }
+        },
+        // Catálogo único de fases (lo envía TournamentPhaseLabels::options())
+        phaseOptions: {
+            type: Array,
+            default: () => [],
+        },
+        // Formatos de cruce (los envía TournamentTieService::tieFormats())
+        tieFormats: {
+            type: Array,
+            default: () => [],
+        },
     });
 
     const form = useForm({
         edition_id: props.edition.id,
         team_h: null,
         team_a: null,
-        phase: null,
+        phase: 'league',
         round_number: null,
         group_name: null,
         match_date: null,
-        location: null
+        location: null,
+        // Formato del cruce: opcional, por defecto partido único normal.
+        tie_format: 'single',
+        // Jornada de la vuelta: el cruce ocupa dos jornadas distintas.
+        round_number_return: null,
+        match_date_return: null,
+        location_return: null,
+    });
+
+    // Las fases de eliminación son las únicas que admiten ida y vuelta o muerte súbita.
+    const knockoutPhases = ['round_16', 'quarterfinals', 'semifinals', 'third_place', 'final', 'knockout', 'playoff'];
+    const isKnockoutPhase = computed(() => knockoutPhases.includes(form.phase));
+    const isHomeAndAway = computed(() => form.tie_format === 'home_and_away');
+
+    // Al volver a una fase de liga, el formato de eliminación se descarta.
+    watch(() => form.phase, (phase) => {
+        if (! knockoutPhases.includes(phase)) {
+            form.tie_format = 'single';
+        }
+    });
+
+    // La ida y la vuelta no pueden compartir jornada: al elegir ida y vuelta se
+    // propone la jornada 1 para la ida y la 2 para la vuelta.
+    const sincronizarJornadaVuelta = () => {
+        if (! isHomeAndAway.value) {
+            return;
+        }
+
+        if (! form.round_number || Number(form.round_number) < 1) {
+            form.round_number = 1;
+        }
+
+        form.round_number_return = jornadaVuelta(form.round_number);
+    };
+
+    watch(isHomeAndAway, (esIdaYVuelta) => {
+        if (esIdaYVuelta) {
+            sincronizarJornadaVuelta();
+        }
+    });
+
+    // Si se corrige la jornada de la ida, la vuelta la sigue. Se respeta la
+    // jornada de vuelta que el organizador ya haya escrito a mano.
+    watch(() => form.round_number, (nueva, anterior) => {
+        if (! isHomeAndAway.value) {
+            return;
+        }
+
+        const sugerida = anterior ? jornadaVuelta(anterior) : null;
+
+        if (! form.round_number_return || Number(form.round_number_return) === sugerida) {
+            form.round_number_return = jornadaVuelta(nueva);
+        }
     });
 
     const createNow = () => {
@@ -103,15 +166,40 @@
             </div>
             <div class="sm:col-span-2">
                 <InputLabel for="phase" value="Fase *" class="mb-1" />
-                <select v-model="form.phase" id="team_h" class="form-select">
-                    <option value="league">Fase de Liga</option>
-                    <option value="quarterfinals">Cuartos de Final</option>
-                    <option value="final">Gran Final</option>
+                <select v-model="form.phase" id="phase" class="form-select">
+                    <option v-for="option in phaseOptions" :key="option.value" :value="option.value">
+                        {{ option.label }}
+                    </option>
                 </select>
                 <InputError :message="form.errors.phase" class="mt-2" />
             </div>
             <div class="sm:col-span-2">
-                <InputLabel for="round_number" value="Jornada / Fecha" />
+                <InputLabel for="tie_format" value="Formato del cruce (Opcional)" class="mb-1" />
+                <select v-model="form.tie_format" id="tie_format" class="form-select">
+                    <option
+                        v-for="format in tieFormats"
+                        :key="format.value"
+                        :value="format.value"
+                        :disabled="format.value !== 'single' && !isKnockoutPhase"
+                    >
+                        {{ format.label }}
+                    </option>
+                </select>
+                <p class="mt-1 text-xs text-gray-500">
+                    {{ isKnockoutPhase
+                        ? 'El formato se aplica al cruce completo: la ida y la vuelta quedan en la misma fase.'
+                        : 'Los formatos de eliminación solo se usan en octavos, cuartos, semifinales, tercer puesto o final.' }}
+                </p>
+                <InputError :message="form.errors.tie_format" class="mt-2" />
+            </div>
+            <div v-if="isHomeAndAway" class="sm:col-span-2">
+                <div class="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    Se crearán <strong>2 partidos</strong> (ida y vuelta) y <strong>2 cargos</strong> por registro.
+                    La ida queda en una jornada y la vuelta en la siguiente, con los equipos invertidos.
+                </div>
+            </div>
+            <div class="sm:col-span-2">
+                <InputLabel for="round_number" :value="isHomeAndAway ? 'Jornada / Fecha (ida)' : 'Jornada / Fecha'" />
                 <TextInput
                     id="round_number"
                     v-model="form.round_number"
@@ -120,6 +208,40 @@
                     type="text"
                 />
                 <InputError :message="form.errors.round_number" />
+            </div>
+            <div v-if="isHomeAndAway" class="sm:col-span-2">
+                <InputLabel for="round_number_return" value="Jornada / Fecha (vuelta)" />
+                <TextInput
+                    id="round_number_return"
+                    v-model="form.round_number_return"
+                    v-mask="'##'"
+                    maxlength="2"
+                    type="text"
+                />
+                <p class="mt-1 text-xs text-gray-500">
+                    Los partidos de vuelta se programan en la jornada siguiente a la ida.
+                </p>
+                <InputError :message="form.errors.round_number_return" />
+            </div>
+            <div v-if="isHomeAndAway" class="sm:col-span-2">
+                <InputLabel for="match_date_return" value="Fecha y hora de la vuelta (Opcional)" class="mb-1" />
+                <flat-pickr
+                    v-model="form.match_date_return"
+                    :config="configFlatPickr"
+                    class="form-input w-full"
+                    placeholder="Selecciona fecha de la vuelta"
+                />
+                <InputError :message="form.errors.match_date_return" class="mt-2" />
+            </div>
+            <div v-if="isHomeAndAway" class="sm:col-span-2">
+                <InputLabel for="location_return" value="Cancha de la vuelta (Opcional)" class="mb-1" />
+                <select id="location_return" v-model="form.location_return" class="form-select">
+                    <option :value="null">Misma cancha de la ida</option>
+                    <option v-for="local in locales" :key="local.names" :value="local.names">
+                        {{ local.names }}
+                    </option>
+                </select>
+                <InputError :message="form.errors.location_return" class="mt-2" />
             </div>
             <div class="sm:col-span-2">
                 <InputLabel for="group_name" value="Grupo (Opcional)" />

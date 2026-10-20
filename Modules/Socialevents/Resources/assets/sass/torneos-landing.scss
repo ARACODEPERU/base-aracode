@@ -947,6 +947,20 @@ body.se-landing ::selection {
     border: 1px solid var(--se-border);
 }
 
+/* Chip IDA / VUELTA de los cruces a dos partidos */
+.se-match__leg {
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    color: var(--se-accent);
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.45);
+}
+
 .se-match__note {
     font-size: 0.65rem;
     font-weight: 600;
@@ -959,6 +973,261 @@ body.se-landing ::selection {
 
 .se-match--cancelled .se-match__name {
     color: var(--se-muted);
+}
+
+/* Cuartos de final a ida y vuelta: una fila por llave con los dos partidos */
+.se-ties {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.se-tie {
+    display: grid;
+    /* Base (tablet y móvil): equipos arriba y cada pierna en su propio bloque. */
+    grid-template-areas:
+        'home vs away'
+        'ida ida ida'
+        'vuelta vuelta vuelta';
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.85rem 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--se-radius);
+    background: var(--se-bg-card);
+    border: 1px solid var(--se-border);
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.se-tie:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.se-tie__team {
+    grid-area: home;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 0;
+}
+
+.se-tie__team--away {
+    grid-area: away;
+    justify-content: flex-end;
+    text-align: right;
+}
+
+@media (max-width: 639px) {
+    .se-tie__team--away {
+        flex-direction: row-reverse;
+        text-align: left;
+    }
+}
+
+.se-tie__team-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.se-tie__crest {
+    width: 2.4rem;
+    height: 2.4rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.6rem;
+    background: rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+}
+
+.se-tie__crest img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.se-tie__crest i {
+    font-size: 1.25rem;
+    color: var(--se-muted);
+}
+
+.se-tie__name {
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    color: #fff;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.se-tie__role {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--se-muted);
+}
+
+.se-tie__vs {
+    grid-area: vs;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-size: 0.6rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    color: #06140a;
+    background: var(--se-green);
+}
+
+.se-tie__leg {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--se-border);
+}
+
+.se-tie__leg--first {
+    grid-area: ida;
+}
+
+.se-tie__leg--return {
+    grid-area: vuelta;
+}
+
+.se-tie__leg-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.se-tie__leg-line {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--se-muted);
+}
+
+.se-tie__leg-line i {
+    font-size: 0.7rem;
+    opacity: 0.85;
+}
+
+.se-tie__leg-line--empty {
+    font-style: italic;
+}
+
+.se-tie__leg-score {
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+    color: #fff;
+    margin-top: 0.1rem;
+}
+
+.se-tie__leg-score small {
+    font-weight: 700;
+    color: var(--se-muted);
+}
+
+.se-tie__leg-status {
+    align-self: flex-start;
+    font-size: 0.56rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    color: var(--se-accent);
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.45);
+}
+
+.se-tie__leg-status--finished,
+.se-tie__leg-status--closed {
+    color: var(--se-green);
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.45);
+}
+
+.se-tie__leg-status--live {
+    color: #fff;
+    background: rgba(239, 68, 68, 0.16);
+    border-color: rgba(239, 68, 68, 0.55);
+}
+
+.se-tie__leg-status--cancelled,
+.se-tie__leg-status--no_points {
+    color: var(--se-muted);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--se-border);
+}
+
+/* Escritorio: equipos compactos junto al VS y las dos piernas a la derecha */
+@media (min-width: 1024px) {
+    /* La fila del cruce necesita más ancho que la lista de partidos. */
+    .se-ties {
+        margin-inline: -6rem;
+    }
+
+    .se-tie {
+        grid-template-areas: 'home vs away . ida vuelta';
+        grid-template-columns:
+            minmax(0, 11rem)
+            auto
+            minmax(0, 12rem)
+            minmax(1rem, 1fr)
+            minmax(8.5rem, 11rem)
+            minmax(8.5rem, 11rem);
+        gap: 0.75rem 1.15rem;
+    }
+
+    .se-tie__leg {
+        padding-top: 0;
+        padding-left: 1rem;
+        border-top: 0;
+        border-left: 1px solid var(--se-border);
+    }
+}
+
+/* Móvil: lectura apilada y escudos proporcionados, sin desbordes */
+@media (max-width: 639px) {
+    .se-tie {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+
+    .se-tie__crest {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.5rem;
+    }
+
+    .se-tie__name {
+        font-size: 0.78rem;
+    }
+
+    .se-tie__vs {
+        width: 1.75rem;
+        height: 1.75rem;
+        font-size: 0.55rem;
+    }
 }
 
 /* Escritorio / tablet */

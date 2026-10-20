@@ -7,10 +7,10 @@ return [
         'players' => [
             // El goleador ya tiene su propia lista: en "mejor jugador" el gol
             // pesa poco (sirve de desempate) y mandan asistencias y MVP.
+            // La valla invicta NO puntúa aquí: es métrica del arquero.
             'goal' => 1,
             'assist' => 4,
             'mvp' => 6,
-            'clean_sheet' => 1,
             'sanction_penalty' => 1,
         ],
         'goalkeepers' => [

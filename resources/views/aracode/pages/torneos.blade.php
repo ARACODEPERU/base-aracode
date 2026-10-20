@@ -36,7 +36,7 @@
                     <a href="#inicio" class="text-gray-300 hover:text-white transition-colors text-sm font-medium">Inicio</a>
                     <a href="#torneos" class="text-gray-300 hover:text-white transition-colors text-sm font-medium">Torneos</a>
                     <a href="#contacto" class="text-gray-300 hover:text-white transition-colors text-sm font-medium">Contacto</a>
-                    <a href="{{ route('register') }}" class="inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 text-sm font-bold hover:scale-105 transition-transform">Crea cuenta</a>
+                    {{-- <a href="{{ route('register') }}" class="inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 text-sm font-bold hover:scale-105 transition-transform">Crea cuenta</a> --}}
                     @if ($eventos->isNotEmpty())
                         @php $first = $eventos->first()->editions->first(); @endphp
                         @if ($first)
@@ -65,7 +65,7 @@
                     Plataforma integral para la gestión de torneos deportivos. Fixture automático, tabla de posiciones, estadísticas de jugadores y resultados en tiempo real.
                 </p>
                 <div class="flex flex-wrap gap-4 se-cta">
-                    <a href="{{ route('register') }}" class="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 font-black shadow-xl shadow-orange-500/30 hover:scale-105 transition-transform">⚽ Crea cuenta y empieza a organizar tu torneo</a>
+                    {{-- <a href="{{ route('register') }}" class="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 font-black shadow-xl shadow-orange-500/30 hover:scale-105 transition-transform">⚽ Crea cuenta y empieza a organizar tu torneo</a> --}}
                     <a href="#torneos" class="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:from-blue-500 hover:to-cyan-400 transition-all shadow-lg shadow-blue-500/25">Ver torneos vigentes</a>
                     <a href="#contacto" class="inline-flex items-center px-6 py-3 rounded-xl border border-gray-700 text-gray-300 font-semibold hover:border-gray-500 hover:text-white transition-all">Contacto</a>
                 </div>

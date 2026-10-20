@@ -17,6 +17,7 @@ class AcaSchoolLevel extends Model
 
     protected $fillable = [
         'school_id',
+        'year_id',
         'code',
         'name',
         'sort_order',
@@ -47,6 +48,11 @@ class AcaSchoolLevel extends Model
     public function school(): BelongsTo
     {
         return $this->belongsTo(AcaSchool::class, 'school_id');
+    }
+
+    public function year(): BelongsTo
+    {
+        return $this->belongsTo(AcaSchoolYear::class, 'year_id');
     }
 
     public function grades(): HasMany

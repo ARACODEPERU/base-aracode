@@ -407,7 +407,12 @@ function initPlayerModal() {
         }
 
         items.push({ label: 'MVP', value: summary.mvp ?? 0 });
-        items.push({ label: 'Valla invicta', value: summary.clean_sheet ?? 0 });
+
+        // La valla invicta es del arquero: en "mejor jugador" no puntúa, así
+        // que el resumen no la muestra para esas categorías.
+        if (category === 'goalkeeper') {
+            items.push({ label: 'Valla invicta', value: summary.clean_sheet ?? 0 });
+        }
 
         if (Number(summary.sanctions ?? 0) > 0) {
             items.push({ label: 'Sanciones', value: summary.sanctions });
@@ -534,7 +539,7 @@ function initPlayerModal() {
 
         const columns = isGoalkeeper
             ? ['Fecha', 'Partido', 'Atajadas', 'MVP', 'Valla inv.', 'Sanc.']
-            : ['Fecha', 'Partido', 'Goles', 'Asist.', 'MVP', 'Valla inv.', 'Sanc.'];
+            : ['Fecha', 'Partido', 'Goles', 'Asist.', 'MVP', 'Sanc.'];
 
         if (hasPoints) {
             columns.push('Pts');
@@ -562,7 +567,9 @@ function initPlayerModal() {
                 }
 
                 cells.push(`<td>${flag(row.is_mvp, 'MVP', 'mvp')}</td>`);
-                cells.push(`<td>${flag(row.clean_sheet, 'VI', 'clean')}</td>`);
+                if (isGoalkeeper) {
+                    cells.push(`<td>${flag(row.clean_sheet, 'VI', 'clean')}</td>`);
+                }
                 cells.push(
                     `<td>${Number(row.sanctions ?? 0) > 0 ? escapeHtml(formatNumber(row.sanctions)) : '<span class="se-modal__muted">—</span>'}</td>`,
                 );

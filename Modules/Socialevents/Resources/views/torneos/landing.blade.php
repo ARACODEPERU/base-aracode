@@ -254,8 +254,22 @@
                 </header>
 
                 @forelse ($matches as $phase => $rounds)
+                    @php
+                        // Cuartos de final a ida y vuelta: una fila por llave con las dos piernas.
+                        // El resto de fases conserva la lista de partidos de siempre.
+                        // (`?? null` cubre vistas cacheadas antes de este cambio).
+                        $tiesInThisPhase = ! empty($quarterfinalTies ?? null)
+                            && \Modules\Socialevents\Support\TournamentPhaseLabels::canonical((string) $phase) === 'quarterfinals';
+                    @endphp
                     <div class="se-phase" data-se-reveal>
                         <h3 class="se-phase-title">{{ $phaseLabels[$phase] ?? \Modules\Socialevents\Support\TournamentPhaseLabels::label($phase) }}</h3>
+                        @if ($tiesInThisPhase)
+                            <div class="se-ties">
+                                @foreach ($quarterfinalTies as $tie)
+                                    @include('socialevents::torneos.partials.tie-row', ['tie' => $tie])
+                                @endforeach
+                            </div>
+                        @else
                         @foreach ($rounds as $round => $roundMatches)
                             <details class="se-round">
                                 <summary>
@@ -264,6 +278,15 @@
                                 </summary>
                                 <div class="se-round__body">
                                     @foreach ($roundMatches as $match)
+                                        @php
+                                            // Resumen del cruce de ida y vuelta (pierna, global y cómo se definió).
+                                            $tieSummary = ($match->tie_id || (int) $match->leg === 1)
+                                                ? app(\Modules\Socialevents\Services\TournamentTieService::class)->summary($match)
+                                                : null;
+                                            $tieHow = $tieSummary && $tieSummary['is_tie']
+                                                ? (['aggregate' => 'global', 'penalties' => 'penales', 'pending' => 'pendiente'][$tieSummary['decided_by']] ?? '')
+                                                : '';
+                                        @endphp
                                         <article class="se-match {{ $match->status === 'cancelled' ? 'se-match--cancelled' : '' }}">
                                             <div class="se-match__side">
                                                 <div class="se-match__crest">
@@ -282,6 +305,9 @@
                                                 @if (in_array($match->status, ['finished', 'closed']))
                                                     <div class="se-match__score">{{ $match->score_h ?? 0 }}<span class="se-match__score-sep">-</span>{{ $match->score_a ?? 0 }}</div>
                                                     <div class="se-match__meta se-match__meta--done">Finalizado</div>
+                                                    @if ($tieSummary && $tieSummary['is_tie'] && $tieSummary['complete'])
+                                                        <div class="se-match__note">Global {{ $tieSummary['aggregate_h'] }} - {{ $tieSummary['aggregate_a'] }}{{ $tieHow ? ' (' . $tieHow . ')' : '' }}</div>
+                                                    @endif
                                                 @elseif ($match->status === 'cancelled')
                                                     {{-- Partido cancelado: no se jugará; se muestra 0-0 y no suma puntos --}}
                                                     <div class="se-match__score se-match__score--cancelled">0<span class="se-match__score-sep">-</span>0</div>
@@ -295,6 +321,13 @@
                                                     <div class="se-match__meta se-match__meta--pending">
                                                         {{ $match->match_date ? $match->match_date->format('d/m H:i') : 'Por definir' }}
                                                     </div>
+                                                @endif
+
+                                                {{-- Chip Ida/Vuelta: distingue las dos piernas del cruce --}}
+                                                @if ((int) $match->leg === 1)
+                                                    <div class="se-match__leg">Ida</div>
+                                                @elseif ((int) $match->leg === 2)
+                                                    <div class="se-match__leg">Vuelta</div>
                                                 @endif
                                             </div>
 
@@ -315,6 +348,7 @@
                                 </div>
                             </details>
                         @endforeach
+                        @endif
                     </div>
                 @empty
                     <p class="se-section__sub" data-se-reveal style="text-align:center">Aún no hay partidos programados.</p>
@@ -386,7 +420,7 @@
             <div class="se-container se-rank-stack">
                 <section class="se-rank-section se-rank-section--player" aria-labelledby="se-rank-title-player">
                     <h3 class="se-rank-section__title" id="se-rank-title-player" data-se-reveal>Mejor <span>jugador</span></h3>
-                    <p class="se-rank-section__note" data-se-reveal>Puntaje por goles, asistencias, MVP y valla invicta</p>
+                    <p class="se-rank-section__note" data-se-reveal>Puntaje por goles, asistencias y MVP</p>
                     <div class="se-rank-grid se-rank-grid--player">
                         @forelse ($playersRanking as $index => $player)
                             <article class="se-rank-card se-rank-card--lg {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>

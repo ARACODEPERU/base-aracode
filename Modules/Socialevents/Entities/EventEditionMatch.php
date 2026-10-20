@@ -35,11 +35,17 @@ class EventEditionMatch extends Model
         'extra_time_played',
         'score_regular_h',
         'score_regular_a',
+        'tie_format',
+        'decider',
+        'tie_id',
+        'leg',
     ];
 
     protected $casts = [
         'match_date' => 'datetime',
         'penalties' => 'array',
+        'tie_id' => 'integer',
+        'leg' => 'integer',
         'extra_time_played' => 'boolean',
         'half_minutes_override' => 'integer',
         'halves_override' => 'integer',
@@ -69,5 +75,29 @@ class EventEditionMatch extends Model
     public function goals(): HasMany
     {
         return $this->hasMany(EventEditionMatchGoal::class, 'match_id', 'id')->orderBy('minute')->orderBy('id');
+    }
+
+    /**
+     * Piernas del cruce: la ida (a la que apuntan las vueltas) y la propia vuelta.
+     */
+    public function legs(): HasMany
+    {
+        return $this->hasMany(self::class, 'tie_id', 'id')->orderBy('leg');
+    }
+
+    /**
+     * Partido de ida al que pertenece esta vuelta.
+     */
+    public function tie(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'tie_id', 'id');
+    }
+
+    /**
+     * ¿El partido es una vuelta de un cruce de ida y vuelta?
+     */
+    public function isReturnLeg(): bool
+    {
+        return (int) $this->leg === 2;
     }
 }

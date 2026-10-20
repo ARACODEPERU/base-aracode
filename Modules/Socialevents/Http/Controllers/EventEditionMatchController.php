@@ -31,7 +31,10 @@ use Modules\Socialevents\Services\TournamentService;
 use Modules\Socialevents\Services\PositionTableService;
 use Modules\Socialevents\Services\PlayerSuspensionService;
 use Modules\Socialevents\Support\TournamentLandingCache;
+use Modules\Socialevents\Support\TournamentPhaseLabels;
 use Modules\Socialevents\Services\SportsOrganizationService;
+use Modules\Socialevents\Services\TournamentTieService;
+use Illuminate\Validation\Rule;
 
 
 class EventEditionMatchController extends Controller
@@ -68,14 +71,17 @@ class EventEditionMatchController extends Controller
         // 3. Creamos la variable final que irá al frontend
         $finalFixture = [];
 
-        // Orden de fases
-        $phaseOrder = [
-            'league' => 1,
-            'quarterfinals' => 2,
-            'semifinals' => 3,
-            'final' => 4,
-            'third_place' => 5,
-        ];
+        // Orden de fases: sale del catálogo único (tercer puesto antes de la final).
+        $phaseOrder = [];
+
+        foreach (array_keys(TournamentPhaseLabels::CANONICAL) as $position => $phaseKey) {
+            $phaseOrder[$phaseKey] = $position + 1;
+        }
+
+        // Los alias heredados (quarter, semi, ...) comparten el orden de su fase canónica.
+        foreach (TournamentPhaseLabels::ALIASES as $alias => $canonical) {
+            $phaseOrder[$alias] = $phaseOrder[$canonical] ?? 999;
+        }
 
         foreach ($grouped as $phase => $rounds) {
             foreach ($rounds as $roundNumber => $matchList) {
@@ -109,6 +115,9 @@ class EventEditionMatchController extends Controller
             'locales' => $locales,
             'ubigeo' => $ubigeo,
             'documentTypes' => $documentTypes,
+            'phaseLabels' => TournamentPhaseLabels::labels(),
+            'phaseOptions' => TournamentPhaseLabels::options(),
+            'tieFormats' => TournamentTieService::tieFormats(),
         ]);
     }
 
@@ -185,6 +194,8 @@ class EventEditionMatchController extends Controller
         // Atajadas con su tipo, pateador y tiempo: el acta las abre cargadas.
         $matchData['saves'] = $performance->savesForMatch($match->id);
         $matchData['timing'] = $performance->resolvedTiming($match);
+        // Cruce de ida y vuelta: pierna, marcador global y cómo se definió.
+        $matchData['tie'] = app(TournamentTieService::class)->summary($match);
 
         return $matchData;
     }
@@ -210,6 +221,8 @@ class EventEditionMatchController extends Controller
         return Inertia::render('Socialevents::Editions/MatchScore', [
             'edition' => $edition,
             'match' => $this->buildMatchPayload($match, $edition),
+            'phaseLabels' => TournamentPhaseLabels::labels(),
+            'tieFormats' => TournamentTieService::tieFormats(),
         ]);
     }
 
@@ -242,7 +255,10 @@ class EventEditionMatchController extends Controller
         return Inertia::render('Socialevents::Fixtures/Create',[
             'edition' => $edition,
             'teams' => $teams,
-            'locales' => $locales
+            'locales' => $locales,
+            // El combo de fases y los formatos de cruce salen del catálogo único.
+            'phaseOptions' => TournamentPhaseLabels::options(),
+            'tieFormats' => TournamentTieService::tieFormats(),
         ]);
     }
 
@@ -294,14 +310,55 @@ class EventEditionMatchController extends Controller
             'edition_id'   => 'required|exists:event_editions,id',
             'team_h'    => 'required|exists:event_teams,id|different:team_a',
             'team_a'    => 'required|exists:event_teams,id',
-            'phase'        => 'required|string',
+            'phase'        => ['required', 'string', Rule::in(array_keys(TournamentPhaseLabels::labels()))],
             'round_number' => 'nullable|integer',
             'group_name'   => 'nullable|string|max:1',
             'match_date'   => 'nullable|date',
             'location'     => 'nullable|string|max:255',
+            // Formato del cruce: opcional, por defecto partido único normal.
+            'tie_format'   => ['nullable', 'string', Rule::in(array_column(TournamentTieService::tieFormats(), 'value'))],
+            // Jornada de la vuelta: el cruce ocupa dos jornadas distintas.
+            'round_number_return' => 'nullable|integer|min:1|max:99',
+            'match_date_return' => 'nullable|date',
+            'location_return'   => 'nullable|string|max:255',
         ], [
             'team_h.different' => 'Un equipo no puede jugar contra sí mismo.',
+            'phase.in' => 'La fase seleccionada no es válida.',
+            'tie_format.in' => 'El formato del cruce no es válido.',
+            'round_number_return.min' => 'La jornada de la vuelta debe ser 1 o mayor.',
+            'round_number_return.max' => 'La jornada de la vuelta no puede pasar de 99.',
         ]);
+
+        // La fase se guarda siempre con su clave canónica (los alias históricos se normalizan).
+        $phase = TournamentPhaseLabels::canonical((string) $validated['phase']) ?? $validated['phase'];
+        $validated['phase'] = $phase;
+
+        $formatValue = $validated['tie_format'] ?? TournamentTieService::FORMAT_SINGLE;
+
+        if (! TournamentTieService::formatAllowedForPhase($formatValue, $phase)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'tie_format' => 'La ida y vuelta y la muerte súbita solo se usan en fases de eliminación (octavos, cuartos, semifinales, tercer puesto o final).',
+            ]);
+        }
+
+        // Valor del selector traducido a los campos que se guardan.
+        $tieFormat = TournamentTieService::resolveFormat($formatValue);
+        $isHomeAndAway = $tieFormat['tie_format'] === TournamentTieService::FORMAT_HOME_AND_AWAY;
+
+        // La ida y la vuelta se juegan en jornadas distintas: la vuelta va a la
+        // jornada siguiente salvo que el organizador elija otra.
+        // Un campo vacío llega como null (o como cadena vacía): en ambos casos se
+        // usa la jornada propuesta y no se guarda una jornada 0.
+        $idaRound = ! empty($validated['round_number']) ? (int) $validated['round_number'] : 1;
+        $vueltaRound = ! empty($validated['round_number_return'])
+            ? (int) $validated['round_number_return']
+            : TournamentTieService::defaultReturnRound($idaRound);
+
+        if ($isHomeAndAway && $vueltaRound <= $idaRound) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'round_number_return' => 'La jornada de la vuelta debe ser posterior a la de la ida.',
+            ]);
+        }
 
         $sports->assertOwnedEditionTeam($request->user(), (int) $validated['edition_id'], (int) $validated['team_h']);
         $sports->assertOwnedEditionTeam($request->user(), (int) $validated['edition_id'], (int) $validated['team_a']);
@@ -341,23 +398,61 @@ class EventEditionMatchController extends Controller
         }
 
         // 3. Registro y débito del prepago en una sola transacción
-        DB::transaction(function () use ($request, $validated, $sports) {
+        $created = DB::transaction(function () use ($request, $validated, $sports, $tieFormat, $isHomeAndAway, $idaRound, $vueltaRound) {
             $sports->assertCanCreateMatch($request->user(), (int) $validated['edition_id'], 2);
+
             $match = EventEditionMatch::create([
             'edition_id'   => $validated['edition_id'],
             'team_h_id'    => $validated['team_h'],
             'team_a_id'    => $validated['team_a'],
             'phase'        => $validated['phase'],
-            'round_number' => $validated['round_number'] ?? 1,
+            'round_number' => $idaRound,
             'group_name'   => $validated['group_name'] ?? null,
             'match_date'   => $validated['match_date'] ?? null,
             'location'     => $validated['location'] ?? null,
             'status'       => 'pending', // Por defecto
+            'tie_format'   => $tieFormat['tie_format'],
+            'decider'      => $tieFormat['decider'],
+            'leg'          => $isHomeAndAway ? 1 : null,
             ]);
+
+            // El cobro es por partido: un cruce de ida y vuelta genera dos cargos.
             $sports->chargeMatch($match, $request->user());
+            $created = collect([$match]);
+
+            if ($isHomeAndAway) {
+                // La vuelta es el mismo cruce con los equipos invertidos y apunta a la ida.
+                $return = EventEditionMatch::create([
+                    'edition_id'   => $validated['edition_id'],
+                    'team_h_id'    => $validated['team_a'],
+                    'team_a_id'    => $validated['team_h'],
+                    'phase'        => $validated['phase'],
+                    // La vuelta se programa en su propia jornada (la siguiente por defecto).
+                    'round_number' => $vueltaRound,
+                    'group_name'   => $validated['group_name'] ?? null,
+                    'match_date'   => $validated['match_date_return'] ?? null,
+                    'location'     => $validated['location_return'] ?? ($validated['location'] ?? null),
+                    'status'       => 'pending',
+                    'tie_format'   => $tieFormat['tie_format'],
+                    'decider'      => $tieFormat['decider'],
+                    'tie_id'       => $match->id,
+                    'leg'          => 2,
+                ]);
+
+                $sports->chargeMatch($return, $request->user());
+                $created->push($return);
+            }
+
+            return $created;
         });
 
         TournamentLandingCache::forget((int) $validated['edition_id']);
+
+        // Se informa cuántos partidos y cargos generó el registro sin cambiar la
+        // respuesta (el formulario es de Inertia y ya muestra su propio mensaje).
+        session()->flash('status', $created->count() > 1
+            ? "Se registraron 2 partidos (ida en la jornada {$idaRound} y vuelta en la {$vueltaRound}) y 2 cargos."
+            : 'Se registró 1 partido y 1 cargo.');
     }
 
     /**
@@ -379,9 +474,14 @@ class EventEditionMatchController extends Controller
             //'location' => 'required|string',
             'equipo_h_id' => 'nullable|exists:event_teams,id|different:equipo_a_id',
             'equipo_a_id' => 'nullable|exists:event_teams,id|different:equipo_h_id',
+            // Fase y formato del cruce: ahora también se editan desde el modal.
+            'phase' => ['nullable', 'string', Rule::in(array_keys(TournamentPhaseLabels::labels()))],
+            'tie_format' => ['nullable', 'string', Rule::in(array_column(TournamentTieService::tieFormats(), 'value'))],
         ], [
             'round_number.min' => 'La jornada debe ser 1 o mayor.',
             'round_number.max' => 'La jornada no puede pasar de 99.',
+            'phase.in' => 'La fase seleccionada no es válida.',
+            'tie_format.in' => 'El formato del cruce no es válido.',
         ]);
 
         // Validación adicional: si ambos equipos están seleccionados, no pueden ser el mismo
@@ -390,6 +490,37 @@ class EventEditionMatchController extends Controller
         }
 
         $match = $sports->assertOwnedMatch($request->user(), (int) $id);
+
+        // Fase normalizada a su clave canónica (los alias históricos se resuelven).
+        $phaseInput = $request->input('phase');
+        $phase = is_string($phaseInput) && $phaseInput !== ''
+            ? TournamentPhaseLabels::canonical($phaseInput)
+            : null;
+        $phase = $phase ?: (string) $match->phase;
+
+        $formatInput = $request->input('tie_format');
+        $formatValue = is_string($formatInput) && $formatInput !== ''
+            ? $formatInput
+            : TournamentTieService::formatValue($match);
+
+        if (! TournamentTieService::formatAllowedForPhase($formatValue, $phase)) {
+            throw ValidationException::withMessages([
+                'tie_format' => 'La ida y vuelta y la muerte súbita solo se usan en fases de eliminación.',
+            ]);
+        }
+
+        $tieFormat = TournamentTieService::resolveFormat($formatValue);
+        $returnLeg = EventEditionMatch::where('tie_id', $match->id)->first()
+            ?? ($match->tie_id ? EventEditionMatch::find($match->tie_id) : null);
+
+        // Convertir un partido suelto en ida y vuelta desde el modal crearía un partido
+        // y un cargo sin avisar: eso se hace al crear el cruce.
+        if ($tieFormat['tie_format'] === TournamentTieService::FORMAT_HOME_AND_AWAY && ! $returnLeg) {
+            throw ValidationException::withMessages([
+                'tie_format' => 'Para un cruce de ida y vuelta usa "Nuevo partido": el sistema crea ambas piernas y cobra los dos partidos.',
+            ]);
+        }
+
         // Vacío es "sin programar": la columna es datetime y la cadena vacía no es fecha válida.
         $matchDate = $request->filled('match_date') ? $request->get('match_date') : null;
         $teamH = $request->input('equipo_h_id', $match->team_h_id);
@@ -427,18 +558,20 @@ class EventEditionMatchController extends Controller
             if ($sports->sportsMode() && ! $sports->isSuperAdmin($request->user()) && $match->status === 'pending') {
                 $sports->assertCanCreateMatch($request->user(), (int) $match->edition_id, 2);
             }
-            DB::transaction(function () use ($match, $teamH, $teamA, $request, $sports, $matchDate) {
+            DB::transaction(function () use ($match, $teamH, $teamA, $request, $sports, $matchDate, $phase, $tieFormat, $returnLeg) {
                 $match->update([
                     'team_h_id' => $teamH,
                     'team_a_id' => $teamA,
                     'round_number' => $request->get('round_number'),
                     'group_name' => $request->get('group_name') ?? null,
+                    'phase' => $phase,
                     'match_date' => $matchDate,
                     'location' => $request->get('location') ?? null,
                     'status' => $request->get('status') ?? 'pending',
                     'placeholder_h' => null,
                     'placeholder_a' => null,
                 ]);
+                $this->syncTieSettings($match, $phase, $tieFormat, $returnLeg);
                 if ($match->status === 'pending') $sports->chargeMatch($match, $request->user());
             });
         } else {
@@ -447,12 +580,14 @@ class EventEditionMatchController extends Controller
                 'team_a_id' => $teamA,
                 'round_number' => $request->get('round_number'),
                 'group_name' => $request->get('group_name') ?? null,
+                'phase' => $phase,
                 'match_date' => $matchDate,
                 'location' => $request->get('location') ?? null,
                 'status' => $request->get('status') ?? 'pending',
                 'placeholder_h' => null,
                 'placeholder_a' => null,
             ]);
+            $this->syncTieSettings($match, $phase, $tieFormat, $returnLeg);
         }
         $score_h = $request->get('score_h') ?? 0;
         $score_a = $request->get('score_a') ?? 0;
@@ -472,6 +607,38 @@ class EventEditionMatchController extends Controller
             TournamentLandingCache::forget((int) $match->edition_id);
         }
 
+    }
+
+    /**
+     * La fase y el formato pertenecen al cruce, no a una pierna suelta: se
+     * replican en la ida y en la vuelta para que no queden en fases distintas.
+     *
+     * @param  array{tie_format: string, decider: string}  $tieFormat
+     */
+    private function syncTieSettings(EventEditionMatch $match, string $phase, array $tieFormat, ?EventEditionMatch $otherLeg): void
+    {
+        $values = [
+            'phase' => $phase,
+            'tie_format' => $tieFormat['tie_format'],
+            'decider' => $tieFormat['decider'],
+        ];
+
+        if ((string) $match->phase !== $values['phase']
+            || (string) $match->tie_format !== $values['tie_format']
+            || (string) $match->decider !== $values['decider']) {
+            $match->update($values);
+        }
+
+        if (! $otherLeg) {
+            return;
+        }
+
+        // Una vuelta con acta cerrada no cambia de fase ni de formato.
+        if (in_array($otherLeg->status, ['closed'], true)) {
+            return;
+        }
+
+        $otherLeg->update($values);
     }
 
     public function editionMatchScoreStore(Request $request){
@@ -523,6 +690,15 @@ class EventEditionMatchController extends Controller
         ]);
 
         $match = $sports->assertOwnedMatch($request->user(), (int) $request->get('id'));
+
+        // Muerte súbita: el acta no admite empate (no hay prórroga ni penales).
+        if ($match->decider === TournamentTieService::DECIDER_SUDDEN_DEATH
+            && $request->has('score_h') && $request->has('score_a')
+            && (int) $request->get('score_h') === (int) $request->get('score_a')) {
+            return back()->withErrors([
+                'score' => 'Este partido se define por muerte súbita: registra un ganador, no se admite empate.',
+            ]);
+        }
 
         // Bloqueo: jugadores suspendidos no pueden participar en el acta
         $suspendedPlaying = app(PlayerSuspensionService::class)->findSuspendedParticipating(
@@ -703,6 +879,16 @@ class EventEditionMatchController extends Controller
             // se suman al crear el acta
             $this->positionService->updateTablePositions($editionId);
         });
+
+        // Cruce de ida y vuelta: si el global queda empatado y la vuelta no trae
+        // penales, el ganador todavía no está definido. Se avisa, no se bloquea.
+        if ($match->tie_id || (int) $match->leg === 1) {
+            $tie = app(TournamentTieService::class)->summary($match->fresh());
+
+            if ($tie['is_tie'] && $tie['complete'] && $tie['decided_by'] === 'pending') {
+                return back()->with('tie_warning', 'El marcador global está empatado y no hay penales registrados: el cruce queda pendiente de definición.');
+            }
+        }
     }
 
     /**

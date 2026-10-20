@@ -88,9 +88,16 @@
                        target="_blank" rel="noopener" class="pg-btn pg-btn-primary pg-btn-lg">
                         Escribir por WhatsApp
                     </a>
-                    <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-ghost pg-btn-lg">
-                        Descargar la app
-                    </a>
+                    @if (config('pichanguero.app_disponible', false))
+                        <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-ghost pg-btn-lg">
+                            Descargar la app
+                        </a>
+                    @else
+                        {{-- La app aún no está publicada: la acción disponible es crear cuenta. --}}
+                        <a href="{{ config('pichanguero.registro_url') }}" class="pg-btn pg-btn-ghost pg-btn-lg">
+                            Crear cuenta
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

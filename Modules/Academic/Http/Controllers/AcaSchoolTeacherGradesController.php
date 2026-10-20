@@ -59,12 +59,20 @@ class AcaSchoolTeacherGradesController extends Controller
     }
 
     /**
-     * Ano escolar activo (status=active); fallback al primero registrado.
+     * Año vigente del colegio activo (status=active); fallback al más reciente
+     * del mismo colegio.
      */
     private function currentYearId(): ?int
     {
-        $year = AcaSchoolYear::where('status', AcaSchoolYear::STATUS_ACTIVE)->orderBy('id')->first()
-            ?? AcaSchoolYear::orderBy('id')->first();
+        $schoolId = $this->context->currentSchoolId();
+
+        $year = AcaSchoolYear::where('school_id', $schoolId)
+            ->where('status', AcaSchoolYear::STATUS_ACTIVE)
+            ->orderByDesc('year')
+            ->first()
+            ?? AcaSchoolYear::where('school_id', $schoolId)
+                ->orderByDesc('year')
+                ->first();
 
         return $year?->id;
     }

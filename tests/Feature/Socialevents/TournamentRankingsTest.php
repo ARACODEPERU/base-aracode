@@ -227,6 +227,41 @@ class TournamentRankingsTest extends TestCase
         $this->assertSame(3.0, $players[1]['points']);
     }
 
+    public function test_la_valla_invicta_no_suma_para_el_mejor_jugador(): void
+    {
+        // Cada jugador de un equipo que no recibe goles queda con clean_sheet=1:
+        // en "mejor jugador" eso no debe sumar puntos, solo en la lista de arqueros.
+        $this->registerPlayer($this->homeTeam, 80, 'Lateral derecho');
+        $this->registerPlayer($this->homeTeam, 81, 'Arquero');
+        $match = $this->makeMatch();
+
+        $this->stat($match, 80, ['assists' => 1, 'clean_sheet' => 1]);
+        $this->stat($match, 81, ['clean_sheet' => 1]);
+
+        $players = $this->rankings->topPlayersPayload($this->edition->id);
+
+        // 1 asistencia (4) y la valla invicta no aporta nada.
+        $this->assertCount(1, $players);
+        $this->assertSame(80, $players[0]['player_id']);
+        $this->assertSame(4.0, $players[0]['points']);
+
+        $detail = $this->rankings->playerDetail($this->edition->id, 80, 'player');
+
+        $this->assertSame(4.0, $detail['summary']['points']);
+        $this->assertSame(
+            [],
+            array_values(array_filter(
+                $detail['reasons'],
+                fn (array $reason) => $reason['concept'] === 'Valla invicta'
+            ))
+        );
+
+        // El arquero sí sigue cobrando su valla invicta (5 pts).
+        $keepers = $this->rankings->topGoalkeepersPayload($this->edition->id);
+
+        $this->assertSame(5.0, $keepers[0]['points']);
+    }
+
     // ─── Sanciones ───────────────────────────────────────────────────
 
     public function test_una_sancion_descuenta_una_sola_vez_aunque_haya_varios_partidos(): void

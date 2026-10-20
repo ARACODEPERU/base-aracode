@@ -17,6 +17,7 @@ import {
     faSchool,
     faCalendarDays,
     faCalendarCheck,
+    faCalendarWeek,
     faSitemap,
     faFileSignature,
     faChalkboardUser,
@@ -288,6 +289,28 @@ const colegioGroup = {
                         <li>📅 <span>Crear el año escolar (ej. 2027) para poder matricular.</span></li>
                         <li>✅ <span>Activar el año en curso: matrículas, notas y carnés se registran en el año activo.</span></li>
                         <li>📝 <span>Agregar observaciones del año lectivo.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
+        },
+        {
+            route: route('aca_school_periods_list'),
+            status: false,
+            text: 'Períodos Académicos',
+            icom: faCalendarWeek,
+            permissions: 'aca_school_period_listado',
+            info: {
+                title: 'Períodos Académicos',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Configuración de los períodos de evaluación del año:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>📅 <span>Elegir tipo: bimestral, trimestral, cuatrimestral, semestral o personalizada.</span></li>
+                        <li>🔢 <span>Generar de una vez los N períodos del año con sus fechas.</span></li>
+                        <li>✏️ <span>Editar nombre y fechas de cada período.</span></li>
+                        <li>🗑️ <span>Eliminar períodos sin registros asociados.</span></li>
                     </ul>
                 `,
                 placement: 'right'

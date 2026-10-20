@@ -1,9 +1,17 @@
 @extends('pichanguero.layouts.app')
 
 @section('title', 'Pichanguero — Organiza tu torneo de fútbol sin Excel')
-@section('description', 'Pichanguero organiza tu campeonato de fútbol: fixture automático, tabla de posiciones, estadísticas de jugadores, resultados en vivo y app para Android.')
+@section('description', 'Pichanguero organiza tu campeonato de fútbol: fixture automático, tabla de posiciones, estadísticas de jugadores y resultados en vivo desde el navegador.')
 
 @section('content')
+    @php
+        // La app Android aún no está publicada. Mientras `app_disponible` sea
+        // false esta portada no muestra ninguna opción de descarga y la acción
+        // principal es «Crear cuenta» en la plataforma de torneos.
+        $appDisponible = (bool) config('pichanguero.app_disponible', false);
+        $registroUrl = config('pichanguero.registro_url');
+    @endphp
+
     @include('pichanguero.components.navbar')
 
     {{-- ===================== HERO ===================== --}}
@@ -34,13 +42,23 @@
                     </p>
 
                     <div class="pg-reveal mt-9 flex flex-col gap-4 sm:flex-row">
-                        <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-primary pg-btn-lg">
-                            Descargar la app
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                            </svg>
-                        </a>
+                        @if ($appDisponible)
+                            <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-primary pg-btn-lg">
+                                Descargar la app
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                            </a>
+                        @else
+                            <a href="{{ $registroUrl }}" class="pg-btn pg-btn-primary pg-btn-lg">
+                                Crear cuenta
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                </svg>
+                            </a>
+                        @endif
                         <a href="{{ route('pichanguero.contacto') }}" class="pg-btn pg-btn-ghost pg-btn-lg">
                             Solicitar demo
                         </a>
@@ -50,7 +68,7 @@
                 {{-- Recurso real: ilustración que la propia app distribuye en su APK --}}
                 <div class="pg-reveal hidden lg:block">
                     <img src="{{ asset('themes/pichanguero/images/app-player.webp') }}"
-                         alt="Ilustración de la aplicación Pichanguero"
+                         alt="Ilustración de Pichanguero"
                          class="mx-auto w-full max-w-md" width="900" height="900"
                          loading="lazy" decoding="async">
                 </div>
@@ -80,9 +98,9 @@
                             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/>',
                         ],
                         [
-                            'title' => 'App Android',
-                            'text' => 'Torneo en el bolsillo',
-                            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>',
+                            'title' => 'Desde el navegador',
+                            'text' => 'Sin instalar nada',
+                            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3 12h18M12 3c2.5 2.5 3.8 5.6 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.6-3.8-9S9.5 5.5 12 3z"/>',
                         ],
                     ];
                 @endphp
@@ -145,9 +163,9 @@
                             'text' => 'Registra equipos, controla cupos y lleva el estado de cada inscripción.',
                         ],
                         [
-                            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>',
-                            'title' => 'App móvil',
-                            'text' => 'Los equipos y jugadores siguen el torneo desde el celular con la app Pichanguero.',
+                            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3 12h18M12 3c2.5 2.5 3.8 5.6 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.6-3.8-9S9.5 5.5 12 3z"/>',
+                            'title' => 'Desde cualquier dispositivo',
+                            'text' => 'Gestiona el campeonato desde la computadora y consulta el fixture y los resultados desde el celular, sin instalar nada.',
                         ],
                     ];
                 @endphp
@@ -212,11 +230,16 @@
 
                     <div class="absolute -bottom-6 left-6 flex items-center gap-3 rounded-2xl border border-pg-line bg-pg-navy2 p-3 pr-5">
                         <img src="{{ asset('themes/pichanguero/images/app-keeper.webp') }}"
-                             alt="Ilustración de la aplicación Pichanguero"
+                             alt="Ilustración de Pichanguero"
                              class="h-12 w-12" width="600" height="600" loading="lazy" decoding="async">
                         <div>
-                            <p class="pg-display text-sm font-bold text-white">App Android</p>
-                            <a href="{{ route('pichanguero.descargas') }}" class="pg-link text-xs">Ver descarga</a>
+                            @if ($appDisponible)
+                                <p class="pg-display text-sm font-bold text-white">App Android</p>
+                                <a href="{{ route('pichanguero.descargas') }}" class="pg-link text-xs">Ver descarga</a>
+                            @else
+                                <p class="pg-display text-sm font-bold text-white">Crea tu cuenta</p>
+                                <a href="{{ $registroUrl }}" class="pg-link text-xs">Empezar ahora</a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -256,7 +279,11 @@
         </div>
     </section>
 
-    {{-- ===================== DESCARGA ===================== --}}
+    {{-- ===================== DESCARGA =====================
+         Solo se publica cuando la app ya está disponible (config/pichanguero.php).
+         Mientras no lo esté, la acción de la portada es «Crear cuenta» y esta
+         sección no se renderiza. --}}
+    @if ($appDisponible)
     <section class="pg-surface-dark relative overflow-hidden py-16 lg:py-20">
         <div class="absolute inset-0 -z-10">
             <img src="{{ asset('themes/pichanguero/images/bg-page.jpg') }}" alt=""
@@ -283,7 +310,6 @@
                                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
                     </a>
-                    {{-- Descarga directa del APK: misma accion que ofrecia la version anterior --}}
                     <a href="{{ asset('downloads/pichanguero.apk') }}" class="pg-btn pg-btn-ghost pg-btn-lg" download>
                         Descargar APK
                     </a>
@@ -291,6 +317,7 @@
             </div>
         </div>
     </section>
+    @endif
 
     {{-- ===================== PREGUNTAS FRECUENTES ===================== --}}
     <section class="pg-surface-light py-16 sm:py-20 lg:py-24">
@@ -306,11 +333,11 @@
                         $faqs = [
                             [
                                 'q' => '¿Necesito instalar algo en la computadora?',
-                                'a' => 'No. La gestión del torneo funciona desde el navegador y la app permite consultar la información desde el celular.',
+                                'a' => 'No. Todo funciona desde el navegador, también desde el celular: no hay que instalar nada para gestionar o consultar el torneo.',
                             ],
                             [
-                                'q' => '¿Los jugadores también deben descargar la app?',
-                                'a' => 'Es opcional. La app les da acceso al fixture, sus estadísticas y los resultados, pero la información pública del torneo también se puede compartir por enlace.',
+                                'q' => '¿Cómo empiezo a usar Pichanguero?',
+                                'a' => 'Crea tu cuenta, registra tu organización y arma tu primer torneo. Desde ahí puedes publicar la información para los equipos y jugadores.',
                             ],
                             [
                                 'q' => '¿Sirve para alquiler de canchas?',
@@ -347,12 +374,17 @@
                     Cuéntanos cuántos equipos manejas y te mostramos Pichanguero funcionando con tu campeonato.
                 </p>
                 <div class="relative mt-8 flex flex-col justify-center gap-4 sm:flex-row">
-                    <a href="{{ route('pichanguero.contacto') }}" class="pg-btn pg-btn-primary pg-btn-lg">
+                    <a href="{{ $registroUrl }}" class="pg-btn pg-btn-primary pg-btn-lg">
+                        Crear cuenta
+                    </a>
+                    <a href="{{ route('pichanguero.contacto') }}" class="pg-btn pg-btn-ghost pg-btn-lg">
                         Solicitar demo
                     </a>
-                    <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-ghost pg-btn-lg">
-                        Descargar la app
-                    </a>
+                    @if ($appDisponible)
+                        <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-ghost pg-btn-lg">
+                            Descargar la app
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

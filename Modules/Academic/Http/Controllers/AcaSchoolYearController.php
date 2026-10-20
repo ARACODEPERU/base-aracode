@@ -95,7 +95,7 @@ class AcaSchoolYearController extends Controller
 
     /**
      * Activa el año escolar y anuncia/cierra los demas del colegio.
-     * Si el colegio no tiene estructura academica (niveles/grados/secciones),
+     * Si el año no tiene estructura academica propia (niveles/grados),
      * la precarga con la estructura estandar de Peru.
      */
     public function activate(Request $request, int $id)
@@ -111,10 +111,12 @@ class AcaSchoolYearController extends Controller
 
                 $year->update(['status' => AcaSchoolYear::STATUS_ACTIVE]);
 
-                $hasStructure = AcaSchoolLevel::where('school_id', $year->school_id)->exists();
+                $hasStructure = AcaSchoolLevel::where('school_id', $year->school_id)
+                    ->where('year_id', $year->id)
+                    ->exists();
 
                 if (! $hasStructure) {
-                    $this->seedStandardStructure($year->school_id);
+                    $this->seedStandardStructure($year->school_id, $year->id);
                 }
             });
         } catch (\Throwable $e) {
@@ -136,19 +138,20 @@ class AcaSchoolYearController extends Controller
 
     /**
      * Crea los niveles y grados estandar (Inicial 3-4-5, Primaria 1°-6°,
-     * Secundaria 1°-5°) para el colegio. Las secciones se crean aparte.
+     * Secundaria 1°-5°) para un año escolar especifico. Las secciones
+     * se crean aparte desde la vista de Estructura Academica.
      */
-    private function seedStandardStructure(int $schoolId): void
+    private function seedStandardStructure(int $schoolId, int $yearId): void
     {
         foreach (AcaSchoolLevel::standardPeruStructure() as $i => $levelData) {
             $level = AcaSchoolLevel::firstOrCreate(
-                ['school_id' => $schoolId, 'code' => $levelData['code']],
+                ['school_id' => $schoolId, 'year_id' => $yearId, 'code' => $levelData['code']],
                 ['name' => $levelData['name'], 'sort_order' => $i + 1, 'status' => true]
             );
 
             foreach ($levelData['grades'] as $j => $gradeName) {
                 AcaSchoolGrade::firstOrCreate(
-                    ['school_id' => $schoolId, 'level_id' => $level->id, 'name' => $gradeName],
+                    ['school_id' => $schoolId, 'year_id' => $yearId, 'level_id' => $level->id, 'name' => $gradeName],
                     ['sort_order' => $j + 1, 'status' => true]
                 );
             }

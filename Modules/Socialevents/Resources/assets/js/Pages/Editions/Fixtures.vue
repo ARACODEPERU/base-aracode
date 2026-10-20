@@ -37,7 +37,20 @@
         documentTypes: {
             type: Object,
             default: () => ({}),
-        }
+        },
+        // Catálogo único de fases y formatos de cruce que envía el servidor.
+        phaseLabels: {
+            type: Object,
+            default: () => ({}),
+        },
+        phaseOptions: {
+            type: Array,
+            default: () => [],
+        },
+        tieFormats: {
+            type: Array,
+            default: () => [],
+        },
     });
 
     const roundRobinRef = ref(null);
@@ -134,6 +147,9 @@
                         :edition="edition"
                         :ubigeo="ubigeo"
                         :document-types="documentTypes"
+                        :phase-labels="phaseLabels"
+                        :phase-options="phaseOptions"
+                        :tie-formats="tieFormats"
                    />
                 </template>
                 <template v-else>
@@ -145,6 +161,9 @@
                         :edition="edition"
                         :ubigeo="ubigeo"
                         :document-types="documentTypes"
+                        :phase-labels="phaseLabels"
+                        :phase-options="phaseOptions"
+                        :tie-formats="tieFormats"
                     />
                 </template>
             </div>

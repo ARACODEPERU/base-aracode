@@ -18,8 +18,11 @@ use Modules\Socialevents\Entities\EventEditionTeamPlayer;
 use Modules\Socialevents\Services\MatchPerformanceService;
 use Modules\Socialevents\Services\PlayerSuspensionService;
 use Modules\Socialevents\Services\PositionTableService;
+use Illuminate\Validation\Rule;
 use Modules\Socialevents\Support\TournamentLandingCache;
+use Modules\Socialevents\Support\TournamentPhaseLabels;
 use Modules\Socialevents\Services\SportsOrganizationService;
+use Modules\Socialevents\Services\TournamentTieService;
 
 class MatchAdminController extends Controller
 {
@@ -79,7 +82,8 @@ class MatchAdminController extends Controller
             'location' => 'nullable|string|max:255',
             'team_h_id' => 'nullable|integer',
             'team_a_id' => 'nullable|integer',
-            'phase' => 'required|in:league,groups,round_16,quarter,semi,final,third_place',
+            // Claves canónicas y alias históricos (quarter, semi) por compatibilidad.
+            'phase' => ['required', 'string', Rule::in(array_keys(TournamentPhaseLabels::labels()))],
             'placeholder_h' => 'nullable|string|max:255',
             'placeholder_a' => 'nullable|string|max:255',
             'group_name' => 'nullable|string|max:255',
@@ -113,7 +117,8 @@ class MatchAdminController extends Controller
             'location' => $validated['location'] ?? null,
             'team_h_id' => $validated['team_h_id'] ?? null,
             'team_a_id' => $validated['team_a_id'] ?? null,
-            'phase' => $validated['phase'],
+            // Se guarda la clave canónica: los alias históricos (quarter, semi) se normalizan.
+            'phase' => TournamentPhaseLabels::canonical($validated['phase']) ?? $validated['phase'],
             'group_name' => $validated['group_name'] ?? null,
             'round_number' => $validated['round_number'] ?? null,
             'score_h' => $validated['score_h'] ?? null,
@@ -145,7 +150,7 @@ class MatchAdminController extends Controller
             'location' => 'nullable|string|max:255',
             'team_h_id' => 'nullable|integer',
             'team_a_id' => 'nullable|integer',
-            'phase' => 'sometimes|in:league,groups,round_16,quarter,semi,final,third_place',
+            'phase' => ['sometimes', 'string', Rule::in(array_keys(TournamentPhaseLabels::labels()))],
             'placeholder_h' => 'nullable|string|max:255',
             'placeholder_a' => 'nullable|string|max:255',
             'group_name' => 'nullable|string|max:255',
@@ -177,6 +182,11 @@ class MatchAdminController extends Controller
         if ($teamAssignmentChanged && $hasCompleteTeams && $sports->sportsMode() && ! $sports->isSuperAdmin($request->user())) {
             abort_unless(! DB::table('socialevent_organization_ledger')->where('match_id', $match->id)->where('entry_type', 'match_charge')->exists(), 422, 'No se pueden cambiar equipos de un partido ya cobrado.');
             $sports->assertCanCreateMatch($request->user(), (int) $match->edition_id);
+        }
+
+        // La fase se guarda siempre canonizada, venga como alias o como clave nueva.
+        if (isset($validated['phase'])) {
+            $validated['phase'] = TournamentPhaseLabels::canonical($validated['phase']) ?? $validated['phase'];
         }
 
         DB::transaction(function () use ($match, $validated, $sports, $request, $teamAssignmentChanged, $hasCompleteTeams) {
@@ -293,6 +303,15 @@ class MatchAdminController extends Controller
             'score_h' => $match->score_h,
             'score_a' => $match->score_a,
             'phase' => $match->phase,
+            'phase_label' => TournamentPhaseLabels::label($match->phase),
+            // Cruce de ida y vuelta (la app los muestra cuando existen).
+            'tie_format' => $match->tie_format ?? TournamentTieService::FORMAT_SINGLE,
+            'decider' => $match->decider ?? TournamentTieService::DECIDER_NORMAL,
+            'tie_id' => $match->tie_id,
+            'leg' => $match->leg,
+            'tie' => ($match->tie_id || (int) $match->leg === 1)
+                ? app(TournamentTieService::class)->summary($match)
+                : null,
             'group_name' => $match->group_name,
             'round_number' => $match->round_number,
             'is_editable' => in_array($match->status, ['pending']),

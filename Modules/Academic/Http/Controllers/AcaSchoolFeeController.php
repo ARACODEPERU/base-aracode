@@ -36,12 +36,16 @@ class AcaSchoolFeeController extends Controller
         AcaSchoolFeeType::ensureDefaults();
 
         $years = AcaSchoolYear::where('school_id', $school->id)->orderByDesc('year')->get(['id', 'year', 'status']);
-        $levels = AcaSchoolLevel::where('school_id', $school->id)->where('status', true)->orderBy('sort_order')->get(['id', 'name']);
+        $activeYear = $years->firstWhere('status', 'active');
+        $yearId = (int) ($request->query('year_id') ?: ($activeYear->id ?? ($years->first()->id ?? 0)));
+
+        // Solo el año vigente admite cambios: los años pasados son historial.
+        $yearIsActive = (bool) $activeYear && (int) $yearId === (int) $activeYear->id;
+
+        $levels = AcaSchoolLevel::where('school_id', $school->id)->where('year_id', $yearId)->where('status', true)->orderBy('sort_order')->get(['id', 'name']);
         $grades = AcaSchoolGrade::whereIn('level_id', $levels->pluck('id'))->orderBy('sort_order')->get(['id', 'level_id', 'name']);
         $sections = AcaSchoolSection::whereIn('grade_id', $grades->pluck('id'))->where('status', true)->orderBy('name')->get(['id', 'grade_id', 'name', 'shift']);
         $feeTypes = AcaSchoolFeeType::orderBy('id')->get();
-
-        $yearId = (int) ($request->query('year_id') ?: ($years->firstWhere('status', 'active')->id ?? ($years->first()->id ?? 0)));
 
         $fees = AcaSchoolFee::query()
             ->where('year_id', $yearId)
@@ -59,6 +63,8 @@ class AcaSchoolFeeController extends Controller
             'feeTypes' => $feeTypes,
             'fees' => $fees,
             'filters' => ['year_id' => $yearId],
+            'activeYearId' => $activeYear?->id,
+            'yearIsActive' => $yearIsActive,
         ]);
     }
 
@@ -79,6 +85,11 @@ class AcaSchoolFeeController extends Controller
     public function destroy(int $id)
     {
         $fee = AcaSchoolFee::findOrFail($id);
+
+        if ($errors = $this->guardReadOnlyYear((int) $fee->year_id)) {
+            return response()->json(['success' => false, 'message' => reset($errors)], 422);
+        }
+
         $fee->delete();
 
         return response()->json(['success' => true, 'message' => 'Tarifa eliminada correctamente']);
@@ -116,6 +127,11 @@ class AcaSchoolFeeController extends Controller
             'status' => 'nullable|boolean',
         ]);
 
+        // Los años pasados son historial: solo el año vigente admite cambios.
+        if ($errors = $this->guardReadOnlyYear((int) $validated['year_id'])) {
+            return $this->response($request, reset($errors), $errors);
+        }
+
         $duplicate = AcaSchoolFee::where('year_id', $validated['year_id'])
             ->where('fee_type_id', $validated['fee_type_id'])
             ->where('level_id', $validated['level_id'] ?? null)
@@ -149,6 +165,34 @@ class AcaSchoolFeeController extends Controller
         }
 
         return $this->response($request, $message);
+    }
+
+    /**
+     * Año vigente del colegio activo.
+     */
+    private function activeYearId(): ?int
+    {
+        $schoolId = $this->context->currentSchoolId();
+
+        return AcaSchoolYear::where('school_id', $schoolId)
+            ->where('status', AcaSchoolYear::STATUS_ACTIVE)
+            ->orderByDesc('year')
+            ->value('id');
+    }
+
+    /**
+     * Los años pasados son historial de solo lectura. Devuelve los errores
+     * (vacío si el año es el vigente o no hay año activo).
+     */
+    private function guardReadOnlyYear(int $yearId): array
+    {
+        $activeYearId = $this->activeYearId();
+
+        if ($activeYearId && $yearId !== $activeYearId) {
+            return ['year_id' => 'El año elegido es histórico: solo el año vigente admite cambios.'];
+        }
+
+        return [];
     }
 
     private function response(Request $request, string $message, array $errors = [])

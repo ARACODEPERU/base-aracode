@@ -117,10 +117,12 @@ class TournamentRankingsService
             }
 
             $playerId = $stat->player_id;
+            // La valla invicta no puntúa en "mejor jugador": es métrica del
+            // arquero. Aquí solo mandan asistencias, MVP, goles (desempate) y
+            // la sanción.
             $points = ($stat->goals * ($weights['goal'] ?? 3))
                 + ($stat->assists * ($weights['assist'] ?? 2))
-                + ($stat->is_mvp ? ($weights['mvp'] ?? 5) : 0)
-                + ($stat->clean_sheet ? ($weights['clean_sheet'] ?? 1) : 0);
+                + ($stat->is_mvp ? ($weights['mvp'] ?? 5) : 0);
 
             if (! isset($players[$playerId])) {
                 // La sanción se descuenta una sola vez por edición. Antes se
@@ -516,10 +518,11 @@ class TournamentRankingsService
                 + ($stat->is_mvp ? ($weights['mvp'] ?? 5) : 0)
                 + ($stat->clean_sheet ? ($weights['clean_sheet'] ?? 5) : 0);
         } else {
+            // Mismo criterio que el ranking: la valla invicta no aporta puntos
+            // al "mejor jugador", así el total del modal coincide con la tarjeta.
             $points = ($stat->goals * ($weights['goal'] ?? 3))
                 + ($stat->assists * ($weights['assist'] ?? 2))
-                + ($stat->is_mvp ? ($weights['mvp'] ?? 5) : 0)
-                + ($stat->clean_sheet ? ($weights['clean_sheet'] ?? 1) : 0);
+                + ($stat->is_mvp ? ($weights['mvp'] ?? 5) : 0);
         }
 
         return (float) $points - ($sanctions * ($weights['sanction_penalty'] ?? 1));
@@ -578,7 +581,8 @@ class TournamentRankingsService
         } else {
             $saveUnit = null;
             $mvpUnit = (float) ($weights['mvp'] ?? 5);
-            $cleanSheetUnit = (float) ($weights['clean_sheet'] ?? 1);
+            // La valla invicta no explica el puntaje de un jugador de campo.
+            $cleanSheetUnit = null;
         }
 
         $penaltyUnit = (float) ($weights['sanction_penalty'] ?? 1);
@@ -626,7 +630,9 @@ class TournamentRankingsService
             ];
         }
 
-        if ((int) $totals['clean_sheet'] > 0) {
+        // Solo el arquero explica su valla invicta: en "mejor jugador" ese
+        // concepto no suma, así que no se lista entre los motivos del puntaje.
+        if ($category === 'goalkeeper' && (int) $totals['clean_sheet'] > 0) {
             $reasons[] = [
                 'concept' => 'Valla invicta',
                 'count' => (int) $totals['clean_sheet'],

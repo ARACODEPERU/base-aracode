@@ -35,6 +35,7 @@ use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
 use Modules\Academic\Http\Controllers\AcaSchoolAreaController;
 use Modules\Academic\Http\Controllers\AcaSchoolChargeController;
 use Modules\Academic\Http\Controllers\AcaSchoolController;
+use Modules\Academic\Http\Controllers\AcaSchoolPeriodController;
 use Modules\Academic\Http\Controllers\AcaSchoolEnrollmentController;
 use Modules\Academic\Http\Controllers\AcaSchoolFeeController;
 use Modules\Academic\Http\Controllers\AcaSchoolGateController;
@@ -870,6 +871,16 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->put('school/years/activate/{id}', [AcaSchoolYearController::class, 'activate'])->name('aca_school_years_activate');
     Route::middleware(['middleware' => 'permission:aca_school_year_editar'])
         ->put('school/years/close/{id}', [AcaSchoolYearController::class, 'close'])->name('aca_school_years_close');
+
+    // Períodos académicos (bimestres/trimestres/etc. por año escolar)
+    Route::middleware(['middleware' => 'permission:aca_school_period_listado'])
+        ->get('school/periods', [AcaSchoolPeriodController::class, 'index'])->name('aca_school_periods_list');
+    Route::middleware(['middleware' => 'permission:aca_school_period_nuevo'])
+        ->post('school/periods/store', [AcaSchoolPeriodController::class, 'store'])->name('aca_school_periods_store');
+    Route::middleware(['middleware' => 'permission:aca_school_period_editar'])
+        ->put('school/periods/update/{id}', [AcaSchoolPeriodController::class, 'update'])->name('aca_school_periods_update');
+    Route::middleware(['middleware' => 'permission:aca_school_period_eliminar'])
+        ->delete('school/periods/destroy/{id}', [AcaSchoolPeriodController::class, 'destroy'])->name('aca_school_periods_destroy');
 
     // Áreas curriculares: catalogo que alimenta el registro de notas
     Route::middleware(['middleware' => 'permission:aca_school_area_listado'])

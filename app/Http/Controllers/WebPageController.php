@@ -75,7 +75,7 @@ class WebPageController extends Controller
         // PW00001 desde Parámetros y el catálogo de portadas disponibles vive en
         // config/pagina_principal.php (ver App\Support\PaginaPrincipal).
         $portada = PaginaPrincipal::seleccionada();
-
+        //dd($portada);
         // La portada de torneos es la única que necesita datos de la base de
         // datos; las demás se renderizan solas.
         if ($portada === PaginaPrincipal::TORNEOS) {

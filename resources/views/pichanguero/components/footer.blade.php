@@ -24,7 +24,11 @@
                 <ul class="mt-4 space-y-3 text-sm">
                     <li><a href="{{ route('pichanguero.home') }}#beneficios" class="pg-link">Beneficios</a></li>
                     <li><a href="{{ route('pichanguero.home') }}#como-funciona" class="pg-link">Cómo funciona</a></li>
-                    <li><a href="{{ route('pichanguero.descargas') }}" class="pg-link">Descargas</a></li>
+                    {{-- La app Android aún no está publicada (ver config/pichanguero.php). --}}
+                    @if (config('pichanguero.app_disponible', false))
+                        <li><a href="{{ route('pichanguero.descargas') }}" class="pg-link">Descargas</a></li>
+                    @endif
+                    <li><a href="{{ config('pichanguero.registro_url') }}" class="pg-link">Crear cuenta</a></li>
                     <li><a href="{{ route('pichanguero.contacto') }}" class="pg-link">Contacto</a></li>
                 </ul>
             </div>

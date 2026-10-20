@@ -23,6 +23,27 @@ assets de ARACODE). Está pensado para copiarse a su propio dominio junto con to
 
 El prefijo `site/pichanguero` existe solo para convivir con el sitio ARACODE en este repositorio.
 
+## Descargas de la app y botón «Crear cuenta»
+
+La app Android todavía no está publicada, así que el sitio **no ofrece ninguna descarga**: la portada
+no muestra la sección de descarga ni el enlace «Descargas» de la cabecera y del pie, y en su lugar
+aparece el botón **«Crear cuenta»**, que lleva al registro de la plataforma de torneos
+(`https://avc.pichanguero.com/register`).
+
+Todo eso lo decide `config/pichanguero.php`, sin tocar las vistas:
+
+| Clave | Variable de entorno | Para qué sirve |
+| --- | --- | --- |
+| `registro_url` | `PICHANGUERO_REGISTRO_URL` | Destino de los botones «Crear cuenta» (cabecera, portada, pasos, llamada final y pie) |
+| `app_disponible` | `PICHANGUERO_APP_DISPONIBLE` | `false` (por defecto): oculta las descargas. `true`: vuelve a mostrarlas |
+
+Las vistas leen el interruptor con `@if (config('pichanguero.app_disponible'))`, así que al publicar
+la app solo hay que poner `PICHANGUERO_APP_DISPONIBLE=true` y ejecutar `php artisan config:clear`:
+el contenido de descargas vuelve a aparecer tal como está escrito, sin recuperar código.
+
+La página `/descargas` sigue existiendo con su contenido; mientras el interruptor esté en `false`
+simplemente no se enlaza desde el sitio.
+
 ## Compilar el CSS
 
 ```bash

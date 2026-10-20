@@ -106,6 +106,10 @@ class PermissionTableSeeder extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_year_listado']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_year_nuevo']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_year_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_period_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_period_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_period_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_period_eliminar']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_estructura']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_alumno_listado']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_alumno_nuevo']));

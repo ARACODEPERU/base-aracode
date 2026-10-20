@@ -1,13 +1,23 @@
 {{-- Navbar del sitio Pichanguero (propia, sin dependencias de ARACODE) --}}
 @php
+    // La app Android aún no está publicada: mientras `app_disponible` sea false
+    // la cabecera no ofrece la página de descargas y su acción principal pasa a
+    // ser crear cuenta en la plataforma de torneos.
+    $appDisponible = (bool) config('pichanguero.app_disponible', false);
+    $registroUrl = config('pichanguero.registro_url');
+
     // Enlaces principales: mismo destino que antes, en un solo lugar.
     $navLinks = [
         ['route' => 'pichanguero.home', 'label' => 'Inicio', 'active' => request()->routeIs('pichanguero.home'), 'hash' => ''],
         ['route' => 'pichanguero.home', 'label' => 'Beneficios', 'active' => false, 'hash' => '#beneficios'],
         ['route' => 'pichanguero.home', 'label' => 'Cómo funciona', 'active' => false, 'hash' => '#como-funciona'],
-        ['route' => 'pichanguero.descargas', 'label' => 'Descargas', 'active' => request()->routeIs('pichanguero.descargas'), 'hash' => ''],
-        ['route' => 'pichanguero.contacto', 'label' => 'Contacto', 'active' => request()->routeIs('pichanguero.contacto'), 'hash' => ''],
     ];
+
+    if ($appDisponible) {
+        $navLinks[] = ['route' => 'pichanguero.descargas', 'label' => 'Descargas', 'active' => request()->routeIs('pichanguero.descargas'), 'hash' => ''];
+    }
+
+    $navLinks[] = ['route' => 'pichanguero.contacto', 'label' => 'Contacto', 'active' => request()->routeIs('pichanguero.contacto'), 'hash' => ''];
 @endphp
 
 <nav class="pg-nav pg-surface-dark" id="pgNav">
@@ -37,9 +47,15 @@
                 @include('pichanguero.components.theme-switch')
 
                 <div class="hidden lg:block">
-                    <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-primary pg-btn-sm">
-                        Descargar la app
-                    </a>
+                    @if ($appDisponible)
+                        <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-primary pg-btn-sm">
+                            Descargar la app
+                        </a>
+                    @else
+                        <a href="{{ $registroUrl }}" class="pg-btn pg-btn-primary pg-btn-sm">
+                            Crear cuenta
+                        </a>
+                    @endif
                 </div>
 
                 {{-- Botón menú móvil --}}
@@ -84,8 +100,14 @@
             @endforeach
         </nav>
 
-        <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-primary mt-8 w-full">
-            Descargar la app
-        </a>
+        @if ($appDisponible)
+            <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-primary mt-8 w-full">
+                Descargar la app
+            </a>
+        @else
+            <a href="{{ $registroUrl }}" class="pg-btn pg-btn-primary mt-8 w-full">
+                Crear cuenta
+            </a>
+        @endif
     </div>
 </div>

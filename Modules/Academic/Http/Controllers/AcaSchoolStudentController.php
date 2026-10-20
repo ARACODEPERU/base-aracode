@@ -41,9 +41,15 @@ class AcaSchoolStudentController extends Controller
                 ->onEachSide(2)
                 ->withQueryString();
 
-            // Opciones para los filtros en cascada Nivel -> Grado -> Sección.
+            // Opciones para los filtros en cascada Nivel -> Grado -> Sección
+            // (estructura del año activo).
+            $activeYearId = AcaSchoolYear::where('school_id', $school->id)
+                ->where('status', AcaSchoolYear::STATUS_ACTIVE)
+                ->value('id');
+
             $filterOptions = AcaSchoolLevel::query()
                 ->where('school_id', $school->id)
+                ->when($activeYearId, fn ($q) => $q->where('year_id', $activeYearId))
                 ->where('status', true)
                 ->orderBy('sort_order')
                 ->with(['grades' => fn ($q) => $q->orderBy('sort_order'), 'grades.sections' => fn ($q) => $q->orderBy('id')])

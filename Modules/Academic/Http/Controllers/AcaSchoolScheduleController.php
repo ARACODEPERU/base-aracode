@@ -65,8 +65,41 @@ class AcaSchoolScheduleController extends Controller
 
     private function currentYear(): ?AcaSchoolYear
     {
-        return AcaSchoolYear::where('status', AcaSchoolYear::STATUS_ACTIVE)->orderBy('id')->first()
-            ?? AcaSchoolYear::orderByDesc('year')->first();
+        // Año vigente del colegio activo: prioriza el año marcado como activo
+        // y cae al más reciente del mismo colegio si ninguno está activo.
+        $schoolId = $this->context->currentSchoolId();
+
+        return AcaSchoolYear::where('school_id', $schoolId)
+            ->where('status', AcaSchoolYear::STATUS_ACTIVE)
+            ->orderByDesc('year')
+            ->first()
+            ?? AcaSchoolYear::where('school_id', $schoolId)
+                ->orderByDesc('year')
+                ->first();
+    }
+
+    /**
+     * Solo el año vigente admite cambios: los años pasados quedan como
+     * historial de solo lectura. Devuelve el año si es editable o null.
+     */
+    private function currentYearId(): ?int
+    {
+        return $this->currentYear()?->id;
+    }
+
+    /**
+     * Verifica que la sección/bloque pertenezca al año vigente antes de
+     * escribir. Devuelve un array de errores (vacío si es editable).
+     */
+    private function guardReadOnlySection(?AcaSchoolSection $section): array
+    {
+        $activeYearId = $this->currentYearId();
+
+        if ($section && $activeYearId && (int) $section->year_id !== $activeYearId) {
+            return ['year_id' => 'El año elegido es histórico: solo el año vigente admite cambios.'];
+        }
+
+        return [];
     }
 
     /**
@@ -112,6 +145,7 @@ class AcaSchoolScheduleController extends Controller
 
         $sections = AcaSchoolSection::with('grade.level')
             ->where('school_id', $school->id)
+            ->where('year_id', $yearId)
             ->orderBy('grade_id')
             ->orderBy('name')
             ->get()
@@ -183,8 +217,12 @@ class AcaSchoolScheduleController extends Controller
                     'status' => $y->status,
                 ]),
             'yearId' => $yearId ?: null,
+            // Año vigente del colegio y bandera de solo lectura: cuando el año
+            // consultado no es el activo, la vista entra en modo historial.
+            'activeYearId' => $year?->id,
+            'yearIsActive' => $yearId && (int) $yearId === (int) $year?->id,
             // La jornada se configura por nivel, existan o no secciones creadas.
-            'levels' => $this->levelsPayload($school->id),
+            'levels' => $this->levelsPayload($school->id, $yearId),
             'sections' => $sections,
             'sectionId' => $sectionId ?: null,
             'section' => $section ? array_merge($section, ['students' => $students]) : null,
@@ -197,7 +235,7 @@ class AcaSchoolScheduleController extends Controller
                     ->orderBy('name')
                     ->get(['id', 'name'])
                 : [],
-            'teachers' => $this->teachersPayload($school->id),
+            'teachers' => $this->teachersPayload($school->id, $yearId),
             'journeys' => $this->journeysPayload($school->id),
             'journey' => $journey ? [
                 'id' => $journey->id,
@@ -219,6 +257,8 @@ class AcaSchoolScheduleController extends Controller
             'school' => null,
             'years' => [],
             'yearId' => null,
+            'activeYearId' => null,
+            'yearIsActive' => false,
             'levels' => [],
             'sections' => [],
             'sectionId' => null,
@@ -234,12 +274,14 @@ class AcaSchoolScheduleController extends Controller
     }
 
     /**
-     * Niveles activos del colegio. Alimenta el combo del modal de jornada, que
-     * debe listar Primaria y Secundaria aunque todavia no tengan secciones.
+     * Niveles activos del colegio para el año dado. Alimenta el combo del
+     * modal de jornada, que debe listar Primaria y Secundaria aunque todavia
+     * no tengan secciones.
      */
-    private function levelsPayload(int $schoolId): array
+    private function levelsPayload(int $schoolId, int $yearId = 0): array
     {
         return AcaSchoolLevel::where('school_id', $schoolId)
+            ->when($yearId, fn ($q) => $q->where('year_id', $yearId))
             ->where('status', true)
             ->orderBy('sort_order')
             ->orderBy('id')
@@ -277,7 +319,7 @@ class AcaSchoolScheduleController extends Controller
      *
      * @return array<int, array<string, mixed>>
      */
-    private function teachersPayload(int $schoolId): array
+    private function teachersPayload(int $schoolId, int $yearId = 0): array
     {
         $levelIds = [];
         $sectionIds = [];
@@ -292,10 +334,11 @@ class AcaSchoolScheduleController extends Controller
             }
         };
 
-        // Tutor o auxiliar de una seccion del colegio.
+        // Tutor o auxiliar de una seccion del colegio (del año dado).
         $staffedSections = DB::table('aca_school_sections as s')
             ->join('aca_school_grades as g', 'g.id', '=', 's.grade_id')
             ->where('s.school_id', $schoolId)
+            ->when($yearId, fn ($q) => $q->where('s.year_id', $yearId))
             ->where(function ($query) {
                 $query->whereNotNull('s.tutor_person_id')
                     ->orWhereNotNull('s.auxiliary_person_id');
@@ -320,6 +363,7 @@ class AcaSchoolScheduleController extends Controller
             ->join('aca_school_sections as s', 's.id', '=', 'h.section_id')
             ->join('aca_school_grades as g', 'g.id', '=', 's.grade_id')
             ->where('h.school_id', $schoolId)
+            ->when($yearId, fn ($q) => $q->where('h.year_id', $yearId))
             ->whereNotNull('h.teacher_person_id')
             ->get(['h.teacher_person_id', 'h.section_id', 'g.level_id']);
 
@@ -411,6 +455,11 @@ class AcaSchoolScheduleController extends Controller
 
         $section = AcaSchoolSection::with('grade.level')->findOrFail($request->input('section_id'));
         $block = $id ? AcaSchoolSchedule::findOrFail($id) : new AcaSchoolSchedule();
+
+        // Los años pasados son historial: solo el año vigente admite cambios.
+        if ($errors = $this->guardReadOnlySection($section)) {
+            return $this->response($request, null, $errors);
+        }
 
         $start = $this->normalizeTime($request->input('start_time'));
         $end = $this->normalizeTime($request->input('end_time'));
@@ -536,6 +585,11 @@ class AcaSchoolScheduleController extends Controller
     public function destroy(int $id)
     {
         $block = AcaSchoolSchedule::findOrFail($id);
+
+        if ($errors = $this->guardReadOnlySection($block->section)) {
+            return response()->json(['success' => false, 'message' => reset($errors)], 422);
+        }
+
         $block->delete();
 
         return response()->json(['success' => true, 'message' => 'Bloque del horario eliminado correctamente']);
@@ -557,6 +611,10 @@ class AcaSchoolScheduleController extends Controller
 
         $section = AcaSchoolSection::findOrFail($request->input('section_id'));
         $from = (int) $request->input('from_weekday');
+
+        if ($errors = $this->guardReadOnlySection($section)) {
+            return $this->response($request, null, $errors);
+        }
         $targets = collect($request->input('to_weekdays'))->map(fn ($d) => (int) $d)->reject(fn ($d) => $d === $from)->unique();
         $replace = $request->boolean('replace');
 
@@ -631,6 +689,10 @@ class AcaSchoolScheduleController extends Controller
 
         $section = AcaSchoolSection::findOrFail($request->input('section_id'));
         $sourceSection = AcaSchoolSection::findOrFail($request->input('source_section_id'));
+
+        if ($errors = $this->guardReadOnlySection($section)) {
+            return $this->response($request, null, $errors);
+        }
 
         if ($section->school_id !== $sourceSection->school_id) {
             return $this->response($request, null, ['source_section_id' => 'Las secciones pertenecen a colegios distintos.']);

@@ -50,10 +50,13 @@ class TournamentPublicDataService
     public function buildForLanding(EventEdition $edition): array
     {
         $editionId = $edition->id;
+        $fixture = $this->fixtureService->groupedFixture($editionId);
 
         return [
             'edition' => $edition,
-            'matches' => $this->fixtureService->groupedFixture($editionId),
+            'matches' => $fixture,
+            // Cuartos de final a ida y vuelta: la landing los pinta en una fila por llave.
+            'quarterfinalTies' => $this->fixtureService->quarterfinalTies($fixture),
             'currentEquipment' => $this->standingsService->sortedTeams($editionId),
             'pointAdjustments' => EventEditionPointAdjustment::netByTeam($editionId),
             'playersRanking' => $this->rankingsService->topPlayers($editionId),

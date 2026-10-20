@@ -10,6 +10,7 @@ use Modules\Academic\Entities\AcaSchoolEnrollment;
 use Modules\Academic\Entities\AcaSchoolGrade;
 use Modules\Academic\Entities\AcaSchoolLevel;
 use Modules\Academic\Entities\AcaSchoolSection;
+use Modules\Academic\Entities\AcaSchoolYear;
 use Modules\Academic\Entities\AcaTeacher;
 use Modules\Academic\Services\SchoolContextService;
 
@@ -17,6 +18,22 @@ class AcaSchoolStructureController extends Controller
 {
     public function __construct(private SchoolContextService $context)
     {
+    }
+
+    /**
+     * Año escolar activo del colegio actual. La estructura (niveles/grados/
+     * secciones) se gestiona por año: cada año tiene su propia copia.
+     */
+    private function activeYear($schoolId = null): ?AcaSchoolYear
+    {
+        $schoolId = $schoolId ?? $this->context->currentSchoolId();
+        if (! $schoolId) {
+            return null;
+        }
+
+        return AcaSchoolYear::where('school_id', $schoolId)
+            ->where('status', AcaSchoolYear::STATUS_ACTIVE)
+            ->first();
     }
 
     /**
@@ -54,16 +71,29 @@ class AcaSchoolStructureController extends Controller
             return Inertia::render('Academic::School/Structure/Index', [
                 'tree' => [],
                 'shifts' => [],
+                'activeYear' => null,
+            ]);
+        }
+
+        $year = $this->activeYear($school->id);
+
+        if (! $year) {
+            return Inertia::render('Academic::School/Structure/Index', [
+                'tree' => [],
+                'shifts' => AcaSchoolSection::shiftLabels(),
+                'activeYear' => null,
             ]);
         }
 
         $activeTaken = AcaSchoolEnrollment::selectRaw('section_id, COUNT(*) as total')
             ->where('school_id', $school->id)
+            ->where('year_id', $year->id)
             ->where('status', AcaSchoolEnrollment::STATUS_ACTIVO)
             ->groupBy('section_id')
             ->pluck('total', 'section_id');
 
         $levels = AcaSchoolLevel::where('school_id', $school->id)
+            ->where('year_id', $year->id)
             ->with([
                 'grades.sections' => function ($q) {
                     $q->withCount(['enrollments as enrollments_active_count' => function ($q2) {
@@ -114,6 +144,7 @@ class AcaSchoolStructureController extends Controller
         return Inertia::render('Academic::School/Structure/Index', [
             'tree' => $tree,
             'shifts' => AcaSchoolSection::shiftLabels(),
+            'activeYear' => ['id' => $year->id, 'year' => $year->year],
         ]);
     }
 
@@ -132,18 +163,26 @@ class AcaSchoolStructureController extends Controller
             return back()->withErrors(['name' => 'No hay un colegio configurado.']);
         }
 
+        $year = $this->activeYear($school->id);
+        if (! $year) {
+            return back()->withErrors(['name' => 'Active un año escolar primero para gestionar la estructura.']);
+        }
+
         $code = $request->get('code') ?: \Str::slug($request->get('name'), '_');
 
-        $exists = AcaSchoolLevel::where('school_id', $school->id)->where('code', $code)->exists();
+        $exists = AcaSchoolLevel::where('school_id', $school->id)
+            ->where('year_id', $year->id)
+            ->where('code', $code)->exists();
         if ($exists) {
-            return back()->withErrors(['name' => 'Ya existe un nivel con ese código.']);
+            return back()->withErrors(['name' => 'Ya existe un nivel con ese código en este año.']);
         }
 
         AcaSchoolLevel::create([
             'school_id' => $school->id,
+            'year_id' => $year->id,
             'code' => $code,
             'name' => $request->get('name'),
-            'sort_order' => ((int) AcaSchoolLevel::where('school_id', $school->id)->max('sort_order')) + 1,
+            'sort_order' => ((int) AcaSchoolLevel::where('school_id', $school->id)->where('year_id', $year->id)->max('sort_order')) + 1,
             'status' => true,
         ]);
 
@@ -184,8 +223,11 @@ class AcaSchoolStructureController extends Controller
     {
         $this->validate($request, ['level_id' => 'required|integer', 'name' => 'required|max:100']);
 
+        $level = AcaSchoolLevel::findOrFail($request->get('level_id'));
+
         AcaSchoolGrade::create([
             'school_id' => $this->context->currentSchoolId(),
+            'year_id' => $level->year_id,
             'level_id' => $request->get('level_id'),
             'name' => $request->get('name'),
             'sort_order' => ((int) AcaSchoolGrade::where('level_id', $request->get('level_id'))->max('sort_order')) + 1,
@@ -236,8 +278,11 @@ class AcaSchoolStructureController extends Controller
             'auxiliary_person_id' => 'nullable|integer|exists:people,id',
         ]);
 
+        $grade = AcaSchoolGrade::findOrFail($request->get('grade_id'));
+
         AcaSchoolSection::create([
             'school_id' => $this->context->currentSchoolId(),
+            'year_id' => $grade->year_id,
             'grade_id' => $request->get('grade_id'),
             'name' => $request->get('name'),
             'capacity' => $request->get('capacity'),

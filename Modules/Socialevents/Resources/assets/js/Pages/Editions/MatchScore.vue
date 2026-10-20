@@ -21,6 +21,9 @@
     const props = defineProps({
         edition: { type: Object, default: () => ({}) },
         match: { type: Object, default: () => ({}) },
+        // Etiquetas de fase del catálogo único del servidor.
+        phaseLabels: { type: Object, default: () => ({}) },
+        tieFormats: { type: Array, default: () => [] },
     });
 
     // ─── Formulario del acta ───────────────────────────────────────────────
@@ -65,13 +68,23 @@
         () => ['finished', 'closed'].includes(props.match.status)
     );
 
-    const phaseLabels = {
-        league: 'Fase de grupos / liga',
-        quarterfinals: 'Cuartos de final',
-        semifinals: 'Semifinales',
-        final: 'Final',
-        third_place: 'Tercer lugar',
-    };
+    // Las etiquetas ya no se duplican aquí: llegan del catálogo del servidor.
+    const phaseLabel = (phase) => props.phaseLabels?.[phase] ?? String(phase ?? '').replace(/_/g, ' ');
+
+    // Resumen del cruce (ida/vuelta) que arma TournamentTieService.
+    const tieSummary = computed(() => props.match.tie ?? null);
+
+    const tieGlobalLabel = computed(() => {
+        const tie = tieSummary.value;
+
+        if (!tie || !tie.is_tie) return null;
+
+        const how = { aggregate: 'global', penalties: 'penales', pending: 'pendiente' }[tie.decided_by] ?? '';
+
+        return `${tie.aggregate_h} - ${tie.aggregate_a}${how ? ' (' + how + ')' : ''}`;
+    });
+
+    const isSuddenDeath = computed(() => props.match.decider === 'sudden_death');
 
     // ─── Tiempos y cambios ─────────────────────────────────────────────────
     // Misma resolución que el backend: override del partido → edición → preset.
@@ -912,8 +925,14 @@
                     <p class="text-xs text-gray-500 dark:text-gray-400">
                         {{ match.match_date ? match.match_date : 'Horario por definir' }}
                         <span v-if="match.location"> · {{ match.location }}</span>
-                        · {{ phaseLabels[match.phase] || match.phase }}
+                        · {{ phaseLabel(match.phase) }}
                         <span v-if="match.round_number"> · Fecha {{ match.round_number }}</span>
+                        <span v-if="tieSummary?.leg" class="ml-1 font-bold uppercase text-indigo-600 dark:text-indigo-300">
+                            · {{ tieSummary.leg === 1 ? 'Ida' : 'Vuelta' }}
+                        </span>
+                        <span v-if="tieGlobalLabel" class="ml-1 font-bold text-gray-700 dark:text-gray-200">
+                            · Global {{ tieGlobalLabel }}
+                        </span>
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
@@ -931,6 +950,9 @@
 
             <!-- Marcador y estado del encuentro -->
             <div class="rounded-xl border border-default p-4 dark:border-blue-900">
+                <div v-if="isSuddenDeath" class="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+                    Muerte súbita: el primero que anota gana. No se admite empate ni se registran penales.
+                </div>
                 <div class="grid sm:grid-cols-5 gap-2 items-center">
                     <div class="sm:col-span-2 flex items-center justify-between">
                         <InputLabel :value="formScore.equipo_h_name || 'Local'" />

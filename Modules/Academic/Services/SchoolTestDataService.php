@@ -294,7 +294,7 @@ class SchoolTestDataService
 
         DB::transaction(function () use ($school, $register, $sectionsPerGrade, $studentsPerSection) {
             $year = $this->ensureYear($school, $register);
-            $levels = $this->ensureLevels($school, $register);
+            $levels = $this->ensureLevels($school, $year->id, $register);
 
             foreach ($levels as $level) {
                 $this->ensureJourney($school, $level, $register);
@@ -302,7 +302,7 @@ class SchoolTestDataService
             }
 
             $teachers = $this->ensureTeachers($school, $register);
-            $sections = $this->ensureGradesAndSections($school, $levels, $teachers, $sectionsPerGrade, $register);
+            $sections = $this->ensureGradesAndSections($school, $year->id, $levels, $teachers, $sectionsPerGrade, $register);
 
             $this->ensureStudents($school, $year, $sections, $studentsPerSection, $register);
             $this->ensureSchedules($school, $year, $sections, $register);
@@ -359,18 +359,20 @@ class SchoolTestDataService
      *
      * @return Collection<int, AcaSchoolLevel>
      */
-    private function ensureLevels(AcaSchool $school, callable $register): Collection
+    private function ensureLevels(AcaSchool $school, int $yearId, callable $register): Collection
     {
         $levels = new Collection();
 
         foreach (self::TEST_LEVEL_STRUCTURE as $index => $definition) {
             $level = AcaSchoolLevel::where('school_id', $school->id)
+                ->where('year_id', $yearId)
                 ->where('code', $definition['code'])
                 ->first();
 
             if (! $level) {
                 $level = AcaSchoolLevel::create([
                     'school_id' => $school->id,
+                    'year_id' => $yearId,
                     'code' => $definition['code'],
                     'name' => $definition['name'],
                     'sort_order' => $index + 1,
@@ -395,7 +397,7 @@ class SchoolTestDataService
      *
      * @return Collection<int, AcaSchoolGrade>
      */
-    private function ensureGradesAndSections(AcaSchool $school, Collection $levels, Collection $teachers, int $sectionsPerGrade, callable $register): Collection
+    private function ensureGradesAndSections(AcaSchool $school, int $yearId, Collection $levels, Collection $teachers, int $sectionsPerGrade, callable $register): Collection
     {
         $registeredGrades = $this->registeredModels($school, self::ENTITY_GRADE, AcaSchoolGrade::class);
         $sections = $this->registeredModels($school, self::ENTITY_SECTION, AcaSchoolSection::class);
@@ -412,6 +414,7 @@ class SchoolTestDataService
                 foreach ($gradeNames as $index => $gradeName) {
                     $grade = AcaSchoolGrade::create([
                         'school_id' => $school->id,
+                        'year_id' => $yearId,
                         'level_id' => $level->id,
                         'name' => self::MARK.' '.$gradeName,
                         'sort_order' => $index + 1,
@@ -433,6 +436,7 @@ class SchoolTestDataService
 
                     $section = AcaSchoolSection::create([
                         'school_id' => $school->id,
+                        'year_id' => $yearId,
                         'grade_id' => $grade->id,
                         'name' => mb_substr($name, 0, 20),
                         'capacity' => max(1, self::DEFAULT_STUDENTS_PER_SECTION * 2),

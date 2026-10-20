@@ -36,8 +36,17 @@ class AcaSchoolAttendanceController extends Controller
 
     private function currentYear(): ?AcaSchoolYear
     {
-        return AcaSchoolYear::where('status', AcaSchoolYear::STATUS_ACTIVE)->orderBy('id')->first()
-            ?? AcaSchoolYear::orderBy('id')->first();
+        // Año vigente del colegio activo: prioriza el año marcado como activo
+        // y cae al más reciente del mismo colegio si ninguno está activo.
+        $schoolId = $this->context->currentSchoolId();
+
+        return AcaSchoolYear::where('school_id', $schoolId)
+            ->where('status', AcaSchoolYear::STATUS_ACTIVE)
+            ->orderByDesc('year')
+            ->first()
+            ?? AcaSchoolYear::where('school_id', $schoolId)
+                ->orderByDesc('year')
+                ->first();
     }
 
     private function currentPerson(): ?Person

@@ -24,6 +24,10 @@
             type: Object,
             default: () => ({}),
         },
+        // Catálogo único de fases y formatos de cruce del servidor.
+        phaseLabels: { type: Object, default: () => ({}) },
+        phaseOptions: { type: Array, default: () => [] },
+        tieFormats: { type: Array, default: () => [] },
     });
 
     const displayModalEdit = ref(false);
@@ -42,7 +46,40 @@
         phase: null,
         location: null,
         status: null,
+        // Formato del cruce (se sincroniza en la ida y en la vuelta).
+        tie_format: 'single',
     });
+
+    // Las fases de eliminación son las únicas que admiten ida y vuelta o muerte súbita.
+    const knockoutPhases = ['round_16', 'quarterfinals', 'semifinals', 'third_place', 'final', 'knockout', 'playoff'];
+    const editIsKnockoutPhase = computed(() => knockoutPhases.includes(formMatch.phase));
+
+    const matchFormatValue = (partido) => {
+        if (partido?.tie_format === 'home_and_away') {
+            return 'home_and_away';
+        }
+
+        return partido?.decider === 'sudden_death' ? 'single_sudden_death' : 'single';
+    };
+
+    const tieLegLabel = (match) => {
+        const leg = match?.tie?.leg;
+
+        if (leg === 1) return 'Ida';
+        if (leg === 2) return 'Vuelta';
+
+        return null;
+    };
+
+    const tieGlobalLabel = (match) => {
+        const tie = match?.tie;
+
+        if (!tie || !tie.is_tie) return null;
+
+        const how = { aggregate: 'global', penalties: 'penales', pending: 'pendiente' }[tie.decided_by] ?? '';
+
+        return `${tie.aggregate_h} - ${tie.aggregate_a}${how ? ' (' + how + ')' : ''}`;
+    };
 
     const openModalEdit = (partido) => {
         if(partido.status != 'closed'){
@@ -60,6 +97,7 @@
             formMatch.phase = partido.phase;
             formMatch.location = partido.location;
             formMatch.status = partido.status;
+            formMatch.tie_format = matchFormatValue(partido);
             displayModalEdit.value = true;
         } else {
             // Assuming showAlertStatus is defined or add a simple alert
@@ -165,6 +203,12 @@
                                     <div class="flex justify-between items-center text-sm font-bold text-slate-800 dark:text-slate-200">
                                         <span class="truncate pr-2">{{ match.equipovisitante?.short_name || match.placeholder_a || 'TBD' }}</span>
                                         <span class="text-slate-700 dark:text-slate-300 font-mono">{{ match.score_a ?? '-' }}</span>
+                                    </div>
+                                    <div v-if="tieLegLabel(match) || tieGlobalLabel(match)" class="mt-2 flex items-center justify-between gap-2 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                                        <span v-if="tieLegLabel(match)" class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200">
+                                            {{ tieLegLabel(match) }}
+                                        </span>
+                                        <span v-if="tieGlobalLabel(match)">Global {{ tieGlobalLabel(match) }}</span>
                                     </div>
                                     <div class="absolute top-1 right-1 z-30 flex items-center gap-1 bg-white/80 dark:bg-zinc-700/80 rounded-lg">
                                         <button
@@ -291,6 +335,29 @@
                             placeholder="0"
                         />
                         <InputError :message="formMatch.errors.score_a" />
+                    </div>
+                    <div>
+                        <InputLabel for="single_phase" value="Fase" />
+                        <select id="single_phase" v-model="formMatch.phase" class="form-select">
+                            <option v-for="option in phaseOptions" :key="option.value" :value="option.value">
+                                {{ option.label }}
+                            </option>
+                        </select>
+                        <InputError :message="formMatch.errors.phase" />
+                    </div>
+                    <div>
+                        <InputLabel for="single_tie_format" value="Formato del cruce" />
+                        <select id="single_tie_format" v-model="formMatch.tie_format" class="form-select">
+                            <option
+                                v-for="format in tieFormats"
+                                :key="format.value"
+                                :value="format.value"
+                                :disabled="format.value !== 'single' && !editIsKnockoutPhase"
+                            >
+                                {{ format.label }}
+                            </option>
+                        </select>
+                        <InputError :message="formMatch.errors.tie_format" />
                     </div>
                 </div>
             </template>

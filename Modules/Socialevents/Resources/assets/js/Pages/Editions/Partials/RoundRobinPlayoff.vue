@@ -55,7 +55,21 @@
         documentTypes: {
             type: Object,
             default: () => ({}),
-        }
+        },
+        // Etiquetas de fase del catálogo único del servidor (TournamentPhaseLabels).
+        phaseLabels: {
+            type: Object,
+            default: () => ({}),
+        },
+        // Solo claves canónicas, sin alias duplicados.
+        phaseOptions: {
+            type: Array,
+            default: () => [],
+        },
+        tieFormats: {
+            type: Array,
+            default: () => [],
+        },
     });
 
     const formTeams = useForm({
@@ -161,7 +175,22 @@
         phase: null,
         location: null,
         status: null,
+        // Formato del cruce (se sincroniza en la ida y en la vuelta).
+        tie_format: 'single',
     });
+
+    // Las fases de eliminación son las únicas que admiten ida y vuelta o muerte súbita.
+    const knockoutPhases = ['round_16', 'quarterfinals', 'semifinals', 'third_place', 'final', 'knockout', 'playoff'];
+    const editIsKnockoutPhase = computed(() => knockoutPhases.includes(formMatch.phase));
+
+    // Valor del selector a partir de los campos guardados del partido.
+    const matchFormatValue = (partido) => {
+        if (partido?.tie_format === 'home_and_away') {
+            return 'home_and_away';
+        }
+
+        return partido?.decider === 'sudden_death' ? 'single_sudden_death' : 'single';
+    };
 
     const teamsSortedDesc = computed(() => {
         return [...props.teams].sort((a, b) => (b.points || 0) - (a.points || 0));
@@ -184,6 +213,7 @@
             formMatch.phase = partido.phase;
             formMatch.location = partido.location;
             formMatch.status = partido.status;
+            formMatch.tie_format = matchFormatValue(partido);
             displayModalEdit.value = true;
         } else {
             showAlertStatus(partido.status)
@@ -333,18 +363,35 @@
         }
     }
 
+    // Las etiquetas vienen del servidor: una sola fuente de verdad para todas las vistas.
     const formatPhaseName = (phase) => {
-        let translations = {
-            'league': 'Fase de Grupos / Liga',
-            'quarterfinals': 'Cuartos de Final',
-            'semifinals': 'Semifinales',
-            'third_place': 'Tercer Puesto',
-            'final': 'Gran Final'
-        };
+        if (props.phaseLabels?.[phase]) {
+            return props.phaseLabels[phase];
+        }
 
-        // Si la fase existe en el diccionario, la devuelve.
-        // Si no, limpia el texto (quita guiones bajos) por si acaso.
-        return translations[phase] || phase.replace('_', ' ');
+        // Si el catálogo no la conoce, limpia el texto (quita guiones bajos) por si acaso.
+        return String(phase).replace(/_/g, ' ');
+    };
+
+    // Chip Ida/Vuelta para los cruces de dos partidos.
+    const tieLegLabel = (match) => {
+        const leg = match?.tie?.leg;
+
+        if (leg === 1) return 'Ida';
+        if (leg === 2) return 'Vuelta';
+
+        return null;
+    };
+
+    // Marcador global del cruce (se muestra en la vuelta y también en la ida una vez jugada).
+    const tieGlobalLabel = (match) => {
+        const tie = match?.tie;
+
+        if (!tie || !tie.is_tie) return null;
+
+        const how = { aggregate: 'global', penalties: 'penales', pending: 'pendiente' }[tie.decided_by] ?? '';
+
+        return `${tie.aggregate_h} - ${tie.aggregate_a}${how ? ' (' + how + ')' : ''}`;
     };
 
     // Funciones para mostrar resultado de penales en la lista de partidos
@@ -632,9 +679,17 @@
                             :key="match.id"
                             class="bg-white border rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden dark:bg-zinc-800 dark:border-zinc-800"
                         >
-                            <div class="bg-gray-50 px-4 py-2 text-xs font-medium text-gray-500 flex justify-between dark:bg-zinc-900 dark:text-gray-300">
+                            <div class="bg-gray-50 px-4 py-2 text-xs font-medium text-gray-500 flex justify-between items-center gap-2 dark:bg-zinc-900 dark:text-gray-300">
                                 <span>{{ match.match_date ? formatDate(match.match_date) : 'Horario por definir' }}</span>
-                                <span :class="statusBadge(match.status)" class="uppercase font-bold">{{ match.status }}</span>
+                                <span class="flex items-center gap-2">
+                                    <span
+                                        v-if="tieLegLabel(match)"
+                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200"
+                                    >
+                                        {{ tieLegLabel(match) }}
+                                    </span>
+                                    <span :class="statusBadge(match.status)" class="uppercase font-bold">{{ match.status }}</span>
+                                </span>
                             </div>
 
                             <div class="p-4 flex flex-col gap-3">
@@ -694,6 +749,14 @@
                                         </div>
                                     </div>
                                     <span class="text-xl font-black text-red-600">{{ match.score_a ?? '-' }}</span>
+                                </div>
+
+                                <!-- Marcador global del cruce de ida y vuelta -->
+                                <div
+                                    v-if="tieGlobalLabel(match)"
+                                    class="rounded-lg bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600 text-center dark:bg-zinc-900 dark:text-gray-300"
+                                >
+                                    Global: <span class="font-black text-gray-800 dark:text-white">{{ tieGlobalLabel(match) }}</span>
                                 </div>
                             </div>
 
@@ -835,6 +898,34 @@
                         placeholder="Selecciona fecha"
                     />
                     <InputError :message="formMatch.errors.match_date" />
+                </div>
+                <div class="col-span-6 md:col-span-3">
+                    <InputLabel for="form_phase" value="Fase" />
+                    <select id="form_phase" v-model="formMatch.phase" class="form-select">
+                        <option v-for="option in phaseOptions" :key="option.value" :value="option.value">
+                            {{ option.label }}
+                        </option>
+                    </select>
+                    <InputError :message="formMatch.errors.phase" />
+                </div>
+                <div class="col-span-6 md:col-span-3">
+                    <InputLabel for="form_tie_format" value="Formato del cruce" />
+                    <select id="form_tie_format" v-model="formMatch.tie_format" class="form-select">
+                        <option
+                            v-for="format in tieFormats"
+                            :key="format.value"
+                            :value="format.value"
+                            :disabled="format.value !== 'single' && !editIsKnockoutPhase"
+                        >
+                            {{ format.label }}
+                        </option>
+                    </select>
+                    <InputError :message="formMatch.errors.tie_format" />
+                </div>
+                <div v-if="formMatch.tie_format === 'home_and_away'" class="col-span-6">
+                    <div class="rounded-lg border border-blue-300 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                        La fase y el formato se aplican al cruce completo: la ida y la vuelta quedan siempre en la misma fase.
+                    </div>
                 </div>
                 <div class="col-span-6 md:col-span-4">
                     <div >

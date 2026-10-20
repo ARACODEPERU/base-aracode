@@ -13,6 +13,7 @@ import ModalLarge from '@/Components/ModalLarge.vue';
 const props = defineProps({
     tree: { type: Array, default: () => [] },
     shifts: { type: Object, default: () => ({}) },
+    activeYear: { type: Object, default: null },
 });
 
 const levelModal = ref(false);
@@ -218,14 +219,23 @@ const closeSectionModal = () => { sectionModal.value = false; };
         />
         <div class="pt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
-                <h2 class="text-xl">Estructura Académica</h2>
-                <button type="button" class="btn btn-primary" @click="openLevelCreate">
+                <h2 class="text-xl">
+                    Estructura Académica
+                    <span class="text-white-dark text-base">( {{ activeYear?.year ?? '—' }} )</span>
+                </h2>
+                <button v-if="activeYear" type="button" class="btn btn-primary" @click="openLevelCreate">
                     <font-awesome-icon :icon="faPlus" class="ltr:mr-2 rtl:ml-2" /> Nuevo Nivel
                 </button>
             </div>
 
-            <div v-if="tree.length === 0" class="mt-5 panel p-8 text-center text-white-dark">
-                Sin estructura. Active un año escolar en el menú <b>Años Escolares</b> para precargar Inicial, Primaria y Secundaria, o cree los niveles manualmente.
+            <div v-if="!activeYear" class="mt-5 panel p-8 text-center text-white-dark">
+                Active un año escolar primero para gestionar la estructura académica (niveles, grados y secciones).
+                <br />
+                <a :href="route('aca_school_years_list')" class="btn btn-primary mt-4">Ir a Años Escolares</a>
+            </div>
+
+            <div v-else-if="tree.length === 0" class="mt-5 panel p-8 text-center text-white-dark">
+                Sin estructura para el año {{ activeYear.year }}. Cree los niveles manualmente o vuelva a activar el año para precargar Inicial, Primaria y Secundaria.
             </div>
 
             <div v-for="level in tree" :key="level.id" class="mt-5 panel">

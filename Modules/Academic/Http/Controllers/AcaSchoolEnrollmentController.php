@@ -81,6 +81,8 @@ class AcaSchoolEnrollmentController extends Controller
             'typeLabels' => AcaSchoolEnrollment::typeLabels(),
             'statusLabels' => AcaSchoolEnrollment::statusLabels(),
             'filters' => $request->only(['year_id', 'level_id', 'grade_id', 'section_id', 'status', 'search']),
+            'activeYearId' => $data['activeYearId'],
+            'yearIsActive' => $data['yearIsActive'],
         ]);
     }
 
@@ -103,6 +105,8 @@ class AcaSchoolEnrollmentController extends Controller
             'levels' => $data['levels'],
             'typeLabels' => AcaSchoolEnrollment::typeLabels(),
             'guardianRelationships' => AcaSchoolStudentGuardian::relationshipLabels(),
+            'activeYearId' => $data['activeYearId'],
+            'yearIsActive' => $data['yearIsActive'],
             'preselect' => [
                 'year_id' => $request->query('year_id'),
                 'student_id' => $request->query('student_id'),
@@ -238,6 +242,11 @@ class AcaSchoolEnrollmentController extends Controller
             'observations' => 'nullable|max:1000',
         ]);
 
+        // Los años pasados son historial: solo el año vigente admite cambios.
+        if ($errors = $this->guardReadOnlyYear((int) $request->get('year_id'))) {
+            return back()->withErrors($errors);
+        }
+
         $school = $this->context->currentSchool();
 
         try {
@@ -307,6 +316,10 @@ class AcaSchoolEnrollmentController extends Controller
 
         $enrollment = AcaSchoolEnrollment::findOrFail($id);
 
+        if ($errors = $this->guardReadOnlyYear((int) $enrollment->year_id)) {
+            return back()->withErrors($errors);
+        }
+
         if ($enrollment->status === AcaSchoolEnrollment::STATUS_ANULADO) {
             return back()->withErrors(['status' => 'Una matrícula anulada no puede cambiar de estado.']);
         }
@@ -338,6 +351,10 @@ class AcaSchoolEnrollmentController extends Controller
         ]);
 
         $enrollment = AcaSchoolEnrollment::findOrFail($id);
+
+        if ($errors = $this->guardReadOnlyYear((int) $enrollment->year_id)) {
+            return back()->withErrors($errors);
+        }
 
         try {
             DB::transaction(function () use ($request, $enrollment) {
@@ -374,20 +391,63 @@ class AcaSchoolEnrollmentController extends Controller
     }
 
     /**
-     * Opciones de los filtros en cascada (solo del colegio activo).
+     * Opciones de los filtros en cascada (del colegio activo y del año
+     * seleccionado o activo). La estructura ahora es por año escolar.
      */
     private function filterOptions($school): array
     {
         if (! $school) {
-            return ['years' => [], 'levels' => [], 'grades' => [], 'sections' => []];
+            return ['years' => [], 'levels' => [], 'grades' => [], 'sections' => [], 'activeYearId' => null, 'yearIsActive' => true];
         }
 
+        $years = AcaSchoolYear::where('school_id', $school->id)->orderByDesc('year')->get(['id', 'year', 'status']);
+        $activeYear = $years->firstWhere('status', 'active');
+        $yearId = request()->query('year_id')
+            ?: $activeYear?->id
+            ?: $years->first()?->id;
+
         return [
-            'years' => AcaSchoolYear::where('school_id', $school->id)->orderByDesc('year')->get(['id', 'year', 'status']),
-            'levels' => AcaSchoolLevel::where('school_id', $school->id)->where('status', true)->orderBy('sort_order')->get(['id', 'name']),
-            'grades' => AcaSchoolGrade::whereIn('level_id', fn ($q) => $q->select('id')->from('aca_school_levels')->where('school_id', $school->id))
+            'years' => $years,
+            'activeYearId' => $activeYear?->id,
+            'yearIsActive' => ! $activeYear || ! $yearId || (int) $yearId === (int) $activeYear->id,
+            'levels' => AcaSchoolLevel::where('school_id', $school->id)
+                ->where('year_id', $yearId)
+                ->where('status', true)
+                ->orderBy('sort_order')->get(['id', 'name']),
+            'grades' => AcaSchoolGrade::whereIn('level_id', fn ($q) => $q->select('id')->from('aca_school_levels')
+                    ->where('school_id', $school->id)->where('year_id', $yearId))
                 ->orderBy('sort_order')->get(['id', 'level_id', 'name']),
-            'sections' => AcaSchoolSection::where('school_id', $school->id)->where('status', true)->orderBy('name')->get(['id', 'grade_id', 'name', 'shift']),
+            'sections' => AcaSchoolSection::where('school_id', $school->id)
+                ->where('year_id', $yearId)
+                ->where('status', true)->orderBy('name')->get(['id', 'grade_id', 'name', 'shift']),
         ];
+    }
+
+    /**
+     * Año vigente del colegio activo.
+     */
+    private function activeYearId(): ?int
+    {
+        $schoolId = $this->context->currentSchoolId();
+
+        return AcaSchoolYear::where('school_id', $schoolId)
+            ->where('status', AcaSchoolYear::STATUS_ACTIVE)
+            ->orderByDesc('year')
+            ->value('id');
+    }
+
+    /**
+     * Los años pasados son historial de solo lectura. Devuelve los errores
+     * (vacío si el año es el vigente o no hay año activo).
+     */
+    private function guardReadOnlyYear(int $yearId): array
+    {
+        $activeYearId = $this->activeYearId();
+
+        if ($activeYearId && $yearId !== $activeYearId) {
+            return ['year_id' => 'El año elegido es histórico: solo el año vigente admite cambios.'];
+        }
+
+        return [];
     }
 }

@@ -19,7 +19,16 @@
         locales: {
             type: Object,
             default: () => ({}),
-        }
+        },
+        // Catálogo de fases y formatos de cruce que envía el servidor.
+        phaseOptions: {
+            type: Array,
+            default: () => [],
+        },
+        tieFormats: {
+            type: Array,
+            default: () => [],
+        },
     });
 
 
@@ -49,6 +58,8 @@
                 :locales="locales"
                 :teams="teams"
                 :edition="edition"
+                :phase-options="phaseOptions"
+                :tie-formats="tieFormats"
             />
         </div>
     </AppLayout>
