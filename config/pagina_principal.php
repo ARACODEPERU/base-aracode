@@ -52,8 +52,8 @@ return [
 
         '2' => [
             'nombre' => 'Aracode torneos',
-            //'vista' => 'aracode.pages.torneos',
-            'vista' => 'pichanguero.pages.home',
+            'vista' => 'aracode.pages.torneos',
+            //'vista' => 'pichanguero.pages.home',
             'producto' => 'pichanguero',
         ],
 

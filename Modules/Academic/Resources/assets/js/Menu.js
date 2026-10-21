@@ -320,7 +320,7 @@ const colegioGroup = {
             route: route('aca_virtual_classroom_index'),
             status: false,
             text: 'Aula Virtual',
-            icom: faChalkboard,
+            icom: faBook,
             permissions: 'aca_virtual_listado',
             info: {
                 title: 'Aula Virtual',
