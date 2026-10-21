@@ -22,6 +22,8 @@ class OpenAiAssistantServiceTest extends TestCase
             'academic.openai.api_key_parameter' => null,
             'academic.openai.provider_parameter' => null,
             'academic.openai.agent_id_parameter' => null,
+            // Sin parametro IA-0000: se usa el respaldo del .env (5 s en pruebas).
+            'academic.openai.agent_timeout_parameter' => null,
         ]);
     }
 
@@ -349,6 +351,47 @@ class OpenAiAssistantServiceTest extends TestCase
             return str_ends_with($request->url(), '/agents/sessions')
                 && $request['agent_id'] === 'agent_from_parameter';
         });
+    }
+
+    public function test_agent_timeout_reads_ia_0000_in_minutes(): void
+    {
+        config([
+            'academic.openai.agent_timeout_parameter' => 'IA-0000',
+            'academic.openai.agent_timeout_minutes' => 6,
+        ]);
+
+        $service = new class extends OpenAiAssistantService {
+            protected function parameterValue(?string $parameterCode): ?string
+            {
+                return $parameterCode === 'IA-0000' ? '9' : null;
+            }
+        };
+
+        $this->assertSame(9, $service->agentTimeoutMinutes());
+    }
+
+    public function test_agent_timeout_defaults_to_six_minutes_without_parameter(): void
+    {
+        config([
+            'academic.openai.agent_timeout_parameter' => null,
+            'academic.openai.agent_timeout_minutes' => 6,
+        ]);
+
+        $this->assertSame(6, app(OpenAiAssistantService::class)->agentTimeoutMinutes());
+    }
+
+    public function test_agent_enabled_reports_whether_an_agent_is_configured(): void
+    {
+        config([
+            'academic.openai.agent_id_parameter' => null,
+            'academic.openai.agent_id' => 'agent_test',
+        ]);
+
+        $this->assertTrue(app(OpenAiAssistantService::class)->agentEnabled());
+
+        config(['academic.openai.agent_id' => null]);
+
+        $this->assertFalse(app(OpenAiAssistantService::class)->agentEnabled());
     }
 
     public function test_provider_reads_system_parameter(): void

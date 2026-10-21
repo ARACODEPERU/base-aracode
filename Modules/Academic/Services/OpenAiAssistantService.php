@@ -168,6 +168,10 @@ class OpenAiAssistantService
      */
     private function requestAgent(int|string $userId, string $message, ?string $customInstructions = null): string
     {
+        // El agente puede tardar varios minutos: el limite de ejecucion de PHP
+        // (30-60 s por defecto) cortaria la espera antes que la configuracion.
+        $this->extendExecutionTime();
+
         $agentId = $this->agentId();
 
         if ($agentId === null) {
@@ -245,8 +249,11 @@ class OpenAiAssistantService
      */
     private function waitForAgentAnswer(string $sessionId, ?string $previousAnswerId): string
     {
-        $deadline = microtime(true) + max(5, (int) config('academic.openai.agent_timeout', 90));
+        $deadline = microtime(true) + $this->agentTimeoutSeconds();
         $intervalUs = max(200, (int) config('academic.openai.agent_poll_interval_ms', 1000)) * 1000;
+        // Cada vuelta consulta el estado y los items: con esperas de minutos se
+        // espacia el sondeo para no saturar la API ni el rate limit de OpenAI.
+        $maxIntervalUs = 5000 * 1000;
 
         while (true) {
             $session = $this->agentClient()
@@ -275,6 +282,7 @@ class OpenAiAssistantService
             }
 
             usleep($intervalUs);
+            $intervalUs = min($maxIntervalUs, (int) ($intervalUs * 1.5));
         }
     }
 
@@ -351,11 +359,72 @@ class OpenAiAssistantService
 
     private function agentClient(): PendingRequest
     {
+        // Cada llamada (crear sesion, consultar estado o items) debe responder
+        // rapido: la espera larga la controla waitForAgentAnswer con su deadline.
         return Http::withToken($this->apiKey())
             ->baseUrl(self::BASE_URL)
             ->withHeaders(['OpenAI-Beta' => 'agents=v1'])
-            ->timeout(max(10, (int) config('academic.openai.agent_timeout', 90)) + 15)
+            ->timeout(60)
             ->connectTimeout(10);
+    }
+
+    /**
+     * true cuando hay un agente guardado configurado (IA-00003): el chat de
+     * consultas usara la Agents API y la interfaz puede avisar de la espera.
+     */
+    public function agentEnabled(): bool
+    {
+        return $this->agentId() !== null;
+    }
+
+    /**
+     * Espera maxima del agente en minutos. Se administra en el parametro
+     * IA-0000; sin el, se usa academic.openai.agent_timeout_minutes (6).
+     */
+    public function agentTimeoutMinutes(): int
+    {
+        $parameterCode = config('academic.openai.agent_timeout_parameter');
+
+        if ($parameterCode) {
+            $value = trim((string) $this->parameterValue($parameterCode));
+
+            if ($value !== '' && is_numeric($value)) {
+                return max(1, (int) $value);
+            }
+        }
+
+        return max(1, (int) config('academic.openai.agent_timeout_minutes', 6));
+    }
+
+    /**
+     * Espera maxima en segundos para el polling del agente. El parametro manda
+     * sobre el .env y se limita a 30 minutos para no dejar un pedido abierto
+     * indefinidamente si alguien escribe un numero enorme.
+     */
+    private function agentTimeoutSeconds(): int
+    {
+        $parameterCode = config('academic.openai.agent_timeout_parameter');
+
+        if ($parameterCode) {
+            $value = trim((string) $this->parameterValue($parameterCode));
+
+            if ($value !== '' && is_numeric($value)) {
+                return min(1800, max(60, (int) round((float) $value * 60)));
+            }
+        }
+
+        return max(5, (int) config('academic.openai.agent_timeout', 360));
+    }
+
+    /**
+     * Permite que el proceso PHP viva lo que dure la espera del agente.
+     * Algunos hospedajes deshabilitan set_time_limit: en ese caso se ignora.
+     */
+    private function extendExecutionTime(): void
+    {
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(0);
+        }
     }
 
     /**

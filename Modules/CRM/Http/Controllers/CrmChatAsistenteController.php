@@ -40,9 +40,14 @@ class CrmChatAsistenteController extends Controller
             $seleccionado = $asistentes->firstWhere('person_id', (int) $request->get('asistente'));
         }
 
+        $openAi = app(OpenAiAssistantService::class);
+
         return Inertia::render('CRM::Chat/Dashboard', [
             // Proveedor de IA del parametro IA-00002 (1 OpenAI, 2 Gemini).
-            'aiProvider' => app(OpenAiAssistantService::class)->provider(),
+            'aiProvider' => $openAi->provider(),
+            // El aviso de espera del loader solo aplica cuando hay agente.
+            'agentEnabled' => $openAi->agentEnabled(),
+            'agentMaxWaitMinutes' => $openAi->agentTimeoutMinutes(),
             'P000010' => Parameter::where('parameter_code', 'P000010')->value('value_default'),
             'modoAsistentes' => true,
             'asistentes' => $asistentes,
