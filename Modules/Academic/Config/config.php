@@ -1,5 +1,10 @@
 <?php
 
+/*
+ * La espera maxima del agente de OpenAI vive solo en el parametro del sistema
+ * IA-00004 (en minutos): no se configura por .env. OpenAiAssistantService lee
+ * siempre ese codigo y, si todavia no tiene un valor valido, espera 6 minutos.
+ */
 return [
     'name' => 'Academic',
 
@@ -24,16 +29,6 @@ return [
          */
         'agent_id_parameter' => env('OPENAI_AGENT_ID_PARAMETER', 'IA-00003'),
         'agent_id' => env('OPENAI_AGENT_ID'),
-        /*
-         * Parametro del sistema con la espera maxima del agente, en minutos.
-         * El agente puede tardar unos 5 minutos, asi que mientras no exista el
-         * parametro se espera 6 minutos. 'agent_timeout' (segundos) queda solo
-         * como respaldo para pruebas o instalaciones sin tabla de parametros.
-         */
-        'agent_timeout_parameter' => env('OPENAI_AGENT_TIMEOUT_PARAMETER', 'IA-0000'),
-        'agent_timeout_minutes' => (int) env('OPENAI_AGENT_TIMEOUT_MINUTES', 6),
-        // Espera maxima del agente antes de caer al modelo, en segundos.
-        'agent_timeout' => (int) env('OPENAI_AGENT_TIMEOUT', 360),
         // Milisegundos entre consultas del estado de la sesion del agente.
         'agent_poll_interval_ms' => (int) env('OPENAI_AGENT_POLL_INTERVAL_MS', 1000),
         // Minutos que se conserva la sesion del agente para continuar el hilo.

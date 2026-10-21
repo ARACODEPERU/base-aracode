@@ -6,8 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /** Espera maxima del agente de OpenAI, expresada en minutos. */
+    /**
+     * Espera maxima del agente de OpenAI, expresada en minutos.
+     *
+     * Migracion historica ya ejecutada en produccion: el codigo correcto de la
+     * secuencia es IA-00004 y lo aplica 2026_10_21_000002
+     * (fix_agent_timeout_parameter_code). El codigo de la migracion se mantiene
+     * como se ejecuto en produccion; solo el valor inicial es fijo (6 minutos).
+     */
     private const AGENT_TIMEOUT = 'IA-0000';
+
+    /** Minutos de espera iniciales: la espera no se configura por .env. */
+    private const DEFAULT_TIMEOUT_MINUTES = 6;
 
     public function up(): void
     {
@@ -24,10 +34,10 @@ return new class extends Migration
         ]);
 
         if (!$parameter->exists) {
-            $parameter->value_default = (string) max(1, (int) config('academic.openai.agent_timeout_minutes', 6));
+            $parameter->value_default = (string) self::DEFAULT_TIMEOUT_MINUTES;
         } elseif (trim((string) $parameter->value_default) === '') {
             // Un parametro creado a mano y vacio recupera el valor por defecto.
-            $parameter->value_default = (string) max(1, (int) config('academic.openai.agent_timeout_minutes', 6));
+            $parameter->value_default = (string) self::DEFAULT_TIMEOUT_MINUTES;
         }
 
         $parameter->save();

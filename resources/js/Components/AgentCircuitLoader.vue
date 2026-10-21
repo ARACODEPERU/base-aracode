@@ -2,7 +2,7 @@
     import { computed, onMounted, onUnmounted, ref } from 'vue';
 
     const props = defineProps({
-        // Espera maxima configurada en el parametro IA-0000 (minutos).
+        // Espera maxima configurada en el parametro IA-00004 (minutos).
         maxWaitMinutes: {
             type: Number,
             default: 6,

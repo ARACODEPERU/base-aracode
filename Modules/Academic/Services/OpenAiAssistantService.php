@@ -16,6 +16,16 @@ class OpenAiAssistantService
 {
     private const BASE_URL = 'https://api.openai.com/v1';
 
+    /**
+     * Parametro del sistema con la espera maxima del agente, en minutos.
+     * Es fijo: no se toma de .env para que el valor administrado en Parametros
+     * del sistema sea el unico que define cuanto se espera al agente.
+     */
+    private const AGENT_TIMEOUT_PARAMETER = 'IA-00004';
+
+    /** Espera por defecto (minutos) mientras IA-00004 no tenga un numero valido. */
+    private const AGENT_TIMEOUT_FALLBACK_MINUTES = 6;
+
     public function sendPrompt(int|string $userId, string $message, ?string $fileName = null, ?string $customInstructions = null, bool $continueThread = true): string
     {
         if (trim($message) === '') {
@@ -378,42 +388,29 @@ class OpenAiAssistantService
     }
 
     /**
-     * Espera maxima del agente en minutos. Se administra en el parametro
-     * IA-0000; sin el, se usa academic.openai.agent_timeout_minutes (6).
+     * Espera maxima del agente en minutos. Se lee solo del parametro del
+     * sistema IA-00004; el .env no participa. Sin un numero valido se usa el
+     * valor por defecto de 6 minutos.
      */
     public function agentTimeoutMinutes(): int
     {
-        $parameterCode = config('academic.openai.agent_timeout_parameter');
+        $value = trim((string) $this->parameterValue(self::AGENT_TIMEOUT_PARAMETER));
 
-        if ($parameterCode) {
-            $value = trim((string) $this->parameterValue($parameterCode));
-
-            if ($value !== '' && is_numeric($value)) {
-                return max(1, (int) $value);
-            }
+        if ($value !== '' && is_numeric($value)) {
+            return max(1, (int) $value);
         }
 
-        return max(1, (int) config('academic.openai.agent_timeout_minutes', 6));
+        return self::AGENT_TIMEOUT_FALLBACK_MINUTES;
     }
 
     /**
-     * Espera maxima en segundos para el polling del agente. El parametro manda
-     * sobre el .env y se limita a 30 minutos para no dejar un pedido abierto
-     * indefinidamente si alguien escribe un numero enorme.
+     * Espera maxima en segundos para el polling del agente. Sale del mismo
+     * parametro IA-00004 y se limita a 30 minutos para no dejar un pedido
+     * abierto indefinidamente si alguien escribe un numero enorme.
      */
     private function agentTimeoutSeconds(): int
     {
-        $parameterCode = config('academic.openai.agent_timeout_parameter');
-
-        if ($parameterCode) {
-            $value = trim((string) $this->parameterValue($parameterCode));
-
-            if ($value !== '' && is_numeric($value)) {
-                return min(1800, max(60, (int) round((float) $value * 60)));
-            }
-        }
-
-        return max(5, (int) config('academic.openai.agent_timeout', 360));
+        return min(1800, $this->agentTimeoutMinutes() * 60);
     }
 
     /**

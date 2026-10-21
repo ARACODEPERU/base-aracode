@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /**
- * Contrato del parametro IA-0000: guarda en minutos la espera maxima de la
- * respuesta del agente de OpenAI. El valor inicial es 6 minutos y la migracion
- * nunca pisa un valor que el administrador ya haya guardado.
+ * Contrato del parametro creado por la migracion historica 2026_10_21_000001:
+ * guarda en minutos la espera maxima de la respuesta del agente de OpenAI. El
+ * valor inicial es 6 minutos y nunca pisa un valor ya guardado. El codigo
+ * definitivo (IA-00004) lo aplica 2026_10_21_000002, cubierto en
+ * FixAgentTimeoutParameterCodeMigrationTest.
  */
 class AddAgentTimeoutParameterMigrationTest extends TestCase
 {
@@ -39,8 +41,6 @@ class AddAgentTimeoutParameterMigrationTest extends TestCase
 
     public function test_crea_ia_0000_con_seis_minutos_por_defecto(): void
     {
-        config(['academic.openai.agent_timeout_minutes' => 6]);
-
         $this->migration()->up();
 
         $parameter = $this->parameterRow('IA-0000');
@@ -53,8 +53,6 @@ class AddAgentTimeoutParameterMigrationTest extends TestCase
 
     public function test_no_pisa_un_valor_ya_configurado(): void
     {
-        config(['academic.openai.agent_timeout_minutes' => 6]);
-
         Parameter::create([
             'parameter_code' => 'IA-0000',
             'description' => 'Valor manual',

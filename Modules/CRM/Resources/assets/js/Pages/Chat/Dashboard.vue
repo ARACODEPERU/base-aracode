@@ -70,7 +70,7 @@
             type: Boolean,
             default: false
         },
-        // Espera maxima configurada en el parametro IA-0000 (minutos).
+        // Espera maxima configurada en el parametro IA-00004 (minutos).
         agentMaxWaitMinutes: {
             type: Number,
             default: 6

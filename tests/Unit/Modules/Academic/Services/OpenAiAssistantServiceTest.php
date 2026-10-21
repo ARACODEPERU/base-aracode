@@ -22,8 +22,6 @@ class OpenAiAssistantServiceTest extends TestCase
             'academic.openai.api_key_parameter' => null,
             'academic.openai.provider_parameter' => null,
             'academic.openai.agent_id_parameter' => null,
-            // Sin parametro IA-0000: se usa el respaldo del .env (5 s en pruebas).
-            'academic.openai.agent_timeout_parameter' => null,
         ]);
     }
 
@@ -266,7 +264,6 @@ class OpenAiAssistantServiceTest extends TestCase
     {
         config([
             'academic.openai.agent_id' => 'agent_test',
-            'academic.openai.agent_timeout' => 5,
             'academic.openai.agent_poll_interval_ms' => 200,
         ]);
 
@@ -290,7 +287,16 @@ class OpenAiAssistantServiceTest extends TestCase
             ]),
         ]);
 
-        $result = app(OpenAiAssistantService::class)->sendPromptWithAgent(30, '¿Que es el activo?');
+        // Sin tabla de parametros: el servicio lee IA-00004 y usa los 6 minutos
+        // por defecto, sin tocar la base de datos.
+        $service = new class extends OpenAiAssistantService {
+            protected function parameterValue(?string $parameterCode): ?string
+            {
+                return null;
+            }
+        };
+
+        $result = $service->sendPromptWithAgent(30, '¿Que es el activo?');
 
         $this->assertTrue($result['agent_used']);
         $this->assertSame('agent', $result['source']);
@@ -313,7 +319,6 @@ class OpenAiAssistantServiceTest extends TestCase
         config([
             'academic.openai.agent_id_parameter' => 'IA-00003',
             'academic.openai.agent_id' => null,
-            'academic.openai.agent_timeout' => 5,
             'academic.openai.agent_poll_interval_ms' => 200,
         ]);
 
@@ -353,31 +358,62 @@ class OpenAiAssistantServiceTest extends TestCase
         });
     }
 
-    public function test_agent_timeout_reads_ia_0000_in_minutes(): void
+    public function test_agent_timeout_reads_only_ia_00004_parameter(): void
     {
-        config([
-            'academic.openai.agent_timeout_parameter' => 'IA-0000',
-            'academic.openai.agent_timeout_minutes' => 6,
-        ]);
+        // Aunque un .env viejo apunte al codigo anterior, la espera se lee
+        // unicamente del parametro IA-00004.
+        putenv('OPENAI_AGENT_TIMEOUT_PARAMETER=IA-0000');
+        putenv('OPENAI_AGENT_TIMEOUT_MINUTES=15');
 
+        try {
+            $service = new class extends OpenAiAssistantService {
+                /** @var string[] */
+                public array $requestedCodes = [];
+
+                protected function parameterValue(?string $parameterCode): ?string
+                {
+                    $this->requestedCodes[] = (string) $parameterCode;
+
+                    return $parameterCode === 'IA-00004' ? '9' : null;
+                }
+            };
+
+            $this->assertSame(9, $service->agentTimeoutMinutes());
+            $this->assertSame(['IA-00004'], $service->requestedCodes);
+        } finally {
+            putenv('OPENAI_AGENT_TIMEOUT_PARAMETER');
+            putenv('OPENAI_AGENT_TIMEOUT_MINUTES');
+        }
+    }
+
+    public function test_agent_timeout_defaults_to_six_minutes_without_parameter_value(): void
+    {
         $service = new class extends OpenAiAssistantService {
+            /** @var string[] */
+            public array $requestedCodes = [];
+
             protected function parameterValue(?string $parameterCode): ?string
             {
-                return $parameterCode === 'IA-0000' ? '9' : null;
+                $this->requestedCodes[] = (string) $parameterCode;
+
+                return null;
             }
         };
 
-        $this->assertSame(9, $service->agentTimeoutMinutes());
+        $this->assertSame(6, $service->agentTimeoutMinutes());
+        $this->assertSame(['IA-00004'], $service->requestedCodes);
     }
 
-    public function test_agent_timeout_defaults_to_six_minutes_without_parameter(): void
+    public function test_agent_timeout_ignores_a_non_numeric_parameter_value(): void
     {
-        config([
-            'academic.openai.agent_timeout_parameter' => null,
-            'academic.openai.agent_timeout_minutes' => 6,
-        ]);
+        $service = new class extends OpenAiAssistantService {
+            protected function parameterValue(?string $parameterCode): ?string
+            {
+                return 'sin valor';
+            }
+        };
 
-        $this->assertSame(6, app(OpenAiAssistantService::class)->agentTimeoutMinutes());
+        $this->assertSame(6, $service->agentTimeoutMinutes());
     }
 
     public function test_agent_enabled_reports_whether_an_agent_is_configured(): void
@@ -427,7 +463,6 @@ class OpenAiAssistantServiceTest extends TestCase
         config([
             'academic.openai.agent_id' => 'agent_test',
             'academic.openai.model' => 'gpt-4.1-mini',
-            'academic.openai.agent_timeout' => 5,
             'academic.openai.agent_poll_interval_ms' => 200,
         ]);
 
@@ -457,7 +492,6 @@ class OpenAiAssistantServiceTest extends TestCase
     {
         config([
             'academic.openai.agent_id' => 'agent_test',
-            'academic.openai.agent_timeout' => 5,
             'academic.openai.agent_poll_interval_ms' => 200,
         ]);
 
@@ -483,7 +517,12 @@ class OpenAiAssistantServiceTest extends TestCase
             'api.openai.com/v1/agents/sessions/sess_2/events' => Http::response(['ok' => true]),
         ]);
 
-        $service = app(OpenAiAssistantService::class);
+        $service = new class extends OpenAiAssistantService {
+            protected function parameterValue(?string $parameterCode): ?string
+            {
+                return null;
+            }
+        };
 
         $first = $service->sendPromptWithAgent(32, 'primera pregunta');
         $second = $service->sendPromptWithAgent(32, 'segunda pregunta');
