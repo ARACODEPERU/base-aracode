@@ -19,10 +19,12 @@ final class TournamentPhaseLabels
      * @var array<string, string>
      */
     public const CANONICAL = [
+        'everyone' => 'Todos contra Todos',
         'league' => 'Fase de grupos / Liga',
         'groups' => 'Fase de grupos',
         'round_16' => 'Octavos de final',
         'quarterfinals' => 'Cuartos de final',
+        'eliminations' => 'Eliminaciones',
         'semifinals' => 'Semifinales',
         'third_place' => 'Tercer y cuarto puesto',
         'final' => 'Gran final',
