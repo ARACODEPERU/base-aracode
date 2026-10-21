@@ -55,6 +55,7 @@ use Modules\Academic\Http\Controllers\AcaShortVideoController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
 use Modules\Academic\Http\Controllers\AcaStudentTestimonyController;
 use Modules\Academic\Http\Controllers\AcaThemeCommentController;
+use Modules\Academic\Http\Controllers\AcaVirtualClassroomController;
 use Modules\Academic\Http\Controllers\MercadopagoController;
 use Modules\Academic\Jobs\ExportStudentsExcel;
 use App\Http\Controllers\WebPageController;
@@ -1183,6 +1184,14 @@ Route::middleware(['auth'])->put('create/payment/{id}/pay', [MercadopagoControll
 
 Route::middleware(['auth'])->put('mercadopago/{id}/academic', [MercadopagoController::class, 'processPayment'])
     ->name('aca_mercadopago_processpayment');
+
+Route::middleware(['auth'])->get('academic/virtual-classroom', [AcaVirtualClassroomController::class, 'index'])
+    ->middleware(['middleware' => 'permission:aca_virtual_listado'])
+    ->name('aca_virtual_classroom_index');
+
+Route::middleware(['auth'])->get('academic/virtual-classroom/{course}', [AcaVirtualClassroomController::class, 'show'])
+    ->middleware(['middleware' => 'permission:aca_virtual_curso_ver'])
+    ->name('aca_virtual_classroom_show');
 
 Route::middleware(['auth'])->get('thank/purchasing/{id}', [MercadopagoController::class, 'thankYou'])->name('web_gracias_por_comprar');
 Route::get('/certificado-validar/{dni?}/{course_id?}/{module_id?}', [AcaCertificateController::class, 'certificado_validar'])->name('certificado_validar');

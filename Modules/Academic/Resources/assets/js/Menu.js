@@ -317,6 +317,28 @@ const colegioGroup = {
             },
         },
         {
+            route: route('aca_virtual_classroom_index'),
+            status: false,
+            text: 'Aula Virtual',
+            icom: faChalkboard,
+            permissions: 'aca_virtual_listado',
+            info: {
+                title: 'Aula Virtual',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Gestión de contenidos por año escolar, alineados al CNEB:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>📚 <span>Unidades didácticas y sesiones de aprendizaje.</span></li>
+                        <li>📁 <span>Recursos y actividades por curso (sección + área).</span></li>
+                        <li>👩‍🏫 <span>Los cursos se generan automáticamente para el docente.</span></li>
+                        <li>🗓️ <span>Por año escolar, con modo historial solo lectura.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
+        },
+        {
             route: route('aca_school_fees_list'),
             status: false,
             text: 'Tarifas',

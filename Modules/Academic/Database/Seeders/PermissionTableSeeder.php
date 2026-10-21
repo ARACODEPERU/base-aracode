@@ -149,7 +149,17 @@ class PermissionTableSeeder extends Seeder
         // elimina informacion escolar masiva.
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_modo_prueba']));
 
+        // Aula Virtual (gestión de contenidos por año escolar)
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_virtual_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_virtual_curso_ver']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_virtual_unidad_gestionar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_virtual_sesion_gestionar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_virtual_recurso_gestionar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_virtual_actividad_gestionar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_virtual_configurar']));
+
         foreach ($permissions as $permission) {
+
 
             $role->givePermissionTo($permission->name);
 
@@ -194,5 +204,21 @@ class PermissionTableSeeder extends Seeder
         // cobros ni matriculas. Es con el que entra la tablet de la porteria.
         $portero = Role::firstOrCreate(['name' => 'Portero']);
         $portero->givePermissionTo('aca_school_porteria_escaner');
+
+        // Aula Virtual: docente ve sus cursos, administrador gestiona todo.
+        $docente->givePermissionTo('aca_virtual_listado');
+        $docente->givePermissionTo('aca_virtual_curso_ver');
+        $docente->givePermissionTo('aca_virtual_unidad_gestionar');
+        $docente->givePermissionTo('aca_virtual_sesion_gestionar');
+        $docente->givePermissionTo('aca_virtual_recurso_gestionar');
+        $docente->givePermissionTo('aca_virtual_actividad_gestionar');
+
+        $administrador->givePermissionTo('aca_virtual_listado');
+        $administrador->givePermissionTo('aca_virtual_curso_ver');
+        $administrador->givePermissionTo('aca_virtual_unidad_gestionar');
+        $administrador->givePermissionTo('aca_virtual_sesion_gestionar');
+        $administrador->givePermissionTo('aca_virtual_recurso_gestionar');
+        $administrador->givePermissionTo('aca_virtual_actividad_gestionar');
+        $administrador->givePermissionTo('aca_virtual_configurar');
     }
 }
