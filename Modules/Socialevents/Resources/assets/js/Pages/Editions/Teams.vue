@@ -3,7 +3,7 @@
     import { useForm } from '@inertiajs/vue3';
     import { domToPng } from 'modern-screenshot'
     import Swal2 from "sweetalert2";
-    import { Link, router } from '@inertiajs/vue3';
+    import { Link, router, usePage } from '@inertiajs/vue3';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import { computed, nextTick , ref } from "vue";
     import Multiselect from '@suadelabs/vue3-multiselect';
@@ -35,6 +35,10 @@
             default: () => [],
         },
     });
+
+    const page = usePage();
+    // Mismo tema azul noche y lima que el listado y el fixture de la edición.
+    const sportsMode = computed(() => page.props.sportsOrganization?.mode === true);
 
     // Sanciones administrativas por equipo (para los badges de la tabla)
     const sanctionsByTeam = computed(() => {
@@ -340,7 +344,7 @@
 </script>
 <template>
     <AppLayout title="Ediciones">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="sportsMode ? 'GESTIÓN DEPORTIVA' : 'Eventos sociales'"
             :data="[
                 {
                     route: route('even_ediciones_listado'), title: 'Ediciones',
@@ -358,7 +362,28 @@
                 {title: 'Inscripciones y Tabla'}
             ]"
         />
-        <div class="pt-5">
+        <div class="pt-5" :class="sportsMode ? 'text-slate-100' : ''">
+            <section
+                class="rounded-2xl border p-5 sm:p-6"
+                :class="sportsMode
+                    ? 'border-white/10 bg-[#0b1f2b] text-white shadow-[0_26px_70px_rgba(0,0,0,0.38)]'
+                    : 'border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900'"
+            >
+                <div class="min-w-0">
+                    <div
+                        class="mb-2 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.2em]"
+                        :class="sportsMode ? 'border-lime-300/25 bg-lime-300/10 text-lime-200' : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200'"
+                    >
+                        <span class="h-1.5 w-1.5 rounded-full bg-lime-400"></span> Inscripciones
+                    </div>
+                    <h1 class="text-2xl font-black tracking-tight sm:text-3xl" :class="sportsMode ? 'text-white' : 'text-gray-900 dark:text-white'">
+                        Equipos y tabla de posiciones
+                    </h1>
+                    <p class="mt-1 text-sm" :class="sportsMode ? 'text-slate-300' : 'text-gray-600 dark:text-gray-300'">
+                        {{ edicion.name }}<span v-if="edicion.year"> · {{ edicion.year }}</span> — inscribe equipos, ajusta puntos y revisa la tabla de la edición.
+                    </p>
+                </div>
+            </section>
             <div class="mt-5">
                 <div class="grid sm:grid-cols-2 gap-6 w-full">
                     <div class="flex items-center gap-6">
@@ -379,16 +404,35 @@
                             >
                             </Multiselect>
                         </div>
-                        <button @click="addTeamSave" :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="btn btn-primary uppercase text-xs" type="button"><IconLoader v-if="form.processing" class="w-4 h-4 animate-spin mr-1" /><icon-plus v-else class="w-4 h-4 mr-1" />Agregar</button>
+                        <button
+                            @click="addTeamSave"
+                            :disabled="form.processing"
+                            class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-50"
+                            :class="[sportsMode ? 'bg-[#c8f169] text-[#08251a] hover:bg-[#d9fb8d]' : 'btn btn-primary text-xs', { 'opacity-25': form.processing }]"
+                            type="button"
+                        >
+                            <IconLoader v-if="form.processing" class="w-4 h-4 animate-spin mr-1" />
+                            <icon-plus v-else class="w-4 h-4 mr-1" />
+                            Agregar
+                        </button>
                     </div>
                     <div class="flex items-center justify-end gap-6">
-                        <button @click="openModalBonus" class="btn btn-secondary uppercase text-xs">
+                        <button
+                            @click="openModalBonus"
+                            class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition"
+                            :class="sportsMode ? 'border border-[#2b4b5d] text-slate-200 hover:border-lime-300/60 hover:text-lime-200' : 'btn btn-secondary text-xs'"
+                        >
                             <svg class="w-4 h-4 mr-1 inline" fill="currentColor" viewBox="0 0 384 512">
                                 <path d="M240 32h64l70.3 140c8 16 8.1 35.5 0 51.5L278.6 384H192v-32c0-17.7-14.3-32-32-32s-32 14.3-32 32v32H88l-96.3-160.5c-8.1-16-8.1-35.5 0-51.5L80 32h64v32c0 17.7 14.3 32 32 32s32-14.3 32-32V32zm-80 96c-17.7 0-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32s-14.3-32-32-32zm128 0c-17.7 0-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32s-14.3-32-32-32z"/>
                             </svg>
                             Puntos extra
                         </button>
-                        <button @click="recalculateTable" :disabled="recalculateLoading" class="btn btn-info uppercase text-xs">
+                        <button
+                            @click="recalculateTable"
+                            :disabled="recalculateLoading"
+                            class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-50"
+                            :class="sportsMode ? 'border border-[#2b4b5d] text-slate-200 hover:border-lime-300/60 hover:text-lime-200' : 'btn btn-info text-xs'"
+                        >
                             <svg v-if="recalculateLoading" class="mr-1 h-4 w-4 inline animate-spin" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
@@ -398,20 +442,35 @@
                             </svg>
                             Recalcular tabla
                         </button>
-                        <button @click="exportImage" class="btn btn-danger uppercase text-xs">
+                        <button
+                            @click="exportImage"
+                            class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition"
+                            :class="sportsMode ? 'border border-[#2b4b5d] text-slate-200 hover:border-lime-300/60 hover:text-lime-200' : 'btn btn-danger text-xs'"
+                        >
                             Exportar imagen
                         </button>
-                        <Link :href="route('even_ediciones_listado')" :preserveState="true" class="btn btn-warning uppercase text-xs">
+                        <Link
+                            :href="route('even_ediciones_listado')"
+                            :preserveState="true"
+                            class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition"
+                            :class="sportsMode ? 'border border-[#2b4b5d] text-slate-200 hover:border-lime-300/60 hover:text-lime-200' : 'btn btn-warning text-xs'"
+                        >
                             Ir atras
                         </Link>
                     </div>
                 </div>
                 <div class="mt-6">
-                    <div ref="captureRef" class="panel" >
-                        <h3 class="text-lg uppercase mb-4 font-medium">Tabla de posiciones</h3>
+                    <div
+                        ref="captureRef"
+                        :class="sportsMode ? 'rounded-2xl border border-[#234052] bg-[#0b1f2b] p-5 text-slate-100 shadow-[0_26px_70px_rgba(0,0,0,0.38)]' : 'panel'"
+                    >
+                        <h3 class="text-lg uppercase mb-4 font-medium" :class="sportsMode ? 'text-white' : ''">Tabla de posiciones</h3>
                         <div class="table-responsive">
                             <table class="w-full text-sm text-left rtl:text-right">
-                                <thead class="bg-gradient-to-r from-gray-800 to-gray-700 text-white">
+                                <thead
+                                    class="bg-gradient-to-r text-white"
+                                    :class="sportsMode ? 'from-[#122c3a] to-[#0e2532] text-lime-200' : 'from-gray-800 to-gray-700'"
+                                >
                                     <tr>
                                         <th scope="col" class="px-4 py-4 font-bold text-center">#</th>
                                         <th class="no-export px-4 py-4 font-bold text-center">Acciones</th>
@@ -427,15 +486,26 @@
                                         <th scope="col" class="px-4 py-4 font-bold text-center">GC</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <tbody class="divide-y" :class="sportsMode ? 'divide-[#1b3544]' : 'divide-gray-200 dark:divide-gray-700'">
                                     <template v-if="currentEquipment.length > 0">
                                         <tr v-for="(team, index) in currentEquipment"
                                             :class="[
-                                                'hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200',
-                                                index === 0 ? 'bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20' :
-                                                index === 1 ? 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-600/20 dark:to-gray-500/20' :
-                                                index === 2 ? 'bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20' :
-                                                index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'
+                                                'transition-colors duration-200',
+                                                sportsMode
+                                                    ? [
+                                                        'hover:bg-[#122c3a]',
+                                                        index === 0 ? 'bg-[#122c3a]' :
+                                                        index === 1 ? 'bg-[#102734]' :
+                                                        index === 2 ? 'bg-[#0e2532]' :
+                                                        index % 2 === 0 ? 'bg-[#0b1f2b]' : 'bg-[#0d2230]'
+                                                    ]
+                                                    : [
+                                                        'hover:bg-gray-50 dark:hover:bg-gray-700',
+                                                        index === 0 ? 'bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20' :
+                                                        index === 1 ? 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-600/20 dark:to-gray-500/20' :
+                                                        index === 2 ? 'bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20' :
+                                                        index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'
+                                                    ]
                                             ]"
                                         >
                                             <td class="px-4 py-2 text-center font-bold text-lg">
@@ -474,10 +544,10 @@
                                             <td scope="row" class="flex items-center px-4 py-2 text-heading whitespace-nowrap gap-4">
                                                 <img v-if="team.equipo.logo_path" class="w-12 h-12 rounded-full border-2 border-gray-300 dark:border-gray-600" :src="xhttp + 'storage/' + team.equipo.logo_path" :alt="team.equipo.short_name">
                                                 <img v-else class="w-12 h-12 rounded-full border-2 border-gray-300 dark:border-gray-600" :src="`https://ui-avatars.com/api/?name=${team.equipo.short_name}&size=150&length=4`" :alt="team.equipo.short_name">
-                                                <div class="text-base font-semibold text-gray-900 dark:text-white">{{ team.equipo.name }}</div>
+                                                <div class="text-base font-semibold" :class="sportsMode ? 'text-slate-100' : 'text-gray-900 dark:text-white'">{{ team.equipo.name }}</div>
                                             </td>
                                             <td class="px-4 py-2 text-center">
-                                                <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold text-lg">{{ (Number(team.points) || 0) + (Number(team.bonus_points) || 0) }}</span>
+                                                <span class="px-3 py-1 rounded-full font-bold text-lg" :class="sportsMode ? 'bg-[#c8f169] text-[#08251a]' : 'bg-blue-600 text-white'">{{ (Number(team.points) || 0) + (Number(team.bonus_points) || 0) }}</span>
                                                 <span
                                                     v-if="sanctionBadge(team.team_id)"
                                                     class="inline-flex items-center ml-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold align-middle"
@@ -487,20 +557,23 @@
                                                 </span>
                                             </td>
                                             <td class="px-4 py-2 text-center">
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-bold">{{ team.bonus_points || 0 }}</span>
+                                                <span
+                                                    class="inline-flex items-center px-2 py-1 rounded-full text-sm font-bold"
+                                                    :class="sportsMode ? 'bg-lime-400/15 text-lime-200' : 'bg-amber-100 text-amber-800'"
+                                                >{{ team.bonus_points || 0 }}</span>
                                             </td>
-                                            <td class="px-4 py-2 text-center font-medium text-gray-700 dark:text-gray-300">{{ team.matches_played }}</td>
-                                            <td class="px-4 py-2 text-center font-medium text-green-600">{{ team.matches_won }}</td>
-                                            <td class="px-4 py-2 text-center font-medium text-yellow-600">{{ team.matches_drawn }}</td>
-                                            <td class="px-4 py-2 text-center font-medium text-red-600">{{ team.matches_lost }}</td>
-                                            <td class="px-4 py-2 text-center font-medium" :class="team.goal_difference >= 0 ? 'text-green-600' : 'text-red-600'">{{ team.goal_difference }}</td>
-                                            <td class="px-4 py-2 text-center font-medium text-gray-700 dark:text-gray-300">{{ team.goals_for }}</td>
-                                            <td class="px-4 py-2 text-center font-medium text-gray-700 dark:text-gray-300">{{ team.goals_against }}</td>
+                                            <td class="px-4 py-2 text-center font-medium" :class="sportsMode ? 'text-slate-300' : 'text-gray-700 dark:text-gray-300'">{{ team.matches_played }}</td>
+                                            <td class="px-4 py-2 text-center font-medium" :class="sportsMode ? 'text-lime-300' : 'text-green-600'">{{ team.matches_won }}</td>
+                                            <td class="px-4 py-2 text-center font-medium" :class="sportsMode ? 'text-amber-300' : 'text-yellow-600'">{{ team.matches_drawn }}</td>
+                                            <td class="px-4 py-2 text-center font-medium" :class="sportsMode ? 'text-rose-300' : 'text-red-600'">{{ team.matches_lost }}</td>
+                                            <td class="px-4 py-2 text-center font-medium" :class="sportsMode ? (team.goal_difference >= 0 ? 'text-lime-300' : 'text-rose-300') : (team.goal_difference >= 0 ? 'text-green-600' : 'text-red-600')">{{ team.goal_difference }}</td>
+                                            <td class="px-4 py-2 text-center font-medium" :class="sportsMode ? 'text-slate-300' : 'text-gray-700 dark:text-gray-300'">{{ team.goals_for }}</td>
+                                            <td class="px-4 py-2 text-center font-medium" :class="sportsMode ? 'text-slate-300' : 'text-gray-700 dark:text-gray-300'">{{ team.goals_against }}</td>
                                         </tr>
                                     </template>
                                     <template v-else>
                                         <tr>
-                                            <td colspan="12" ><Empty :description="'Sin equipos'" /></td>
+                                            <td colspan="12" :class="sportsMode ? 'text-slate-400' : ''"><Empty :description="'Sin equipos'" /></td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -518,15 +591,23 @@
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
             @click.self="closeModalBonus"
         >
-            <div class="w-full max-w-2xl rounded-lg bg-white p-6 shadow-2xl dark:bg-slate-800 max-h-[90vh] overflow-y-auto">
+            <div
+                class="w-full max-w-2xl rounded-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+                :class="sportsMode ? 'border border-[#234052] bg-[#0b1f2b] text-slate-100' : 'bg-white dark:bg-slate-800'"
+            >
                 <div class="mb-4 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-slate-800 dark:text-white">Asignar puntos extra</h3>
-                    <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" @click="closeModalBonus">✕</button>
+                    <h3 class="text-lg font-semibold" :class="sportsMode ? 'text-white' : 'text-slate-800 dark:text-white'">Asignar puntos extra</h3>
+                    <button
+                        type="button"
+                        class="transition"
+                        :class="sportsMode ? 'text-slate-400 hover:text-lime-200' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'"
+                        @click="closeModalBonus"
+                    >✕</button>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Puntos *</label>
+                        <label class="mb-1 block text-sm font-medium" :class="sportsMode ? 'text-slate-300' : 'text-slate-700 dark:text-slate-200'">Puntos *</label>
                         <input
                             v-model.number="bonusPoints"
                             type="number"
@@ -537,7 +618,7 @@
                         />
                     </div>
                     <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Motivo *</label>
+                        <label class="mb-1 block text-sm font-medium" :class="sportsMode ? 'text-slate-300' : 'text-slate-700 dark:text-slate-200'">Motivo *</label>
                         <input
                             v-model="bonusReason"
                             type="text"
@@ -548,13 +629,18 @@
                 </div>
 
                 <div class="mt-5">
-                    <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">Equipos que reciben los puntos *</label>
+                    <label class="mb-2 block text-sm font-medium" :class="sportsMode ? 'text-slate-300' : 'text-slate-700 dark:text-slate-200'">Equipos que reciben los puntos *</label>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 max-h-52 overflow-y-auto">
                         <label
                             v-for="team in currentEquipment"
                             :key="team.team_id"
-                            class="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 py-2 transition hover:border-cyan-500 dark:border-slate-600"
-                            :class="{ 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20': bonusEquipos.includes(team.team_id) }"
+                            class="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 transition"
+                            :class="[
+                                sportsMode ? 'border-[#2b4b5d] hover:border-lime-300/60' : 'border-slate-200 hover:border-cyan-500 dark:border-slate-600',
+                                bonusEquipos.includes(team.team_id)
+                                    ? (sportsMode ? 'border-lime-300/70 bg-lime-400/10' : 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20')
+                                    : ''
+                            ]"
                         >
                             <input
                                 type="checkbox"
@@ -562,14 +648,25 @@
                                 :checked="bonusEquipos.includes(team.team_id)"
                                 @change="toggleBonusTeam(team.team_id)"
                             />
-                            <span class="text-sm text-slate-700 dark:text-slate-200">{{ team.equipo?.name }}</span>
+                            <span class="text-sm" :class="sportsMode ? 'text-slate-200' : 'text-slate-700 dark:text-slate-200'">{{ team.equipo?.name }}</span>
                         </label>
                     </div>
                 </div>
 
                 <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" class="btn btn-outline-dark" @click="closeModalBonus">Cancelar</button>
-                    <button type="button" class="btn btn-primary" :disabled="bonusLoading" @click="saveBonus">
+                    <button
+                        type="button"
+                        class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition"
+                        :class="sportsMode ? 'border border-[#2b4b5d] text-slate-200 hover:border-lime-300/60 hover:text-lime-200' : 'btn btn-outline-dark'"
+                        @click="closeModalBonus"
+                    >Cancelar</button>
+                    <button
+                        type="button"
+                        class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-50"
+                        :class="sportsMode ? 'bg-[#c8f169] text-[#08251a] hover:bg-[#d9fb8d]' : 'btn btn-primary'"
+                        :disabled="bonusLoading"
+                        @click="saveBonus"
+                    >
                         <svg v-if="bonusLoading" class="mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
@@ -578,18 +675,22 @@
                     </button>
                 </div>
 
-                <div v-if="bonusHistory.length" class="mt-6 border-t border-slate-200 pt-4 dark:border-slate-600">
-                    <h4 class="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Historial de puntos extra</h4>
+                <div v-if="bonusHistory.length" class="mt-6 border-t pt-4" :class="sportsMode ? 'border-[#234052]' : 'border-slate-200 dark:border-slate-600'">
+                    <h4 class="mb-2 text-sm font-semibold" :class="sportsMode ? 'text-slate-300' : 'text-slate-700 dark:text-slate-200'">Historial de puntos extra</h4>
                     <ul class="space-y-2">
                         <li
                             v-for="bonus in bonusHistory"
                             :key="bonus.id"
-                            class="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-sm dark:bg-slate-700"
+                            class="flex items-center justify-between rounded-md px-3 py-2 text-sm"
+                            :class="sportsMode ? 'bg-[#122c3a]' : 'bg-slate-50 dark:bg-slate-700'"
                         >
                             <div>
-                                <span class="font-semibold text-slate-800 dark:text-white">{{ bonus.team_name }}</span>
-                                <span class="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">+{{ bonus.points }}</span>
-                                <span class="block text-xs text-slate-500 dark:text-slate-300">{{ bonus.reason }}</span>
+                                <span class="font-semibold" :class="sportsMode ? 'text-white' : 'text-slate-800 dark:text-white'">{{ bonus.team_name }}</span>
+                                <span
+                                    class="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold"
+                                    :class="sportsMode ? 'bg-lime-400/15 text-lime-200' : 'bg-amber-100 text-amber-800'"
+                                >+{{ bonus.points }}</span>
+                                <span class="block text-xs" :class="sportsMode ? 'text-slate-400' : 'text-slate-500 dark:text-slate-300'">{{ bonus.reason }}</span>
                             </div>
                             <button
                                 type="button"
@@ -604,7 +705,7 @@
                         </li>
                     </ul>
                 </div>
-                <p v-else class="mt-6 border-t border-slate-200 pt-4 text-center text-sm text-slate-400 dark:border-slate-600">
+                <p v-else class="mt-6 border-t pt-4 text-center text-sm" :class="sportsMode ? 'border-[#234052] text-slate-500' : 'border-slate-200 text-slate-400 dark:border-slate-600'">
                     No hay puntos extra otorgados.
                 </p>
             </div>

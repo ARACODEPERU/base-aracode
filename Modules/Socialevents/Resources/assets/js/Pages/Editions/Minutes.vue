@@ -2,7 +2,7 @@
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import { useForm } from '@inertiajs/vue3';
     import Swal from "sweetalert2";
-    import { Link, router } from '@inertiajs/vue3';
+    import { Link, router, usePage } from '@inertiajs/vue3';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import { ref, computed } from "vue";
     import InputError from '@/Components/InputError.vue';
@@ -24,6 +24,10 @@
             default: () => ({}),
         }
     });
+
+    const page = usePage();
+    // Mismo tema azul noche y lima que equipos y fixture de la edición.
+    const sportsMode = computed(() => page.props.sportsOrganization?.mode === true);
 
     const displayModalPdf = ref(false);
     const pdfUrl = ref(null);
@@ -409,7 +413,7 @@
 </script>
 <template>
     <AppLayout title="Ediciones">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="sportsMode ? 'GESTIÓN DEPORTIVA' : 'Eventos sociales'"
             :data="[
                 {
                     route: route('even_ediciones_listado'), title: 'Ediciones',
@@ -426,21 +430,47 @@
                 {title: 'Libro de Actas y Acuerdos'}
             ]"
         />
-        <div class="mt-5">
-            <div class="flex items-center justify-between flex-wrap gap-4">
-                <h2 class="text-xl font-semibold text-gray-800">Libro de Actas y Acuerdos</h2>
-                <div class="">
-                    <Link v-can="'even_ediciones_actas_nuevo'" :href="route('even_ediciones_actas_crear', edicion.id)" class="btn btn-primary uppercase text-xs">
+        <div class="mt-5" :class="sportsMode ? 'text-slate-100' : ''">
+            <section
+                class="rounded-2xl border p-5 sm:p-6"
+                :class="sportsMode
+                    ? 'border-white/10 bg-[#0b1f2b] text-white shadow-[0_26px_70px_rgba(0,0,0,0.38)]'
+                    : 'border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900'"
+            >
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div class="min-w-0">
+                        <div
+                            class="mb-2 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.2em]"
+                            :class="sportsMode ? 'border-lime-300/25 bg-lime-300/10 text-lime-200' : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200'"
+                        >
+                            <span class="h-1.5 w-1.5 rounded-full bg-lime-400"></span> Actas
+                        </div>
+                        <h1 class="text-2xl font-black tracking-tight sm:text-3xl" :class="sportsMode ? 'text-white' : 'text-gray-900 dark:text-white'">
+                            Libro de actas y acuerdos
+                        </h1>
+                        <p class="mt-1 text-sm" :class="sportsMode ? 'text-slate-300' : 'text-gray-600 dark:text-gray-300'">
+                            {{ edicion.name }}<span v-if="edicion.year"> · {{ edicion.year }}</span> — registra actas, resoluciones y respaldos firmados de la edición.
+                        </p>
+                    </div>
+                    <Link
+                        v-can="'even_ediciones_actas_nuevo'"
+                        :href="route('even_ediciones_actas_crear', edicion.id)"
+                        class="inline-flex shrink-0 items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition"
+                        :class="sportsMode ? 'bg-[#c8f169] text-[#08251a] hover:bg-[#d9fb8d]' : 'btn btn-primary text-xs'"
+                    >
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        Nueva Acta
+                        Nueva acta
                     </Link>
                 </div>
-            </div>
+            </section>
             <div class="mt-5">
-                <div class="panel p-0">
-                    <table class="w-full rounded-2xl table-hover">
+                <div :class="sportsMode ? 'overflow-hidden rounded-2xl border border-[#234052] bg-[#0b1f2b] p-0 shadow-[0_26px_70px_rgba(0,0,0,0.38)]' : 'panel p-0'">
+                    <table class="w-full rounded-2xl table-hover" :class="sportsMode ? 'text-slate-200' : ''">
                         <thead>
-                            <tr class="bg-gray-100 text-gray-600 uppercase text-xs font-bold">
+                            <tr
+                                class="uppercase text-xs font-bold"
+                                :class="sportsMode ? 'bg-[#122c3a] text-lime-200' : 'bg-gray-100 text-gray-600'"
+                            >
                                 <th class="px-2 py-2.5 text-center ">Acciones</th>
                                 <th class="px-2 py-2.5">Código / Título</th>
                                 <th class="px-2 py-2.5">Tipo</th>
@@ -451,14 +481,18 @@
                         </thead>
                         <tbody>
                             <template v-if="sortedMinutes.length > 0">
-                                <tr v-for="(item, index) in sortedMinutes">
+                                <tr
+                                    v-for="(item, index) in sortedMinutes"
+                                    :class="sportsMode ? (index % 2 === 0 ? 'bg-[#0b1f2b] hover:bg-[#122c3a]' : 'bg-[#0d2230] hover:bg-[#122c3a]') : ''"
+                                >
                                     <td class="px-2 py-2.5 text-right space-x-2 ">
                                         <div class="flex items-center gap-2 justify-center">
                                             <Link
                                                 v-can="'even_ediciones_acta_editar'"
                                                 :href="item.url_edit"
                                                 v-tippy="{content: 'Editar acta', placement: 'bottom'}"
-                                                class="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                                class="p-2 rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                                :class="sportsMode ? 'text-slate-400 hover:text-lime-300 hover:bg-[#17394a]' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'"
                                             >
                                                 <IconPencilPaper class="w-5 h-5" />
                                             </Link>
@@ -468,7 +502,8 @@
                                                 type="button"
                                                 @click="openModalSolution(item)"
                                                 v-tippy="{content: 'Resolución / Sanción administrativa', placement: 'bottom'}"
-                                                class="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition"
+                                                class="p-2 rounded-full transition"
+                                                :class="sportsMode ? 'text-slate-400 hover:text-amber-300 hover:bg-[#17394a]' : 'text-gray-500 hover:text-amber-600 hover:bg-amber-50'"
                                             >
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z"/></svg>
                                             </button>
@@ -476,7 +511,8 @@
                                                 @click="printPdfDownload(item)"
                                                 :disabled="loadingId === item.minutes_code"
                                                 v-tippy="{content: 'Descargar PDF', placement: 'bottom'}"
-                                                class="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                                class="p-2 rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                                :class="sportsMode ? 'text-slate-400 hover:text-lime-300 hover:bg-[#17394a]' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'"
                                             >
                                                 <svg v-if="loadingId !== item.minutes_code" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -490,7 +526,8 @@
                                             <button
                                                 @click="openUploadModal(item)"
                                                 title="Subir acta firmada"
-                                                class="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-full transition"
+                                                class="p-2 rounded-full transition"
+                                                :class="sportsMode ? 'text-slate-400 hover:text-lime-300 hover:bg-[#17394a]' : 'text-gray-500 hover:text-green-600 hover:bg-green-50'"
                                                 v-if="item.partido?.status !== 'closed' && !item.minutes_file_path"
                                             >
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -500,19 +537,25 @@
                                             <button
                                                 @click="openModalPreviewPdf(item)"
                                                 v-if="item.minutes_file_path"
-                                                type="button" class="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full transition">
+                                                type="button"
+                                                class="p-2 rounded-full transition"
+                                                :class="sportsMode ? 'text-slate-400 hover:text-white hover:bg-[#17394a]' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'"
+                                            >
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                             </button>
                                         </div>
                                     </td>
                                     <td class="px-2 py-2.5">
-                                        <div class="text-sm font-bold text-indigo-600">#{{ item.minutes_code }}</div>
-                                        <div class="text-xs text-gray-500">
+                                        <div class="text-sm font-bold" :class="sportsMode ? 'text-lime-300' : 'text-indigo-600'">#{{ item.minutes_code }}</div>
+                                        <div class="text-xs" :class="sportsMode ? 'text-slate-400' : 'text-gray-500'">
                                             {{ item.minutes_subject }}
                                         </div>
                                     </td>
                                     <td class="px-2 py-2.5">
-                                        <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 font-medium">{{ item.minutes_type }}</span>
+                                        <span
+                                            class="px-2 py-1 text-xs rounded-full font-medium"
+                                            :class="sportsMode ? 'bg-lime-400/15 text-lime-200' : 'bg-blue-100 text-blue-700'"
+                                        >{{ item.minutes_type }}</span>
                                     </td>
                                     <td class="px-2 py-2.5 text-center">
                                         <AvatarGroup shape="circle" :max-count="2">
@@ -528,31 +571,32 @@
                                         </AvatarGroup>
                                     </td>
                                     <td class="px-2 py-2.5 text-sm">
-                                        <span v-if="item.status == 'pending'" class="flex items-center text-amber-600">
-                                            <span class="h-2 w-2 rounded-full bg-amber-600 mr-2 animate-pulse"></span>
-                                            Pendiente Firma
+                                        <span v-if="item.status == 'pending'" class="flex items-center" :class="sportsMode ? 'text-amber-300' : 'text-amber-600'">
+                                            <span class="h-2 w-2 rounded-full mr-2 animate-pulse" :class="sportsMode ? 'bg-amber-300' : 'bg-amber-600'"></span>
+                                            Pendiente firma
                                         </span>
-                                        <span v-if="item.status == 'accepted'" class="flex items-center text-blue-600">
-                                            <span class="h-2 w-2 rounded-full bg-blue-600 mr-2 animate-pulse"></span>
+                                        <span v-if="item.status == 'accepted'" class="flex items-center" :class="sportsMode ? 'text-sky-300' : 'text-blue-600'">
+                                            <span class="h-2 w-2 rounded-full mr-2 animate-pulse" :class="sportsMode ? 'bg-sky-300' : 'bg-blue-600'"></span>
                                             Firmado
                                         </span>
                                         <span
                                             v-if="item.sanction && item.sanction.apply_sanction"
-                                            class="inline-flex items-center mt-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold"
+                                            class="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-xs font-bold"
+                                            :class="sportsMode ? 'bg-rose-400/15 text-rose-200' : 'bg-red-100 text-red-700'"
                                             :title="'Sanción administrativa: -' + item.sanction.sanction_points + ' punto(s)'"
                                         >
                                             ⚖ Sanción −{{ item.sanction.sanction_points }} pts
                                         </span>
                                     </td>
                                     <td class="px-2 py-2.5 text-sm">
-                                        <span v-if="item.minutes_file_name" class="text-gray-700 italic">{{ item.minutes_file_name }}</span>
-                                        <span v-else class="text-gray-400 italic">No cargado</span>
+                                        <span v-if="item.minutes_file_name" class="italic" :class="sportsMode ? 'text-slate-300' : 'text-gray-700'">{{ item.minutes_file_name }}</span>
+                                        <span v-else class="italic" :class="sportsMode ? 'text-slate-500' : 'text-gray-400'">No cargado</span>
                                     </td>
                                 </tr>
                             </template>
                             <template v-else>
                                 <tr>
-                                    <td colspan="6" ><Empty :description="'Sin actas registradas'" /></td>
+                                    <td colspan="6" :class="sportsMode ? 'text-slate-400' : ''"><Empty :description="'Sin actas registradas'" /></td>
                                 </tr>
                             </template>
                         </tbody>

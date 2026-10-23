@@ -16,6 +16,7 @@ const actaPartido = readFileSync(new URL('../../Modules/Socialevents/Resources/a
 const formularioCrearLocales = readFileSync(new URL('../../Modules/Socialevents/Resources/assets/js/Pages/Local/Partials/CreateForm.vue', import.meta.url), 'utf8');
 const footer = readFileSync(new URL('../../resources/js/Components/vristo/layout/Footer.vue', import.meta.url), 'utf8');
 const paginacion = readFileSync(new URL('../../resources/js/Components/Pagination.vue', import.meta.url), 'utf8');
+const temaDeportivo = readFileSync(new URL('../../resources/js/utils/temaDeportivo.js', import.meta.url), 'utf8');
 const modales = ['ModalSmall.vue', 'ModalLarge.vue', 'ModalLargeX.vue', 'ModalLargeXX.vue'].map((nombre) => ({
     nombre,
     contenido: readFileSync(new URL(`../../resources/js/Components/${nombre}`, import.meta.url), 'utf8'),
@@ -30,23 +31,57 @@ test('el tema del sistema depende del modo deportivo compartido por el servidor'
     assert.match(authLayout, /sportsTheme\s*\?\s*'theme-torneos'\s*:\s*''/);
 });
 
-test('los estilos futboleros usan el mismo fondo de estadio del login en el cuerpo', () => {
-    const login = readFileSync(new URL('../../resources/js/Pages/Auth/LoginOrganizer.vue', import.meta.url), 'utf8');
+test('la limpieza del tema espera a que no quede ningún layout montado', () => {
+    // Inertia monta la página nueva antes de desmontar la anterior: si el
+    // layout viejo borra la clase al desmontarse, la vista queda sin tema
+    // hasta recargar con F5.
+    assert.match(temaDeportivo, /let reservasActivas = 0/);
+    assert.match(temaDeportivo, /return reservasActivas === 0/);
+    assert.match(layout, /import \{ reservarTemaDeportivo \} from '@\/utils\/temaDeportivo'/);
+    assert.match(layout, /if \(! liberarTemaDeportivo\(\)\) \{\s*return;/);
+    assert.match(authLayout, /import \{ reservarTemaDeportivo \} from '@\/utils\/temaDeportivo'/);
+    assert.match(authLayout, /if \(liberarTemaDeportivo\(\) && typeof document !== 'undefined'\)/);
+});
 
-    assert.match(login, /estadio:\s*'\/img\/torneos\/chaos-soccer-gear-Cjfl8r_eYxY-unsplash\.jpg'/);
+test('el login de organizadores usa el marco de Pichanguero y el tema conserva su fondo de cancha', () => {
+    // La piel del login se movió a PichangueroAuthShell (compartida con el
+    // registro); el fondo de cancha del sistema sigue viviendo en app.css.
+    const login = readFileSync(new URL('../../resources/js/Pages/Auth/LoginOrganizer.vue', import.meta.url), 'utf8');
+    const shell = readFileSync(new URL('../../resources/js/Pages/Auth/Partials/PichangueroAuthShell.vue', import.meta.url), 'utf8');
+
+    assert.match(login, /import PichangueroAuthShell from '\.\/Partials\/PichangueroAuthShell\.vue'/);
+    assert.match(login, /<PichangueroAuthShell/);
+    assert.match(shell, /themes\/pichanguero\/images\/hero-bg\.jpg/);
     assert.match(estilos, /--torneos-pitch-image:\s*url\('\/img\/torneos\/chaos-soccer-gear-Cjfl8r_eYxY-unsplash\.jpg'\)/);
     assert.match(estilos, /html\.theme-torneos \.main-content > \.p-6\.animation\s*\{\s*background-color:\s*transparent;\s*background-image:\s*none;/);
     assert.match(estilos, /linear-gradient\(120deg, rgb\(2 44 34 \/ 88%\)/);
 });
 
 test('los estilos futboleros incluyen header, sidebar, botones y diálogos', () => {
-    assert.match(estilos, /html\.theme-torneos \.main-content > header/);
+    // El chrome usa la paleta oficial: azul noche para el header y el sidebar,
+    // con el lima reservado para los estados activos y los acentos.
+    assert.match(
+        estilos,
+        /html\.theme-torneos \.main-content > header\s*\{\s*background:\s*linear-gradient\(105deg, #0d1b29 0%, #122a3a/
+    );
     assert.match(estilos, /html\.theme-torneos nav\.sidebar/);
-    assert.match(estilos, /html\.theme-torneos nav\.sidebar > #divSiempreVisible > div:nth-child\(2\)\s*\{\s*background-color:\s*#f0fdf4/);
-    assert.match(estilos, /html\.theme-torneos nav\.sidebar \.sidebar-option-item > :is\(button, a\)/);
-    assert.match(estilos, /html\.theme-torneos nav\.sidebar \.sidebar-option-item > :is\(button, a\)\.border-blue-200/);
-    assert.match(estilos, /html\.theme-torneos nav\.sidebar \.sidebar-option-item > :is\(button, a\)\.border-orange-200/);
-    assert.match(estilos, /html\.theme-torneos \.dark nav\.sidebar \.sidebar-option-item > :is\(button, a\)/);
+    assert.match(estilos, /html\.theme-torneos nav\.sidebar #divSiempreVisible\s*\{\s*background-color:\s*#071420/);
+    assert.match(
+        estilos,
+        /html\.theme-torneos nav\.sidebar > #divSiempreVisible > div:nth-child\(2\)\s*\{\s*background:\s*linear-gradient\(180deg, rgb\(8 27 41 \/ 97%\)/
+    );
+    assert.match(
+        estilos,
+        /html\.theme-torneos nav\.sidebar \.sidebar-option-item > :is\(button, a\)\s*\{\s*background:\s*linear-gradient\(150deg/
+    );
+    assert.match(
+        estilos,
+        /html\.theme-torneos nav\.sidebar > #divSiempreVisible > div:first-child :is\(button, a\)\.bg-primary,/
+    );
+    assert.match(
+        estilos,
+        /html\.theme-torneos nav\.sidebar \.sidebar-option-item > :is\(button, a\)\[class~="from-primary"\][\s\S]*?color:\s*#101d2d;/
+    );
     assert.match(estilos, /html\.theme-torneos nav\.sidebar \.sidebar-option-item a\.rounded-lg\.bg-blue-50/);
     assert.match(sidebar, /class="sidebar fixed/);
     assert.match(sidebar, /class="sidebar-option-item group relative"/);
@@ -148,16 +183,20 @@ test('los paneles usan tonos contenidos y variables reutilizables en Torneos', (
     assert.match(estilos, /html\.theme-torneos body\.dark \.sports-locals-page \.sports-locals-panel\s*\{\s*background-color:\s*var\(--torneos-panel-surface\)/);
 });
 
-test('FormSection adopta el panel esmeralda y textos legibles solo con PW00001 = 2', () => {
-    assert.match(estilos, /html\.theme-torneos \{\s*[^}]*--torneos-form-surface-start:\s*rgb\(6 78 59 \/ 96%\)/);
-    assert.match(estilos, /--torneos-form-text:\s*#ecfdf5/);
-    assert.match(estilos, /html\.theme-torneos \.form-section \.form-section__card\.panel\s*\{[^}]*background:\s*linear-gradient\(145deg, var\(--torneos-form-surface-start\), var\(--torneos-form-surface-end\)\);[^}]*border:\s*1px solid var\(--torneos-form-border\);[^}]*color:\s*var\(--torneos-form-text\);/);
-    assert.match(estilos, /html\.theme-torneos \.form-section \.form-section-header :is\(h1, h2, h3, h4, h5, h6\)\s*\{\s*color:\s*#f0fdf4;/);
+test('FormSection adopta el panel azul noche del prototipo solo con PW00001 = 2', () => {
+    assert.match(estilos, /html\.theme-torneos \{\s*[^}]*--torneos-form-surface-start:\s*rgb\(11 31 43 \/ 97%\)/);
+    assert.match(estilos, /--torneos-form-text:\s*#f1f7f6/);
+    assert.match(estilos, /html\.theme-torneos \.form-section \.form-section__card\.panel\s*\{[^}]*background:\s*linear-gradient\(150deg, var\(--torneos-form-surface-start\), var\(--torneos-form-surface-end\)\);[^}]*border:\s*1px solid var\(--torneos-form-border\);[^}]*border-radius:\s*1\.15rem;[^}]*color:\s*var\(--torneos-form-text\);/);
+    /* El panel redefine los tokens de los controles para que Ant Design Vue
+       y los campos nativos compartan la superficie oscura del formulario. */
+    assert.match(estilos, /html\.theme-torneos \.form-section \.form-section__card\.panel\s*\{[^}]*--torneos-control-bg:\s*var\(--torneos-form-field\);[^}]*--torneos-control-text:\s*var\(--torneos-form-field-text\);/);
+    assert.match(estilos, /html\.theme-torneos \.form-section \.form-section-header :is\(h1, h2, h3, h4, h5, h6\)\s*\{\s*color:\s*#f4faf8;/);
     assert.match(estilos, /html\.theme-torneos \.form-section \.form-section-header p\s*\{\s*color:\s*var\(--torneos-form-muted\);/);
-    assert.match(estilos, /html\.theme-torneos \.form-section__card label\s*\{\s*color:\s*var\(--torneos-form-text\);/);
+    assert.match(estilos, /html\.theme-torneos \.form-section__card label\s*\{[^}]*color:\s*var\(--torneos-form-muted\);[^}]*text-transform:\s*uppercase;/);
     assert.match(estilos, /html\.theme-torneos \.form-section__card :is\(input, select, textarea\)\s*\{[^}]*background-color:\s*var\(--torneos-form-field\);[^}]*color:\s*var\(--torneos-form-field-text\);/);
     assert.match(estilos, /html\.theme-torneos \.form-section \.form-section__actions\s*\{[^}]*background:\s*linear-gradient\(110deg, var\(--torneos-form-actions-start\), var\(--torneos-form-actions-end\)\)/);
-    assert.match(estilos, /html\.theme-torneos body\.dark\s*\{[^}]*--torneos-form-surface-start:\s*rgb\(2 44 34 \/ 96%\)/);
+    assert.match(estilos, /html\.theme-torneos \.form-section__actions \.btn-primary\s*\{[^}]*background-color:\s*#c8f169;[^}]*color:\s*#08251a;/);
+    assert.match(estilos, /html\.theme-torneos body\.dark\s*\{[^}]*--torneos-form-surface-start:\s*rgb\(11 31 43 \/ 97%\)/);
     /* Las superficies claras internas conservan texto oscuro. */
     assert.match(estilos, /html\.theme-torneos \.form-section__card \[class\*="bg-white"\],\s*\nhtml\.theme-torneos \.form-section__card :is\(\.bg-gray-50, \.bg-gray-100\)\s*\{\s*color:\s*var\(--torneos-form-field-text\)/);
     /* Los paneles anidados conservan la paleta del panel, no la del formulario. */
@@ -197,10 +236,10 @@ test('el paginador adoptó la variante de Torneos sin perder el diseño original
     // Reconoce el tema con el mismo prop compartido por el servidor.
     assert.match(paginacion, /page\.props\.sportsOrganization\?\.mode === true/);
 
-    // Variante futbolera: barra esmeralda, botones oscuros e iconos claros.
-    assert.match(paginacion, /bg-emerald-950\/70/);
-    assert.match(paginacion, /bg-emerald-900\/85/);
-    assert.match(paginacion, /text-emerald-50/);
+    // Variante futbolera: barra azul noche, botones acero e iconos claros.
+    assert.match(paginacion, /bg-\[\#0b1f2b\]\/90/);
+    assert.match(paginacion, /bg-\[\#122c3a\]/);
+    assert.match(paginacion, /text-slate-100/);
 
     // Página activa en verde lima con número oscuro, sin el azul genérico.
     assert.match(paginacion, /clasesPaginaActiva/);
@@ -208,7 +247,7 @@ test('el paginador adoptó la variante de Torneos sin perder el diseño original
     assert.match(paginacion, /aria-current="page"/);
 
     // Estado deshabilitado distinguible y foco visible por teclado.
-    assert.match(paginacion, /bg-emerald-950\/55 text-emerald-100\/45 cursor-not-allowed/);
+    assert.match(paginacion, /bg-\[\#0b1f2b\]\/60 text-slate-500 cursor-not-allowed/);
     assert.match(paginacion, /focus-visible:ring-2 focus-visible:ring-lime-300/);
 
     // El diseño original se conserva literalmente como alternativa.
@@ -218,9 +257,9 @@ test('el paginador adoptó la variante de Torneos sin perder el diseño original
     assert.match(paginacion, /bg-\[\#F3F5F9\] text-\[\#BDC5D8\]/);
 
     // La barra y los botones del tema consumen tokens dedicados del pager.
-    assert.match(estilos, /--torneos-pager-button-bg:\s*rgb\(6 78 59 \/ 88%\)/);
-    assert.match(estilos, /--torneos-pager-active-bg:\s*#a3e635/);
-    assert.match(estilos, /--torneos-pager-active-text:\s*#052e16/);
+    assert.match(estilos, /--torneos-pager-button-bg:\s*#122c3a/);
+    assert.match(estilos, /--torneos-pager-active-bg:\s*#c8f169/);
+    assert.match(estilos, /--torneos-pager-active-text:\s*#08251a/);
     assert.match(estilos, /html\.theme-torneos \[aria-label="Navegación de Paginación"\] a\s*\{[^}]*background-color:\s*var\(--torneos-pager-button-bg\)/);
     assert.match(estilos, /html\.theme-torneos \[aria-label="Navegación de Paginación"\] \[aria-current="page"\]\s*\{[^}]*background-color:\s*var\(--torneos-pager-active-bg\);[^}]*color:\s*var\(--torneos-pager-active-text\)/);
     // Ninguna regla del paginador vive fuera del tema.

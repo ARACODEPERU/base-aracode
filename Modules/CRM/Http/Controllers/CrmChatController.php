@@ -36,9 +36,14 @@ class CrmChatController extends Controller
 
     public function index(Request $request)
     {
+        $openAi = app(OpenAiAssistantService::class);
+
         return Inertia::render('CRM::Chat/Dashboard', [
             'aiProvider' => $this->aiProvider,
-            'P000010' => $this->P000010
+            'P000010' => $this->P000010,
+            // El aviso de espera del loader solo aplica cuando hay agente.
+            'agentEnabled' => $openAi->agentEnabled(),
+            'agentMaxWaitMinutes' => $openAi->agentTimeoutMinutes(),
         ]);
     }
 

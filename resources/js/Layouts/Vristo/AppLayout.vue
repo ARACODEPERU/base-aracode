@@ -24,6 +24,7 @@
     import SuperEditorPanel from 'Modules/Security/Resources/assets/js/Components/SuperEditor/Panel.vue';
     import SuperEditorPasswordModal from 'Modules/Security/Resources/assets/js/Components/SuperEditor/PasswordModal.vue';
     import { variablesDeMarca } from '@/utils/colorMarca';
+    import { reservarTemaDeportivo } from '@/utils/temaDeportivo';
     // Una cuenta con rol de panel entra al panel aunque también tenga el rol
     // 'Alumno'; el campus del alumno se muestra solo cuando es su único rol.
     import { esModoAlumno } from '@/utils/modoAlumno';
@@ -33,6 +34,10 @@
     const userData = page.props.auth.user;
     const showTopButton = ref(false);
     const sportsTheme = computed(() => page.props.sportsOrganization?.mode === true);
+
+    // Reserva del tema en <html>: el desmontaje del layout anterior ya no
+    // borra la clase si la página nueva sigue en pantalla.
+    const liberarTemaDeportivo = reservarTemaDeportivo();
 
     // Cuando PW00001 selecciona Torneos, usa la paleta del login futbolero y
     // deja intactos los colores corporativos del modo principal.
@@ -77,8 +82,15 @@
         }
     });
 
-    // 3. Limpieza de ambas configuraciones al desmontar el componente/layout
+    // 3. Limpieza de ambas configuraciones al desmontar el componente/layout.
+    // Solo limpia cuando ya no queda ningún layout con tema montado: Inertia
+    // monta la página nueva antes de desmontar la anterior y, si no, se
+    // llevaría por delante lo que la nueva ya había publicado.
     onUnmounted(() => {
+        if (! liberarTemaDeportivo()) {
+            return;
+        }
+
         if (typeof document !== 'undefined') {
             // Limpiar la clase del tema
             document.documentElement.classList.remove('theme-torneos');

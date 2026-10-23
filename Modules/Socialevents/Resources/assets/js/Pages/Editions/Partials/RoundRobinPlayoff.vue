@@ -70,6 +70,10 @@
             type: Array,
             default: () => [],
         },
+        sportsMode: {
+            type: Boolean,
+            default: false,
+        },
     });
 
     const formTeams = useForm({
@@ -153,13 +157,21 @@
 
     // Colores según el estado
     const statusBadge = (status) => {
-        const classes = {
-            'pending': 'text-orange-500',
-            'finished': 'text-gray-400',
-            'live': 'text-red-600 animate-pulse font-bold',
-            'no_points': 'text-indigo-600 font-bold'
-        };
-        return classes[status] || 'text-gray-500';
+        // Sobre la tarjeta azul noche los estados usan tonos más luminosos.
+        const classes = props.sportsMode
+            ? {
+                'pending': 'text-amber-300',
+                'finished': 'text-slate-400',
+                'live': 'text-rose-300 animate-pulse font-bold',
+                'no_points': 'text-sky-300 font-bold'
+            }
+            : {
+                'pending': 'text-orange-500',
+                'finished': 'text-gray-400',
+                'live': 'text-red-600 animate-pulse font-bold',
+                'no_points': 'text-indigo-600 font-bold'
+            };
+        return classes[status] || (props.sportsMode ? 'text-slate-400' : 'text-gray-500');
     };
 
     const displayModalEdit = ref(false);
@@ -648,11 +660,15 @@
 
     <div v-if="Object.keys(fixture).length > 0" >
         <details v-for="(rounds, phase) in fixture" :key="phase" :open="!isPhaseCompleted(phase)" class="mb-12">
-            <summary class="cursor-pointer text-2xl font-black uppercase mb-6 text-gray-800 border-l-4 border-red-600 pl-4 dark:text-white">
+            <summary
+                class="cursor-pointer text-2xl font-black uppercase mb-6 border-l-4 pl-4"
+                :class="sportsMode ? 'text-white border-lime-300' : 'text-gray-800 border-red-600 dark:text-white'"
+            >
                 {{ formatPhaseName(phase) }}
                 <span
                     v-if="isPhaseCompleted(phase)"
-                    class="block text-xs font-medium normal-case text-gray-500 dark:text-gray-400"
+                    class="block text-xs font-medium normal-case"
+                    :class="sportsMode ? 'text-slate-400' : 'text-gray-500 dark:text-gray-400'"
                 >
                     {{ phaseMatchCount(phase) }} partidos — clic para expandir y corregir un acta
                 </span>
@@ -662,29 +678,39 @@
 
                     <div class="flex items-center gap-4 mb-4">
                         <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
-                            <span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+                            <span
+                                class="px-4 py-2 rounded-full text-sm font-bold shadow-lg"
+                                :class="sportsMode ? 'bg-lime-400 text-emerald-950' : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'"
+                            >
                                 FECHA {{ roundNumber }}
                             </span>
-                             <button @click="exportImage(phase, roundNumber)" :class="{ 'opacity-25': loaders[phase + '-' + roundNumber] }" :disabled="loaders[phase + '-' + roundNumber]" class="bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white w-10 h-10 flex items-center justify-center rounded-full shadow-lg transition-all duration-200 transform hover:scale-105">
+                             <button
+                                @click="exportImage(phase, roundNumber)"
+                                :class="[sportsMode ? 'border border-[#2b4b5d] bg-[#122c3a] text-lime-200 hover:bg-[#17394a]' : 'bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white', { 'opacity-25': loaders[phase + '-' + roundNumber] }]"
+                                :disabled="loaders[phase + '-' + roundNumber]"
+                                class="w-10 h-10 flex items-center justify-center rounded-full shadow-lg transition-all duration-200 transform hover:scale-105"
+                             >
                                  <IconBallSoccer v-if="loaders[phase + '-' + roundNumber]" class="w-5 h-5 animate-bounce-ball" />
                                  <IconImages v-else class="w-5 h-5" />
                              </button>
                         </div>
-                        <div class="h-0.5 bg-gradient-to-r from-gray-300 to-gray-400 flex-grow dark:from-gray-600 dark:to-gray-700 rounded-full"></div>
+                        <div class="h-0.5 flex-grow rounded-full" :class="sportsMode ? 'bg-gradient-to-r from-[#234052] to-[#1b3544]' : 'bg-gradient-to-r from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700'"></div>
                     </div>
 
                      <div :ref="(el) => captureRefs[phase + '-' + roundNumber] = el" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         <div
                             v-for="match in matches"
                             :key="match.id"
-                            class="bg-white border rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden dark:bg-zinc-800 dark:border-zinc-800"
+                            class="border rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                            :class="sportsMode ? 'bg-[#0b1f2b] border-[#234052] text-slate-100 shadow-black/30' : 'bg-white dark:bg-zinc-800 dark:border-zinc-800'"
                         >
-                            <div class="bg-gray-50 px-4 py-2 text-xs font-medium text-gray-500 flex justify-between items-center gap-2 dark:bg-zinc-900 dark:text-gray-300">
+                            <div class="px-4 py-2 text-xs font-medium flex justify-between items-center gap-2" :class="sportsMode ? 'bg-[#0e2532] text-slate-400' : 'bg-gray-50 text-gray-500 dark:bg-zinc-900 dark:text-gray-300'">
                                 <span>{{ match.match_date ? formatDate(match.match_date) : 'Horario por definir' }}</span>
                                 <span class="flex items-center gap-2">
                                     <span
                                         v-if="tieLegLabel(match)"
-                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200"
+                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                                        :class="sportsMode ? 'bg-lime-400/15 text-lime-200' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'"
                                     >
                                         {{ tieLegLabel(match) }}
                                     </span>
@@ -696,12 +722,12 @@
                                 <!-- Equipo Local -->
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border dark:bg-zinc-800 dark:border-zinc-700">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border" :class="sportsMode ? 'bg-[#122c3a] border-[#2b4b5d]' : 'bg-gray-100 dark:bg-zinc-800 dark:border-zinc-700'">
                                             <img v-if="match.equipolocal?.logo_path" :src="xhttp + 'storage/' + match.equipolocal.logo_path" class="w-full h-full object-contain p-1" />
                                             <img v-else src="/img/escudo-deportivo.png" class="w-full h-full object-contain p-1 opacity-50" />
                                         </div>
                                         <div>
-                                            <span class="font-bold text-gray-700 dark:text-white truncate max-w-[120px] block">
+                                            <span class="font-bold truncate max-w-[120px] block" :class="sportsMode ? 'text-slate-100' : 'text-gray-700 dark:text-white'">
                                                 {{ match.equipolocal?.name || match.placeholder_h || 'TBD' }}
                                             </span>
                                             <!-- Badge de penales -->
@@ -717,7 +743,7 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <span class="text-xl font-black text-red-600">{{ match.score_h ?? '-' }}</span>
+                                    <span class="text-xl font-black" :class="sportsMode ? 'text-lime-300' : 'text-red-600'">{{ match.score_h ?? '-' }}</span>
                                 </div>
 
                                 <div class="flex justify-center items-center gap-2">
@@ -727,12 +753,12 @@
                                 <!-- Equipo Visitante -->
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border dark:bg-zinc-800 dark:border-zinc-700">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border" :class="sportsMode ? 'bg-[#122c3a] border-[#2b4b5d]' : 'bg-gray-100 dark:bg-zinc-800 dark:border-zinc-700'">
                                             <img v-if="match.equipovisitante?.logo_path" :src="xhttp + 'storage/' + match.equipovisitante.logo_path" class="w-full h-full object-contain p-1" />
                                             <img v-else src="/img/escudo-deportivo.png" class="w-full h-full object-contain p-1 opacity-50" />
                                         </div>
                                         <div>
-                                            <span class="font-bold text-gray-700 dark:text-white truncate max-w-[120px] block">
+                                            <span class="font-bold truncate max-w-[120px] block" :class="sportsMode ? 'text-slate-100' : 'text-gray-700 dark:text-white'">
                                                 {{ match.equipovisitante?.name || match.placeholder_a || 'TBD' }}
                                             </span>
                                             <!-- Badge de penales -->
@@ -748,41 +774,45 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <span class="text-xl font-black text-red-600">{{ match.score_a ?? '-' }}</span>
+                                    <span class="text-xl font-black" :class="sportsMode ? 'text-lime-300' : 'text-red-600'">{{ match.score_a ?? '-' }}</span>
                                 </div>
 
                                 <!-- Marcador global del cruce de ida y vuelta -->
                                 <div
                                     v-if="tieGlobalLabel(match)"
-                                    class="rounded-lg bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600 text-center dark:bg-zinc-900 dark:text-gray-300"
+                                    class="rounded-lg px-3 py-2 text-xs font-semibold text-center"
+                                    :class="sportsMode ? 'bg-[#122c3a] text-slate-300' : 'bg-gray-50 text-gray-600 dark:bg-zinc-900 dark:text-gray-300'"
                                 >
-                                    Global: <span class="font-black text-gray-800 dark:text-white">{{ tieGlobalLabel(match) }}</span>
+                                    Global: <span class="font-black" :class="sportsMode ? 'text-white' : 'text-gray-800 dark:text-white'">{{ tieGlobalLabel(match) }}</span>
                                 </div>
                             </div>
 
-                            <div class="border-t px-4 py-3 bg-gray-50 flex justify-center gap-2 dark:bg-zinc-800/50 dark:border-zinc-800 no-export">
+                            <div class="border-t px-4 py-3 flex justify-center gap-2 no-export" :class="sportsMode ? 'border-[#234052] bg-[#0e2532]' : 'bg-gray-50 dark:bg-zinc-800/50 dark:border-zinc-800'">
                                 <button
                                     @click="openModalEdit(match)"
                                     v-tippy="{content: 'Editar', placement: 'bottom'}"
-                                    class="p-1 hover:bg-gray-200 rounded-lg transition dark:hover:bg-zinc-700 no-export"
+                                    class="p-1 rounded-lg transition no-export"
+                                    :class="sportsMode ? 'hover:bg-[#17394a]' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                                 >
-                                    <IconPencilPaper class="w-6 h-6 text-blue-600" />
+                                    <IconPencilPaper class="w-6 h-6" :class="sportsMode ? 'text-slate-300' : 'text-blue-600'" />
                                 </button>
                                 <button
                                     v-can="'even_ediciones_partido_eliminar'"
                                     @click="deleteMatch(match)"
                                     v-tippy="{content: 'Eliminar', placement: 'bottom'}"
-                                    class="p-1 hover:bg-red-100 rounded-lg transition dark:hover:bg-red-900/30 no-export"
+                                    class="p-1 rounded-lg transition no-export"
+                                    :class="sportsMode ? 'hover:bg-rose-500/15' : 'hover:bg-red-100 dark:hover:bg-red-900/30'"
                                 >
-                                    <IconTrashLines class="w-6 h-6 text-red-500" />
+                                    <IconTrashLines class="w-6 h-6" :class="sportsMode ? 'text-rose-300' : 'text-red-500'" />
                                 </button>
                                 <button
                                     v-can="'even_ediciones_partido_resultado'"
                                     v-tippy="{content: 'Registrar resultados del partido', placement: 'bottom'}"
                                     @click="openMatchScoreView(match)"
-                                    class="p-1 hover:bg-green-100 rounded-lg transition dark:hover:bg-green-900/30 no-export"
+                                    class="p-1 rounded-lg transition no-export"
+                                    :class="sportsMode ? 'hover:bg-lime-400/15' : 'hover:bg-green-100 dark:hover:bg-green-900/30'"
                                 >
-                                    <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 640 640">
+                                    <svg class="w-6 h-6" :class="sportsMode ? 'text-lime-300' : 'text-green-600'" fill="currentColor" viewBox="0 0 640 640">
                                         <path d="M192 64C156.7 64 128 92.7 128 128L128 512C128 547.3 156.7 576 192 576L448 576C483.3 576 512 547.3 512 512L512 128C512 92.7 483.3 64 448 64L192 64zM224 128L416 128C433.7 128 448 142.3 448 160L448 192C448 209.7 433.7 224 416 224L224 224C206.3 224 192 209.7 192 192L192 160C192 142.3 206.3 128 224 128z"/>
                                     </svg>
                                 </button>
@@ -790,16 +820,18 @@
                                     v-if="canCorrectScore && match.status !== 'pending' && match.status !== 'live'"
                                     @click="openMatchScoreView(match)"
                                     v-tippy="{content: 'Corregir acta: marcador, goles, asistencias, atajadas y MVP', placement: 'bottom'}"
-                                    class="p-1 hover:bg-amber-100 rounded-lg transition dark:hover:bg-amber-900/30 no-export"
+                                    class="p-1 rounded-lg transition no-export"
+                                    :class="sportsMode ? 'hover:bg-amber-400/15' : 'hover:bg-amber-100 dark:hover:bg-amber-900/30'"
                                 >
-                                    <IconNotesEdit class="w-6 h-6 text-amber-500" />
+                                    <IconNotesEdit class="w-6 h-6" :class="sportsMode ? 'text-amber-300' : 'text-amber-500'" />
                                 </button>
                                 <button
                                     v-can="'even_ediciones_partido_acta'"
                                     v-if="match.status !== 'no_points'"
                                     v-tippy="{content: 'Generar Acta y Finalizar Partido', placement: 'bottom'}"
                                     @click="openModalMatchReport(match)"
-                                    class="p-1 hover:bg-green-100 rounded-lg transition dark:hover:bg-[#011403]/30 no-export"
+                                    class="p-1 rounded-lg transition no-export"
+                                    :class="sportsMode ? 'hover:bg-lime-400/15' : 'hover:bg-green-100 dark:hover:bg-[#011403]/30'"
                                 >
                                     <svg class="w-6 h-6 text-[#067A21]" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
                                         <path d="M64.1 128C64.1 92.7 92.8 64 128.1 64L277.6 64C294.6 64 310.9 70.7 322.9 82.7L429.3 189.3C441.3 201.3 448 217.6 448 234.6L448 332.1L316 464.1L273.9 464.1L257.8 410.5C253.1 394.8 238.7 384.1 222.3 384.1C211 384.1 200.4 389.2 193.4 398L133.3 473C125 483.3 126.7 498.5 137 506.7C147.3 514.9 162.5 513.3 170.7 502.9L217.8 444.1L233 494.8C236 505 245.4 511.9 256 511.9L287.5 511.9C286.6 515 285.8 518.2 285.2 521.4L274.3 575.9L128.1 575.9C92.8 575.9 64.1 547.2 64.1 511.9L64.1 127.9zM272.1 122.5L272.1 216C272.1 229.3 282.8 240 296.1 240L389.6 240L272.1 122.5zM332.3 530.9C334.8 518.5 340.9 507.1 349.8 498.2L468.7 379.3L548.7 459.3L429.8 578.2C420.9 587.1 409.5 593.2 397.1 595.7L337.5 607.6C336.6 607.8 335.6 607.9 334.6 607.9C326.6 607.9 320 601.4 320 593.3C320 592.3 320.1 591.4 320.3 590.4L332.2 530.8zM600.1 407.9L571.3 436.7L491.3 356.7L520.1 327.9C542.2 305.8 578 305.8 600.1 327.9C622.2 350 622.2 385.8 600.1 407.9z"/>
@@ -809,7 +841,8 @@
                                     v-can="'even_ediciones_fixtures'"
                                     @click="downloadPdfSheet(match)"
                                     v-tippy="{content: 'Ficha Partido', placement: 'bottom'}"
-                                    class="p-1 hover:bg-gray-200 rounded-lg transition dark:hover:bg-zinc-700 no-export"
+                                    class="p-1 rounded-lg transition no-export"
+                                    :class="sportsMode ? 'hover:bg-[#17394a]' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                                 >
                                     <svg class="w-6 h-6 text-orange-500" fill="currentColor" viewBox="0 0 512 512">
                                         <path d="M128 0C92.7 0 64 28.7 64 64l0 96 64 0 0-96 226.7 0L384 93.3l0 66.7 64 0 0-80c0-17-6.7-33.3-18.7-45.3L354.7 18.7C342.7 6.7 326.5 0 309.3 0L128 0zM384 352l0-32 0-32 0-160L256 128l0 96c0 17.7-14.3 32-32 32l-96 0 0 96 0 32 0 32 256 0zm-256 96l256 0c35.3 0 64-28.7 64-64l0-128c0-35.3-28.7-64-64-64l-64 0 0-64L128 0 64 0C28.7 0 0 28.7 0 64L0 384c0 35.3 28.7 64 64 64l64 0z"/>
@@ -823,8 +856,9 @@
         </details>
     </div>
 
-    <div v-else class="text-center py-20 text-gray-500">
+    <div v-else class="text-center py-20" :class="sportsMode ? 'text-slate-400' : 'text-gray-500'">
         <span class="text-lg font-bold">No hay partidos generados para esta edición.</span>
+        <p class="mt-2 text-sm" :class="sportsMode ? 'text-slate-500' : 'text-gray-400'">Genera el fixture para empezar a programar las jornadas.</p>
     </div>
 
     <ModalLarge :show="displayModalTeams" :onClose="closeModalTeams" :icon="'/img/calendario.png'">

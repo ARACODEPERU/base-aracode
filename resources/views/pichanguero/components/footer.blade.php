@@ -5,7 +5,7 @@
             {{-- Marca --}}
             <div class="lg:col-span-2">
                 <a href="{{ route('pichanguero.home') }}" class="inline-flex items-center">
-                    <img src="{{ asset('themes/pichanguero/images/logo.svg') }}" alt="Pichanguero"
+                    <img src="{{ asset('themes/pichanguero/images/Logo-vertical.png') }}" alt="Pichanguero"
                          class="pg-brand-mark" width="260" height="48">
                 </a>
                 <p class="mt-5 max-w-md text-sm leading-relaxed text-pg-muted">
@@ -18,25 +18,28 @@
                 </a>
             </div>
 
-            {{-- Sitio --}}
+            {{-- Producto --}}
             <div>
-                <h4 class="pg-display text-sm font-bold uppercase tracking-wide text-white">Sitio</h4>
+                <h4 class="pg-display text-sm font-bold uppercase tracking-wide text-white">Producto</h4>
                 <ul class="mt-4 space-y-3 text-sm">
-                    <li><a href="{{ route('pichanguero.home') }}#beneficios" class="pg-link">Beneficios</a></li>
+                    <li><a href="{{ route('pichanguero.home') }}#producto" class="pg-link">Qué incluye</a></li>
                     <li><a href="{{ route('pichanguero.home') }}#como-funciona" class="pg-link">Cómo funciona</a></li>
+                    <li><a href="{{ route('pichanguero.home') }}#para-quien" class="pg-link">Para quién</a></li>
+                    <li><a href="{{ route('pichanguero.home') }}#preguntas" class="pg-link">Preguntas frecuentes</a></li>
                     {{-- La app Android aún no está publicada (ver config/pichanguero.php). --}}
                     @if (config('pichanguero.app_disponible', false))
                         <li><a href="{{ route('pichanguero.descargas') }}" class="pg-link">Descargas</a></li>
                     @endif
-                    <li><a href="{{ config('pichanguero.registro_url') }}" class="pg-link">Crear cuenta</a></li>
-                    <li><a href="{{ route('pichanguero.contacto') }}" class="pg-link">Contacto</a></li>
                 </ul>
             </div>
 
-            {{-- Contacto --}}
+            {{-- Atención --}}
             <div>
-                <h4 class="pg-display text-sm font-bold uppercase tracking-wide text-white">Contacto</h4>
+                <h4 class="pg-display text-sm font-bold uppercase tracking-wide text-white">Atención</h4>
                 <ul class="mt-4 space-y-3 text-sm text-pg-muted">
+                    <li>
+                        <a href="{{ route('pichanguero.contacto') }}" class="pg-link">Contacto y demo</a>
+                    </li>
                     <li>
                         <a href="https://wa.me/51917295856?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20Pichanguero"
                            target="_blank" rel="noopener" class="pg-link">

@@ -28,6 +28,8 @@
         phaseLabels: { type: Object, default: () => ({}) },
         phaseOptions: { type: Array, default: () => [] },
         tieFormats: { type: Array, default: () => [] },
+        // Cuando la edición se pinta con el tema azul noche y lima.
+        sportsMode: { type: Boolean, default: false },
     });
 
     const displayModalEdit = ref(false);
@@ -175,18 +177,18 @@
 </script>
 
 <template>
-    <div class="panel min-h-screen">
+    <div :class="sportsMode ? 'min-h-screen text-slate-100' : 'panel min-h-screen'">
         <div v-for="(rounds, phase) in knockout" :key="phase" class="mb-12">
             <div class="text-center mb-16">
-                <h1 class="text-3xl font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Torneo Relámpago</h1>
-                <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-tighter">Eliminación Directa</p>
+                <h1 class="text-3xl font-black uppercase tracking-widest" :class="sportsMode ? 'text-white' : 'text-slate-700 dark:text-slate-300'">Torneo Relámpago</h1>
+                <p class="text-xs font-bold uppercase tracking-tighter" :class="sportsMode ? 'text-lime-300' : 'text-slate-500 dark:text-slate-400'">Eliminación Directa</p>
             </div>
 
             <div class="flex flex-row items-stretch justify-center overflow-x-auto min-w-max">
                 <template v-for="(matches, roundNumber, index) in rounds" :key="roundNumber">
 
                     <div class="flex flex-col min-w-[320px] relative">
-                        <div class="text-center mb-4 font-black text-xs uppercase text-slate-600 dark:text-slate-400 tracking-widest">
+                        <div class="text-center mb-4 font-black text-xs uppercase tracking-widest" :class="sportsMode ? 'text-slate-400' : 'text-slate-600 dark:text-slate-400'">
                             Ronda {{ roundNumber }}
                         </div>
 
@@ -194,36 +196,42 @@
                             <div v-for="(match, mIdx) in matches" :key="match.id"
                                  class="relative flex flex-col justify-center py-4 px-10 h-full w-full">
 
-                                 <div class="relative z-20 flex flex-col gap-1 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-600 w-64 mx-auto cursor-pointer hover:shadow-lg transition-shadow" @click="openModalEdit(match)">
-                                    <div class="flex justify-between items-center text-sm font-bold text-slate-800 dark:text-slate-200">
+                                 <div
+                                    class="relative z-20 flex flex-col gap-1 p-4 rounded-xl shadow-md border w-64 mx-auto cursor-pointer hover:shadow-lg transition-shadow"
+                                    :class="sportsMode ? 'bg-[#0b1f2b] border-[#234052] text-slate-100 shadow-black/40' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600'"
+                                    @click="openModalEdit(match)"
+                                 >
+                                    <div class="flex justify-between items-center text-sm font-bold" :class="sportsMode ? 'text-slate-100' : 'text-slate-800 dark:text-slate-200'">
                                         <span class="truncate pr-2">{{ match.equipolocal?.short_name || match.placeholder_h || 'TBD' }}</span>
-                                        <span class="text-slate-700 dark:text-slate-300 font-mono">{{ match.score_h ?? '-' }}</span>
+                                        <span class="font-mono" :class="sportsMode ? 'text-lime-300' : 'text-slate-700 dark:text-slate-300'">{{ match.score_h ?? '-' }}</span>
                                     </div>
-                                    <div class="border-t border-slate-200 dark:border-slate-600 my-2"></div>
-                                    <div class="flex justify-between items-center text-sm font-bold text-slate-800 dark:text-slate-200">
+                                    <div class="my-2 border-t" :class="sportsMode ? 'border-[#234052]' : 'border-slate-200 dark:border-slate-600'"></div>
+                                    <div class="flex justify-between items-center text-sm font-bold" :class="sportsMode ? 'text-slate-100' : 'text-slate-800 dark:text-slate-200'">
                                         <span class="truncate pr-2">{{ match.equipovisitante?.short_name || match.placeholder_a || 'TBD' }}</span>
-                                        <span class="text-slate-700 dark:text-slate-300 font-mono">{{ match.score_a ?? '-' }}</span>
+                                        <span class="font-mono" :class="sportsMode ? 'text-lime-300' : 'text-slate-700 dark:text-slate-300'">{{ match.score_a ?? '-' }}</span>
                                     </div>
-                                    <div v-if="tieLegLabel(match) || tieGlobalLabel(match)" class="mt-2 flex items-center justify-between gap-2 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
-                                        <span v-if="tieLegLabel(match)" class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200">
+                                    <div v-if="tieLegLabel(match) || tieGlobalLabel(match)" class="mt-2 flex items-center justify-between gap-2 text-[10px] font-bold uppercase" :class="sportsMode ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400'">
+                                        <span v-if="tieLegLabel(match)" class="px-2 py-0.5 rounded-full" :class="sportsMode ? 'bg-lime-400/15 text-lime-200' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'">
                                             {{ tieLegLabel(match) }}
                                         </span>
                                         <span v-if="tieGlobalLabel(match)">Global {{ tieGlobalLabel(match) }}</span>
                                     </div>
-                                    <div class="absolute top-1 right-1 z-30 flex items-center gap-1 bg-white/80 dark:bg-zinc-700/80 rounded-lg">
+                                    <div class="absolute top-1 right-1 z-30 flex items-center gap-1 rounded-lg" :class="sportsMode ? 'bg-[#122c3a]' : 'bg-white/80 dark:bg-zinc-700/80'">
                                         <button
                                             v-can="'even_ediciones_partido_resultado'"
                                             @click.stop="openMatchScoreView(match)"
                                             v-tippy="{content: 'Registrar resultados del partido', placement: 'bottom'}"
-                                            class="p-1 hover:bg-green-100 rounded-lg transition dark:hover:bg-green-900/30 no-export"
+                                            class="p-1 rounded-lg transition no-export"
+                                            :class="sportsMode ? 'hover:bg-lime-400/20' : 'hover:bg-green-100 dark:hover:bg-green-900/30'"
                                         >
-                                            <IconNotesEdit class="w-4 h-4 text-green-600" />
+                                            <IconNotesEdit class="w-4 h-4" :class="sportsMode ? 'text-lime-300' : 'text-green-600'" />
                                         </button>
                                         <button
                                             v-can="'even_ediciones_fixtures'"
                                             @click.stop="downloadPdfSheet(match)"
                                             v-tippy="{content: 'Ficha Partido', placement: 'bottom'}"
-                                            class="p-1 hover:bg-gray-200 rounded-lg transition dark:hover:bg-zinc-700 no-export"
+                                            class="p-1 rounded-lg transition no-export"
+                                            :class="sportsMode ? 'hover:bg-white/10' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                                         >
                                             <svg class="w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 512 512">
                                                 <path d="M128 0C92.7 0 64 28.7 64 64l0 96 64 0 0-96 226.7 0L384 93.3l0 66.7 64 0 0-80c0-17-6.7-33.3-18.7-45.3L354.7 18.7C342.7 6.7 326.5 0 309.3 0L128 0zM384 352l0-32 0-32 0-160L256 128l0 96c0 17.7-14.3 32-32 32l-96 0 0 96 0 32 0 32 256 0zm-256 96l256 0c35.3 0 64-28.7 64-64l0-128c0-35.3-28.7-64-64-64l-64 0 0-64L128 0 64 0C28.7 0 0 28.7 0 64L0 384c0 35.3 28.7 64 64 64l64 0z"/>
@@ -233,21 +241,24 @@
                                 </div>
 
                                 <template v-if="index < Object.keys(rounds).length - 1">
-                                     <div class="absolute top-1/2 right-0 w-10 h-0.5 bg-slate-400 dark:bg-slate-500 z-10"></div>
+                                     <div class="absolute top-1/2 right-0 w-10 h-0.5 z-10" :class="sportsMode ? 'bg-[#2b4b5d]' : 'bg-slate-400 dark:bg-slate-500'"></div>
 
                                      <div v-if="mIdx % 2 === 0"
-                                          class="absolute right-0 top-1/2 border-r-2 border-slate-400 dark:border-slate-500 z-0"
+                                          class="absolute right-0 top-1/2 border-r-2 z-0"
+                                          :class="sportsMode ? 'border-[#2b4b5d]' : 'border-slate-400 dark:border-slate-500'"
                                           :style="{ height: '50%' }">
                                      </div>
 
                                      <div v-else
-                                          class="absolute right-0 bottom-1/2 border-r-2 border-slate-400 dark:border-slate-500 z-0"
+                                          class="absolute right-0 bottom-1/2 border-r-2 z-0"
+                                          :class="sportsMode ? 'border-[#2b4b5d]' : 'border-slate-400 dark:border-slate-500'"
                                           :style="{ height: '50%' }">
                                      </div>
                                  </template>
 
                                  <div v-if="index > 0"
-                                      class="absolute top-1/2 left-0 w-10 h-0.5 bg-slate-400 dark:bg-slate-500 z-10">
+                                      class="absolute top-1/2 left-0 w-10 h-0.5 z-10"
+                                      :class="sportsMode ? 'bg-[#2b4b5d]' : 'bg-slate-400 dark:bg-slate-500'">
                                  </div>
                             </div>
                         </div>

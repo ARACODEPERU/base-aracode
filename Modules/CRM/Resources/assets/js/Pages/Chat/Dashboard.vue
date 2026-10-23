@@ -32,6 +32,7 @@
     import Swal from 'sweetalert2';
     import { useMessageEdition } from '../../useMessageEdition';
     import ModalLargeX from '@/Components/ModalLargeX.vue';
+    import AgentCircuitLoader from '@/Components/AgentCircuitLoader.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import Editor from '@tinymce/tinymce-vue';
 
@@ -62,8 +63,23 @@
         avisoAsistentes: {
             type: String,
             default: null
+        },
+        // true cuando el parametro IA-00003 tiene un agente guardado: la consulta
+        // de OpenAI espera al agente y muestra el loader de circuito.
+        agentEnabled: {
+            type: Boolean,
+            default: false
+        },
+        // Espera maxima configurada en el parametro IA-00004 (minutos).
+        agentMaxWaitMinutes: {
+            type: Number,
+            default: 6
         }
     });
+
+    // El aviso de "puede tomar 5 minutos" solo tiene sentido cuando la consulta
+    // realmente va al agente: con Gemini o sin agente se usa el loader normal.
+    const consultaUsaAgente = computed(() => Number(props.aiProvider) === 1 && props.agentEnabled);
 
     const data = reactive({
         posts: []
@@ -1018,6 +1034,21 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                    </template>
+                    <!-- Mientras se espera al agente: piezas electronicas en movimiento.
+                         Si la consulta no usa el agente se conserva el spinner normal. -->
+                    <template #loading>
+                        <AgentCircuitLoader
+                            v-if="consultaUsaAgente"
+                            :max-wait-minutes="agentMaxWaitMinutes"
+                        />
+                        <div v-else class="flex flex-col items-center">
+                            <svg class="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="mt-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Espera un momento...</p>
                         </div>
                     </template>
                     <template #buttons>

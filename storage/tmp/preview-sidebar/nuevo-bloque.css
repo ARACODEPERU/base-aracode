@@ -1,0 +1,283 @@
+/* Header y sidebar del tema Torneos: azul noche con acentos lima.
+   Usan el mismo vidrio oscuro de los paneles del dashboard para que el chrome
+   del sistema y el contenido deportivo compartan la paleta oficial. */
+
+/* --- Header principal --- */
+html.theme-torneos .main-content > header {
+    background: linear-gradient(105deg, #0d1b29 0%, #122a3a 58%, #0f2b25 100%);
+    color: #d6e2e9;
+    border-bottom: 1px solid rgb(184 243 74 / 18%);
+    box-shadow: 0 12px 30px rgb(0 0 0 / 28%);
+}
+
+html.theme-torneos .main-content > header > div,
+html.theme-torneos .main-content > header > div > div,
+html.theme-torneos .main-content > header > div > div:first-child {
+    background-color: transparent;
+    background-image: none;
+}
+
+html.theme-torneos .main-content > header .horizontal-menu {
+    background: rgb(13 34 51 / 92%);
+    color: #ecfccb;
+    border-color: rgb(184 243 74 / 20%);
+}
+
+html.theme-torneos .main-content > header a,
+html.theme-torneos .main-content > header button {
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+
+html.theme-torneos .main-content > header a:hover,
+html.theme-torneos .main-content > header button:hover {
+    color: #b8f34a;
+}
+
+html.theme-torneos .main-content > header .bg-slate-100,
+html.theme-torneos .main-content > header button.bg-slate-100 {
+    background-color: rgb(255 255 255 / 5.5%);
+    border-color: rgb(255 255 255 / 16%);
+    color: #d6e2e9;
+}
+
+html.theme-torneos .main-content > header .bg-slate-100:hover {
+    background-color: rgb(184 243 74 / 13%);
+    border-color: rgb(184 243 74 / 45%);
+    color: #b8f34a;
+}
+
+html.theme-torneos .main-content > header .text-slate-600,
+html.theme-torneos .main-content > header .text-slate-500,
+html.theme-torneos .main-content > header .text-slate-400,
+html.theme-torneos .main-content > header .text-blue-700 {
+    color: #c9d6e0;
+}
+
+html.theme-torneos .main-content > header .text-slate-600:hover,
+html.theme-torneos .main-content > header .text-blue-700:hover {
+    color: #b8f34a;
+}
+
+/* --- Sidebar: rail azul noche y módulo activo lima --- */
+html.theme-torneos nav.sidebar,
+html.theme-torneos nav.sidebar #divSiempreVisible {
+    background-color: #071420;
+    border-color: rgb(148 178 191 / 16%);
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child {
+    background: linear-gradient(180deg, #0b1a28 0%, #04121c 100%);
+    border-color: rgb(148 178 191 / 14%);
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child > div:first-child {
+    background-color: rgb(184 243 74 / 9%);
+    border: 1px solid rgb(184 243 74 / 28%);
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgb(184 243 74 / 18%);
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .bg-blue-50 {
+    background-color: transparent;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child :is(button, a).bg-primary,
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .bg-blue-600,
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .bg-blue-700 {
+    background-color: #b8f34a;
+    color: #101d2d;
+    box-shadow: 0 10px 22px rgb(184 243 74 / 32%);
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child :is(button, a).bg-primary:hover {
+    background-color: #c7fa65;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child :is(button, a).bg-primary svg,
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .bg-blue-600 svg,
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .bg-blue-700 svg {
+    color: #101d2d;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .group:hover {
+    background-color: rgb(184 243 74 / 8%);
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .text-slate-600,
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child [class~="group-hover:text-blue-600"] {
+    color: #8ea6b6;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .group:hover .text-slate-600,
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .group:hover [class~="group-hover:text-blue-600"] {
+    color: #b8f34a;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:first-child .bg-green-400 {
+    border-color: #071420;
+}
+
+/* --- Panel de opciones del módulo --- */
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) {
+    background: linear-gradient(180deg, rgb(8 27 41 / 97%), rgb(5 18 28 / 99%));
+    border-left: 1px solid rgb(148 178 191 / 12%);
+    color: #d6e2e9;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child,
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:last-child {
+    border-color: rgb(148 178 191 / 14%);
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child p:first-child {
+    color: #b8f34a;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child h2 {
+    color: #ffffff;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child p:last-child {
+    color: #94a9b9;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child > div > div:first-child {
+    background: linear-gradient(145deg, #c9fb6b, #b8f34a);
+    color: #101d2d;
+    box-shadow: 0 8px 20px rgb(184 243 74 / 22%);
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:first-child > div > div:first-child svg {
+    color: #101d2d;
+}
+
+/* Tarjetas de opciones: vidrio oscuro con hover lima. */
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) {
+    background: linear-gradient(150deg, rgb(255 255 255 / 5.5%), transparent 46%), rgb(8 28 41 / 90%);
+    border-color: rgb(159 186 194 / 18%);
+    color: #d6e2e9;
+    box-shadow: 0 16px 30px rgb(0 0 0 / 12%);
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a):hover {
+    background: rgb(184 243 74 / 8%);
+    border-color: rgb(184 243 74 / 40%);
+    color: #ffffff;
+    box-shadow: 0 18px 32px rgb(0 0 0 / 18%);
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .text-slate-700 {
+    color: #eaf2f7;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .text-slate-400,
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .text-slate-500 {
+    color: #8299a9;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .text-blue-800,
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .text-sky-800,
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .text-sky-600 {
+    color: #dbe6ec;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .bg-slate-100 {
+    background-color: rgb(184 243 74 / 9%);
+    color: #b8f34a;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .bg-blue-100,
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .bg-sky-100,
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .bg-orange-100 {
+    background-color: rgb(184 243 74 / 10%);
+    border: 1px solid rgb(184 243 74 / 18%);
+    color: #b8f34a;
+}
+
+/* Opción activa del dashboard: lima sólido con texto azul noche. */
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-primary"],
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-sky-600"] {
+    background-image: linear-gradient(140deg, #c9fb6b 0%, #b8f34a 58%, #a6e23c 100%);
+    border-color: rgb(184 243 74 / 70%);
+    color: #101d2d;
+    box-shadow: 0 12px 26px rgb(184 243 74 / 30%);
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-primary"] :is(span, svg, strong, h3),
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-sky-600"] :is(span, svg, strong, h3) {
+    color: #101d2d;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-primary"] .bg-white\/20,
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-sky-600"] .bg-white\/20 {
+    background-color: rgb(16 29 45 / 13%);
+    color: #101d2d;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-primary"] .text-slate-400,
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-sky-600"] .text-slate-400 {
+    color: rgb(16 29 45 / 72%);
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="border-primary/40"] {
+    background: rgb(184 243 74 / 12%);
+    border-color: rgb(184 243 74 / 50%);
+    color: #f2f8fb;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a)[class~="from-white"] {
+    background: linear-gradient(145deg, rgb(20 49 62 / 42%), rgb(8 28 41 / 90%) 62%);
+    border-color: rgb(159 186 194 / 20%);
+    color: #e8f1f6;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item > :is(button, a) .bg-orange-100 {
+    background-color: rgb(184 243 74 / 10%);
+    color: #b8f34a;
+}
+
+/* Subopciones desplegables. */
+html.theme-torneos nav.sidebar .sidebar-option-item > div > .ml-4 {
+    border-color: rgb(148 178 191 / 16%);
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg {
+    color: #c9d6e0;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg:hover {
+    background-color: rgb(184 243 74 / 10%);
+    color: #ffffff;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg.bg-blue-50 {
+    background-color: rgb(184 243 74 / 12%);
+    color: #ffffff;
+    box-shadow: none;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg .bg-blue-500 {
+    background-color: #b8f34a;
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg .bg-slate-300 {
+    background-color: rgb(184 243 74 / 30%);
+}
+
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg .text-slate-700,
+html.theme-torneos nav.sidebar .sidebar-option-item a.rounded-lg .text-slate-200 {
+    color: #c9d6e0;
+}
+
+/* Pie del panel de opciones con el usuario. */
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:last-child {
+    background-color: rgb(4 18 28 / 85%);
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:last-child p:first-child {
+    color: #e8f1f6;
+}
+
+html.theme-torneos nav.sidebar > #divSiempreVisible > div:nth-child(2) > div:last-child p:last-child {
+    color: #94a9b9;
+}

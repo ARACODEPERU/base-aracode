@@ -1,23 +1,31 @@
-/* Tournament public landing — responsive, dark sports theme */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap');
+/*
+ * Landing pública del torneo.
+ *
+ * La piel sigue el sistema visual del sitio de Pichanguero (propuesta
+ * «Cancha»): azul noche, lima y verde cancha, Montserrat en titulares y
+ * botones, Inter en texto y datos. Se conservan los nombres de variable
+ * (--se-*) para no tocar la estructura del Blade ni el JS de la landing.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:ital,wght@0,600;0,700;0,800;1,800;1,900&display=swap');
 
 :root {
-    --se-bg: #070b14;
-    --se-bg-elevated: #0d1321;
-    --se-bg-card: rgba(22, 29, 47, 0.72);
-    --se-accent: #3b82f6;
-    --se-accent-glow: rgba(59, 130, 246, 0.45);
-    --se-accent-2: #22d3ee;
-    --se-green: #22c55e;
+    --se-bg: #101d2d;
+    --se-bg-elevated: #16283b;
+    --se-bg-card: #0c1826;
+    --se-accent: #b8f34a;
+    --se-accent-glow: rgba(184, 243, 74, 0.28);
+    --se-accent-2: #1b9447;
+    --se-green: #35c46e;
     --se-red: #ef4444;
     --se-amber: #f59e0b;
-    --se-text: #f1f5f9;
-    --se-muted: #94a3b8;
-    --se-border: rgba(255, 255, 255, 0.08);
-    --se-radius: 1.25rem;
-    --se-radius-lg: 1.75rem;
-    --se-header-h: 4.5rem;
-    --se-font: 'Outfit', system-ui, sans-serif;
+    --se-text: #ffffff;
+    --se-muted: #9ab0c4;
+    --se-border: #26425c;
+    --se-radius: 1rem;
+    --se-radius-lg: 1.375rem;
+    --se-header-h: 4.75rem;
+    --se-font: 'Inter', system-ui, -apple-system, sans-serif;
+    --se-display: 'Montserrat', 'Inter', system-ui, sans-serif;
     --se-max: 80rem;
 }
 
@@ -36,13 +44,14 @@ body.se-landing {
     font-family: var(--se-font);
     background: var(--se-bg);
     color: var(--se-text);
-    line-height: 1.5;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
 }
 
 body.se-landing ::selection {
-    background: rgba(59, 130, 246, 0.35);
+    background: var(--se-accent);
+    color: var(--se-bg);
 }
 
 .se-landing a {
@@ -410,17 +419,9 @@ body.se-landing ::selection {
     cursor: pointer;
 }
 
-.se-btn--contact-desktop {
-    display: none;
-}
-
-@media (min-width: 768px) {
+@media (min-width: 1280px) {
     .se-menu-toggle {
         display: none;
-    }
-
-    .se-btn--contact-desktop {
-        display: inline-flex;
     }
 }
 
@@ -2518,4 +2519,1020 @@ body.se-landing.se-motion-off [data-se-reveal] {
 
 body.se-landing.se-motion-off .se-ambient__orb {
     animation: none;
+}
+
+/* ============================================================
+   Piel Pichanguero
+   ============================================================
+   Portada del sitio de Pichanguero trasladada a la landing del torneo:
+   misma paleta, misma tipografía (Montserrat + Inter), mismos botones en
+   mayúscula y el mismo tratamiento de tarjetas y franjas. Solo cambia la
+   piel: no altera datos, anclas ni el comportamiento del JS.
+   ============================================================ */
+
+.se-landing h1,
+.se-landing h2,
+.se-landing h3,
+.se-landing h4,
+.se-brand__title,
+.se-btn {
+    font-family: var(--se-display);
+}
+
+/* Foco visible en lima sobre cualquier superficie, como en el sitio */
+.se-landing :focus-visible {
+    outline: 2px solid var(--se-accent);
+    outline-offset: 3px;
+}
+
+/* --- Cabecera --- */
+.se-header.is-scrolled {
+    background: rgba(16, 29, 45, 0.96);
+    border-color: var(--se-border);
+    box-shadow: 0 12px 30px -22px rgba(0, 0, 0, 0.9);
+}
+
+.se-brand__icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 10px;
+    background: var(--se-accent);
+    box-shadow: none;
+}
+
+.se-brand__icon i {
+    color: var(--se-bg);
+    font-size: 1.05rem;
+}
+
+.se-brand__title {
+    font-size: clamp(1rem, 2.4vw, 1.2rem);
+    font-style: normal;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-transform: none;
+    /* En móvil los nombres largos ocupan dos líneas en vez de perderse
+       detrás de los puntos suspensivos. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: normal;
+    line-height: 1.15;
+}
+
+.se-brand__title span {
+    color: var(--se-accent);
+}
+
+/* Con títulos largos la cabecera necesita más aire: el menú completo
+   entra a partir de 1280px y por debajo se usa el botón de menú. */
+.se-nav {
+    gap: 0.5rem;
+}
+
+@media (max-width: 1279px) {
+    .se-nav {
+        display: none;
+    }
+
+    .se-menu-toggle {
+        display: flex;
+    }
+}
+
+.se-nav a {
+    padding: 0.55rem;
+    border-radius: 8px;
+    color: #cfdae4;
+    font-family: var(--se-font);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    transition: color 0.16s ease, background-color 0.16s ease;
+}
+
+.se-nav a:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+}
+
+.se-nav a.is-active {
+    color: var(--se-accent);
+}
+
+.se-menu-toggle {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 10px;
+    border-color: var(--se-border);
+    background: transparent;
+    color: #fff;
+}
+
+.se-mobile-nav {
+    background: rgba(16, 29, 45, 0.98);
+}
+
+.se-mobile-nav a {
+    border-radius: 10px;
+    border-color: var(--se-border);
+    background: rgba(255, 255, 255, 0.04);
+    font-family: var(--se-font);
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* --- Botones: Montserrat en mayúscula, como en el sitio --- */
+.se-btn {
+    padding: 0.85rem 1.4rem;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+    text-transform: uppercase;
+    box-shadow: none;
+}
+
+.se-btn--primary {
+    background: var(--se-accent);
+    color: var(--se-bg);
+    box-shadow: none;
+}
+
+.se-btn--primary:hover {
+    background: #c9fb6c;
+    transform: translateY(-1px);
+    box-shadow: none;
+}
+
+.se-btn--ghost {
+    border: 1px solid rgba(255, 255, 255, 0.34);
+    background: transparent;
+    color: #fff;
+}
+
+.se-btn--ghost:hover {
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.se-btn--lg {
+    padding: 1rem 1.75rem;
+    border-radius: 10px;
+    font-size: 0.86rem;
+}
+
+/* --- Portada --- */
+.se-hero {
+    min-height: 0;
+    padding-top: calc(var(--se-header-h) + 3.5rem);
+    padding-bottom: 4.5rem;
+    overflow: hidden;
+    background: var(--se-bg);
+}
+
+.se-hero__bg img {
+    opacity: 0.62;
+    object-position: center 40%;
+}
+
+.se-hero__bg::after {
+    background:
+        linear-gradient(105deg, rgba(16, 29, 45, 0.95) 0%, rgba(16, 29, 45, 0.86) 42%, rgba(16, 29, 45, 0.45) 72%, rgba(16, 29, 45, 0.8) 100%),
+        linear-gradient(to top, var(--se-bg) 0%, transparent 45%);
+}
+
+/* Franjas diagonales de la publicidad, como en el hero del sitio */
+.se-hero::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    top: -10%;
+    right: -14%;
+    width: 28%;
+    height: 130%;
+    background: linear-gradient(180deg, var(--se-accent) 0%, var(--se-accent-2) 55%, #087443 100%);
+    transform: skewX(-14deg);
+    opacity: 0.12;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 70%);
+    mask-image: linear-gradient(90deg, transparent, #000 70%);
+    pointer-events: none;
+}
+
+.se-hero::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    top: -12%;
+    right: 4%;
+    width: 5%;
+    height: 130%;
+    background: var(--se-accent);
+    transform: skewX(-14deg);
+    opacity: 0.32;
+    pointer-events: none;
+}
+
+.se-hero__grid {
+    position: relative;
+    z-index: 1;
+}
+
+.se-badge {
+    margin-bottom: 1.4rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid rgba(184, 243, 74, 0.42);
+    background: rgba(184, 243, 74, 0.12);
+    color: var(--se-accent);
+    font-family: var(--se-display);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+}
+
+.se-badge::before {
+    width: 7px;
+    height: 7px;
+    /* El organizador conserva su color de edición en este punto; el resto
+       de la landing usa la paleta fija de Pichanguero. */
+    background: var(--se-edition-accent, var(--se-accent));
+    box-shadow: 0 0 0 4px rgba(184, 243, 74, 0.18);
+    animation: none;
+}
+
+.se-hero__title {
+    position: relative;
+    margin-bottom: 1.35rem;
+    padding-bottom: 0.9rem;
+    font-size: clamp(2.4rem, 5.6vw, 4.25rem);
+    font-weight: 900;
+    font-style: italic;
+    line-height: 0.94;
+    letter-spacing: -0.025em;
+    text-transform: uppercase;
+}
+
+/* Trazo de lima bajo el titular, como el subrayado del hero del sitio */
+.se-hero__title::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 5.5rem;
+    height: 0.32rem;
+    border-radius: 999px;
+    background: var(--se-accent);
+}
+
+.se-hero__title .se-gradient {
+    background: none;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    color: inherit;
+    -webkit-text-fill-color: currentColor;
+}
+
+.se-hero__desc {
+    max-width: 46rem;
+    margin-bottom: 2rem;
+    color: #c9d6e2;
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+.se-hero__desc p {
+    margin: 0 0 0.85rem;
+}
+
+.se-hero__desc p:last-child {
+    margin-bottom: 0;
+}
+
+.se-hero__desc h2,
+.se-hero__desc h3,
+.se-hero__desc h4 {
+    margin: 0 0 0.75rem;
+    color: var(--se-accent);
+    font-family: var(--se-display);
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.se-hero__desc strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+.se-hero__desc ul,
+.se-hero__desc ol {
+    margin: 0.5rem 0 0.9rem;
+    padding-left: 1.15rem;
+}
+
+.se-hero__desc li {
+    margin: 0.35rem 0;
+}
+
+.se-hero__desc li::marker {
+    color: var(--se-accent);
+}
+
+.se-hero__desc a {
+    color: var(--se-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* El organizador puede pegar texto con colores en línea desde el editor:
+   se neutralizan para que el bloque hable el idioma del sitio. */
+.se-hero__desc [style*='color'] {
+    color: inherit !important;
+}
+
+/* Las dos tarjetas del hero no se estiran a la altura de la más alta:
+   el premio principal puede ocupar varias líneas y descuadra la de equipos. */
+.se-stat-grid {
+    align-items: start;
+}
+
+@media (max-width: 559px) {
+    .se-stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .se-stat-card:nth-child(2) {
+        margin-top: 0;
+    }
+}
+
+.se-stat-card {
+    padding: 1.6rem 1.5rem;
+    border-radius: var(--se-radius-lg);
+    border: 1px solid var(--se-border);
+    background: var(--se-bg-card);
+    backdrop-filter: none;
+    box-shadow: 0 40px 80px -50px rgba(0, 0, 0, 0.8);
+}
+
+.se-stat-card:hover {
+    border-color: rgba(184, 243, 74, 0.45);
+    transform: translateY(-3px);
+}
+
+.se-stat-card__icon {
+    margin-bottom: 0.85rem;
+    color: var(--se-accent);
+    font-size: 1.35rem;
+}
+
+.se-stat-card__value {
+    font-family: var(--se-display);
+    font-size: clamp(1.5rem, 2.8vw, 1.85rem);
+    font-weight: 900;
+    line-height: 1.15;
+    color: #fff;
+}
+
+.se-stat-card__label {
+    margin-top: 0.5rem;
+    color: var(--se-muted);
+    font-family: var(--se-font);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.35;
+    text-transform: uppercase;
+}
+
+/* --- Secciones --- */
+.se-section {
+    padding-block: clamp(3.5rem, 8vw, 5.5rem);
+}
+
+.se-section--alt {
+    border-top: 1px solid var(--se-border);
+    border-bottom: 1px solid var(--se-border);
+    background: var(--se-bg-elevated);
+}
+
+.se-section__head {
+    max-width: 46rem;
+    margin-inline: auto;
+    margin-bottom: clamp(2rem, 5vw, 3rem);
+    text-align: center;
+}
+
+.se-section__title {
+    font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+    font-weight: 800;
+    font-style: normal;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-transform: none;
+}
+
+.se-section__title span {
+    color: var(--se-accent);
+    font-style: italic;
+}
+
+.se-section__sub {
+    margin-top: 0.85rem;
+    color: var(--se-muted);
+    font-size: 1.02rem;
+    line-height: 1.6;
+}
+
+/* --- Equipos --- */
+.se-team-card {
+    padding: 1.35rem 1rem;
+    border-radius: var(--se-radius);
+    border-color: var(--se-border);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.se-team-card:hover {
+    border-color: rgba(184, 243, 74, 0.45);
+    box-shadow: 0 16px 36px -26px rgba(0, 0, 0, 0.55);
+}
+
+.se-team-card__logo {
+    border-radius: 12px;
+    background: #11202f;
+}
+
+.se-team-card__logo i {
+    color: var(--se-accent);
+}
+
+.se-team-card__name {
+    font-family: var(--se-display);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    text-transform: none;
+}
+
+/* --- Fixture --- */
+.se-phase-title {
+    padding-left: 1rem;
+    border-left: 4px solid var(--se-accent);
+    color: #fff;
+    font-family: var(--se-display);
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.se-round {
+    border-radius: var(--se-radius);
+    border-color: var(--se-border);
+    background: var(--se-bg-card);
+}
+
+.se-round[open] {
+    border-color: rgba(184, 243, 74, 0.35);
+}
+
+.se-round summary {
+    color: #fff;
+    font-family: var(--se-display);
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.se-round summary:hover {
+    color: var(--se-accent);
+}
+
+.se-round summary i {
+    color: var(--se-accent);
+}
+
+.se-match {
+    padding: 1.1rem 1.25rem;
+    border-radius: 12px;
+    border-color: #1e3347;
+    background: #11202f;
+}
+
+.se-match:hover {
+    border-color: rgba(184, 243, 74, 0.35);
+    background: #16293c;
+}
+
+.se-match__crest,
+.se-tie__crest {
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.se-match__name,
+.se-tie__name {
+    color: #fff;
+    font-family: var(--se-font);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.se-match__score {
+    font-family: var(--se-display);
+    font-weight: 900;
+    font-style: italic;
+}
+
+.se-match__meta {
+    font-family: var(--se-font);
+    font-weight: 700;
+}
+
+.se-match__meta--done {
+    color: #a8e6c0;
+    border: 1px solid rgba(53, 196, 110, 0.55);
+    background: rgba(53, 196, 110, 0.16);
+}
+
+.se-match__meta--live {
+    color: var(--se-bg);
+    border: 1px solid var(--se-accent);
+    background: var(--se-accent);
+}
+
+.se-match__meta--pending {
+    color: var(--se-muted);
+    border: 1px solid var(--se-border);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.se-match__leg {
+    color: var(--se-accent);
+    border: 1px solid rgba(184, 243, 74, 0.42);
+    background: rgba(184, 243, 74, 0.12);
+}
+
+/* --- Llaves de ida y vuelta --- */
+.se-tie {
+    border-radius: 12px;
+    border-color: #1e3347;
+    background: #11202f;
+}
+
+.se-tie:hover {
+    border-color: rgba(184, 243, 74, 0.35);
+    background: #16293c;
+}
+
+.se-tie__vs {
+    background: var(--se-accent);
+    color: var(--se-bg);
+    font-family: var(--se-display);
+}
+
+.se-tie__leg-label {
+    font-family: var(--se-display);
+    font-weight: 800;
+}
+
+.se-tie__leg-status {
+    color: var(--se-muted);
+    border: 1px solid var(--se-border);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.se-tie__leg-status--finished,
+.se-tie__leg-status--closed {
+    color: #a8e6c0;
+    border-color: rgba(53, 196, 110, 0.55);
+    background: rgba(53, 196, 110, 0.16);
+}
+
+.se-tie__leg-status--live {
+    color: var(--se-bg);
+    border-color: var(--se-accent);
+    background: var(--se-accent);
+}
+
+/* --- Tabla de posiciones --- */
+.se-table-wrap {
+    border-radius: var(--se-radius);
+    border-color: var(--se-border);
+    background: var(--se-bg-card);
+    scrollbar-color: rgba(184, 243, 74, 0.35) transparent;
+}
+
+.se-table thead {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.se-table th {
+    color: var(--se-muted);
+    font-family: var(--se-font);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.se-table td {
+    border-top-color: rgba(38, 66, 92, 0.7);
+    font-weight: 500;
+}
+
+.se-table tr:hover td {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.se-table tr.is-leader td:first-child {
+    color: var(--se-accent);
+}
+
+.se-table__team {
+    font-weight: 600;
+}
+
+.se-table .pts {
+    color: var(--se-accent);
+    font-family: var(--se-display);
+    font-style: normal;
+    font-weight: 800;
+}
+
+/* --- Rankeos --- */
+.se-rank-section__title {
+    font-size: clamp(1.2rem, 2.4vw, 1.5rem);
+    font-style: normal;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-transform: none;
+}
+
+.se-rank-section__title span,
+.se-rank-section--scorer .se-rank-section__title span,
+.se-rank-section--gk .se-rank-section__title span {
+    color: var(--se-accent);
+    font-style: italic;
+}
+
+.se-rank-section__note {
+    color: var(--se-muted);
+    font-family: var(--se-font);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: none;
+}
+
+.se-rank-card {
+    padding: 1rem 1.1rem;
+    border-radius: 12px;
+    border-color: var(--se-border);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.se-rank-card:hover {
+    border-color: rgba(184, 243, 74, 0.35);
+}
+
+.se-rank-card.is-top,
+.se-rank-section--gk .se-rank-card.is-top,
+.se-rank-section--scorer .se-rank-card.is-top {
+    border-color: rgba(184, 243, 74, 0.4);
+    background: linear-gradient(90deg, rgba(184, 243, 74, 0.14), transparent);
+}
+
+.se-rank-card.is-top .se-rank-card__avatar img,
+.se-rank-section--gk .se-rank-card.is-top .se-rank-card__avatar img,
+.se-rank-section--scorer .se-rank-card.is-top .se-rank-card__avatar img {
+    border-color: var(--se-accent);
+}
+
+.se-rank-card__pos,
+.se-rank-section--gk .se-rank-card__pos,
+.se-rank-section--scorer .se-rank-card__pos {
+    background: var(--se-accent);
+    color: var(--se-bg);
+    font-family: var(--se-display);
+}
+
+.se-rank-card__name {
+    font-family: var(--se-font);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.se-rank-card__name--action:hover,
+.se-rank-card__name--action:focus-visible {
+    color: var(--se-accent);
+}
+
+.se-rank-card__stats {
+    color: var(--se-muted);
+    font-family: var(--se-font);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.se-rank-card.is-top .se-rank-card__stats {
+    color: #c9d6e2;
+}
+
+.se-rank-card__points,
+.se-rank-section--scorer .se-rank-card__points,
+.se-rank-section--gk .se-rank-card__points {
+    color: var(--se-accent);
+    font-family: var(--se-display);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: none;
+}
+
+/* --- Premios --- */
+.se-prize-card {
+    padding: 1.35rem;
+    border-radius: var(--se-radius);
+    border-color: var(--se-border);
+    background: var(--se-bg-card);
+}
+
+.se-prize-card__place {
+    color: var(--se-accent);
+    font-family: var(--se-display);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+}
+
+.se-prize-card__value {
+    color: #fff;
+    font-family: var(--se-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* --- Galería --- */
+.se-gallery__day-title {
+    color: #fff;
+    font-family: var(--se-display);
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: none;
+}
+
+.se-gallery__day-title i {
+    color: var(--se-accent);
+}
+
+.se-gallery__day-count {
+    color: var(--se-muted);
+    font-family: var(--se-font);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.se-gallery__item {
+    border-radius: 12px;
+    border-color: var(--se-border);
+    background: var(--se-bg-card);
+}
+
+.se-gallery__item:hover {
+    border-color: rgba(184, 243, 74, 0.45);
+    box-shadow: 0 18px 40px -30px rgba(0, 0, 0, 0.8);
+}
+
+/* --- App --- */
+.se-app-download {
+    display: grid;
+    padding: 2rem;
+    border-radius: var(--se-radius);
+    border-color: var(--se-border);
+    background: var(--se-bg-card);
+    backdrop-filter: none;
+}
+
+.se-app-download__icon {
+    border-radius: 14px;
+    background: rgba(184, 243, 74, 0.12);
+    color: var(--se-accent);
+}
+
+.se-app-download__body h3 {
+    font-weight: 800;
+}
+
+.se-app-download__count {
+    color: var(--se-accent);
+}
+
+/* --- Contacto --- */
+.se-contact-cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+/* El Blade trae un margen en línea en el botón de WhatsApp: aquí manda el gap. */
+.se-contact-cta .se-btn {
+    margin-left: 0 !important;
+}
+
+.se-contact-card {
+    padding: 2rem 1.6rem;
+    border-radius: var(--se-radius-lg);
+    border-color: var(--se-border);
+    background: var(--se-bg-card);
+    backdrop-filter: none;
+}
+
+.se-contact-card:hover {
+    border-color: rgba(184, 243, 74, 0.4);
+}
+
+.se-contact-card__icon,
+.se-contact-card__icon--blue,
+.se-contact-card__icon--green,
+.se-contact-card__icon--violet {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    background: rgba(184, 243, 74, 0.12);
+    box-shadow: none;
+    color: var(--se-accent);
+    font-size: 1.1rem;
+}
+
+.se-contact-card h3 {
+    color: #fff;
+    font-family: var(--se-display);
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.se-contact-card__value {
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.se-contact-card__hint {
+    color: var(--se-muted);
+}
+
+/* --- Pie --- */
+.se-footer {
+    border-top-color: #1b2f44;
+    background: #0b1521;
+}
+
+.se-footer__copy {
+    color: var(--se-muted);
+    font-family: var(--se-font);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* --- Modal de jugador --- */
+.se-modal__dialog {
+    border-radius: var(--se-radius-lg);
+    border-color: var(--se-border);
+    background: linear-gradient(180deg, #0c1826, #0a1420);
+}
+
+.se-modal__head {
+    border-bottom-color: var(--se-border);
+    background: rgba(184, 243, 74, 0.06);
+}
+
+.se-modal__avatar {
+    border-color: rgba(184, 243, 74, 0.45);
+}
+
+.se-modal__avatar-initials,
+.se-modal__eyebrow {
+    color: var(--se-accent);
+}
+
+.se-modal__title {
+    font-style: normal;
+    font-weight: 800;
+    text-transform: none;
+}
+
+.se-modal__section-title {
+    color: var(--se-accent);
+    font-family: var(--se-display);
+    font-weight: 800;
+}
+
+.se-modal__stat {
+    border-radius: 12px;
+}
+
+.se-modal__stat--accent {
+    border-color: rgba(184, 243, 74, 0.4);
+    background: rgba(184, 243, 74, 0.1);
+}
+
+.se-modal__reason-total strong {
+    color: var(--se-accent);
+}
+
+.se-modal__badge--mvp {
+    background: rgba(184, 243, 74, 0.2);
+    color: #eafcb4;
+}
+
+.se-modal__badge--clean {
+    background: rgba(53, 196, 110, 0.22);
+    color: #c8f7d8;
+}
+
+.se-modal__close {
+    border-radius: 10px;
+}
+
+/* En móvil la franja diagonal no debe competir con el texto del hero. */
+@media (max-width: 640px) {
+    .se-hero::after {
+        right: -26%;
+        width: 34%;
+        opacity: 0.08;
+    }
+
+    .se-hero::before {
+        opacity: 0.22;
+    }
+}
+
+/* Los avisos de «sin datos» de los rankeos van centrados, como su título. */
+.se-rank-grid > .se-section__sub {
+    text-align: center;
+}
+
+/* --- Splash patrocinado --- */
+.se-splash {
+    background:
+        radial-gradient(circle at 50% 15%, rgba(184, 243, 74, 0.18), transparent 60%),
+        linear-gradient(160deg, #0b1521 0%, #101d2d 55%, #0b1521 100%);
+}
+
+.se-splash__logo {
+    filter: drop-shadow(0 12px 30px rgba(184, 243, 74, 0.2));
+}
+
+/* background-image (no el atajo background) para no anular el recorte del
+   texto que hace visible el degradado sobre la palabra. */
+.se-splash__message strong {
+    background-image: linear-gradient(90deg, var(--se-accent), #d9ff8a);
+}
+
+.se-splash__bar span {
+    background: linear-gradient(90deg, var(--se-accent), var(--se-accent-2));
+}
+
+/* --- Ambiente: menos azul, solo luz de cancha --- */
+.se-ambient__grid {
+    opacity: 0.25;
+    background-image:
+        linear-gradient(rgba(184, 243, 74, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184, 243, 74, 0.05) 1px, transparent 1px);
+}
+
+.se-ambient__orb--1 {
+    background: radial-gradient(circle, rgba(184, 243, 74, 0.16), transparent 70%);
+}
+
+.se-ambient__orb--2 {
+    background: radial-gradient(circle, rgba(27, 148, 71, 0.2), transparent 70%);
+}
+
+.se-ambient__orb--3 {
+    background: radial-gradient(circle, rgba(8, 116, 67, 0.22), transparent 70%);
 }

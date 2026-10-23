@@ -1,0 +1,316 @@
+{
+  "medidas": [
+    {
+      "ancho": 1920,
+      "desborde": 0,
+      "alto": 7753,
+      "fondo": "#101d2d",
+      "lima": "#b8f34a",
+      "fuenteCuerpo": "Inter, system-ui, -apple-system, sans-serif",
+      "fuenteTitular": "Montserrat, Inter, system-ui, sans-serif",
+      "boton": {
+        "familia": "Montserrat, Inter, system-ui, sans-serif",
+        "mayusculas": "uppercase",
+        "fondo": "rgb(184, 243, 74)"
+      },
+      "tituloMarca": {
+        "ancho": 533,
+        "completo": 533,
+        "recortado": false,
+        "alto": 22.078125
+      },
+      "navVisible": true,
+      "menuVisible": false,
+      "contactoEnNav": true,
+      "assetsBuild": 2,
+      "usaViteDev": false,
+      "equipos": 9,
+      "premios": 3,
+      "filasTabla": 9,
+      "secciones": 7,
+      "enlacesNav": [
+        "Inicio",
+        "Equipos",
+        "Premios",
+        "Fixture",
+        "Posiciones",
+        "Galería",
+        "App",
+        "Contacto"
+      ]
+    },
+    {
+      "ancho": 1440,
+      "desborde": 0,
+      "alto": 7753,
+      "fondo": "#101d2d",
+      "lima": "#b8f34a",
+      "fuenteCuerpo": "Inter, system-ui, -apple-system, sans-serif",
+      "fuenteTitular": "Montserrat, Inter, system-ui, sans-serif",
+      "boton": {
+        "familia": "Montserrat, Inter, system-ui, sans-serif",
+        "mayusculas": "uppercase",
+        "fondo": "rgb(184, 243, 74)"
+      },
+      "tituloMarca": {
+        "ancho": 533,
+        "completo": 533,
+        "recortado": false,
+        "alto": 22.078125
+      },
+      "navVisible": true,
+      "menuVisible": false,
+      "contactoEnNav": true,
+      "assetsBuild": 2,
+      "usaViteDev": false,
+      "equipos": 9,
+      "premios": 3,
+      "filasTabla": 9,
+      "secciones": 7,
+      "enlacesNav": [
+        "Inicio",
+        "Equipos",
+        "Premios",
+        "Fixture",
+        "Posiciones",
+        "Galería",
+        "App",
+        "Contacto"
+      ]
+    },
+    {
+      "ancho": 1280,
+      "desborde": 0,
+      "alto": 7753,
+      "fondo": "#101d2d",
+      "lima": "#b8f34a",
+      "fuenteCuerpo": "Inter, system-ui, -apple-system, sans-serif",
+      "fuenteTitular": "Montserrat, Inter, system-ui, sans-serif",
+      "boton": {
+        "familia": "Montserrat, Inter, system-ui, sans-serif",
+        "mayusculas": "uppercase",
+        "fondo": "rgb(184, 243, 74)"
+      },
+      "tituloMarca": {
+        "ancho": 533,
+        "completo": 533,
+        "recortado": false,
+        "alto": 22.078125
+      },
+      "navVisible": true,
+      "menuVisible": false,
+      "contactoEnNav": true,
+      "assetsBuild": 2,
+      "usaViteDev": false,
+      "equipos": 9,
+      "premios": 3,
+      "filasTabla": 9,
+      "secciones": 7,
+      "enlacesNav": [
+        "Inicio",
+        "Equipos",
+        "Premios",
+        "Fixture",
+        "Posiciones",
+        "Galería",
+        "App",
+        "Contacto"
+      ]
+    },
+    {
+      "ancho": 1100,
+      "desborde": 0,
+      "alto": 7832,
+      "fondo": "#101d2d",
+      "lima": "#b8f34a",
+      "fuenteCuerpo": "Inter, system-ui, -apple-system, sans-serif",
+      "fuenteTitular": "Montserrat, Inter, system-ui, sans-serif",
+      "boton": {
+        "familia": "Montserrat, Inter, system-ui, sans-serif",
+        "mayusculas": "uppercase",
+        "fondo": "rgb(184, 243, 74)"
+      },
+      "tituloMarca": {
+        "ancho": 533,
+        "completo": 533,
+        "recortado": false,
+        "alto": 22.078125
+      },
+      "navVisible": false,
+      "menuVisible": true,
+      "contactoEnNav": true,
+      "assetsBuild": 2,
+      "usaViteDev": false,
+      "equipos": 9,
+      "premios": 3,
+      "filasTabla": 9,
+      "secciones": 7,
+      "enlacesNav": [
+        "Inicio",
+        "Equipos",
+        "Premios",
+        "Fixture",
+        "Posiciones",
+        "Galería",
+        "App",
+        "Contacto"
+      ]
+    },
+    {
+      "ancho": 1024,
+      "desborde": 0,
+      "alto": 7704,
+      "fondo": "#101d2d",
+      "lima": "#b8f34a",
+      "fuenteCuerpo": "Inter, system-ui, -apple-system, sans-serif",
+      "fuenteTitular": "Montserrat, Inter, system-ui, sans-serif",
+      "boton": {
+        "familia": "Montserrat, Inter, system-ui, sans-serif",
+        "mayusculas": "uppercase",
+        "fondo": "rgb(184, 243, 74)"
+      },
+      "tituloMarca": {
+        "ancho": 533,
+        "completo": 533,
+        "recortado": false,
+        "alto": 22.078125
+      },
+      "navVisible": false,
+      "menuVisible": true,
+      "contactoEnNav": true,
+      "assetsBuild": 2,
+      "usaViteDev": false,
+      "equipos": 9,
+      "premios": 3,
+      "filasTabla": 9,
+      "secciones": 7,
+      "enlacesNav": [
+        "Inicio",
+        "Equipos",
+        "Premios",
+        "Fixture",
+        "Posiciones",
+        "Galería",
+        "App",
+        "Contacto"
+      ]
+    },
+    {
+      "ancho": 820,
+      "desborde": 0,
+      "alto": 7621,
+      "fondo": "#101d2d",
+      "lima": "#b8f34a",
+      "fuenteCuerpo": "Inter, system-ui, -apple-system, sans-serif",
+      "fuenteTitular": "Montserrat, Inter, system-ui, sans-serif",
+      "boton": {
+        "familia": "Montserrat, Inter, system-ui, sans-serif",
+        "mayusculas": "uppercase",
+        "fondo": "rgb(184, 243, 74)"
+      },
+      "tituloMarca": {
+        "ancho": 533,
+        "completo": 533,
+        "recortado": false,
+        "alto": 22.078125
+      },
+      "navVisible": false,
+      "menuVisible": true,
+      "contactoEnNav": true,
+      "assetsBuild": 2,
+      "usaViteDev": false,
+      "equipos": 9,
+      "premios": 3,
+      "filasTabla": 9,
+      "secciones": 7,
+      "enlacesNav": [
+        "Inicio",
+        "Equipos",
+        "Premios",
+        "Fixture",
+        "Posiciones",
+        "Galería",
+        "App",
+        "Contacto"
+      ]
+    },
+    {
+      "ancho": 390,
+      "desborde": 0,
+      "alto": 9305,
+      "fondo": "#101d2d",
+      "lima": "#b8f34a",
+      "fuenteCuerpo": "Inter, system-ui, -apple-system, sans-serif",
+      "fuenteTitular": "Montserrat, Inter, system-ui, sans-serif",
+      "boton": {
+        "familia": "Montserrat, Inter, system-ui, sans-serif",
+        "mayusculas": "uppercase",
+        "fondo": "rgb(184, 243, 74)"
+      },
+      "tituloMarca": {
+        "ancho": 250,
+        "completo": 250,
+        "recortado": true,
+        "alto": 36.78125
+      },
+      "navVisible": false,
+      "menuVisible": true,
+      "contactoEnNav": true,
+      "assetsBuild": 2,
+      "usaViteDev": false,
+      "equipos": 9,
+      "premios": 3,
+      "filasTabla": 9,
+      "secciones": 7,
+      "enlacesNav": [
+        "Inicio",
+        "Equipos",
+        "Premios",
+        "Fixture",
+        "Posiciones",
+        "Galería",
+        "App",
+        "Contacto"
+      ]
+    }
+  ],
+  "splash": {
+    "texto": "ARACODE",
+    "recorteTexto": "text",
+    "color": "rgba(0, 0, 0, 0)",
+    "logoCargado": true,
+    "logoUrl": "http://127.0.0.1:8000/img/logo176x32_negativo.png"
+  },
+  "menus": {
+    "390": {
+      "abierto": true,
+      "visible": true,
+      "enlaces": [
+        "Inicio",
+        "Equipos",
+        "Premios",
+        "Fixture",
+        "Posiciones",
+        "Galería",
+        "App",
+        "Contacto"
+      ]
+    },
+    "820": {
+      "abierto": true,
+      "visible": true,
+      "enlaces": [
+        "Inicio",
+        "Equipos",
+        "Premios",
+        "Fixture",
+        "Posiciones",
+        "Galería",
+        "App",
+        "Contacto"
+      ]
+    }
+  },
+  "fallos": [],
+  "errores": []
+}

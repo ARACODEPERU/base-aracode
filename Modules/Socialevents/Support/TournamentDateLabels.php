@@ -64,7 +64,9 @@ final class TournamentDateLabels
     {
         $carbon = $date instanceof Carbon ? $date : Carbon::parse($date);
 
-        $dayName = self::DAYS[(int) $carbon->dayOfWeek] ?? $carbon->format('l');
+        // dayOfWeekIso va de 1 (lunes) a 7 (domingo); dayOfWeek usa 0 para domingo
+        // y dejaba ese día en inglés.
+        $dayName = self::DAYS[(int) $carbon->dayOfWeekIso] ?? $carbon->format('l');
         $monthName = self::MONTHS[(int) $carbon->month] ?? $carbon->format('F');
 
         return sprintf(
@@ -83,7 +85,7 @@ final class TournamentDateLabels
     {
         $carbon = $date instanceof Carbon ? $date : Carbon::parse($date);
 
-        $dayName = self::DAYS_SHORT[(int) $carbon->dayOfWeek] ?? $carbon->format('D');
+        $dayName = self::DAYS_SHORT[(int) $carbon->dayOfWeekIso] ?? $carbon->format('D');
         $monthName = self::MONTHS_SHORT[(int) $carbon->month] ?? $carbon->format('M');
 
         return sprintf('%s %d %s %d', $dayName, $carbon->day, $monthName, $carbon->year);

@@ -1,6 +1,6 @@
 <script setup>
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
-    import { Link, router, useForm } from '@inertiajs/vue3';
+    import { Link, router, useForm, usePage } from '@inertiajs/vue3';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import Swal2 from "sweetalert2";
     import { ref, computed, watch } from 'vue';
@@ -25,6 +25,20 @@
         phaseLabels: { type: Object, default: () => ({}) },
         tieFormats: { type: Array, default: () => [] },
     });
+
+    // Mismo tema azul noche y lima que equipos, fixture y actas de la edición.
+    const page = usePage();
+    const sportsMode = computed(() => page.props.sportsOrganization?.mode === true);
+
+    // Tokens de los controles para que los campos se pinten sobre la tarjeta navy
+    // (la hoja global los tiñe de verde claro dentro de html.theme-torneos).
+    const sportsControlVars = computed(() => ({
+        '--torneos-control-bg': '#0e2532',
+        '--torneos-control-text': '#e2e8f0',
+        '--torneos-control-border': '#2b4b5d',
+        '--torneos-control-placeholder': '#64748b',
+        '--torneos-dropdown-bg': '#122c3a',
+    }));
 
     // ─── Formulario del acta ───────────────────────────────────────────────
     // Los mismos campos que espera el endpoint de guardado, para que esta vista
@@ -896,7 +910,7 @@
 </script>
 <template>
     <AppLayout title="Acta del partido">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="sportsMode ? 'GESTIÓN DEPORTIVA' : 'Eventos sociales'"
             :data="[
                 {
                     route: route('even_ediciones_listado'), title: 'Ediciones',
@@ -915,86 +929,144 @@
             ]"
         />
 
-        <div class="sports-match-score-page pt-5 space-y-6">
-            <!-- Barra de acciones: siempre se puede volver al fixture -->
-            <div class="se-acta-header flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 class="text-2xl font-black text-gray-800 dark:text-white">
-                        {{ formScore.equipo_h_name || 'TBD' }} <span class="text-gray-400">vs</span> {{ formScore.equipo_a_name || 'TBD' }}
-                    </h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ match.match_date ? match.match_date : 'Horario por definir' }}
-                        <span v-if="match.location"> · {{ match.location }}</span>
-                        · {{ phaseLabel(match.phase) }}
-                        <span v-if="match.round_number"> · Fecha {{ match.round_number }}</span>
-                        <span v-if="tieSummary?.leg" class="ml-1 font-bold uppercase text-indigo-600 dark:text-indigo-300">
-                            · {{ tieSummary.leg === 1 ? 'Ida' : 'Vuelta' }}
+        <div class="pt-5 space-y-6" :class="sportsMode ? 'text-slate-100' : ''">
+            <!-- Cabecera del acta: mismo hero que Partidos, Equipos y Actas -->
+            <section
+                class="rounded-2xl border p-5 sm:p-6"
+                :class="sportsMode
+                    ? 'border-white/10 bg-[#0b1f2b] text-white shadow-[0_26px_70px_rgba(0,0,0,0.38)]'
+                    : 'border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900'"
+            >
+                <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                    <div class="min-w-0">
+                        <div
+                            class="mb-2 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.2em]"
+                            :class="sportsMode ? 'border-lime-300/25 bg-lime-300/10 text-lime-200' : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200'"
+                        >
+                            <span class="h-1.5 w-1.5 rounded-full bg-lime-400"></span> Acta del partido
+                        </div>
+                        <h1 class="text-2xl font-black tracking-tight sm:text-3xl" :class="sportsMode ? 'text-white' : 'text-gray-900 dark:text-white'">
+                            {{ formScore.equipo_h_name || 'TBD' }}
+                            <span :class="sportsMode ? 'text-lime-300' : 'text-gray-400'">vs</span>
+                            {{ formScore.equipo_a_name || 'TBD' }}
+                        </h1>
+                        <p class="mt-1 text-sm" :class="sportsMode ? 'text-slate-300' : 'text-gray-600 dark:text-gray-300'">
+                            {{ match.match_date ? match.match_date : 'Horario por definir' }}
+                            <span v-if="match.location"> · {{ match.location }}</span>
+                            · {{ phaseLabel(match.phase) }}
+                            <span v-if="match.round_number"> · Fecha {{ match.round_number }}</span>
+                            <span v-if="tieSummary?.leg" class="ml-1 font-bold uppercase" :class="sportsMode ? 'text-lime-300' : 'text-indigo-600 dark:text-indigo-300'">
+                                · {{ tieSummary.leg === 1 ? 'Ida' : 'Vuelta' }}
+                            </span>
+                            <span v-if="tieGlobalLabel" class="ml-1 font-bold" :class="sportsMode ? 'text-slate-100' : 'text-gray-700 dark:text-gray-200'">
+                                · Global {{ tieGlobalLabel }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+                        <span
+                            v-if="isCorrectingScore"
+                            class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold"
+                            :class="sportsMode
+                                ? 'border-amber-300/30 bg-amber-300/10 text-amber-200'
+                                : 'border-amber-300 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'"
+                        >
+                            Acta ya registrada · se guardará como corrección
                         </span>
-                        <span v-if="tieGlobalLabel" class="ml-1 font-bold text-gray-700 dark:text-gray-200">
-                            · Global {{ tieGlobalLabel }}
-                        </span>
-                    </p>
+                        <button
+                            type="button"
+                            @click="goBack"
+                            class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition"
+                            :class="sportsMode
+                                ? 'border border-[#2b4b5d] text-slate-200 hover:border-lime-300/60 hover:text-lime-200'
+                                : 'btn btn-warning text-xs'"
+                        >
+                            Volver al fixture
+                        </button>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span
-                        v-if="isCorrectingScore"
-                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-900/30 dark:text-amber-200"
-                    >
-                        ACTA YA REGISTRADA · SE GUARDARÁ COMO CORRECCIÓN
-                    </span>
-                    <button type="button" @click="goBack" class="btn btn-warning uppercase text-xs">
-                        Volver al fixture
-                    </button>
-                </div>
-            </div>
+            </section>
 
             <!-- Marcador y estado del encuentro -->
-            <div class="se-acta-card rounded-xl border border-default p-4 dark:border-blue-900">
-                <div v-if="isSuddenDeath" class="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+            <div
+                class="rounded-xl border p-4"
+                :class="sportsMode ? 'border-[#234052] bg-[#0b1f2b] text-slate-100 shadow-[0_18px_50px_rgba(0,0,0,0.28)]' : 'border-default dark:border-blue-900'"
+                :style="sportsMode ? sportsControlVars : null"
+            >
+                <div
+                    v-if="isSuddenDeath"
+                    class="mb-3 rounded-lg border px-4 py-2 text-sm"
+                    :class="sportsMode ? 'border-amber-300/30 bg-amber-300/10 text-amber-200' : 'border-amber-300 bg-amber-50 text-amber-800'"
+                >
                     Muerte súbita: el primero que anota gana. No se admite empate ni se registran penales.
                 </div>
                 <div class="grid sm:grid-cols-5 gap-2 items-center">
                     <div class="sm:col-span-2 flex items-center justify-between">
                         <InputLabel :value="formScore.equipo_h_name || 'Local'" />
-                        <TextInput v-model="formScore.score_h" class="w-16 border-4 text-center" />
+                        <TextInput
+                            v-model="formScore.score_h"
+                            class="w-16 border-4 text-center"
+                            :class="sportsMode ? 'font-black text-lime-300' : ''"
+                        />
                     </div>
                     <div class="sm:col-span-1 flex items-center justify-center">
-                        <h3 class="text-lg font-bold">VS</h3>
+                        <h3 class="text-lg font-bold" :class="sportsMode ? 'text-slate-400' : ''">VS</h3>
                     </div>
                     <div class="sm:col-span-2 flex items-center justify-between">
-                        <TextInput v-model="formScore.score_a" class="w-16 border-4 text-center" />
+                        <TextInput
+                            v-model="formScore.score_a"
+                            class="w-16 border-4 text-center"
+                            :class="sportsMode ? 'font-black text-lime-300' : ''"
+                        />
                         <InputLabel :value="formScore.equipo_a_name || 'Visitante'" />
                     </div>
                 </div>
 
                 <!-- Cómo se repartieron los goles: lo que se usará en los reportes -->
                 <div class="mt-4 grid sm:grid-cols-3 gap-3 text-sm">
-                    <div class="se-acta-subcard rounded-lg border border-default p-3 dark:border-blue-900">
-                        <p class="text-xs font-bold uppercase text-gray-500">Tiempo reglamentario</p>
-                        <p class="text-xl font-black">{{ goalSummary.local.regulation }} - {{ goalSummary.visitor.regulation }}</p>
+                    <div
+                        class="rounded-lg border p-3"
+                        :class="sportsMode ? 'border-[#234052] bg-[#122c3a]' : 'border-default dark:border-blue-900'"
+                    >
+                        <p class="text-xs font-bold uppercase" :class="sportsMode ? 'text-slate-400' : 'text-gray-500'">Tiempo reglamentario</p>
+                        <p class="text-xl font-black" :class="sportsMode ? 'text-white' : ''">{{ goalSummary.local.regulation }} - {{ goalSummary.visitor.regulation }}</p>
                     </div>
-                    <div class="se-acta-subcard rounded-lg border border-default p-3 dark:border-blue-900">
-                        <p class="text-xs font-bold uppercase text-gray-500">Alargue (prórroga)</p>
-                        <p class="text-xl font-black">{{ goalSummary.local.extra }} - {{ goalSummary.visitor.extra }}</p>
+                    <div
+                        class="rounded-lg border p-3"
+                        :class="sportsMode ? 'border-[#234052] bg-[#122c3a]' : 'border-default dark:border-blue-900'"
+                    >
+                        <p class="text-xs font-bold uppercase" :class="sportsMode ? 'text-slate-400' : 'text-gray-500'">Alargue (prórroga)</p>
+                        <p class="text-xl font-black" :class="sportsMode ? 'text-white' : ''">{{ goalSummary.local.extra }} - {{ goalSummary.visitor.extra }}</p>
                     </div>
-                    <div class="se-acta-subcard rounded-lg border border-default p-3 dark:border-blue-900">
-                        <p class="text-xs font-bold uppercase text-gray-500">Penales (tanda)</p>
-                        <p class="text-xl font-black">
+                    <div
+                        class="rounded-lg border p-3"
+                        :class="sportsMode ? 'border-[#234052] bg-[#122c3a]' : 'border-default dark:border-blue-900'"
+                    >
+                        <p class="text-xs font-bold uppercase" :class="sportsMode ? 'text-slate-400' : 'text-gray-500'">Penales (tanda)</p>
+                        <p class="text-xl font-black" :class="sportsMode ? 'text-white' : ''">
                             {{ formScore.has_penalties ? `${goalSummary.penalties.local} - ${goalSummary.penalties.visitor}` : '—' }}
                         </p>
                     </div>
                 </div>
-                <p v-if="goalSummary.unlocated > 0" class="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                <p
+                    v-if="goalSummary.unlocated > 0"
+                    class="mt-2 text-xs"
+                    :class="sportsMode ? 'text-amber-300' : 'text-amber-700 dark:text-amber-300'"
+                >
                     {{ goalSummary.unlocated }} gol(es) sin tiempo registrado: no se reparten entre los tiempos hasta que se les asigne uno.
                 </p>
             </div>
 
             <!-- Tiempos del partido -->
-            <div class="se-acta-card mt-2 border border-default rounded-base p-4 dark:border-blue-900">
+            <div
+                class="mt-2 rounded-base border p-4"
+                :class="sportsMode ? 'border-[#234052] bg-[#0b1f2b] text-slate-100' : 'border-default dark:border-blue-900'"
+                :style="sportsMode ? sportsControlVars : null"
+            >
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h4 class="text-lg font-bold">Tiempos del partido</h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                        <h4 class="text-lg font-bold" :class="sportsMode ? 'text-white' : ''">Tiempos del partido</h4>
+                        <p class="text-xs" :class="sportsMode ? 'text-slate-400' : 'text-gray-500 dark:text-gray-400'">
                             Duración: {{ timing.half_minutes }} min por tiempo × {{ timing.halves }}
                             = {{ timing.regular_total }} min<span v-if="timing.extra_time_played"> + prórroga {{ timing.extra_total }} min</span>
                             (total {{ timing.duration }} min). Los minutos se calculan solos desde los cambios.
@@ -1022,41 +1094,61 @@
 
             <!-- Detalles: goles, cambios y penales -->
             <div class="flex flex-wrap gap-2">
-                <button type="button" class="btn btn-primary uppercase text-xs" @click="openGoals('local')">
+                <button
+                    type="button"
+                    class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition"
+                    :class="sportsMode ? 'bg-[#c8f169] text-[#08251a] hover:bg-[#d9fb8d]' : 'btn btn-primary text-xs'"
+                    @click="openGoals('local')"
+                >
                     ⚽ Detalle de goles ({{ formScore.goals_h.length + formScore.goals_a.length }})
                 </button>
-                <button type="button" class="btn btn-success uppercase text-xs" @click="openSubstitutions()">
+                <button
+                    type="button"
+                    class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition"
+                    :class="sportsMode ? 'border border-[#2b4b5d] text-slate-200 hover:border-lime-300/60 hover:text-lime-200' : 'btn btn-success text-xs'"
+                    @click="openSubstitutions()"
+                >
                     🔁 Cambios ({{ formScore.substitutions_h.length + formScore.substitutions_a.length }})
                 </button>
-                <button type="button" class="btn btn-primary uppercase text-xs" @click="openSaves('local')">
+                <button
+                    type="button"
+                    class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition"
+                    :class="sportsMode ? 'border border-[#2b4b5d] text-slate-200 hover:border-lime-300/60 hover:text-lime-200' : 'btn btn-primary text-xs'"
+                    @click="openSaves('local')"
+                >
                     🧤 Detalle de atajadas ({{ formScore.saves_h.length + formScore.saves_a.length }})
                 </button>
-                <label class="se-acta-toggle inline-flex items-center gap-2 text-sm cursor-pointer px-3">
+                <label class="inline-flex cursor-pointer items-center gap-2 px-3 text-sm">
                     <input type="checkbox" v-model="formScore.has_penalties" class="w-5 h-5 text-yellow-600 rounded focus:ring-yellow-500" />
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Registrar tanda de penales</span>
+                    <span class="font-medium" :class="sportsMode ? 'text-slate-300' : 'text-gray-700 dark:text-gray-300'">Registrar tanda de penales</span>
                 </label>
             </div>
 
             <!-- Sección de Penales -->
-            <div v-if="formScore.has_penalties" class="se-acta-card se-acta-card--penales p-4 rounded-lg border">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-yellow-800 dark:text-yellow-200">Tanda de Penales</h3>
+            <div
+                v-if="formScore.has_penalties"
+                class="rounded-lg border p-4"
+                :class="sportsMode ? 'border-amber-300/25 bg-amber-300/5 text-slate-100' : 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20'"
+                :style="sportsMode ? sportsControlVars : null"
+            >
+                <div class="mb-4 flex items-center justify-between">
+                    <h3 class="text-lg font-bold" :class="sportsMode ? 'text-amber-200' : 'text-yellow-800 dark:text-yellow-200'">Tanda de penales</h3>
                     <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Rondas:</span>
+                        <span class="text-sm" :class="sportsMode ? 'text-slate-300' : 'text-gray-600 dark:text-gray-400'">Rondas:</span>
                         <TextInput v-model="formScore.penalty_rounds" type="number" min="1" max="10" class="w-16" />
-                        <span class="text-xs text-gray-500">({{ formScore.penalty_rounds * 2 }} patadas máximo)</span>
+                        <span class="text-xs" :class="sportsMode ? 'text-slate-400' : 'text-gray-500'">({{ formScore.penalty_rounds * 2 }} patadas máximo)</span>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-center gap-4 mb-4">
+                <div class="mb-4 flex items-center justify-center gap-4">
                     <div class="text-center">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Local</span>
-                        <div class="text-3xl font-bold text-green-600">{{ getPenaltyScore.penalty_h }}</div>
+                        <span class="text-sm" :class="sportsMode ? 'text-slate-400' : 'text-gray-600 dark:text-gray-400'">Local</span>
+                        <div class="text-3xl font-bold" :class="sportsMode ? 'text-lime-300' : 'text-green-600'">{{ getPenaltyScore.penalty_h }}</div>
                     </div>
-                    <span class="text-lg font-bold text-gray-400">-</span>
+                    <span class="text-lg font-bold" :class="sportsMode ? 'text-slate-500' : 'text-gray-400'">-</span>
                     <div class="text-center">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Visitante</span>
-                        <div class="text-3xl font-bold text-green-600">{{ getPenaltyScore.penalty_a }}</div>
+                        <span class="text-sm" :class="sportsMode ? 'text-slate-400' : 'text-gray-600 dark:text-gray-400'">Visitante</span>
+                        <div class="text-3xl font-bold" :class="sportsMode ? 'text-lime-300' : 'text-green-600'">{{ getPenaltyScore.penalty_a }}</div>
                     </div>
                 </div>
 
@@ -1064,15 +1156,20 @@
                     type="button"
                     @click="addPenalty"
                     :disabled="!canAddMorePenalties"
-                    :class="{ 'opacity-50 cursor-not-allowed': !canAddMorePenalties }"
-                    class="mb-4 inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md text-sm font-medium"
+                    :class="[
+                        sportsMode
+                            ? 'bg-[#c8f169] text-[#08251a] hover:bg-[#d9fb8d]'
+                            : 'bg-yellow-500 hover:bg-yellow-600 text-white',
+                        { 'opacity-50 cursor-not-allowed': !canAddMorePenalties }
+                    ]"
+                    class="mb-4 inline-flex items-center rounded-md px-3 py-2 text-sm font-medium"
                 >
                     <IconPlus class="w-4 h-4 mr-1" />
                     Agregar Penal
                 </button>
 
                 <div v-if="formScore.penalties.length > 0" class="space-y-2">
-                    <div class="flex items-center gap-2 text-xs font-bold text-gray-500 px-2">
+                    <div class="flex items-center gap-2 px-2 text-xs font-bold" :class="sportsMode ? 'text-slate-400' : 'text-gray-500'">
                         <div class="w-20">#</div>
                         <div class="flex-1">Equipo que Patea</div>
                         <div class="flex-1">Pateador</div>
@@ -1081,10 +1178,15 @@
                         <div class="w-8"></div>
                     </div>
 
-                    <div v-for="(penalty, index) in formScore.penalties" :key="index" class="se-acta-row flex items-center gap-2 p-3 rounded-lg border">
+                    <div
+                        v-for="(penalty, index) in formScore.penalties"
+                        :key="index"
+                        class="flex items-center gap-2 rounded-lg border p-3"
+                        :class="sportsMode ? 'border-[#234052] bg-[#122c3a]' : 'bg-white dark:bg-gray-800'"
+                    >
                         <div class="w-20">
-                            <span class="text-xs font-bold text-gray-500">Patada {{ index + 1 }}</span>
-                            <span class="block text-[10px] text-gray-400">(Ronda {{ penalty.round }})</span>
+                            <span class="text-xs font-bold" :class="sportsMode ? 'text-slate-400' : 'text-gray-500'">Patada {{ index + 1 }}</span>
+                            <span class="block text-[10px]" :class="sportsMode ? 'text-slate-500' : 'text-gray-400'">(Ronda {{ penalty.round }})</span>
                         </div>
                         <div class="flex-1">
                             <select
@@ -1132,8 +1234,8 @@
                         </button>
                     </div>
                 </div>
-                <p v-else class="text-sm text-gray-500 text-center py-2">
-                    No hay penales agregados. Haz clic en "Agregar Penal" para registrar.
+                <p v-else class="py-2 text-center text-sm" :class="sportsMode ? 'text-slate-400' : 'text-gray-500'">
+                    No hay penales agregados. Haz clic en "Agregar penal" para registrar.
                 </p>
             </div>
 
@@ -1146,26 +1248,49 @@
                     ]"
                     :key="side.key"
                 >
-                    <div class="se-acta-card se-acta-card--flush w-full p-0 rounded-base">
-                        <div class="se-acta-card__head px-4 py-2 border-b flex items-center justify-between">
-                            <p class="font-bold">{{ side.label }}</p>
-                            <button type="button" class="text-xs text-blue-600 underline" @click="openGoals(side.key)">
+                    <div
+                        class="w-full overflow-hidden rounded-base border p-0"
+                        :class="sportsMode ? 'border-[#234052] bg-[#0b1f2b] text-slate-100 shadow-[0_18px_50px_rgba(0,0,0,0.28)]' : 'border-default shadow-xs dark:border-blue-900'"
+                        :style="sportsMode ? sportsControlVars : null"
+                    >
+                        <div
+                            class="flex items-center justify-between border-b px-4 py-2"
+                            :class="sportsMode ? 'border-[#234052] bg-[#0e2532]' : 'border-default dark:border-blue-900'"
+                        >
+                            <p class="font-bold" :class="sportsMode ? 'text-white' : ''">{{ side.label }}</p>
+                            <button
+                                type="button"
+                                class="text-xs underline"
+                                :class="sportsMode ? 'text-lime-300 hover:text-lime-200' : 'text-blue-600'"
+                                @click="openGoals(side.key)"
+                            >
                                 Ver goles
                             </button>
                         </div>
                         <div class="table-responsive">
-                            <table class="w-full text-sm text-left rtl:text-right text-body se-score-table se-acta-table">
-                                <thead class="text-sm text-body border-b border-default dark:border-blue-900">
-                                    <th class="se-score-sticky se-score-sticky--role px-3 py-2 bg-gray-50 text-xs font-bold dark:bg-blue-900 dark:text-white"></th>
-                                    <th class="se-score-sticky se-score-sticky--name px-3 py-2 bg-gray-50 text-xs font-bold dark:bg-blue-900 dark:text-white">Nombre</th>
-                                    <th class="px-3 py-2 bg-gray-50 text-xs font-bold dark:bg-blue-900 dark:text-white">Goles</th>
-                                    <th class="px-3 py-2 bg-gray-50 text-xs font-bold dark:bg-blue-900 dark:text-white">Atajadas</th>
-                                    <th class="px-3 py-2 bg-gray-50 text-xs font-bold dark:bg-blue-900 dark:text-white">MVP</th>
-                                    <th class="px-3 py-2 bg-gray-50 text-xs font-bold dark:bg-blue-900 dark:text-white">Sanciones</th>
+                            <table class="w-full text-sm text-left rtl:text-right text-body se-score-table">
+                                <thead
+                                    class="border-b text-sm"
+                                    :class="sportsMode ? 'border-[#234052] text-lime-200' : 'border-default text-body dark:border-blue-900'"
+                                >
+                                    <th class="se-score-sticky se-score-sticky--role px-3 py-2 text-xs font-bold" :class="sportsMode ? 'bg-[#122c3a] text-lime-200' : 'bg-gray-50 dark:bg-blue-900 dark:text-white'"></th>
+                                    <th class="se-score-sticky se-score-sticky--name px-3 py-2 text-xs font-bold" :class="sportsMode ? 'bg-[#122c3a] text-lime-200' : 'bg-gray-50 dark:bg-blue-900 dark:text-white'">Nombre</th>
+                                    <th class="px-3 py-2 text-xs font-bold" :class="sportsMode ? 'bg-[#122c3a] text-lime-200' : 'bg-gray-50 dark:bg-blue-900 dark:text-white'">Goles</th>
+                                    <th class="px-3 py-2 text-xs font-bold" :class="sportsMode ? 'bg-[#122c3a] text-lime-200' : 'bg-gray-50 dark:bg-blue-900 dark:text-white'">Atajadas</th>
+                                    <th class="px-3 py-2 text-xs font-bold" :class="sportsMode ? 'bg-[#122c3a] text-lime-200' : 'bg-gray-50 dark:bg-blue-900 dark:text-white'">MVP</th>
+                                    <th class="px-3 py-2 text-xs font-bold" :class="sportsMode ? 'bg-[#122c3a] text-lime-200' : 'bg-gray-50 dark:bg-blue-900 dark:text-white'">Sanciones</th>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="(player, index) in side.players" :key="side.key + index" class="border-b border-default">
-                                        <td class="se-score-sticky se-score-sticky--role bg-white px-2 dark:bg-gray-800">
+                                    <tr
+                                        v-for="(player, index) in side.players"
+                                        :key="side.key + index"
+                                        class="border-b"
+                                        :class="sportsMode ? 'border-[#1b3544] hover:bg-[#122c3a]' : 'border-default'"
+                                    >
+                                        <td
+                                            class="se-score-sticky se-score-sticky--role px-2"
+                                            :class="sportsMode ? 'bg-[#0b1f2b]' : 'bg-white dark:bg-gray-800'"
+                                        >
                                             <div class="flex-col items-start gap-1">
                                                 <label class="inline-flex items-center cursor-pointer">
                                                     <input type="radio" :name="'role_' + side.key + index" value="starter"
@@ -1186,15 +1311,18 @@
                                                 </button>
                                             </div>
                                         </td>
-                                        <td class="se-score-sticky se-score-sticky--name px-3 py-3 font-medium text-heading whitespace-nowrap bg-neutral-secondary-soft">
-                                            <p class="font-medium text-heading truncate">{{ playerName(player) }}</p>
+                                        <td
+                                            class="se-score-sticky se-score-sticky--name whitespace-nowrap px-3 py-3 font-medium"
+                                            :class="sportsMode ? 'bg-[#0d2230] text-slate-100' : 'bg-neutral-secondary-soft text-heading'"
+                                        >
+                                            <p class="truncate font-medium" :class="sportsMode ? 'text-white' : 'text-heading'">{{ playerName(player) }}</p>
                                             <div v-if="player.is_suspended" class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/40 dark:text-red-300">
                                                 SUSPENDIDO
                                             </div>
                                             <p v-if="player.is_suspended && player.suspension" class="text-[10px] text-red-600 dark:text-red-300 leading-tight">
                                                 {{ suspensionSummary(player.suspension) }}
                                             </p>
-                                            <p class="text-xs text-body truncate">
+                                            <p class="truncate text-xs" :class="sportsMode ? 'text-slate-400' : 'text-body'">
                                                 Camiseta: {{ player.jersey_number }} · {{ player.position }}
                                             </p>
                                         </td>
@@ -1209,9 +1337,9 @@
                                                         : 'Primero marca al jugador como Titular o Suplente'",
                                                     :class="[
                                                         playerGoalCount(side.key, player) > 0
-                                                            ? 'border-green-400 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                                                            : 'border-gray-200 bg-gray-100 text-gray-500 dark:bg-gray-600 dark:text-white',
-                                                        !player.match_role ? 'opacity-50 cursor-not-allowed' : 'hover:border-blue-400 hover:text-blue-600',
+                                                            ? (sportsMode ? 'border-lime-300/60 bg-lime-400/15 text-lime-200' : 'border-green-400 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300')
+                                                            : (sportsMode ? 'border-[#2b4b5d] bg-[#122c3a] text-slate-400' : 'border-gray-200 bg-gray-100 text-gray-500 dark:bg-gray-600 dark:text-white'),
+                                                        !player.match_role ? 'opacity-50 cursor-not-allowed' : (sportsMode ? 'hover:border-lime-300/60 hover:text-lime-200' : 'hover:border-blue-400 hover:text-blue-600'),
                                                         'inline-flex items-center gap-1 border rounded-lg px-3 py-1.5 transition-colors'
                                                     ]"
                                                 >
@@ -1222,13 +1350,15 @@
                                                     v-if="playerGoalTimes(side.key, player)"
                                                     type="button"
                                                     @click="openGoals(side.key, playerIdOf(player))"
-                                                    class="text-[10px] text-blue-600 underline whitespace-nowrap"
+                                                    class="whitespace-nowrap text-[10px] underline"
+                                                    :class="sportsMode ? 'text-lime-300' : 'text-blue-600'"
                                                 >
                                                     {{ playerGoalTimes(side.key, player) }}
                                                 </button>
                                                 <span
                                                     v-if="playerOwnGoalCount(side.key, player) > 0"
-                                                    class="text-[10px] text-amber-600 whitespace-nowrap"
+                                                    class="whitespace-nowrap text-[10px]"
+                                                    :class="sportsMode ? 'text-amber-300' : 'text-amber-600'"
                                                 >
                                                     {{ playerOwnGoalCount(side.key, player) }} en propia puerta
                                                 </span>
@@ -1245,9 +1375,9 @@
                                                         : 'Primero marca al jugador como Titular o Suplente'"
                                                     :class="[
                                                         playerSaveCount(side.key, player) > 0
-                                                            ? 'border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                                                            : 'border-gray-200 bg-gray-100 text-gray-500 dark:bg-gray-600 dark:text-white',
-                                                        !player.match_role ? 'opacity-50 cursor-not-allowed' : 'hover:border-blue-400 hover:text-blue-600',
+                                                            ? (sportsMode ? 'border-sky-300/60 bg-sky-400/15 text-sky-200' : 'border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300')
+                                                            : (sportsMode ? 'border-[#2b4b5d] bg-[#122c3a] text-slate-400' : 'border-gray-200 bg-gray-100 text-gray-500 dark:bg-gray-600 dark:text-white'),
+                                                        !player.match_role ? 'opacity-50 cursor-not-allowed' : (sportsMode ? 'hover:border-sky-300/60 hover:text-sky-200' : 'hover:border-blue-400 hover:text-blue-600'),
                                                         'inline-flex items-center gap-1 border rounded-lg px-3 py-1.5 transition-colors'
                                                     ]"
                                                 >
@@ -1258,7 +1388,8 @@
                                                     v-if="playerSaveSummary(side.key, player)"
                                                     type="button"
                                                     @click="openSaves(side.key, playerIdOf(player))"
-                                                    class="text-[10px] text-blue-600 underline whitespace-nowrap"
+                                                    class="whitespace-nowrap text-[10px] underline"
+                                                    :class="sportsMode ? 'text-sky-300' : 'text-blue-600'"
                                                 >
                                                     {{ playerSaveSummary(side.key, player) }}
                                                 </button>
@@ -1281,7 +1412,9 @@
                                                 <button type="button"
                                                     @click="toggleYellow(player)"
                                                     :class="[
-                                                        player.yellow_cards > 0 ? 'bg-yellow-50 border-yellow-400' : 'bg-transparent border-gray-200',
+                                                        player.yellow_cards > 0
+                                                            ? (sportsMode ? 'border-amber-300/70 bg-amber-300/15' : 'bg-yellow-50 border-yellow-400')
+                                                            : (sportsMode ? 'border-[#2b4b5d] bg-transparent' : 'bg-transparent border-gray-200'),
                                                         'relative flex items-center justify-center border rounded-lg h-10 w-10 transition-all'
                                                     ]">
                                                     <img :src="'/img/tarjeta-amarilla.png'" class="w-6" :class="player.yellow_cards === 0 ? 'opacity-60' : ''" />
@@ -1294,7 +1427,9 @@
                                                 <button type="button"
                                                     @click="toggleRed(player)"
                                                     :class="[
-                                                        player.red_cards > 0 ? 'bg-red-100 border-red-500 ring-2 ring-red-200' : 'bg-transparent border-gray-200',
+                                                        player.red_cards > 0
+                                                            ? (sportsMode ? 'border-rose-400/70 bg-rose-400/15 ring-2 ring-rose-400/30' : 'bg-red-100 border-red-500 ring-2 ring-red-200')
+                                                            : (sportsMode ? 'border-[#2b4b5d] bg-transparent' : 'bg-transparent border-gray-200'),
                                                         'flex items-center justify-center border rounded-lg h-10 w-10 transition-all'
                                                     ]">
                                                     <img :src="'/img/tarjeta-roja.png'" class="w-6" :class="player.red_cards === 0 ? 'opacity-60' : ''" />
@@ -1310,8 +1445,16 @@
             </div>
 
             <!-- Guardar -->
-            <div class="flex flex-wrap items-center justify-end gap-2 pb-10">
-                <button type="button" class="btn btn-warning uppercase text-xs" @click="goBack">
+            <div
+                class="flex flex-wrap items-center justify-end gap-2 rounded-2xl border p-4"
+                :class="sportsMode ? 'border-[#234052] bg-[#0b1f2b] shadow-[0_18px_50px_rgba(0,0,0,0.28)]' : 'border-transparent p-0 pb-10'"
+            >
+                <button
+                    type="button"
+                    class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition"
+                    :class="sportsMode ? 'border border-[#2b4b5d] text-slate-200 hover:border-lime-300/60 hover:text-lime-200' : 'btn btn-warning text-xs'"
+                    @click="goBack"
+                >
                     Cancelar y volver
                 </button>
                 <PrimaryButton
@@ -1329,6 +1472,8 @@
             </div>
         </div>
 
+        <!-- Los modales solo reciben la piel navy cuando la organización es deportiva. -->
+        <div :class="sportsMode ? 'acta-modals' : ''">
         <!-- Modal: detalle de goles (quién, cuándo, cómo y con qué asistencia) -->
         <ModalLargeXX :show="displayModalGoals" :onClose="() => displayModalGoals = false" :icon="'/img/pelota-de-futbol.png'">
             <template #title>
@@ -1654,6 +1799,7 @@
                 <PrimaryButton type="button" @click="displayModalSubs = false">Listo</PrimaryButton>
             </template>
         </ModalLargeXX>
+        </div>
     </AppLayout>
 </template>
 
@@ -1681,5 +1827,82 @@
     .se-score-sticky--name {
         left: 7rem;
         box-shadow: 2px 0 4px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Los tres modales del acta heredan la tarjeta azul noche y los acentos lima
+       del resto de la pantalla, sin alterar el tema global de los modales. */
+    .acta-modals :deep(.modal-torneos) {
+        background-color: #0b1f2b;
+        border-color: #234052;
+        color: #e2e8f0;
+    }
+
+    .acta-modals :deep(.modal-torneos__header) {
+        background: linear-gradient(110deg, #0b1f2b, #122c3a);
+        border-color: #234052;
+    }
+
+    .acta-modals :deep(.modal-torneos__icon) {
+        background-color: #122c3a;
+    }
+
+    .acta-modals :deep(.modal-torneos__title) {
+        color: #f8fafc;
+    }
+
+    .acta-modals :deep(.modal-torneos__message) {
+        color: #94a3b8;
+    }
+
+    .acta-modals :deep(.modal-torneos__body) {
+        background-color: #081a25;
+        color: #e2e8f0;
+        --torneos-control-bg: #0e2532;
+        --torneos-control-text: #e2e8f0;
+        --torneos-control-border: #2b4b5d;
+        --torneos-control-placeholder: #64748b;
+        --torneos-dropdown-bg: #122c3a;
+    }
+
+    .acta-modals :deep(.modal-torneos__actions) {
+        border-color: #234052;
+    }
+
+    .acta-modals :deep(.modal-torneos__close) {
+        background-color: #122c3a;
+        color: #94a3b8;
+    }
+
+    .acta-modals :deep(.modal-torneos__close:hover) {
+        background-color: #17394a;
+        color: #e2e8f0;
+    }
+
+    .acta-modals :deep(.modal-torneos__body .text-gray-500) {
+        color: #94a3b8;
+    }
+
+    .acta-modals :deep(.modal-torneos__body .text-gray-400) {
+        color: #64748b;
+    }
+
+    .acta-modals :deep(.modal-torneos__body .text-gray-600) {
+        color: #cbd5e1;
+    }
+
+    .acta-modals :deep(.modal-torneos__body .text-blue-600) {
+        color: #bef264;
+    }
+
+    .acta-modals :deep(.modal-torneos__body .border-default) {
+        border-color: #234052;
+    }
+
+    .acta-modals :deep(.modal-torneos__body .mb-3.rounded-base.border) {
+        background-color: #0b1f2b;
+    }
+
+    .acta-modals :deep(.modal-torneos__body .mt-4.rounded-lg.border) {
+        background-color: #0e2532;
     }
 </style>

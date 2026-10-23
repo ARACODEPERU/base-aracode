@@ -103,7 +103,7 @@ los dos fondos. Basta con marcar el contenedor de la sección:
 ```
 
 Clases propias disponibles: `pg-container`, `pg-section`, `pg-card`, `pg-card-title`, `pg-icon-box`,
-`pg-btn` (`-primary`, `-green`, `-ghost`, `-sm`, `-lg`), `pg-badge` (`-accent`), `pg-faq`,
+`pg-btn` (`-primary`, `-green`, `-ghost`, `-sm`, `-lg`), `pg-kicker`, `pg-badge` (`-accent`), `pg-faq`,
 `pg-step-number`, `pg-rail`, `pg-slash`, `pg-diagonal-edge`, `pg-reveal`, `pg-theme-switch` y las
 que leen la superficie en la que están: `pg-heading` (titulares), `pg-body` (texto corriente) y
 `pg-hairline` (borde/separador).

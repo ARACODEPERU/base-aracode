@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
+use App\Support\RegistroVariantes;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,15 +20,16 @@ use Modules\Socialevents\Services\SportsOrganizationService;
 class RegisteredUserController extends Controller
 {
     /**
-     * Formulario de registro del organizador (solo con PW00001 = 2, torneos).
+     * Formulario de registro. La pantalla la decide la portada publicada
+     * (config/registro.php); la lógica de alta es la misma para todas.
      */
     public function create(): Response
     {
-        if (! app(SportsOrganizationService::class)->availableToRegister()) {
+        if (! RegistroVariantes::habilitado()) {
             abort(404);
         }
 
-        return Inertia::render('Auth/RegisterOrganizer');
+        return Inertia::render(RegistroVariantes::componente());
     }
 
     /**
@@ -38,10 +40,11 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $organizationService = app(SportsOrganizationService::class);
-        if (! $organizationService->availableToRegister()) {
+        if (! RegistroVariantes::habilitado()) {
             abort(404);
         }
+
+        $organizationService = app(SportsOrganizationService::class);
 
         $validated = $request->validate([
             'organization_name' => 'required|string|max:180',
@@ -109,6 +112,10 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(RouteServiceProvider::HOME);
+        // El alta crea al organizador y lo deja en su panel deportivo; si el
+        // modo cambiara, cae en el dashboard general.
+        return redirect(
+            $organizationService->organizerHome($user) ?? RouteServiceProvider::HOME
+        );
     }
 }

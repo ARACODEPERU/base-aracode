@@ -1,0 +1,465 @@
+{
+    "titulo": "CAMPEONATO DE EX ALUMNOS ANDRÉS A. CÁCERES",
+    "edicion": "Edición 2026",
+    "descripcion": "<h3><\/h3>\r\n<h3>🏆 FORMATO DEL CAMPEONATO<\/h3>\r\n<p><strong>🔵 Primera fase – Todos contra todos<\/strong><\/p>\r\n<p>Los 9 equipos disputarán la primera fase bajo el sistema de <strong>todos contra todos<\/strong>.<\/p><p><strong>🔵 Cuartos de final<\/strong><\/p>\r\n<p><\/p>\r\n<p><span>🥇 <\/span><strong><span>El equipo que ocupa el primer lugar de la tabla descansara una fecha.<\/span><\/strong><\/p><p><span>⚔️ <\/span><strong><span>Los otros 8 equipos se jugarán su permanencia en la competencia:<\/span><\/strong><\/p><ul><li><p><span>✅ <\/span><strong><span>4 equipos clasificarán<\/span><\/strong><span> tras ganar sus respectivos partidos.<\/span><\/p><\/li><li><p><span>🎲 <\/span><strong><span>Se realizará un sorteo entre los equipos perdedores<\/span><\/strong><span> para otorgar una oportunidad adicional a uno de ellos.<\/span><\/p><\/li><\/ul><p><span>📊 <\/span><strong><span>Así se completarán los 6 equipos<\/span><\/strong><span> que disputarán la siguiente etapa: 1 clasificado por el primer puesto, 4 ganadores y 1 equipo beneficiado por sorteo.<\/span><\/p><p><span>🔥 En la siguiente fecha, estos 6 equipos volverán a competir: <\/span><strong><span>los 3 ganadores de sus partidos y un equipo seleccionado por sorteo<\/span><\/strong><span> completarán los 4 semifinalistas.<\/span><\/p>\r\n\r\n<p><\/p>\r\n<p><strong>🔵 Semifinales<\/strong><\/p>\r\n<p>Los <strong>4 equipos ganadores de los cuartos de final<\/strong> avanzarán a las semifinales, donde buscarán su pase a la gran final.<\/p>\r\n<p><strong>🔵 Gran final y definición<\/strong><\/p>\r\n<p>En la última jornada se disputarán los encuentros por:<\/p>\r\n<p>🥉 <strong>Tercer puesto<\/strong><br>\r\n🥈 <strong>Segundo puesto<\/strong><br>\r\n🏆 <strong>Primer puesto – Gran Campeón<\/strong><\/p>\r\n\r\n<p><strong><\/strong><\/p><br>",
+    "inscripcion": "Inscripción por equipo: S\/ 200",
+    "equipos": [
+        {
+            "nombre": "Promocion 2003",
+            "pts": 18,
+            "extra": 1,
+            "pj": 8,
+            "pg": 5,
+            "pe": 2,
+            "pp": 1,
+            "dg": 7,
+            "gf": 26,
+            "gc": 19
+        },
+        {
+            "nombre": "Promocion 2004-2005",
+            "pts": 15,
+            "extra": 1,
+            "pj": 9,
+            "pg": 4,
+            "pe": 2,
+            "pp": 2,
+            "dg": 2,
+            "gf": 24,
+            "gc": 22
+        },
+        {
+            "nombre": "Promo 2010",
+            "pts": 13,
+            "extra": 0,
+            "pj": 8,
+            "pg": 3,
+            "pe": 4,
+            "pp": 1,
+            "dg": 13,
+            "gf": 29,
+            "gc": 16
+        },
+        {
+            "nombre": "Promo 1998",
+            "pts": 13,
+            "extra": 0,
+            "pj": 8,
+            "pg": 4,
+            "pe": 1,
+            "pp": 2,
+            "dg": 2,
+            "gf": 22,
+            "gc": 20
+        },
+        {
+            "nombre": "Promocion 1999",
+            "pts": 11,
+            "extra": 1,
+            "pj": 8,
+            "pg": 3,
+            "pe": 1,
+            "pp": 4,
+            "dg": -1,
+            "gf": 18,
+            "gc": 19
+        },
+        {
+            "nombre": "Promoción 2006",
+            "pts": 10,
+            "extra": 0,
+            "pj": 8,
+            "pg": 3,
+            "pe": 1,
+            "pp": 4,
+            "dg": -7,
+            "gf": 17,
+            "gc": 24
+        },
+        {
+            "nombre": "Promoción 2007",
+            "pts": 8,
+            "extra": 0,
+            "pj": 8,
+            "pg": 2,
+            "pe": 2,
+            "pp": 4,
+            "dg": -3,
+            "gf": 20,
+            "gc": 23
+        },
+        {
+            "nombre": "Promo 2001-2002",
+            "pts": 8,
+            "extra": 0,
+            "pj": 8,
+            "pg": 2,
+            "pe": 2,
+            "pp": 4,
+            "dg": -7,
+            "gf": 24,
+            "gc": 31
+        },
+        {
+            "nombre": "Promocion 2008",
+            "pts": 7,
+            "extra": 1,
+            "pj": 8,
+            "pg": 1,
+            "pe": 3,
+            "pp": 4,
+            "dg": -3,
+            "gf": 16,
+            "gc": 19
+        }
+    ],
+    "premios": [
+        {
+            "puesto": "1.er puesto",
+            "valor": "S\/ 600 + Una caja de Cerveza y Trofeo de Campeón"
+        },
+        {
+            "puesto": "2.º puesto",
+            "valor": "S\/ 300 + Una caja de Cerveza y Trofeo"
+        },
+        {
+            "puesto": "3.er puesto",
+            "valor": "S\/ 200"
+        }
+    ],
+    "contacto": [
+        "Promocion 2003",
+        "943462648",
+        "Edición 2026"
+    ],
+    "partidos": [
+        {
+            "fase": "Eliminaciones",
+            "fecha": 10,
+            "local": "Promo 2010",
+            "visitante": "Promocion 1999",
+            "marcador": "VS",
+            "estado": "25\/10 12:15"
+        },
+        {
+            "fase": "Eliminaciones",
+            "fecha": 10,
+            "local": "Promoción 2006",
+            "visitante": "Promocion 2008",
+            "marcador": "VS",
+            "estado": "25\/10 13:30"
+        },
+        {
+            "fase": "Eliminaciones",
+            "fecha": 10,
+            "local": "Promo 2001-2002",
+            "visitante": "Promo 1998",
+            "marcador": "VS",
+            "estado": "25\/10 14:30"
+        },
+        {
+            "fase": "Eliminaciones",
+            "fecha": 10,
+            "local": "Promoción 2007",
+            "visitante": "Promocion 2004-2005",
+            "marcador": "VS",
+            "estado": "25\/10 15:30"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 1,
+            "local": "Promo 2010",
+            "visitante": "Promocion 1999",
+            "marcador": "1-3",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 1,
+            "local": "Promocion 2008",
+            "visitante": "Promoción 2007",
+            "marcador": "2-2",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 1,
+            "local": "Promocion 2004-2005",
+            "visitante": "Promoción 2016",
+            "marcador": "3-0",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 1,
+            "local": "Promo 2001-2002",
+            "visitante": "Promo 1998",
+            "marcador": "2-3",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 2,
+            "local": "Promo 2010",
+            "visitante": "Promocion 2008",
+            "marcador": "1-1",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 2,
+            "local": "Promocion 2003",
+            "visitante": "Promoción 2007",
+            "marcador": "4-2",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 2,
+            "local": "Promo 2001-2002",
+            "visitante": "Promocion 2004-2005",
+            "marcador": "9-4",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 2,
+            "local": "Promo 1998",
+            "visitante": "Promocion 1999",
+            "marcador": "1-5",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 3,
+            "local": "Promocion 2008",
+            "visitante": "Promocion 2004-2005",
+            "marcador": "0-2",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 3,
+            "local": "Promocion 2003",
+            "visitante": "Promo 1998",
+            "marcador": "3-4",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 3,
+            "local": "Promo 2010",
+            "visitante": "Promoción 2006",
+            "marcador": "3-0",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 3,
+            "local": "Promocion 1999",
+            "visitante": "Promo 2001-2002",
+            "marcador": "0-5",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 4,
+            "local": "Promoción 2006",
+            "visitante": "Promocion 2008",
+            "marcador": "5-4",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 4,
+            "local": "Promo 2001-2002",
+            "visitante": "Promoción 2007",
+            "marcador": "4-4",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 4,
+            "local": "Promocion 2004-2005",
+            "visitante": "Promo 1998",
+            "marcador": "VS",
+            "estado": "06\/09 15:00"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 4,
+            "local": "Promocion 2003",
+            "visitante": "Promocion 1999",
+            "marcador": "4-3",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 5,
+            "local": "Promo 2010",
+            "visitante": "Promocion 2004-2005",
+            "marcador": "6-6",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 5,
+            "local": "Promocion 2003",
+            "visitante": "Promo 2001-2002",
+            "marcador": "2-2",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 5,
+            "local": "Promoción 2006",
+            "visitante": "Promoción 2007",
+            "marcador": "2-1",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 5,
+            "local": "Promocion 1999",
+            "visitante": "Promocion 2008",
+            "marcador": "0-0",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 6,
+            "local": "Promocion 2003",
+            "visitante": "Promoción 2006",
+            "marcador": "5-4",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 6,
+            "local": "Promo 2010",
+            "visitante": "Promoción 2007",
+            "marcador": "6-1",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 6,
+            "local": "Promocion 2004-2005",
+            "visitante": "Promocion 1999",
+            "marcador": "5-2",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 6,
+            "local": "Promocion 2008",
+            "visitante": "Promo 1998",
+            "marcador": "0-5",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 6,
+            "local": "Promoción 2006",
+            "visitante": "Promo 2001-2002",
+            "marcador": "3-0",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 7,
+            "local": "Promo 1998",
+            "visitante": "Promo 2010",
+            "marcador": "2-2",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 7,
+            "local": "Promocion 2004-2005",
+            "visitante": "Promoción 2006",
+            "marcador": "2-2",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 7,
+            "local": "Promoción 2007",
+            "visitante": "Promocion 1999",
+            "marcador": "3-2",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 7,
+            "local": "Promocion 2008",
+            "visitante": "Promocion 2003",
+            "marcador": "1-2",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 8,
+            "local": "Promocion 2008",
+            "visitante": "Promo 2001-2002",
+            "marcador": "8-2",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 8,
+            "local": "Promocion 2004-2005",
+            "visitante": "Promoción 2007",
+            "marcador": "2-0",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 8,
+            "local": "Promo 1998",
+            "visitante": "Promoción 2006",
+            "marcador": "6-1",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 8,
+            "local": "Promo 2010",
+            "visitante": "Promocion 2003",
+            "marcador": "3-3",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 9,
+            "local": "Promo 1998",
+            "visitante": "Promoción 2007",
+            "marcador": "1-7",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 9,
+            "local": "Promo 2010",
+            "visitante": "Promo 2001-2002",
+            "marcador": "7-0",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 9,
+            "local": "Promocion 1999",
+            "visitante": "Promoción 2006",
+            "marcador": "3-0",
+            "estado": "Finalizado"
+        },
+        {
+            "fase": "Fase de grupos \/ Liga",
+            "fecha": 9,
+            "local": "Promocion 2003",
+            "visitante": "Promocion 2004-2005",
+            "marcador": "3-0",
+            "estado": "Finalizado"
+        }
+    ]
+}
