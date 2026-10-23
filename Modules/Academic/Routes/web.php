@@ -56,6 +56,8 @@ use Modules\Academic\Http\Controllers\AcaStudentController;
 use Modules\Academic\Http\Controllers\AcaStudentTestimonyController;
 use Modules\Academic\Http\Controllers\AcaThemeCommentController;
 use Modules\Academic\Http\Controllers\AcaVirtualClassroomController;
+use Modules\Academic\Http\Controllers\AcaVirtualQuizAttemptController;
+use Modules\Academic\Http\Controllers\AcaVirtualQuizQuestionController;
 use Modules\Academic\Http\Controllers\MercadopagoController;
 use Modules\Academic\Jobs\ExportStudentsExcel;
 use App\Http\Controllers\WebPageController;
@@ -962,6 +964,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->delete('school/students/destroy/{id}', [AcaSchoolStudentController::class, 'destroy'])->name('aca_school_students_destroy');
     Route::middleware(['middleware' => 'permission:aca_school_alumno_listado'])
         ->get('school/students/{id}/card', [AcaSchoolStudentController::class, 'card'])->name('aca_school_students_card');
+    // Contraseña del aula virtual: se repone al número de DNI del alumno.
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+        ->post('school/students/{id}/password', [AcaSchoolStudentController::class, 'resetPassword'])->name('aca_school_students_password_reset');
 
     // Impresión masiva de carnés (ids separados por coma, en nueva pestaña)
     Route::middleware(['middleware' => 'permission:aca_school_alumno_listado'])
@@ -1192,6 +1197,99 @@ Route::middleware(['auth'])->get('academic/virtual-classroom', [AcaVirtualClassr
 Route::middleware(['auth'])->get('academic/virtual-classroom/{course}', [AcaVirtualClassroomController::class, 'show'])
     ->middleware(['middleware' => 'permission:aca_virtual_curso_ver'])
     ->name('aca_virtual_classroom_show');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/generate', [AcaVirtualClassroomController::class, 'generateCourses'])
+    ->middleware(['middleware' => 'permission:aca_virtual_configurar'])
+    ->name('aca_virtual_classroom_generate');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/{course}/copy-previous', [AcaVirtualClassroomController::class, 'copyFromPrevious'])
+    ->middleware(['middleware' => 'permission:aca_virtual_unidad_gestionar'])
+    ->name('aca_virtual_classroom_copy_previous');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/{course}/units', [AcaVirtualClassroomController::class, 'storeUnit'])
+    ->middleware(['middleware' => 'permission:aca_virtual_unidad_gestionar'])
+    ->name('aca_virtual_classroom_unit_store');
+
+Route::middleware(['auth'])->put('academic/virtual-classroom/units/{unit}', [AcaVirtualClassroomController::class, 'updateUnit'])
+    ->middleware(['middleware' => 'permission:aca_virtual_unidad_gestionar'])
+    ->name('aca_virtual_classroom_unit_update');
+
+Route::middleware(['auth'])->delete('academic/virtual-classroom/units/{unit}', [AcaVirtualClassroomController::class, 'destroyUnit'])
+    ->middleware(['middleware' => 'permission:aca_virtual_unidad_gestionar'])
+    ->name('aca_virtual_classroom_unit_destroy');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/{course}/units/reorder', [AcaVirtualClassroomController::class, 'reorderUnits'])
+    ->middleware(['middleware' => 'permission:aca_virtual_unidad_gestionar'])
+    ->name('aca_virtual_classroom_units_reorder');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/units/{unit}/lessons', [AcaVirtualClassroomController::class, 'storeLesson'])
+    ->middleware(['middleware' => 'permission:aca_virtual_sesion_gestionar'])
+    ->name('aca_virtual_classroom_lesson_store');
+
+Route::middleware(['auth'])->put('academic/virtual-classroom/lessons/{lesson}', [AcaVirtualClassroomController::class, 'updateLesson'])
+    ->middleware(['middleware' => 'permission:aca_virtual_sesion_gestionar'])
+    ->name('aca_virtual_classroom_lesson_update');
+
+Route::middleware(['auth'])->delete('academic/virtual-classroom/lessons/{lesson}', [AcaVirtualClassroomController::class, 'destroyLesson'])
+    ->middleware(['middleware' => 'permission:aca_virtual_sesion_gestionar'])
+    ->name('aca_virtual_classroom_lesson_destroy');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/units/{unit}/lessons/reorder', [AcaVirtualClassroomController::class, 'reorderLessons'])
+    ->middleware(['middleware' => 'permission:aca_virtual_sesion_gestionar'])
+    ->name('aca_virtual_classroom_lessons_reorder');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/{course}/resources', [AcaVirtualClassroomController::class, 'storeResource'])
+    ->middleware(['middleware' => 'permission:aca_virtual_recurso_gestionar'])
+    ->name('aca_virtual_classroom_resource_store');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/resources/{resource}', [AcaVirtualClassroomController::class, 'updateResource'])
+    ->middleware(['middleware' => 'permission:aca_virtual_recurso_gestionar'])
+    ->name('aca_virtual_classroom_resource_update');
+
+Route::middleware(['auth'])->delete('academic/virtual-classroom/resources/{resource}', [AcaVirtualClassroomController::class, 'destroyResource'])
+    ->middleware(['middleware' => 'permission:aca_virtual_recurso_gestionar'])
+    ->name('aca_virtual_classroom_resource_destroy');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/{course}/activities', [AcaVirtualClassroomController::class, 'storeActivity'])
+    ->middleware(['middleware' => 'permission:aca_virtual_actividad_gestionar'])
+    ->name('aca_virtual_classroom_activity_store');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/activities/{activity}', [AcaVirtualClassroomController::class, 'updateActivity'])
+    ->middleware(['middleware' => 'permission:aca_virtual_actividad_gestionar'])
+    ->name('aca_virtual_classroom_activity_update');
+
+Route::middleware(['auth'])->delete('academic/virtual-classroom/activities/{activity}', [AcaVirtualClassroomController::class, 'destroyActivity'])
+    ->middleware(['middleware' => 'permission:aca_virtual_actividad_gestionar'])
+    ->name('aca_virtual_classroom_activity_destroy');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/submissions/{submission}/grade', [AcaVirtualClassroomController::class, 'gradeSubmission'])
+    ->middleware(['middleware' => 'permission:aca_virtual_actividad_gestionar'])
+    ->name('aca_virtual_classroom_submission_grade');
+
+/* Preguntas y respuestas de una evaluación (docente o administrador) */
+Route::middleware(['auth'])->post('academic/virtual-classroom/activities/{activity}/questions', [AcaVirtualQuizQuestionController::class, 'store'])
+    ->middleware(['middleware' => 'permission:aca_virtual_actividad_gestionar'])
+    ->name('aca_virtual_classroom_question_store');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/questions/{question}', [AcaVirtualQuizQuestionController::class, 'update'])
+    ->middleware(['middleware' => 'permission:aca_virtual_actividad_gestionar'])
+    ->name('aca_virtual_classroom_question_update');
+
+Route::middleware(['auth'])->delete('academic/virtual-classroom/questions/{question}', [AcaVirtualQuizQuestionController::class, 'destroy'])
+    ->middleware(['middleware' => 'permission:aca_virtual_actividad_gestionar'])
+    ->name('aca_virtual_classroom_question_destroy');
+
+/* Evaluaciones en línea: el alumno inicia y entrega, el sistema califica */
+Route::middleware(['auth'])->post('academic/virtual-classroom/activities/{activity}/attempt', [AcaVirtualQuizAttemptController::class, 'start'])
+    ->name('aca_virtual_classroom_attempt_start');
+
+Route::middleware(['auth'])->post('academic/virtual-classroom/attempts/{attempt}/submit', [AcaVirtualQuizAttemptController::class, 'submit'])
+    ->name('aca_virtual_classroom_attempt_submit');
+
+/* Revisión manual de las respuestas abiertas (docente o administrador) */
+Route::middleware(['auth'])->post('academic/virtual-classroom/attempts/{attempt}/review', [AcaVirtualClassroomController::class, 'reviewAttempt'])
+    ->middleware(['middleware' => 'permission:aca_virtual_actividad_gestionar'])
+    ->name('aca_virtual_classroom_attempt_review');
 
 Route::middleware(['auth'])->get('thank/purchasing/{id}', [MercadopagoController::class, 'thankYou'])->name('web_gracias_por_comprar');
 Route::get('/certificado-validar/{dni?}/{course_id?}/{module_id?}', [AcaCertificateController::class, 'certificado_validar'])->name('certificado_validar');

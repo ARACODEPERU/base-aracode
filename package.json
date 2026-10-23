@@ -4,6 +4,7 @@
         "dev": "vite",
         "build": "vite build && vite build --ssr",
         "build:pichanguero": "tailwindcss -c resources/css/pichanguero/tailwind.config.js -i resources/css/pichanguero/pichanguero.css -o public/themes/pichanguero/css/pichanguero.css --minify",
+        "build:colegio": "tailwindcss -c resources/css/colegio/tailwind.config.js -i resources/css/colegio/colegio.css -o public/themes/colegio/css/colegio.css --minify",
         "build:kapta": "tailwindcss -c resources/css/kapta/tailwind.config.js -i resources/css/kapta/kapta.css -o public/themes/kapta/css/kapta.css --minify",
         "build:kirafact": "tailwindcss -c resources/css/kirafact/tailwind.config.js -i resources/css/kirafact/kirafact.css -o public/themes/kirafact/css/kirafact.css --minify",
         "build:plantillas": "tailwindcss -i resources/css/plantillas/plantillas.css -o public/themes/plantillas/css/plantillas.css --minify",

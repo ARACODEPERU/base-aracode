@@ -18,10 +18,11 @@ use Modules\Academic\Entities\AcaSchoolStudentGuardian;
 use Modules\Academic\Entities\AcaSchoolYear;
 use Modules\Academic\Services\SchoolContextService;
 use Modules\Academic\Services\StudentCardQr;
+use Modules\Academic\Services\StudentPortalAuth;
 
 class AcaSchoolStudentController extends Controller
 {
-    public function __construct(private SchoolContextService $context)
+    public function __construct(private SchoolContextService $context, private StudentPortalAuth $studentAuth)
     {
     }
 
@@ -395,6 +396,38 @@ class AcaSchoolStudentController extends Controller
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->stream('carnes_alumnos_'.date('YmdHis').'.pdf');
+    }
+
+    /**
+     * Repone la contraseña del aula virtual al número de DNI del alumno.
+     *
+     * La contraseña inicial del alumno es su DNI; si la olvidó, el
+     * administrador la devuelve a ese valor y el alumno la cambia después
+     * desde «Mi perfil» del aula virtual.
+     */
+    public function resetPassword(int $id)
+    {
+        $school = $this->context->currentSchool();
+
+        $student = AcaSchoolStudent::query()
+            ->where('school_id', $school?->id ?? 0)
+            ->with('person')
+            ->findOrFail($id);
+
+        $result = $this->studentAuth->resetPasswordToDocument($student);
+
+        if (isset($result['error'])) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['error'],
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'La contraseña de ' . ($student->person?->full_name ?: $student->student_code)
+                . ' ahora es su número de DNI.',
+        ]);
     }
 
     /**

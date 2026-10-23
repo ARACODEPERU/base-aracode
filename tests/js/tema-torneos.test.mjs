@@ -12,6 +12,7 @@ const navegador = readFileSync(new URL('../../resources/js/Components/vristo/lay
 const listaEquipos = readFileSync(new URL('../../Modules/Socialevents/Resources/assets/js/Pages/Teams/List.vue', import.meta.url), 'utf8');
 const cuentasOrganizaciones = readFileSync(new URL('../../Modules/Socialevents/Resources/assets/js/Pages/Organizations/Accounts.vue', import.meta.url), 'utf8');
 const listaLocales = readFileSync(new URL('../../Modules/Socialevents/Resources/assets/js/Pages/Local/List.vue', import.meta.url), 'utf8');
+const actaPartido = readFileSync(new URL('../../Modules/Socialevents/Resources/assets/js/Pages/Editions/MatchScore.vue', import.meta.url), 'utf8');
 const formularioCrearLocales = readFileSync(new URL('../../Modules/Socialevents/Resources/assets/js/Pages/Local/Partials/CreateForm.vue', import.meta.url), 'utf8');
 const footer = readFileSync(new URL('../../resources/js/Components/vristo/layout/Footer.vue', import.meta.url), 'utf8');
 const paginacion = readFileSync(new URL('../../resources/js/Components/Pagination.vue', import.meta.url), 'utf8');
@@ -71,6 +72,39 @@ test('las tarjetas panel y el navegador contrastan con el fondo solo en tema Tor
     assert.match(estilos, /html\.theme-torneos \.dark \.panel\s*\{/);
     assert.match(estilos, /html\.theme-torneos \.dark \.team-card\s*\{/);
     assert.match(estilos, /html\.theme-torneos \.dark nav\[aria-label="Breadcrumb"\] > ol\s*\{/);
+});
+
+test('el acta del partido usa tarjetas del tema y textos legibles sobre el estadio', () => {
+    // Los bloques del acta dejan de ser transparentes: cada sección lleva su clase.
+    assert.match(actaPartido, /class="sports-match-score-page/);
+    assert.match(actaPartido, /class="se-acta-header /);
+    assert.match(actaPartido, /class="se-acta-card rounded-xl/);
+    assert.match(actaPartido, /class="se-acta-subcard /);
+    assert.match(actaPartido, /class="se-acta-card se-acta-card--penales/);
+    assert.match(actaPartido, /class="se-acta-card se-acta-card--flush w-full/);
+    assert.match(actaPartido, /se-acta-table/);
+    assert.match(actaPartido, /class="se-acta-toggle /);
+
+    // Superficie, borde, sombra y color salen de los tokens del tema.
+    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-card\s*\{[^}]*background-color:\s*var\(--torneos-panel-surface\);[^}]*border:\s*1px solid var\(--torneos-panel-border\);[^}]*box-shadow:\s*var\(--torneos-panel-shadow\);[^}]*color:\s*var\(--torneos-panel-text\);/);
+    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-subcard\s*\{[^}]*background-color:\s*var\(--torneos-panel-header-surface\)/);
+    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-card :is\(\.text-gray-400, \.text-gray-500, \.text-gray-600, \.text-gray-700, \.text-body\)\s*\{\s*color:\s*var\(--torneos-panel-muted-text\)/);
+
+    // Cabecera y alineaciones no dependen del gris ni del azul fijos.
+    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-header\s*\{[^}]*background-color:\s*rgb\(2 44 34 \/ 78%\)/);
+    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-table thead th\s*\{[^}]*background-color:\s*var\(--torneos-panel-header-surface\)/);
+    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-table tbody td\s*\{[^}]*background-color:\s*rgb\(255 255 255 \/ 72%\)/);
+
+    // El modo oscuro se apoya en los mismos tokens y solo ajusta acentos.
+    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-toggle\s*\{[^}]*background-color:\s*rgb\(2 44 34 \/ 62%\)/);
+    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-card--flush\s*\{\s*overflow:\s*hidden;/);
+    assert.match(estilos, /html\.theme-torneos body\.dark \.sports-match-score-page \.se-acta-table thead th\s*\{\s*background-color:\s*#0b3b30/);
+    assert.match(estilos, /html\.theme-torneos body\.dark \.sports-match-score-page \.se-acta-card--penales\s*\{/);
+
+    // Ninguna regla del acta se aplica fuera del tema futbolero.
+    assert.doesNotMatch(estilos, /^\.se-acta-card\s*\{/m);
+    assert.doesNotMatch(estilos, /^\.se-acta-header\s*\{/m);
+    assert.doesNotMatch(estilos, /^\.se-acta-table\s*\{/m);
 });
 
 test('los cuatro modales generales exponen ganchos de tema para encabezado, cuerpo y acciones', () => {

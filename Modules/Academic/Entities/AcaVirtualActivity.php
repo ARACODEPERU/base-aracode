@@ -54,4 +54,25 @@ class AcaVirtualActivity extends Model
     {
         return $this->hasMany(AcaVirtualSubmission::class, 'activity_id');
     }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(AcaVirtualActivityFile::class, 'activity_id');
+    }
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(AcaVirtualActivityQuestion::class, 'activity_id')->orderBy('sort_order');
+    }
+
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(AcaVirtualQuizAttempt::class, 'activity_id');
+    }
+
+    /** Indica si la actividad es una evaluación configurable en linea. */
+    public function isOnlineQuiz(): bool
+    {
+        return $this->type === 'quiz' && $this->questions->isNotEmpty();
+    }
 }

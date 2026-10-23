@@ -145,10 +145,26 @@ class EventApiController extends Controller
      */
     public function getEventById(int $id): JsonResponse
     {
-        $sportsMode = app(SportsOrganizationService::class)->sportsMode();
+        $sports = app(SportsOrganizationService::class);
+        $sportsMode = $sports->sportsMode();
+        $user = request()->user('sanctum');
+        $organizationId = $sports->organizationId($user);
+        $isSuperAdmin = $sports->isSuperAdmin($user);
+        $canReadOwn = $organizationId && $sports->canRead($user);
         $publicEdition = fn ($query) => $query->where(fn ($publication) => $publication->where('landing_published', true)->orWhere('mobile_enabled', true));
+
+        // Sin sesión (o de otra organización) solo se ven eventos con una
+        // edición publicada; el dueño y el superadministrador ven además los
+        // suyos aunque todavía no se hayan publicado.
         $event = EvenEvent::query()
-            ->when($sportsMode, fn ($query) => $query->whereHas('editions', $publicEdition))
+            ->when($sportsMode && ! $isSuperAdmin, function ($query) use ($publicEdition, $organizationId, $canReadOwn) {
+                $query->where(function ($visible) use ($publicEdition, $organizationId, $canReadOwn) {
+                    $visible->whereHas('editions', $publicEdition);
+                    if ($canReadOwn) {
+                        $visible->orWhere('organization_id', $organizationId);
+                    }
+                });
+            })
             ->find($id);
 
         if (!$event) {
@@ -159,9 +175,11 @@ class EventApiController extends Controller
             ], 404);
         }
 
+        $ownsEvent = $canReadOwn && (int) $event->organization_id === (int) $organizationId;
+
         $edition = EventEdition::where('event_id', $event->id)
             ->whereNotIn('status', ['CA'])
-            ->when($sportsMode, $publicEdition)
+            ->when($sportsMode && ! $isSuperAdmin && ! $ownsEvent, $publicEdition)
             ->orderBy('created_at', 'desc')
             ->first();
 

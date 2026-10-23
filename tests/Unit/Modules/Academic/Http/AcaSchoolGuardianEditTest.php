@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 use Modules\Academic\Entities\AcaSchoolStudentGuardian;
 use Modules\Academic\Http\Controllers\AcaSchoolStudentController;
 use Modules\Academic\Services\SchoolContextService;
+use Modules\Academic\Services\StudentPortalAuth;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -255,7 +256,10 @@ class AcaSchoolGuardianEditTest extends TestCase
 
     private function controller(): AcaSchoolStudentController
     {
-        return new AcaSchoolStudentController(app(SchoolContextService::class));
+        return new AcaSchoolStudentController(
+            app(SchoolContextService::class),
+            app(StudentPortalAuth::class)
+        );
     }
 
     /**

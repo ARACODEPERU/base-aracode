@@ -915,9 +915,9 @@
             ]"
         />
 
-        <div class="pt-5 space-y-6">
+        <div class="sports-match-score-page pt-5 space-y-6">
             <!-- Barra de acciones: siempre se puede volver al fixture -->
-            <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="se-acta-header flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-black text-gray-800 dark:text-white">
                         {{ formScore.equipo_h_name || 'TBD' }} <span class="text-gray-400">vs</span> {{ formScore.equipo_a_name || 'TBD' }}
@@ -949,7 +949,7 @@
             </div>
 
             <!-- Marcador y estado del encuentro -->
-            <div class="rounded-xl border border-default p-4 dark:border-blue-900">
+            <div class="se-acta-card rounded-xl border border-default p-4 dark:border-blue-900">
                 <div v-if="isSuddenDeath" class="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800">
                     Muerte súbita: el primero que anota gana. No se admite empate ni se registran penales.
                 </div>
@@ -969,15 +969,15 @@
 
                 <!-- Cómo se repartieron los goles: lo que se usará en los reportes -->
                 <div class="mt-4 grid sm:grid-cols-3 gap-3 text-sm">
-                    <div class="rounded-lg border border-default p-3 dark:border-blue-900">
+                    <div class="se-acta-subcard rounded-lg border border-default p-3 dark:border-blue-900">
                         <p class="text-xs font-bold uppercase text-gray-500">Tiempo reglamentario</p>
                         <p class="text-xl font-black">{{ goalSummary.local.regulation }} - {{ goalSummary.visitor.regulation }}</p>
                     </div>
-                    <div class="rounded-lg border border-default p-3 dark:border-blue-900">
+                    <div class="se-acta-subcard rounded-lg border border-default p-3 dark:border-blue-900">
                         <p class="text-xs font-bold uppercase text-gray-500">Alargue (prórroga)</p>
                         <p class="text-xl font-black">{{ goalSummary.local.extra }} - {{ goalSummary.visitor.extra }}</p>
                     </div>
-                    <div class="rounded-lg border border-default p-3 dark:border-blue-900">
+                    <div class="se-acta-subcard rounded-lg border border-default p-3 dark:border-blue-900">
                         <p class="text-xs font-bold uppercase text-gray-500">Penales (tanda)</p>
                         <p class="text-xl font-black">
                             {{ formScore.has_penalties ? `${goalSummary.penalties.local} - ${goalSummary.penalties.visitor}` : '—' }}
@@ -990,7 +990,7 @@
             </div>
 
             <!-- Tiempos del partido -->
-            <div class="mt-2 border border-default rounded-base p-4 dark:border-blue-900">
+            <div class="se-acta-card mt-2 border border-default rounded-base p-4 dark:border-blue-900">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h4 class="text-lg font-bold">Tiempos del partido</h4>
@@ -1031,14 +1031,14 @@
                 <button type="button" class="btn btn-primary uppercase text-xs" @click="openSaves('local')">
                     🧤 Detalle de atajadas ({{ formScore.saves_h.length + formScore.saves_a.length }})
                 </button>
-                <label class="inline-flex items-center gap-2 text-sm cursor-pointer px-3">
+                <label class="se-acta-toggle inline-flex items-center gap-2 text-sm cursor-pointer px-3">
                     <input type="checkbox" v-model="formScore.has_penalties" class="w-5 h-5 text-yellow-600 rounded focus:ring-yellow-500" />
                     <span class="font-medium text-gray-700 dark:text-gray-300">Registrar tanda de penales</span>
                 </label>
             </div>
 
             <!-- Sección de Penales -->
-            <div v-if="formScore.has_penalties" class="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+            <div v-if="formScore.has_penalties" class="se-acta-card se-acta-card--penales p-4 rounded-lg border">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-bold text-yellow-800 dark:text-yellow-200">Tanda de Penales</h3>
                     <div class="flex items-center gap-2">
@@ -1081,7 +1081,7 @@
                         <div class="w-8"></div>
                     </div>
 
-                    <div v-for="(penalty, index) in formScore.penalties" :key="index" class="flex items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded-lg border">
+                    <div v-for="(penalty, index) in formScore.penalties" :key="index" class="se-acta-row flex items-center gap-2 p-3 rounded-lg border">
                         <div class="w-20">
                             <span class="text-xs font-bold text-gray-500">Patada {{ index + 1 }}</span>
                             <span class="block text-[10px] text-gray-400">(Ronda {{ penalty.round }})</span>
@@ -1146,15 +1146,15 @@
                     ]"
                     :key="side.key"
                 >
-                    <div class="w-full p-0 border border-default rounded-base shadow-xs dark:border-blue-900">
-                        <div class="px-4 py-2 border-b border-default dark:border-blue-900 flex items-center justify-between">
+                    <div class="se-acta-card se-acta-card--flush w-full p-0 rounded-base">
+                        <div class="se-acta-card__head px-4 py-2 border-b flex items-center justify-between">
                             <p class="font-bold">{{ side.label }}</p>
                             <button type="button" class="text-xs text-blue-600 underline" @click="openGoals(side.key)">
                                 Ver goles
                             </button>
                         </div>
                         <div class="table-responsive">
-                            <table class="w-full text-sm text-left rtl:text-right text-body se-score-table">
+                            <table class="w-full text-sm text-left rtl:text-right text-body se-score-table se-acta-table">
                                 <thead class="text-sm text-body border-b border-default dark:border-blue-900">
                                     <th class="se-score-sticky se-score-sticky--role px-3 py-2 bg-gray-50 text-xs font-bold dark:bg-blue-900 dark:text-white"></th>
                                     <th class="se-score-sticky se-score-sticky--name px-3 py-2 bg-gray-50 text-xs font-bold dark:bg-blue-900 dark:text-white">Nombre</th>

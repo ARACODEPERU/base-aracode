@@ -22,8 +22,9 @@ class MatchesApiController extends Controller
         if ($edition instanceof JsonResponse) {
             return $edition;
         }
-        abort_unless($edition->landing_published || ! app(\Modules\Socialevents\Services\SportsOrganizationService::class)->sportsMode(), 404);
 
+        // La visibilidad ya la resolvió editionForMobileApi: si la edición está
+        // habilitada para la app o es del dueño, sus próximos partidos también.
         return response()->json([
             'success' => true,
             'message' => 'Partidos obtenidos correctamente',

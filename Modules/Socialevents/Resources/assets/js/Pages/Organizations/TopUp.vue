@@ -20,7 +20,16 @@ const props = defineProps({
     payments: { type: Array, default: () => [] },
 });
 
-const amount = ref(props.minimumAmount);
+/**
+ * La app móvil abre este checkout con `?amount=`, para que el organizador no
+ * tenga que volver a escribir el monto que ya eligió en el celular.
+ */
+const montoInicial = Number(new URLSearchParams(window.location.search).get('amount'));
+const amount = ref(
+    Number.isFinite(montoInicial) && montoInicial >= props.minimumAmount && montoInicial <= 999999.99
+        ? montoInicial
+        : props.minimumAmount,
+);
 const method = ref('card');
 const email = ref('');
 const documentType = ref('DNI');

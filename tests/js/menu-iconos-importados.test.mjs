@@ -95,11 +95,20 @@ test('todos los iconos de menú vienen importados de @fortawesome', () => {
     );
 });
 
-test('el menú escolar importa faChalkboard para "Aula Virtual"', () => {
+test('el menú escolar importa el icono que usa "Aula Virtual"', () => {
     const archivo = join(raizProyecto, 'Modules', 'Academic', 'Resources', 'assets', 'js', 'Menu.js');
     const codigo = readFileSync(archivo, 'utf8');
 
     assert.ok(statSync(archivo).isFile(), 'No se encontró el menú del módulo Academic.');
-    assert.match(codigo, /import\s*\{[\s\S]*?\bfaChalkboard\b[\s\S]*?\}\s*from\s*"@fortawesome\/free-solid-svg-icons";/);
-    assert.match(codigo, /icom:\s*faChalkboard,/);
+
+    // Se lee el icono que declara la entrada en lugar de fijar un nombre: así la
+    // prueba sigue protegiendo el ReferenceError aunque el diseño cambie el icono.
+    const entrada = codigo.match(/text:\s*'Aula Virtual',[\s\S]{0,120}?icom:\s*(\w+),/);
+
+    assert.ok(entrada, 'La entrada "Aula Virtual" desapareció del menú o ya no declara un icono.');
+    assert.match(
+        codigo,
+        new RegExp(`import\\s*\\{[\\s\\S]*?\\b${entrada[1]}\\b[\\s\\S]*?\\}\\s*from\\s*"@fortawesome/free-solid-svg-icons";`),
+        `El icono ${entrada[1]} de "Aula Virtual" no está importado: el navegador lanzará ReferenceError.`,
+    );
 });

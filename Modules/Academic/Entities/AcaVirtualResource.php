@@ -16,6 +16,7 @@ class AcaVirtualResource extends Model
         'type',
         'title',
         'url',
+        'content',
         'path',
         'mime_type',
         'size_kb',

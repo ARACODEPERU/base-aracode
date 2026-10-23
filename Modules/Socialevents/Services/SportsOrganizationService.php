@@ -96,7 +96,10 @@ class SportsOrganizationService
      * organizador vea hasta cuándo tiene acceso y pueda adelantar el pago antes
      * de que venza.
      *
-     * @return array{status: string, label: string, until: ?string, days_left: ?int, expired: bool, sponsored: bool}
+     * `can_read` y `can_write` son la fuente de verdad para la app móvil: no se
+     * deducen del rol ni de la fecha en el cliente, y `reason` explica el corte.
+     *
+     * @return array{status: string, label: string, until: ?string, days_left: ?int, expired: bool, sponsored: bool, can_read: bool, can_write: bool, reason: ?string}
      */
     public function accessSummary($user): array
     {
@@ -107,9 +110,22 @@ class SportsOrganizationService
             'suspended' => 'Bloqueado',
         ];
 
+        $canRead = $this->canRead($user);
+        $canWrite = $this->canWrite($user);
+
         $organization = $this->organization($user);
         if (! $organization) {
-            return ['status' => 'none', 'label' => 'Sin organización', 'until' => null, 'days_left' => null, 'expired' => true, 'sponsored' => false];
+            return [
+                'status' => 'none',
+                'label' => 'Sin organización',
+                'until' => null,
+                'days_left' => null,
+                'expired' => true,
+                'sponsored' => false,
+                'can_read' => $canRead,
+                'can_write' => $canWrite,
+                'reason' => 'no_organization',
+            ];
         }
 
         $status = (string) $organization->status;
@@ -120,6 +136,9 @@ class SportsOrganizationService
             'days_left' => null,
             'expired' => $status === 'suspended',
             'sponsored' => $status === 'sponsored',
+            'can_read' => $canRead,
+            'can_write' => $canWrite,
+            'reason' => $this->accessReason($user, $organization),
         ];
 
         // La cortesía/patrocinio y la organización histórica no caducan.
@@ -136,6 +155,71 @@ class SportsOrganizationService
         $summary['expired'] = $status === 'suspended' || ! $this->accessDateIsCurrent($until);
 
         return $summary;
+    }
+
+    /**
+     * Datos públicos de la organización para la sesión móvil. No incluye saldo
+     * ni tarifas: eso vive en el endpoint de pagos.
+     *
+     * @return array{id: int, name: string, status: string, is_legacy: bool, trial_ends_at: ?string, access_until: ?string}|null
+     */
+    public function organizationSummary($user): ?array
+    {
+        $organization = $this->organization($user);
+        if (! $organization) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $organization->id,
+            'name' => (string) $organization->name,
+            'status' => (string) $organization->status,
+            'is_legacy' => (bool) $organization->is_legacy,
+            'trial_ends_at' => $organization->trial_ends_at
+                ? \Illuminate\Support\Carbon::parse($organization->trial_ends_at)->toDateString()
+                : null,
+            'access_until' => $organization->access_until
+                ? \Illuminate\Support\Carbon::parse($organization->access_until)->toDateString()
+                : null,
+        ];
+    }
+
+    /**
+     * Motivo del corte para que la app muestre un mensaje útil y no solo un 403.
+     */
+    private function accessReason($user, $organization): ?string
+    {
+        if ($this->canWrite($user)) {
+            return null;
+        }
+
+        return match ((string) $organization->status) {
+            'suspended' => 'suspended',
+            'trial' => 'trial_expired',
+            'active' => 'access_expired',
+            default => 'read_only',
+        };
+    }
+
+    /**
+     * ¿La edición puede verse en la API móvil? Es pública si está marcada para
+     * la landing o para la app; el dueño y el superadministrador pueden ver
+     * además las que aún no se publicaron.
+     */
+    public function canViewEdition($user, EventEdition $edition): bool
+    {
+        if ($user && $this->isSuperAdmin($user)) return true;
+        if ($edition->mobile_enabled || $edition->landing_published) return true;
+        if (! $user || ! $this->canRead($user)) return false;
+
+        $orgId = $this->organizationId($user);
+        if (! $orgId) return false;
+
+        return DB::table('event_editions')
+            ->join('even_events', 'even_events.id', '=', 'event_editions.event_id')
+            ->where('event_editions.id', $edition->id)
+            ->where('even_events.organization_id', $orgId)
+            ->exists();
     }
 
     /**

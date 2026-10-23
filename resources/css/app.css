@@ -2284,3 +2284,205 @@ html.theme-torneos .form-section__card .panel :is(.text-red-600, .text-red-500, 
     color: var(--torneos-panel-error);
 }
 
+/* ============================================================================
+   ACTA DEL PARTIDO: TARJETAS SÓLIDAS SOBRE LA FOTO DEL ESTADIO
+   ----------------------------------------------------------------------------
+   La pantalla del acta no usa .panel, así que sus bloques quedaban
+   transparentes sobre el césped y los textos grises se perdían. Estas reglas
+   solo se activan con el tema Torneos: el modo clásico de Eventos conserva su
+   diseño original.
+   ============================================================================ */
+
+/* Cabecera del acta: mismo vidrio oscuro del breadcrumb, para que el título y
+   la fecha se lean sobre la cancha sin tapar la foto. */
+html.theme-torneos .sports-match-score-page .se-acta-header {
+    padding: 1rem 1.25rem;
+    border: 1px solid rgb(167 243 208 / 32%);
+    border-radius: 1rem;
+    background-color: rgb(2 44 34 / 78%);
+    box-shadow: 0 12px 32px rgb(2 44 34 / 24%);
+    backdrop-filter: blur(12px);
+    color: #f0fdf4;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-header :is(h1, h2) {
+    color: #f7fee7;
+    text-shadow: 0 2px 8px rgb(2 44 34 / 55%);
+}
+
+/* El "vs" del marcador conserva su tono tenue, pero sobre vidrio oscuro. */
+html.theme-torneos .sports-match-score-page .se-acta-header h1 span {
+    color: #a7f3d0;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-header p {
+    color: #bbf7d0;
+    text-shadow: 0 1px 4px rgb(2 44 34 / 45%);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-header p :is(span, a) {
+    color: inherit;
+}
+
+/* Superficie de cada bloque: los mismos tokens que .panel, aplicados a mano
+   porque el acta no envuelve su contenido en un panel. */
+html.theme-torneos .sports-match-score-page .se-acta-card {
+    background-color: var(--torneos-panel-surface);
+    border: 1px solid var(--torneos-panel-border);
+    border-radius: 1rem;
+    box-shadow: var(--torneos-panel-shadow);
+    color: var(--torneos-panel-text);
+}
+
+/* La tarjeta de alineaciones no lleva relleno: se recorta para que la tabla
+   respete las esquinas redondeadas. */
+html.theme-torneos .sports-match-score-page .se-acta-card--flush {
+    overflow: hidden;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-subcard {
+    background-color: var(--torneos-panel-header-surface);
+    border-color: var(--torneos-panel-border);
+    color: var(--torneos-panel-text);
+}
+
+/* Títulos, rótulos y ayudas: el texto oscuro genérico del sistema no se veía
+   sobre el verde; aquí se usan los tonos del panel y su versión atenuada. */
+html.theme-torneos .sports-match-score-page .se-acta-card :is(h1, h2, h3, h4, h5, h6) {
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-card :is(.text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700, .text-body) {
+    color: var(--torneos-panel-muted-text);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-card :is(.text-blue-600, .text-indigo-600) {
+    color: #065f46;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-card :is(.text-amber-600, .text-amber-700) {
+    color: #92400e;
+}
+
+/* Campos editables del acta: fondo luminoso y texto oscuro, como los
+   formularios del tema, para que los marcadores no parezcan ajenos. */
+/* La casilla de penales vive fuera de las tarjetas: se apoya en una pastilla
+   oscura para no quedar como texto suelto sobre la cancha. */
+html.theme-torneos .sports-match-score-page .se-acta-toggle {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgb(167 243 208 / 26%);
+    border-radius: 0.75rem;
+    background-color: rgb(2 44 34 / 62%);
+    color: #f0fdf4;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-toggle .text-gray-700 {
+    color: #f0fdf4;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-card :is(.form-input, .form-select) {
+    background-color: var(--torneos-form-field);
+    border-color: var(--torneos-form-field-border);
+    color: var(--torneos-form-field-text);
+}
+
+/* Tanda de penales: se conserva el acento ámbar, pero sobre una superficie
+   propia en lugar de un amarillo translúcido sobre la cancha. */
+html.theme-torneos .sports-match-score-page .se-acta-card--penales {
+    background-color: rgb(254 250 236 / 96%);
+    border-color: #fcd34d;
+    box-shadow: inset 0 0 0 1px rgb(245 158 11 / 22%), 0 8px 24px rgb(2 44 34 / 12%);
+    color: #3f2d0b;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-card--penales :is(h1, h2, h3, h4) {
+    color: #78350f;
+}
+
+/* Sobre el crema, el gris atenuado del panel se queda corto: se usa un tono
+   cálido más oscuro para los rótulos de la tanda. */
+html.theme-torneos .sports-match-score-page .se-acta-card--penales :is(.text-gray-400, .text-gray-500, .text-gray-600) {
+    color: #57534e;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-row {
+    background-color: rgb(255 255 255 / 72%);
+    border-color: var(--torneos-panel-border);
+    color: #17392e;
+}
+
+/* Alineaciones: cabecera y filas siguen la paleta del panel en vez del gris
+   y del azul fijos que traían las clases de Tailwind. */
+html.theme-torneos .sports-match-score-page .se-acta-card__head {
+    background-color: var(--torneos-panel-header-surface);
+    border-color: var(--torneos-panel-border);
+    border-radius: 1rem 1rem 0 0;
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-table {
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-table :is(th, td) {
+    border-color: var(--torneos-panel-border);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-table thead th {
+    background-color: var(--torneos-panel-header-surface);
+    color: #315b48;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-table tbody td {
+    background-color: rgb(255 255 255 / 72%);
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-table tbody tr:hover td {
+    background-color: rgb(16 185 129 / 12%);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-table :is(.text-heading, .text-body) {
+    color: inherit;
+}
+
+/* Modo oscuro: los tokens cambian solos; solo los acentos y las filas claras
+   necesitan su propia versión. */
+html.theme-torneos body.dark .sports-match-score-page .se-acta-card :is(.text-blue-600, .text-indigo-600) {
+    color: #86efac;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-card :is(.text-amber-600, .text-amber-700) {
+    color: #fcd34d;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-card--penales {
+    background-color: rgb(69 40 6 / 92%);
+    border-color: #b45309;
+    color: #fef3c7;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-card--penales :is(h1, h2, h3, h4) {
+    color: #fde68a;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-card--penales :is(.text-gray-400, .text-gray-500, .text-gray-600) {
+    color: #fde68a;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-row {
+    background-color: rgb(5 46 36 / 72%);
+    border-color: var(--torneos-panel-border);
+    color: #ecfdf5;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-table thead th {
+    background-color: #0b3b30;
+    color: #d1fae5;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-table tbody td {
+    background-color: rgb(5 46 36 / 72%);
+    color: #ecfdf5;
+}
+

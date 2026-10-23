@@ -48,6 +48,9 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')->group(base_path('routes/pichanguero.php'));
             Route::middleware('web')->group(base_path('routes/kapta.php'));
             Route::middleware('web')->group(base_path('routes/kirafact.php'));
+
+            // Sitio público del colegio y acceso al aula virtual de sus niveles.
+            Route::middleware('web')->group(base_path('routes/colegio.php'));
         });
     }
 
