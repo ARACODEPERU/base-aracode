@@ -6,6 +6,7 @@ use App\Models\Person;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Modules\Academic\Entities\AcaSchool;
 use Modules\Academic\Entities\AcaSchoolArea;
 use Modules\Academic\Entities\AcaSchoolEnrollment;
@@ -16,6 +17,7 @@ use Modules\Academic\Entities\AcaSchoolStudent;
 use Modules\Academic\Entities\AcaSchoolYear;
 use Modules\Academic\Entities\AcaVirtualCourse;
 use Modules\Academic\Entities\AcaVirtualLesson;
+use Modules\Academic\Entities\AcaVirtualResource;
 use Modules\Academic\Entities\AcaVirtualUnit;
 use Tests\TestCase;
 
@@ -301,6 +303,115 @@ class ColegioInicialPortalTest extends TestCase
             ->assertSee('45 minutos');
     }
 
+    public function test_la_vista_de_curso_trae_el_modal_con_todos_los_materiales(): void
+    {
+        Storage::fake('public');
+
+        $ficha = $this->makeResource([
+            'title' => 'Ficha de nombres',
+            'path' => 'materiales/ficha.pdf',
+            'mime_type' => 'application/pdf',
+            'size_kb' => 2048,
+        ]);
+
+        $foto = $this->makeResource([
+            'title' => 'Foto del aula',
+            'unit_id' => $this->unit->id,
+            'lesson_id' => $this->lesson->id,
+            'path' => 'materiales/aula.jpg',
+            'mime_type' => 'image/jpeg',
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('colegio.inicial.course', $this->course->id));
+
+        $response->assertOk()
+            ->assertSee('materialDialog', false)
+            ->assertSee('Materiales de apoyo')
+            ->assertSee('2 materiales disponibles')
+            ->assertSee('Ficha de nombres')
+            ->assertSee('Foto del aula')
+            ->assertSee(route('colegio.inicial.material.view', $ficha->id), false)
+            ->assertSee(route('colegio.inicial.material.download', $foto->id), false);
+    }
+
+    public function test_el_alumno_ve_la_imagen_del_material_en_el_visor(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('materiales/aula.png', 'contenido-de-la-imagen');
+
+        $resource = $this->makeResource([
+            'title' => 'Foto del aula',
+            'path' => 'materiales/aula.png',
+            'mime_type' => 'image/png',
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('colegio.inicial.material.view', $resource->id));
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'image/png');
+
+        $this->assertSame(
+            'contenido-de-la-imagen',
+            file_get_contents($response->baseResponse->getFile()->getPathname())
+        );
+    }
+
+    public function test_el_alumno_descarga_el_material_con_un_nombre_legible(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('materiales/ficha.pdf', '%PDF-1.4');
+
+        $resource = $this->makeResource([
+            'title' => 'Ficha de nombres',
+            'path' => 'materiales/ficha.pdf',
+            'mime_type' => 'application/pdf',
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('colegio.inicial.material.download', $resource->id))
+            ->assertOk()
+            ->assertDownload('ficha-de-nombres.pdf');
+    }
+
+    public function test_el_material_de_un_curso_ajeno_no_se_puede_abrir(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('materiales/ajeno.pdf', '%PDF-1.4');
+
+        $otraSeccion = AcaSchoolSection::create([
+            'school_id' => $this->school->id,
+            'year_id' => $this->year->id,
+            'grade_id' => $this->section->grade_id,
+            'name' => 'Z',
+            'capacity' => 20,
+            'shift' => AcaSchoolSection::SHIFT_TARDE,
+            'status' => true,
+        ]);
+
+        $ajeno = AcaVirtualCourse::create([
+            'school_id' => $this->school->id,
+            'year_id' => $this->year->id,
+            'section_id' => $otraSeccion->id,
+            'area_id' => AcaSchoolArea::where('level', AcaSchoolArea::LEVEL_INICIAL)->firstOrFail()->id,
+            'status' => true,
+        ]);
+
+        $resource = $this->makeResource([
+            'course_id' => $ajeno->id,
+            'title' => 'Material de otra aula',
+            'path' => 'materiales/ajeno.pdf',
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('colegio.inicial.material.view', $resource->id))
+            ->assertNotFound();
+
+        $this->actingAs($this->user)
+            ->get(route('colegio.inicial.material.download', $resource->id))
+            ->assertNotFound();
+    }
+
     public function test_el_alumno_no_puede_abrir_el_curso_de_otra_seccion(): void
     {
         $otraSeccion = AcaSchoolSection::create([
@@ -335,6 +446,21 @@ class ColegioInicialPortalTest extends TestCase
 
         $this->get(route('colegio.inicial.games'))
             ->assertRedirect(route('colegio.inicial.login'));
+
+        $this->get(route('colegio.inicial.puzzle'))
+            ->assertRedirect(route('colegio.inicial.login'));
+
+        $this->get(route('colegio.inicial.fruits'))
+            ->assertRedirect(route('colegio.inicial.login'));
+
+        $this->get(route('colegio.inicial.letters'))
+            ->assertRedirect(route('colegio.inicial.login'));
+
+        $this->get(route('colegio.inicial.colors'))
+            ->assertRedirect(route('colegio.inicial.login'));
+
+        $this->get(route('colegio.inicial.memory'))
+            ->assertRedirect(route('colegio.inicial.login'));
     }
 
     public function test_la_zona_de_juegos_muestra_la_vista_previa(): void
@@ -345,6 +471,183 @@ class ColegioInicialPortalTest extends TestCase
             ->assertSee('Aprender jugando')
             ->assertSee('Próximamente')
             ->assertSee('Memoria de animales');
+    }
+
+    public function test_la_tarjeta_del_rompecabezas_lleva_al_juego(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('colegio.inicial.games'))
+            ->assertOk()
+            ->assertSee('Rompecabezas')
+            ->assertSee(route('colegio.inicial.puzzle'), false)
+            ->assertSee('4 niveles');
+    }
+
+    public function test_el_rompecabezas_se_abre_con_sus_ilustraciones(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->get(route('colegio.inicial.puzzle'));
+
+        $response->assertOk()
+            ->assertSee('data-juego="rompecabezas"', false)
+            ->assertSee(asset('themes/colegio/js/juegos/rompecabezas.js'), false)
+            ->assertSee(asset('themes/colegio/img/juegos/sol.svg'), false)
+            ->assertSee('Volver a los juegos');
+
+        // Las cuatro ilustraciones de los niveles se sirven desde el tema.
+        foreach (['sol.svg', 'gato.svg', 'granja.svg', 'parque.svg'] as $illustration) {
+            $this->assertFileExists(public_path('themes/colegio/img/juegos/' . $illustration));
+        }
+    }
+
+    public function test_la_tarjeta_de_contando_frutas_lleva_al_juego(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('colegio.inicial.games'))
+            ->assertOk()
+            ->assertSee('Contando frutas')
+            ->assertSee(route('colegio.inicial.fruits'), false)
+            ->assertSee('10 niveles · del 1 al 10');
+    }
+
+    public function test_contando_frutas_se_abre_con_sus_frutas(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('colegio.inicial.fruits'))
+            ->assertOk()
+            ->assertSee('data-juego="contando-frutas"', false)
+            ->assertSee(asset('themes/colegio/js/juegos/contando-frutas.js'), false)
+            ->assertSee(asset('themes/colegio/img/juegos/frutas'), false)
+            ->assertSee('Volver a los juegos')
+            ->assertSee('Niveles');
+
+        // Las seis frutas del juego se sirven desde el tema.
+        foreach (['manzana', 'banana', 'naranja', 'fresa', 'pera', 'uvas'] as $fruit) {
+            $this->assertFileExists(public_path('themes/colegio/img/juegos/frutas/' . $fruit . '.svg'));
+        }
+    }
+
+    public function test_la_tarjeta_de_reconoce_la_letra_lleva_al_juego(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('colegio.inicial.games'))
+            ->assertOk()
+            ->assertSee('Reconoce la letra')
+            ->assertSee(route('colegio.inicial.letters'), false)
+            ->assertSee('10 niveles · voz y teclado')
+            ->assertDontSee('Traza las letras');
+    }
+
+    public function test_reconoce_la_letra_se_abre_con_su_teclado(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('colegio.inicial.letters'))
+            ->assertOk()
+            ->assertSee('data-juego="reconoce-letra"', false)
+            ->assertSee(asset('themes/colegio/js/juegos/reconoce-letra.js'), false)
+            ->assertSee('Volver a los juegos')
+            ->assertSee('Niveles');
+    }
+
+    public function test_la_tarjeta_de_colores_y_formas_lleva_al_juego(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('colegio.inicial.games'))
+            ->assertOk()
+            ->assertSee('Colores y formas')
+            ->assertSee(route('colegio.inicial.colors'), false)
+            ->assertSee('10 niveles · colores y figuras');
+    }
+
+    public function test_colores_y_formas_se_abre_con_su_tablero(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('colegio.inicial.colors'))
+            ->assertOk()
+            ->assertSee('data-juego="colores-formas"', false)
+            ->assertSee(asset('themes/colegio/js/juegos/colores-formas.js'), false)
+            ->assertSee('Volver a los juegos')
+            ->assertSee('Niveles');
+    }
+
+    public function test_la_tarjeta_de_memoria_de_animales_lleva_al_juego(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('colegio.inicial.games'))
+            ->assertOk()
+            ->assertSee('Memoria de animales')
+            ->assertSee(route('colegio.inicial.memory'), false)
+            ->assertSee('10 niveles · sonidos y parejas')
+            ->assertSee(asset('themes/colegio/img/juegos/animales/perro.jpg'), false);
+    }
+
+    public function test_memoria_de_animales_se_abre_con_su_configuracion(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('colegio.inicial.memory'))
+            ->assertOk()
+            ->assertSee('data-juego="memoria-animales"', false)
+            ->assertSee(asset('themes/colegio/js/juegos/memoria-animales.js'), false)
+            ->assertSee('id="animalesConfig"', false)
+            ->assertSee('Créditos y licencias')
+            ->assertSee('Wikimedia Commons')
+            ->assertSee('Volver a los juegos')
+            ->assertSee('Niveles');
+    }
+
+    public function test_los_animales_tienen_fotografia_audio_y_creditos_locales(): void
+    {
+        $animals = config('colegio_animales.animals');
+        $required = [
+            'perro', 'gato', 'gallina', 'vaca', 'cerdo', 'oveja', 'pato',
+            'caballo', 'gallo', 'leon', 'elefante', 'mono', 'rana', 'pajaro', 'buho',
+        ];
+
+        $this->assertSame($required, array_keys($animals));
+        $this->assertCount(15, $animals);
+
+        $photos = [];
+        $audios = [];
+
+        foreach ($animals as $id => $animal) {
+            $this->assertSame($id, $animal['id']);
+            $this->assertNotSame('', trim($animal['name']));
+            $this->assertContains($animal['group'], ['casa', 'granja', 'selva', 'bosque']);
+
+            foreach (['photo', 'audio'] as $field) {
+                $path = $animal[$field];
+                $this->assertStringStartsWith('themes/colegio/', $path);
+                $this->assertFileExists(public_path($path));
+                $this->assertGreaterThan(8000, (int) filesize(public_path($path)));
+            }
+
+            $this->assertSame('image/jpeg', (new \finfo(FILEINFO_MIME_TYPE))->file(public_path($animal['photo'])));
+            $this->assertSame('audio/mpeg', (new \finfo(FILEINFO_MIME_TYPE))->file(public_path($animal['audio'])));
+
+            $dimensions = getimagesize(public_path($animal['photo']));
+            $this->assertIsArray($dimensions);
+            $this->assertGreaterThanOrEqual(600, $dimensions[0]);
+            $this->assertGreaterThanOrEqual(400, $dimensions[1]);
+
+            foreach (['photo_credit', 'audio_credit'] as $credit) {
+                $this->assertNotSame('', trim($animal[$credit]['author']));
+                $this->assertNotSame('', trim($animal[$credit]['license']));
+                $this->assertStringStartsWith(
+                    'https://commons.wikimedia.org/wiki/File:',
+                    $animal[$credit]['page']
+                );
+
+                if ($animal[$credit]['license_url'] !== '') {
+                    $this->assertStringStartsWith('https://creativecommons.org/', $animal[$credit]['license_url']);
+                }
+            }
+
+            $photos[] = $animal['photo'];
+            $audios[] = $animal['audio'];
+        }
+
+        $this->assertCount(15, array_unique($photos));
+        $this->assertCount(15, array_unique($audios));
     }
 
     public function test_cerrar_sesion_vuelve_al_login_del_aula(): void
@@ -367,6 +670,26 @@ class ColegioInicialPortalTest extends TestCase
             ->assertOk()
             ->assertSee('El código o la contraseña no son correctos.')
             ->assertSee('data-open-login="true"', false);
+    }
+
+    /**
+     * Material de apoyo del curso con los valores minimos del aula virtual.
+     */
+    private function makeResource(array $attributes = []): AcaVirtualResource
+    {
+        return AcaVirtualResource::create(array_merge([
+            'course_id' => $this->course->id,
+            'unit_id' => null,
+            'lesson_id' => null,
+            'type' => 'file',
+            'title' => 'Material de prueba',
+            'path' => 'materiales/material.pdf',
+            'mime_type' => 'application/pdf',
+            'size_kb' => 1024,
+            'visibility' => 'students',
+            'sort_order' => 1,
+            'status' => true,
+        ], $attributes));
     }
 
     /**

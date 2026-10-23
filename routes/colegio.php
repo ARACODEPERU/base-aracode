@@ -41,6 +41,22 @@ Route::prefix('colegio')->name('colegio.')->group(function () {
         Route::get('aula/curso/{course}', [ColegioInicialController::class, 'course'])
             ->whereNumber('course')
             ->name('course');
+
+        // Materiales de apoyo: se ven en el visor del modal y se descargan con
+        // un nombre legible, solo si pertenecen a un curso del alumno.
+        Route::get('aula/material/{resource}', [ColegioInicialController::class, 'viewMaterial'])
+            ->whereNumber('resource')
+            ->name('material.view');
+
+        Route::get('aula/material/{resource}/descargar', [ColegioInicialController::class, 'downloadMaterial'])
+            ->whereNumber('resource')
+            ->name('material.download');
         Route::get('juegos', [ColegioInicialController::class, 'games'])->name('games');
+
+        Route::get('juegos/rompecabezas', [ColegioInicialController::class, 'puzzle'])->name('puzzle');
+        Route::get('juegos/contando-frutas', [ColegioInicialController::class, 'fruits'])->name('fruits');
+        Route::get('juegos/reconoce-la-letra', [ColegioInicialController::class, 'letters'])->name('letters');
+        Route::get('juegos/colores-y-formas', [ColegioInicialController::class, 'colors'])->name('colors');
+        Route::get('juegos/memoria-de-animales', [ColegioInicialController::class, 'memory'])->name('memory');
     });
 });

@@ -197,6 +197,166 @@
     }
 
     /* ------------------------------------------------------------------
+       Materiales de apoyo: modal con visor de imágenes y PDF
+       ------------------------------------------------------------------ */
+    var materialDialog = document.getElementById('materialDialog');
+
+    if (materialDialog && typeof materialDialog.showModal === 'function') {
+        var materialItems = Array.prototype.slice.call(
+            materialDialog.querySelectorAll('[data-material-item]')
+        );
+        var materialImage = materialDialog.querySelector('[data-material-image]');
+        var materialFrame = materialDialog.querySelector('[data-material-frame]');
+        var materialFallback = materialDialog.querySelector('[data-material-fallback]');
+        var materialFallbackTitle = materialDialog.querySelector('[data-material-fallback-title]');
+        var materialTitle = materialDialog.querySelector('[data-material-title]');
+        var materialOrigin = materialDialog.querySelector('[data-material-origin]');
+        var materialDownload = materialDialog.querySelector('[data-material-download]');
+        var materialExternal = materialDialog.querySelector('[data-material-external]');
+        var materialPrev = materialDialog.querySelector('[data-material-prev]');
+        var materialNext = materialDialog.querySelector('[data-material-next]');
+        var materialPosition = materialDialog.querySelector('[data-material-position]');
+        var materialCurrent = 0;
+
+        var resetMaterialViewer = function () {
+            materialImage.hidden = true;
+            materialImage.removeAttribute('src');
+            materialFrame.hidden = true;
+            materialFrame.removeAttribute('src');
+            materialFrame.removeAttribute('srcdoc');
+            materialFallback.hidden = true;
+        };
+
+        var showMaterial = function (index) {
+            if (!materialItems.length) {
+                return;
+            }
+
+            materialCurrent = (index + materialItems.length) % materialItems.length;
+
+            var item = materialItems[materialCurrent];
+            var kind = item.dataset.kind;
+            var preview = item.dataset.preview || '';
+            var download = item.dataset.download || '';
+            var external = item.dataset.external || '';
+            var embedTemplate = materialDialog.querySelector(
+                '[data-material-embed="' + item.dataset.materialId + '"]'
+            );
+
+            materialItems.forEach(function (other, position) {
+                var active = position === materialCurrent;
+                other.classList.toggle('is-active', active);
+                other.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+
+            materialTitle.textContent = item.dataset.title || 'Material';
+            materialOrigin.textContent = item.dataset.origin || '';
+            resetMaterialViewer();
+
+            if (kind === 'image' && preview) {
+                materialImage.src = preview;
+                materialImage.alt = item.dataset.title || 'Material';
+                materialImage.hidden = false;
+            } else if (kind === 'pdf' && preview) {
+                materialFrame.src = preview;
+                materialFrame.title = 'Vista previa de ' + (item.dataset.title || 'el material');
+                materialFrame.hidden = false;
+            } else if (kind === 'embed' && embedTemplate) {
+                materialFrame.srcdoc = embedTemplate.innerHTML;
+                materialFrame.title = item.dataset.title || 'Contenido';
+                materialFrame.hidden = false;
+            } else {
+                materialFallbackTitle.textContent = kind === 'link' && external
+                    ? 'Este material es un enlace'
+                    : 'Este material se descarga para abrirlo';
+                materialFallback.hidden = false;
+            }
+
+            if (download) {
+                materialDownload.href = download;
+                materialDownload.hidden = false;
+            } else {
+                materialDownload.hidden = true;
+                materialDownload.removeAttribute('href');
+            }
+
+            if (external) {
+                materialExternal.href = external;
+                materialExternal.hidden = false;
+            } else {
+                materialExternal.hidden = true;
+                materialExternal.removeAttribute('href');
+            }
+
+            materialPosition.textContent = (materialCurrent + 1) + ' de ' + materialItems.length;
+            materialPrev.disabled = materialItems.length < 2;
+            materialNext.disabled = materialItems.length < 2;
+        };
+
+        var openMaterials = function (id) {
+            var index = 0;
+
+            if (id) {
+                materialItems.forEach(function (item, position) {
+                    if (String(item.dataset.materialId) === String(id)) {
+                        index = position;
+                    }
+                });
+            }
+
+            showMaterial(index);
+            materialDialog.showModal();
+        };
+
+        document.querySelectorAll('[data-material-open]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                openMaterials(button.dataset.materialId || null);
+            });
+        });
+
+        materialDialog.querySelectorAll('[data-material-close]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                materialDialog.close();
+            });
+        });
+
+        materialItems.forEach(function (item, position) {
+            item.addEventListener('click', function () {
+                showMaterial(position);
+            });
+        });
+
+        materialPrev.addEventListener('click', function () {
+            showMaterial(materialCurrent - 1);
+        });
+
+        materialNext.addEventListener('click', function () {
+            showMaterial(materialCurrent + 1);
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (!materialDialog.open || materialItems.length < 2) {
+                return;
+            }
+
+            if (event.key === 'ArrowRight') {
+                showMaterial(materialCurrent + 1);
+            } else if (event.key === 'ArrowLeft') {
+                showMaterial(materialCurrent - 1);
+            }
+        });
+
+        // Cerrar al tocar fuera de la tarjeta y liberar el visor al salir.
+        materialDialog.addEventListener('click', function (event) {
+            if (event.target === materialDialog) {
+                materialDialog.close();
+            }
+        });
+
+        materialDialog.addEventListener('close', resetMaterialViewer);
+    }
+
+    /* ------------------------------------------------------------------
        Entrada suave de las tarjetas
        ------------------------------------------------------------------ */
     if (canAnimate) {

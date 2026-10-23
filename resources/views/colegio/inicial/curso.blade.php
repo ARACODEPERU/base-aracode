@@ -5,7 +5,6 @@
 @section('body_class', 'font-body')
 
 <?php
-    $storage = \Illuminate\Support\Facades\Storage::disk('public');
     $sessionNumber = 0;
 ?>
 
@@ -47,6 +46,15 @@
                             </span>
                         @endif
                     </div>
+
+                    @if (! empty($materials))
+                        <button type="button" class="cole-btn cole-btn-ghost mt-4 h-11 px-4 text-xs" data-material-open>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10l2 2h6.5A1.5 1.5 0 0 1 20 7.5v11A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5z"/>
+                            </svg>
+                            Ver materiales de apoyo
+                        </button>
+                    @endif
                 </div>
 
                 <div class="course-hero__art" aria-hidden="true">
@@ -156,26 +164,15 @@
                                                         <span class="lesson__block-label">Materiales</span>
                                                         <div class="material-list">
                                                             @foreach ($lesson->resources as $resource)
-                                                                <?php
-                                                                    $link = $resource->url ?: ($resource->path ? $storage->url($resource->path) : null);
-                                                                ?>
-
-                                                                @if ($link)
-                                                                    <a class="material" href="{{ $link }}" target="_blank" rel="noopener noreferrer">
-                                                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 13.5a4 4 0 0 1 0-5.7l2-2a4 4 0 0 1 5.7 5.7l-1.3 1.3M13.5 10.5a4 4 0 0 1 0 5.7l-2 2a4 4 0 0 1-5.7-5.7l1.3-1.3"/>
-                                                                        </svg>
-                                                                        {{ $resource->title }}
-                                                                    </a>
-                                                                @else
-                                                                    <span class="material">
-                                                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 3.5h7l5 5v12H6z"/>
-                                                                            <path stroke-linecap="round" d="M13 3.5v5h5"/>
-                                                                        </svg>
-                                                                        {{ $resource->title }}
-                                                                    </span>
-                                                                @endif
+                                                                <button type="button" class="material material--button"
+                                                                        data-material-open data-material-id="{{ $resource->id }}">
+                                                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 3.5h7l5 5v12H6z"/>
+                                                                        <path stroke-linecap="round" d="M13 3.5v5h5"/>
+                                                                        <path stroke-linecap="round" d="M9 14h6M9 17h4"/>
+                                                                    </svg>
+                                                                    {{ $resource->title }}
+                                                                </button>
                                                             @endforeach
                                                         </div>
                                                     </div>
@@ -212,33 +209,35 @@
                 <aside class="space-y-4">
                     @include('colegio.inicial.partials.mascot')
 
-                    @if ($course->resources->isNotEmpty())
+                    @if (! empty($materials))
                         <div class="aula-info-card">
-                            <h2 class="font-display text-base font-semibold text-cole-forest">Materiales del curso</h2>
-                            <div class="material-list mt-2">
-                                @foreach ($course->resources as $resource)
-                                    <?php
-                                        $link = $resource->url ?: ($resource->path ? $storage->url($resource->path) : null);
-                                    ?>
+                            <h2 class="font-display text-base font-semibold text-cole-forest">Materiales de apoyo</h2>
+                            <p class="mt-1 text-[11px] font-bold leading-snug text-cole-ink/55">
+                                Imágenes y PDF que puedes ver aquí mismo.
+                            </p>
 
-                                    @if ($link)
-                                        <a class="material" href="{{ $link }}" target="_blank" rel="noopener noreferrer">
-                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 13.5a4 4 0 0 1 0-5.7l2-2a4 4 0 0 1 5.7 5.7l-1.3 1.3M13.5 10.5a4 4 0 0 1 0 5.7l-2 2a4 4 0 0 1-5.7-5.7l1.3-1.3"/>
-                                            </svg>
-                                            {{ $resource->title }}
-                                        </a>
-                                    @else
-                                        <span class="material">
+                            @if ($course->resources->isNotEmpty())
+                                <div class="material-list mt-2">
+                                    @foreach ($course->resources as $resource)
+                                        <button type="button" class="material material--button"
+                                                data-material-open data-material-id="{{ $resource->id }}">
                                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 3.5h7l5 5v12H6z"/>
                                                 <path stroke-linecap="round" d="M13 3.5v5h5"/>
+                                                <path stroke-linecap="round" d="M9 14h6M9 17h4"/>
                                             </svg>
                                             {{ $resource->title }}
-                                        </span>
-                                    @endif
-                                @endforeach
-                            </div>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            <button type="button" class="cole-btn cole-btn-primary mt-3 h-11 w-full text-xs" data-material-open>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10l2 2h6.5A1.5 1.5 0 0 1 20 7.5v11A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5z"/>
+                                </svg>
+                                Ver todos ({{ count($materials) }})
+                            </button>
                         </div>
                     @endif
 
@@ -255,6 +254,7 @@
 
         @include('colegio.inicial.partials.dock')
         @include('colegio.inicial.partials.help-dialog')
+        @include('colegio.components.aula.material-dialog', ['materials' => $materials])
     </div>
 @endsection
 

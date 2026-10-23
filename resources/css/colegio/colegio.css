@@ -1044,7 +1044,9 @@
         align-items: center;
         gap: 5px;
         align-self: flex-start;
-        margin-top: 6px;
+        /* El botón siempre se apoya en el pie de la tarjeta, sin importar
+           cuántas líneas ocupe el nombre del curso. */
+        margin-top: auto;
         border-radius: 999px;
         padding: 6px 11px;
         font-size: 11.5px;
@@ -1636,6 +1638,704 @@
         color: #7b9188;
     }
 
+    .game-card__meta {
+        font-size: 10px;
+        font-weight: 800;
+        color: rgba(23, 63, 53, 0.5);
+    }
+
+    /* Tarjeta que ya se puede jugar */
+    .game-card--link {
+        color: inherit;
+        text-decoration: none;
+        transition: transform 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .game-card--link:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 11px 0 var(--tone-deep, #c1772f), 0 24px 30px -22px rgba(44, 62, 80, 0.55);
+    }
+
+    .game-card--link:active {
+        transform: translateY(3px);
+        box-shadow: 0 4px 0 var(--tone-deep, #c1772f), 0 12px 18px -16px rgba(44, 62, 80, 0.5);
+    }
+
+    .game-card__play {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 2px;
+        border-radius: 999px;
+        background: #4e9e38;
+        padding: 6px 12px;
+        font-size: 10.5px;
+        font-weight: 900;
+        color: #ffffff;
+        box-shadow: 0 3px 0 #3a7a29;
+    }
+
+    /* El botón «Jugar» toma el tono de la tarjeta que lo contiene. */
+    .game-card--link .game-card__play {
+        background: var(--tone-deep, #4e9e38);
+        box-shadow: 0 3px 0 rgba(23, 63, 53, 0.28);
+    }
+
+    /* ------------------------- Juego: Rompecabezas ------------------------- */
+
+    .juego-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .juego-panel {
+        position: relative;
+        border-radius: 30px;
+        border: 1.5px solid rgba(255, 255, 255, 0.9);
+        background: #fffdf7;
+        padding: 16px;
+        box-shadow: 0 26px 44px -34px rgba(23, 63, 53, 0.65);
+    }
+
+    .juego-panel__head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .juego-panel__eyebrow {
+        font-size: 9.5px;
+        font-weight: 900;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2f7d63;
+    }
+
+    .juego-panel__title {
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: clamp(18px, 3vw, 22px);
+        font-weight: 600;
+        line-height: 1.2;
+        color: #173f35;
+    }
+
+    .juego-panel__figure {
+        font-size: 11px;
+        font-weight: 800;
+        color: rgba(23, 63, 53, 0.55);
+    }
+
+    .juego-mini-referencia {
+        flex: 0 0 auto;
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        border: 2px solid #ffffff;
+        background: #eaf4ee;
+        object-fit: contain;
+        padding: 4px;
+        box-shadow: 0 10px 18px -14px rgba(23, 63, 53, 0.7);
+    }
+
+    .juego-progreso {
+        height: 12px;
+        margin-top: 10px;
+        border-radius: 999px;
+        background: #e8f2eb;
+        overflow: hidden;
+    }
+
+    .juego-progreso__fill {
+        display: block;
+        height: 100%;
+        width: 0;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #86dc72, #4e9e38);
+        transition: width 0.35s ease;
+    }
+
+    .juego-escenario {
+        margin-top: 12px;
+    }
+
+    .juego-tablero {
+        display: grid;
+        grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+        grid-template-rows: repeat(var(--rows, 2), minmax(0, 1fr));
+        gap: 3px;
+        width: 100%;
+        max-width: 520px;
+        margin: 0 auto;
+        aspect-ratio: var(--cols, 2) / var(--rows, 2);
+        padding: 5px;
+        border-radius: 24px;
+        background: #e6f1e9;
+        box-shadow: inset 0 4px 12px rgba(23, 63, 53, 0.12);
+    }
+
+    .juego-casilla {
+        position: relative;
+        display: block;
+        overflow: hidden;
+        border: 2px dashed rgba(47, 125, 99, 0.28);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.7);
+        padding: 0;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .juego-casilla:not(:disabled):hover,
+    .juego-casilla:focus-visible {
+        border-color: #2f7d63;
+        background: #ffffff;
+    }
+
+    .juego-casilla.is-over {
+        border-style: solid;
+        border-color: #2f7d63;
+        background: #e2f8e6;
+        box-shadow: inset 0 0 0 3px rgba(47, 125, 99, 0.22);
+    }
+
+    .juego-casilla.is-filled {
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        cursor: default;
+    }
+
+    .juego-casilla.is-wrong {
+        border-color: #e9787a;
+        animation: juego-shake 0.4s ease;
+    }
+
+    .juego-casilla__guia {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        opacity: 0.2;
+    }
+
+    .juego-pieza {
+        position: relative;
+        display: block;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border: 0;
+        border-radius: 14px;
+        padding: 0;
+        background-color: #eaf4ee;
+        box-shadow: 0 4px 0 rgba(23, 63, 53, 0.16), 0 10px 16px -12px rgba(23, 63, 53, 0.7);
+        cursor: grab;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        transition: transform 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease;
+    }
+
+    .juego-pieza:hover {
+        transform: translateY(-2px);
+    }
+
+    .juego-pieza:active {
+        cursor: grabbing;
+    }
+
+    .juego-pieza.is-selected {
+        outline: 4px solid #f7c45c;
+        outline-offset: 2px;
+        transform: translateY(-3px) scale(1.03);
+    }
+
+    .juego-pieza.is-dragging {
+        opacity: 0.28;
+    }
+
+    .juego-pieza.is-wrong {
+        animation: juego-shake 0.4s ease;
+    }
+
+    .juego-fantasma {
+        position: fixed;
+        z-index: 90;
+        width: 78px;
+        height: 78px;
+        margin: 0;
+        border-radius: 14px;
+        transform: translate(-50%, -50%) rotate(-3deg) scale(1.04);
+        pointer-events: none;
+        opacity: 0.96;
+        box-shadow: 0 18px 26px -14px rgba(23, 63, 53, 0.75);
+    }
+
+    .juego-pieza-colocada {
+        position: absolute;
+        inset: 0;
+        display: block;
+        border-radius: inherit;
+        animation: juego-pop 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .juego-bandeja-wrap {
+        margin-top: 12px;
+        border-radius: 20px;
+        background: rgba(232, 246, 236, 0.6);
+        padding: 10px 12px 12px;
+    }
+
+    .juego-bandeja-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 6px 10px;
+    }
+
+    .juego-bandeja-title {
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: #173f35;
+    }
+
+    /* Contador siempre a la vista, también cuando el héroe se compacta */
+    .juego-bandeja-count {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 1px;
+        margin-left: 4px;
+        border-radius: 999px;
+        background: #ffffff;
+        padding: 2px 8px;
+        font-size: 10px;
+        font-weight: 900;
+        color: #22623c;
+        box-shadow: inset 0 0 0 1px #d9e9df;
+    }
+
+    .juego-bandeja-hint {
+        font-size: 9.5px;
+        font-weight: 800;
+        color: rgba(23, 63, 53, 0.5);
+    }
+
+    .juego-bandeja {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(58px, 74px));
+        align-content: start;
+        justify-content: center;
+        gap: 8px;
+        min-height: 74px;
+        margin-top: 8px;
+    }
+
+    .juego-rompecabezas:not(.is-playing) .juego-bandeja {
+        opacity: 0.45;
+        pointer-events: none;
+    }
+
+    .juego-controles {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+        border-top: 1.5px dashed rgba(47, 125, 99, 0.2);
+        padding-top: 12px;
+    }
+
+    .juego-mensaje {
+        flex: 1 1 190px;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.45;
+        color: #2f7d63;
+    }
+
+    .juego-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-family: inherit;
+        font-size: 12.5px;
+        font-weight: 900;
+        line-height: 1;
+        text-decoration: none;
+        cursor: pointer;
+        transition: transform 0.14s ease, box-shadow 0.14s ease, background-color 0.14s ease, border-color 0.14s ease;
+    }
+
+    .juego-btn--primary {
+        background: #4e9e38;
+        color: #ffffff;
+        box-shadow: 0 5px 0 #3a7a29;
+    }
+
+    .juego-btn--primary:hover {
+        background: #58ab41;
+    }
+
+    .juego-btn--primary:active {
+        transform: translateY(3px);
+        box-shadow: 0 2px 0 #3a7a29;
+    }
+
+    .juego-btn--ghost {
+        border: 2px solid #d9e9df;
+        background: #ffffff;
+        color: #2f7d63;
+    }
+
+    .juego-btn--ghost:hover {
+        border-color: #a9d6b9;
+        background: #f4fbf6;
+    }
+
+    .juego-btn.is-off {
+        color: #8a9a92;
+    }
+
+    /* Portada y celebración: cubren el panel completo */
+
+    .juego-portada,
+    .juego-victoria {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 7px;
+        overflow-y: auto;
+        border-radius: 30px;
+        background: rgba(255, 253, 247, 0.975);
+        padding: 18px;
+        text-align: center;
+    }
+
+    .juego-portada[hidden],
+    .juego-victoria[hidden] {
+        display: none;
+    }
+
+    .juego-portada__fox {
+        width: 62px;
+        height: 62px;
+    }
+
+    .juego-portada__eyebrow {
+        font-size: 9.5px;
+        font-weight: 900;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #2f7d63;
+    }
+
+    .juego-portada__title {
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: 21px;
+        font-weight: 600;
+        color: #173f35;
+    }
+
+    .juego-portada__text {
+        max-width: 320px;
+        font-size: 11.5px;
+        font-weight: 700;
+        line-height: 1.5;
+        color: rgba(23, 63, 53, 0.65);
+    }
+
+    .juego-pasos {
+        display: grid;
+        gap: 5px;
+        margin: 2px 0 4px;
+        text-align: left;
+    }
+
+    .juego-pasos li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.35;
+        color: #3c5349;
+    }
+
+    .juego-pasos__num {
+        display: grid;
+        place-items: center;
+        width: 20px;
+        height: 20px;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #e2f8e6;
+        font-size: 10px;
+        font-weight: 900;
+        color: #22623c;
+    }
+
+    .juego-victoria__fox {
+        width: 68px;
+        height: 68px;
+    }
+
+    .juego-victoria__eyebrow {
+        font-size: 9.5px;
+        font-weight: 900;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #4e9e38;
+    }
+
+    .juego-victoria__title {
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: 22px;
+        font-weight: 600;
+        line-height: 1.2;
+        color: #173f35;
+    }
+
+    .juego-victoria__text {
+        max-width: 320px;
+        font-size: 11.5px;
+        font-weight: 700;
+        line-height: 1.5;
+        color: rgba(23, 63, 53, 0.65);
+    }
+
+    .juego-victoria__actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    .juego-victoria.is-visible {
+        animation: juego-pop 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    /* Columna lateral del juego */
+
+    .juego-side {
+        display: grid;
+        align-content: start;
+        gap: 12px;
+    }
+
+    .juego-card {
+        border-radius: 24px;
+        border: 1.5px solid #ffffff;
+        background: #fffdf7;
+        padding: 14px;
+        box-shadow: 0 18px 30px -28px rgba(23, 63, 53, 0.55);
+    }
+
+    .juego-card__title {
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: #173f35;
+    }
+
+    .juego-card__text {
+        margin-top: 4px;
+        font-size: 10.5px;
+        font-weight: 700;
+        line-height: 1.5;
+        color: rgba(23, 63, 53, 0.55);
+    }
+
+    .juego-referencia {
+        display: block;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        margin-top: 8px;
+        border-radius: 16px;
+        background: #eaf4ee;
+        padding: 6px;
+        object-fit: contain;
+    }
+
+    .juego-niveles {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .juego-nivel {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        border: 2px solid #edf4ef;
+        border-radius: 16px;
+        background: #ffffff;
+        padding: 8px 10px;
+        font-family: inherit;
+        text-align: left;
+        cursor: pointer;
+        transition: transform 0.14s ease, border-color 0.14s ease, background-color 0.14s ease;
+    }
+
+    .juego-nivel:hover {
+        transform: translateY(-1px);
+        border-color: #bfe3c9;
+    }
+
+    .juego-nivel.is-active {
+        border-color: #86dc72;
+        background: #f3fcef;
+    }
+
+    .juego-nivel__num {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #eaf4ee;
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: #2f7d63;
+    }
+
+    .juego-nivel.is-complete .juego-nivel__num {
+        background: #ffe9a8;
+        color: #7c5316;
+    }
+
+    .juego-nivel__info {
+        display: grid;
+        gap: 1px;
+    }
+
+    .juego-nivel__name {
+        font-size: 11px;
+        font-weight: 800;
+        color: #173f35;
+    }
+
+    .juego-nivel__meta {
+        font-size: 9.5px;
+        font-weight: 800;
+        color: rgba(23, 63, 53, 0.45);
+    }
+
+    @media (min-width: 640px) {
+        .juego-panel {
+            padding: 20px;
+        }
+
+        .juego-bandeja {
+            grid-template-columns: repeat(auto-fill, minmax(70px, 86px));
+            min-height: 86px;
+        }
+
+        .juego-mini-referencia {
+            width: 62px;
+            height: 62px;
+        }
+
+        .juego-portada__fox,
+        .juego-victoria__fox {
+            width: 78px;
+            height: 78px;
+        }
+    }
+
+    @media (min-width: 900px) {
+        .juego-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            align-items: start;
+        }
+
+        .juego-tablero {
+            max-width: 540px;
+        }
+    }
+
+    @media (max-width: 639px) {
+        /* En el celular el héroe se queda con lo esencial para que el botón de
+           inicio quede a la vista: el nivel vive en el panel y las piezas
+           colocadas, junto a la bandeja. */
+        .aula-hero--juego {
+            padding: 14px 16px;
+            gap: 8px;
+        }
+
+        .aula-hero--juego .aula-subtitle,
+        .aula-hero--juego .aula-hero__stats {
+            display: none;
+        }
+
+        /* La portada se alinea arriba: con tableros grandes (nivel 4) el
+           botón de inicio quedaría por debajo de la pantalla si se centrara. */
+        .juego-portada,
+        .juego-victoria {
+            align-content: start;
+        }
+
+        .juego-portada {
+            gap: 5px;
+            padding: 14px;
+        }
+
+        .juego-portada__fox {
+            width: 52px;
+            height: 52px;
+        }
+
+        .juego-pasos {
+            gap: 3px;
+        }
+    }
+
+    @keyframes juego-pop {
+        from {
+            opacity: 0;
+            transform: scale(0.82);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes juego-shake {
+        0%,
+        100% {
+            transform: translateX(0);
+        }
+
+        25% {
+            transform: translateX(-5px);
+        }
+
+        50% {
+            transform: translateX(5px);
+        }
+
+        75% {
+            transform: translateX(-3px);
+        }
+    }
+
     /* ------------------------------ Diálogo de ayuda ------------------------------ */
 
     .aula-dialog {
@@ -1681,6 +2381,296 @@
         font-size: 11px;
         font-weight: 900;
         color: #22623c;
+    }
+
+    /* ------------------------- Materiales de apoyo ------------------------- */
+
+    .material--button {
+        width: 100%;
+        border: 0;
+        font-family: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .aula-dialog--material {
+        width: min(940px, calc(100% - 24px));
+    }
+
+    .material-dialog__head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .material-dialog__icon {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        flex: 0 0 auto;
+        border-radius: 16px;
+        background: #e2f8e6;
+        color: #22623c;
+    }
+
+    .material-dialog__body {
+        display: grid;
+        gap: 14px;
+        margin-top: 14px;
+    }
+
+    .material-dialog__list {
+        display: grid;
+        gap: 8px;
+        align-content: start;
+        max-height: 34vh;
+        overflow-y: auto;
+        padding: 2px 4px 2px 2px;
+    }
+
+    .material-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        border: 1.5px solid #e9f1ea;
+        border-radius: 18px;
+        background: #f7fbf8;
+        padding: 9px 10px;
+        font-family: inherit;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+    }
+
+    .material-item:hover {
+        border-color: #cfe8d6;
+        background: #eef8f1;
+    }
+
+    .material-item:active {
+        transform: translateY(1px);
+    }
+
+    .material-item.is-active {
+        border-color: #8fd0a5;
+        background: #e2f8e6;
+        box-shadow: 0 8px 18px -14px rgba(34, 98, 60, 0.8);
+    }
+
+    .material-item__icon {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #2f7d63;
+    }
+
+    .material-item__icon--pdf {
+        background: #fff0ec;
+        color: #c0492f;
+    }
+
+    .material-item__icon--image {
+        background: #e9f5ff;
+        color: #1d6f97;
+    }
+
+    .material-item__icon--link,
+    .material-item__icon--embed {
+        background: #f1ebff;
+        color: #6a4bb5;
+    }
+
+    .material-item__title {
+        display: block;
+        overflow-wrap: anywhere;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.3;
+        color: #173f35;
+    }
+
+    .material-item__meta {
+        display: block;
+        margin-top: 2px;
+        overflow-wrap: anywhere;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.35;
+        color: #7b9188;
+    }
+
+    .material-viewer {
+        display: grid;
+        gap: 10px;
+        min-width: 0;
+        border: 1.5px solid #edf3ee;
+        border-radius: 22px;
+        background: #ffffff;
+        padding: 12px;
+    }
+
+    .material-viewer__head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .material-viewer__eyebrow {
+        font-size: 9.5px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #7b9188;
+    }
+
+    .material-viewer__title {
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+        color: #173f35;
+    }
+
+    .material-viewer__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .material-viewer__download,
+    .material-viewer__external {
+        height: 40px;
+        padding: 0 14px;
+        font-size: 12px;
+        text-decoration: none;
+    }
+
+    .material-viewer__stage {
+        display: grid;
+        place-items: center;
+        min-height: 240px;
+        overflow: hidden;
+        border-radius: 18px;
+        background: #f4faf6;
+        padding: 8px;
+    }
+
+    .material-viewer__frame {
+        width: 100%;
+        height: min(50vh, 460px);
+        border: 0;
+        border-radius: 14px;
+        background: #ffffff;
+        object-fit: contain;
+    }
+
+    img.material-viewer__frame {
+        width: auto;
+        max-width: 100%;
+        height: auto;
+        max-height: min(50vh, 460px);
+    }
+
+    .material-viewer__fallback {
+        max-width: 320px;
+        padding: 22px 14px;
+        text-align: center;
+    }
+
+    .material-viewer__fallback-icon {
+        display: inline-grid;
+        place-items: center;
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
+        background: #ffffff;
+        color: #2f7d63;
+    }
+
+    .material-viewer__fallback-title {
+        margin-top: 10px;
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: #173f35;
+    }
+
+    .material-viewer__fallback-text {
+        margin-top: 4px;
+        font-size: 11.5px;
+        font-weight: 600;
+        line-height: 1.5;
+        color: #5d756b;
+    }
+
+    .material-viewer__nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .material-viewer__nav button {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border: 1.5px solid #e6f1e8;
+        border-radius: 999px;
+        background: #ffffff;
+        padding: 7px 12px;
+        font-family: inherit;
+        font-size: 11.5px;
+        font-weight: 800;
+        color: #2f7d63;
+        cursor: pointer;
+    }
+
+    .material-viewer__nav button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .material-viewer__position {
+        font-size: 11px;
+        font-weight: 800;
+        color: #7b9188;
+    }
+
+    @media (min-width: 780px) {
+        .material-dialog__body {
+            grid-template-columns: 268px minmax(0, 1fr);
+        }
+
+        .material-dialog__list {
+            max-height: min(62vh, 520px);
+        }
+    }
+
+    @media (max-width: 779px) {
+        .material-dialog__list {
+            grid-auto-flow: column;
+            grid-auto-columns: 74%;
+            max-height: none;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 8px;
+        }
+
+        .material-item {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 6px;
+        }
     }
 }
 
@@ -1836,16 +2826,1489 @@
     }
 }
 
+/* -------------------- Juego: Reconoce la letra -------------------- */
+
+    .letras-badge {
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #ece2ff;
+        padding: 5px 10px;
+        font-size: 9.5px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #6b4fb0;
+    }
+
+    .letras-stage {
+        display: grid;
+        align-content: center;
+        width: 100%;
+        min-height: 440px;
+        padding: 12px 2px 4px;
+    }
+
+    .juego-letras:not(.is-playing) .letras-stage {
+        opacity: 0.45;
+        pointer-events: none;
+    }
+
+    .letras-ejercicio {
+        display: grid;
+        justify-items: center;
+        align-content: center;
+        gap: 10px;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .letras-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+        max-width: 520px;
+    }
+
+    .letras-consigna {
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: clamp(16px, 4vw, 20px);
+        font-weight: 600;
+        line-height: 1.25;
+        color: #173f35;
+    }
+
+    .letras-repeat {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        flex: 0 0 auto;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        padding: 6px 8px;
+        font-family: inherit;
+        font-size: 10px;
+        font-weight: 900;
+        color: #2f7d63;
+        cursor: pointer;
+    }
+
+    .letras-repeat:hover {
+        background: #eaf4ee;
+    }
+
+    .letras-display {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        padding: 2px 0;
+    }
+
+    .letras-tile {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: clamp(104px, 28vw, 172px);
+        height: clamp(104px, 28vw, 172px);
+        border: 3px solid #e2efe6;
+        border-radius: 30px;
+        background: #fffdf7;
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: clamp(68px, 20vw, 120px);
+        font-weight: 600;
+        line-height: 1;
+        color: #173f35;
+        box-shadow: 0 8px 0 #e2efe6, 0 22px 32px -26px rgba(23, 63, 53, 0.6);
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .letras-tile--small {
+        width: clamp(62px, 17vw, 108px);
+        height: clamp(62px, 17vw, 108px);
+        border-radius: 22px;
+        font-size: clamp(40px, 11vw, 70px);
+        box-shadow: 0 6px 0 #e2efe6, 0 18px 26px -22px rgba(23, 63, 53, 0.6);
+    }
+
+    .letras-tile.is-correct {
+        border-color: #86dc72;
+        background: #f3fcef;
+        color: #22623c;
+        animation: juego-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .letras-orden {
+        max-width: 430px;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.45;
+        color: rgba(23, 63, 53, 0.55);
+    }
+
+    .letras-metodos {
+        display: grid;
+        justify-items: center;
+        gap: 10px;
+        width: 100%;
+        min-width: 0;
+        max-width: 520px;
+        margin-top: 2px;
+    }
+
+    .letras-tabs {
+        display: flex;
+        gap: 4px;
+        width: min(100%, 340px);
+        max-width: 100%;
+        border-radius: 999px;
+        background: #eaf4ee;
+        padding: 4px;
+    }
+
+    .letras-tab {
+        display: inline-flex;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        padding: 9px 12px;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 900;
+        color: #2f7d63;
+        cursor: pointer;
+        transition: background-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .letras-tab svg {
+        flex: 0 0 auto;
+    }
+
+    .letras-tab:hover {
+        color: #173f35;
+    }
+
+    .letras-tab.is-active {
+        background: #ffffff;
+        color: #173f35;
+        box-shadow: 0 2px 0 #d9e9df;
+    }
+
+    .letras-tab.is-unavailable {
+        opacity: 0.65;
+    }
+
+    .letras-panel {
+        display: grid;
+        justify-items: center;
+        gap: 10px;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .letras-panel[hidden] {
+        display: none;
+    }
+
+    .letras-mic {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-width: 186px;
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #58ab41 0%, #4e9e38 100%);
+        padding: 13px 22px;
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 900;
+        line-height: 1;
+        color: #ffffff;
+        box-shadow: 0 6px 0 #3a7a29;
+        cursor: pointer;
+        transition: transform 0.14s ease, box-shadow 0.14s ease, background-color 0.14s ease;
+    }
+
+    .letras-mic:hover {
+        background: linear-gradient(180deg, #62b94b 0%, #58ab41 100%);
+    }
+
+    .letras-mic:active {
+        transform: translateY(3px);
+        box-shadow: 0 3px 0 #3a7a29;
+    }
+
+    .letras-mic.is-listening {
+        background: linear-gradient(180deg, #f08a6b 0%, #e2645a 100%);
+        box-shadow: 0 6px 0 #b84b42;
+    }
+
+    .letras-mic.is-listening::after {
+        content: '';
+        position: absolute;
+        inset: -7px;
+        border: 3px solid rgba(226, 100, 90, 0.5);
+        border-radius: 999px;
+        animation: letras-pulse 1.2s ease-out infinite;
+        pointer-events: none;
+    }
+
+    .letras-mic[disabled] {
+        opacity: 0.55;
+        cursor: default;
+    }
+
+    .letras-mic__icon {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.22);
+    }
+
+    .letras-estado {
+        max-width: 440px;
+        min-height: 34px;
+        text-align: center;
+        font-size: 11.5px;
+        font-weight: 800;
+        line-height: 1.5;
+        color: #2f7d63;
+    }
+
+    .letras-estado.is-error {
+        color: #a94a4c;
+    }
+
+    .letras-estado.is-ok {
+        color: #2f7d63;
+    }
+
+    .letras-link {
+        border: 0;
+        background: transparent;
+        padding: 4px;
+        font-family: inherit;
+        font-size: 10.5px;
+        font-weight: 900;
+        color: #2f7d63;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        cursor: pointer;
+    }
+
+    .letras-aviso {
+        max-width: 430px;
+        border: 1.5px solid #f4d9a0;
+        border-radius: 18px;
+        background: #fff8e5;
+        padding: 11px 13px;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.5;
+        color: #7c5316;
+    }
+
+    .letras-answer {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .letra-slot {
+        display: grid;
+        place-items: center;
+        width: clamp(42px, 11vw, 54px);
+        height: clamp(42px, 11vw, 54px);
+        border: 2px dashed #cfe3d6;
+        border-radius: 12px;
+        background: #ffffff;
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: clamp(22px, 6vw, 28px);
+        font-weight: 600;
+        color: #173f35;
+        transition: border-color 0.14s ease, background-color 0.14s ease;
+    }
+
+    .letra-slot.is-filled {
+        border-style: solid;
+        border-color: #a9d6b9;
+        background: #f4fbf6;
+    }
+
+    .letra-slot.is-wrong {
+        border-color: #e9787a;
+        background: #ffecec;
+        animation: juego-shake 0.4s ease;
+    }
+
+    .letra-slot.is-correct {
+        border-color: #4e9e38;
+        background: #e2f8e6;
+        color: #22623c;
+    }
+
+    .letras-keys {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+        gap: 6px;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .letras-key {
+        display: grid;
+        place-items: center;
+        min-height: clamp(44px, 11vw, 50px);
+        border: 2px solid #e2efe6;
+        border-radius: 12px;
+        background: #ffffff;
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: clamp(15px, 4vw, 19px);
+        font-weight: 600;
+        color: #173f35;
+        box-shadow: 0 3px 0 #e2efe6;
+        cursor: pointer;
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        user-select: none;
+        transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .letras-key:hover {
+        transform: translateY(-1px);
+        border-color: #a9d6b9;
+    }
+
+    .letras-key:active {
+        transform: translateY(2px);
+        box-shadow: 0 1px 0 #e2efe6;
+    }
+
+    .letras-key.is-wrong {
+        border-color: #e9787a;
+        background: #ffecec;
+        animation: juego-shake 0.4s ease;
+    }
+
+    .letras-key.is-correct {
+        border-color: #4e9e38;
+        background: #e2f8e6;
+    }
+
+    .letras-key[disabled] {
+        opacity: 0.5;
+        cursor: default;
+    }
+
+    .letras-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .letras-action {
+        border: 2px solid #d9e9df;
+        border-radius: 999px;
+        background: #ffffff;
+        padding: 9px 14px;
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 900;
+        color: #2f7d63;
+        cursor: pointer;
+    }
+
+    .letras-action:hover {
+        border-color: #a9d6b9;
+        background: #f4fbf6;
+    }
+
+    .letras-action[disabled] {
+        opacity: 0.45;
+        cursor: default;
+    }
+
+    .letras-check {
+        padding: 10px 18px;
+    }
+
+    .letras-pista {
+        max-width: 430px;
+        text-align: center;
+        font-size: 10.5px;
+        font-weight: 800;
+        line-height: 1.5;
+        color: rgba(23, 63, 53, 0.5);
+    }
+
+    @media (min-width: 640px) {
+        .letras-stage {
+            min-height: 500px;
+        }
+
+        .letras-display {
+            gap: 12px;
+        }
+
+        .letras-tile {
+            width: 176px;
+            height: 176px;
+            font-size: 124px;
+        }
+
+        .letras-tile--small {
+            width: 110px;
+            height: 110px;
+            font-size: 72px;
+        }
+
+        .letras-keys {
+            max-width: 500px;
+        }
+    }
+
+    @media (max-width: 639px) {
+        .letras-stage {
+            min-height: 0;
+        }
+
+        .letras-ejercicio {
+            gap: 8px;
+        }
+
+        .letras-display {
+            gap: 7px;
+        }
+
+        .letras-consigna {
+            font-size: 16px;
+        }
+    }
+
+    @media (max-width: 380px) {
+        .letras-tile {
+            width: 96px;
+            height: 96px;
+            border-radius: 24px;
+            font-size: 62px;
+        }
+
+        .letras-tile--small {
+            width: 58px;
+            height: 58px;
+            font-size: 36px;
+        }
+
+        /* Teclas cómodas para el dedo incluso con 27 letras en pantalla. */
+        .letras-keys {
+            grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+            gap: 6px;
+        }
+
+        .letras-key {
+            min-height: 46px;
+            border-radius: 12px;
+            font-size: 17px;
+        }
+
+        .letras-mic {
+            min-width: 166px;
+        }
+    }
+
+    @keyframes letras-pulse {
+        from {
+            opacity: 0.7;
+            transform: scale(1);
+        }
+
+        to {
+            opacity: 0;
+            transform: scale(1.14);
+        }
+    }
+
+/* ---------------------- Juego: Contando frutas ---------------------- */
+
+    .fruta {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    .frutas-badge {
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #fff3cf;
+        padding: 5px 10px;
+        font-size: 9.5px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #8a6414;
+    }
+
+    .frutas-stage {
+        display: grid;
+        align-content: center;
+        justify-items: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 268px;
+        padding: 14px 2px 4px;
+    }
+
+    /* Mientras la portada está abierta, la actividad espera sin distraer. */
+    .juego-frutas:not(.is-playing) .frutas-stage {
+        opacity: 0.45;
+        pointer-events: none;
+    }
+
+    .frutas-consigna {
+        max-width: 430px;
+        text-align: center;
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: clamp(16px, 4vw, 20px);
+        font-weight: 600;
+        line-height: 1.3;
+        color: #173f35;
+    }
+
+    .frutas-consigna strong {
+        color: #2f7d63;
+        font-weight: 700;
+    }
+
+    .frutas-pista {
+        text-align: center;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.45;
+        color: rgba(23, 63, 53, 0.5);
+    }
+
+    /* Mecánica 1: contar y elegir el número */
+
+    .frutas-grupo {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        max-width: 316px;
+        border-radius: 24px;
+        background: #f4fbf6;
+        padding: 14px 10px;
+        box-shadow: inset 0 0 0 1.5px #e2efe6;
+    }
+
+    .fruta-chip {
+        display: block;
+        flex: 0 0 auto;
+        width: clamp(34px, 10vw, 52px);
+        height: clamp(34px, 10vw, 52px);
+        filter: drop-shadow(0 3px 2px rgba(23, 63, 53, 0.16));
+    }
+
+    .frutas-opciones {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .frutas-numero {
+        display: grid;
+        place-items: center;
+        width: clamp(58px, 16vw, 76px);
+        height: clamp(58px, 16vw, 76px);
+        border: 3px solid #d9e9df;
+        border-radius: 22px;
+        background: #ffffff;
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: clamp(26px, 7vw, 34px);
+        font-weight: 600;
+        line-height: 1;
+        color: #173f35;
+        box-shadow: 0 5px 0 #e2efe6;
+        cursor: pointer;
+        transition: transform 0.14s ease, border-color 0.14s ease, background-color 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .frutas-numero:hover {
+        transform: translateY(-2px);
+        border-color: #86dc72;
+        background: #f7fff3;
+    }
+
+    .frutas-numero:active {
+        transform: translateY(2px);
+        box-shadow: 0 2px 0 #e2efe6;
+    }
+
+    .frutas-numero.is-correct {
+        border-color: #4e9e38;
+        background: #e2f8e6;
+        color: #22623c;
+        animation: juego-pop 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .frutas-numero.is-wrong {
+        border-color: #e9787a;
+        background: #ffecec;
+        animation: juego-shake 0.4s ease;
+    }
+
+    .frutas-numero[disabled] {
+        cursor: default;
+    }
+
+    .frutas-numero[disabled]:hover {
+        transform: none;
+    }
+
+    /* Mecánica 2: llenar la cesta */
+
+    .frutas-cesta-wrap {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        padding-top: 24px;
+    }
+
+    .frutas-cesta {
+        position: relative;
+        display: grid;
+        gap: 10px;
+        width: min(100%, 310px);
+        border: 3px solid #cf9b4f;
+        border-radius: 18px 18px 46px 46px;
+        background: linear-gradient(180deg, #f9e1b6 0%, #eec383 100%);
+        padding: 20px 14px 14px;
+        box-shadow: inset 0 -8px 0 rgba(160, 110, 40, 0.16), 0 16px 22px -18px rgba(160, 110, 40, 0.85);
+        cursor: pointer;
+        transition: box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+
+    .frutas-cesta::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: -22px;
+        width: 62%;
+        height: 34px;
+        transform: translateX(-50%);
+        border: 7px solid #cf9b4f;
+        border-bottom: 0;
+        border-radius: 999px 999px 0 0;
+        pointer-events: none;
+    }
+
+    .frutas-cesta::after {
+        content: '';
+        position: absolute;
+        inset: 6px 6px 10px;
+        border-radius: 14px 14px 40px 40px;
+        background-image: repeating-linear-gradient(90deg, rgba(160, 110, 40, 0.12) 0 2px, transparent 2px 13px);
+        pointer-events: none;
+    }
+
+    .frutas-cesta.is-ready,
+    .frutas-cesta.is-over {
+        border-color: #4e9e38;
+        box-shadow: 0 0 0 5px rgba(134, 220, 114, 0.35), inset 0 -8px 0 rgba(78, 158, 56, 0.16);
+    }
+
+    .frutas-cesta.is-full {
+        border-color: #4e9e38;
+    }
+
+    .frutas-cesta__label {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: center;
+        gap: 4px;
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: #6b4513;
+    }
+
+    .frutas-cesta__count {
+        border-radius: 999px;
+        background: #fffdf7;
+        padding: 1px 8px;
+        font-family: 'Nunito', sans-serif;
+        font-size: 10px;
+        font-weight: 900;
+        color: #22623c;
+    }
+
+    .frutas-cesta__slots {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 46px;
+    }
+
+    .frutas-slot {
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        width: clamp(34px, 9vw, 44px);
+        height: clamp(34px, 9vw, 44px);
+        border: 2px dashed rgba(160, 110, 40, 0.45);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.35);
+        padding: 3px;
+    }
+
+    .frutas-slot.is-filled {
+        border: 0;
+        background: #ffffff;
+        box-shadow: 0 2px 0 rgba(160, 110, 40, 0.25);
+        cursor: pointer;
+    }
+
+    .frutas-slot.is-filled img {
+        animation: juego-pop 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .frutas-pool {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 50px;
+    }
+
+    .frutas-pool__item {
+        width: clamp(44px, 12vw, 58px);
+        height: clamp(44px, 12vw, 58px);
+        border: 2px solid #e2efe6;
+        border-radius: 16px;
+        background: #ffffff;
+        padding: 5px;
+        box-shadow: 0 3px 0 #e2efe6;
+        cursor: grab;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .frutas-pool__item:hover {
+        transform: translateY(-2px);
+        border-color: #a9d6b9;
+    }
+
+    .frutas-pool__item.is-selected {
+        border-color: #f7c45c;
+        box-shadow: 0 0 0 3px rgba(247, 196, 92, 0.5), 0 3px 0 #e0a93b;
+        transform: translateY(-3px);
+    }
+
+    .frutas-pool__item.is-dragging {
+        opacity: 0.3;
+    }
+
+    /* Mecánica 3: unir grupos con números */
+
+    .frutas-match {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 10px 8px;
+        width: 100%;
+        max-width: 520px;
+    }
+
+    .frutas-match__col {
+        display: grid;
+        align-content: start;
+        gap: 8px;
+    }
+
+    .frutas-match__col--nums {
+        justify-items: end;
+    }
+
+    .frutas-match__head {
+        text-align: center;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(23, 63, 53, 0.5);
+    }
+
+    .frutas-match__grupo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        border: 2px solid #e2efe6;
+        border-radius: 18px;
+        background: #ffffff;
+        padding: 7px 8px;
+        font-family: inherit;
+        text-align: left;
+        cursor: grab;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        transition: transform 0.14s ease, border-color 0.14s ease, background-color 0.14s ease;
+    }
+
+    .frutas-match__grupo:hover {
+        border-color: #a9d6b9;
+    }
+
+    .frutas-match__grupo.is-selected {
+        border-color: #f7c45c;
+        background: #fffbef;
+        box-shadow: 0 0 0 3px rgba(247, 196, 92, 0.4);
+    }
+
+    .frutas-match__grupo.is-matched {
+        border-color: #86dc72;
+        background: #f3fcef;
+        cursor: default;
+    }
+
+    .frutas-match__grupo.is-wrong {
+        border-color: #e9787a;
+        animation: juego-shake 0.4s ease;
+    }
+
+    .frutas-match__grupo[disabled] {
+        opacity: 1;
+    }
+
+    .frutas-match__fruits {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px;
+        max-width: 168px;
+    }
+
+    .frutas-match__fruits .fruta-chip {
+        width: clamp(18px, 5vw, 26px);
+        height: clamp(18px, 5vw, 26px);
+        filter: none;
+    }
+
+    .frutas-match__badge {
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        width: 26px;
+        height: 26px;
+        margin-left: auto;
+        border-radius: 999px;
+        background: #eaf4ee;
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: #2f7d63;
+    }
+
+    .frutas-match__grupo.is-matched .frutas-match__badge {
+        background: #4e9e38;
+        color: #ffffff;
+    }
+
+    .frutas-numero--match {
+        width: clamp(48px, 13vw, 64px);
+        height: clamp(48px, 13vw, 64px);
+        border-radius: 18px;
+        font-size: clamp(22px, 6vw, 30px);
+    }
+
+    .frutas-numero.is-matched {
+        border-color: #4e9e38;
+        background: #4e9e38;
+        color: #ffffff;
+        box-shadow: 0 4px 0 #3a7a29;
+    }
+
+    .frutas-numero.is-over {
+        border-color: #4e9e38;
+        background: #e2f8e6;
+    }
+
+    /* Fruta que acompaña al puntero durante el arrastre */
+
+    .frutas-fantasma {
+        position: fixed;
+        z-index: 90;
+        width: 64px;
+        height: 64px;
+        margin: 0;
+        border: 2px solid #ffe9a8;
+        border-radius: 16px;
+        background: #ffffff;
+        padding: 5px;
+        overflow: hidden;
+        opacity: 0.95;
+        pointer-events: none;
+        transform: translate(-50%, -50%) rotate(-4deg) scale(1.05);
+        box-shadow: 0 16px 24px -12px rgba(23, 63, 53, 0.7);
+    }
+
+    @media (min-width: 640px) {
+        .frutas-stage {
+            min-height: 300px;
+            gap: 14px;
+        }
+
+        .frutas-grupo {
+            max-width: 356px;
+            padding: 18px 14px;
+        }
+
+        .fruta-chip {
+            width: 54px;
+            height: 54px;
+        }
+
+        .frutas-cesta {
+            width: 330px;
+        }
+
+        .frutas-match__fruits {
+            max-width: 200px;
+        }
+    }
+
+/* ---------------------- Juego: Colores y formas ---------------------- */
+
+    .formas-badge {
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #f1ebff;
+        padding: 5px 10px;
+        font-size: 9.5px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #6a4bb5;
+    }
+
+    .formas-stage {
+        display: grid;
+        align-content: center;
+        justify-items: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 292px;
+        padding: 14px 2px 4px;
+    }
+
+    /* Mientras la portada está abierta, la actividad espera sin distraer. */
+    .juego-formas:not(.is-playing) .formas-stage {
+        opacity: 0.45;
+        pointer-events: none;
+    }
+
+    .formas-consigna {
+        max-width: 440px;
+        text-align: center;
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: clamp(16px, 4vw, 20px);
+        font-weight: 600;
+        line-height: 1.3;
+        color: #173f35;
+    }
+
+    .formas-consigna strong {
+        color: #2f7d63;
+        font-weight: 700;
+    }
+
+    .formas-pista {
+        max-width: 400px;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.45;
+        color: rgba(23, 63, 53, 0.5);
+    }
+
+    .formas-figura {
+        display: block;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+
+    .formas-figura svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Reconocer un color: muestra grande */
+
+    .formas-color-target {
+        display: grid;
+        place-items: center;
+        width: clamp(138px, 40vw, 188px);
+        aspect-ratio: 1 / 1;
+        border: 3px solid #e2efe6;
+        border-radius: 34px;
+        background: #fffdf7;
+        padding: 10px;
+        box-shadow: 0 14px 24px -20px rgba(23, 63, 53, 0.7), inset 0 0 0 2px #ffffff;
+    }
+
+    .formas-color-target__blob {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 24px;
+        box-shadow: inset 0 -9px 0 rgba(23, 63, 53, 0.13);
+    }
+
+    /* Reconocer una forma: figura grande en un tono neutro para que la
+       silueta sea lo importante, no el color. */
+
+    .formas-target {
+        width: clamp(112px, 32vw, 156px);
+        aspect-ratio: 1 / 1;
+        filter: drop-shadow(0 8px 6px rgba(23, 63, 53, 0.16));
+    }
+
+    /* Opciones (colores, formas y combinaciones) */
+
+    .formas-options {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .formas-option {
+        display: grid;
+        justify-items: center;
+        align-content: start;
+        gap: 6px;
+        width: clamp(82px, 23vw, 112px);
+        border: 3px solid #e2efe6;
+        border-radius: 22px;
+        background: #ffffff;
+        padding: 9px 8px 8px;
+        font-family: inherit;
+        box-shadow: 0 4px 0 #e8f2eb;
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: transform 0.14s ease, border-color 0.14s ease, background-color 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .formas-option:hover {
+        transform: translateY(-2px);
+        border-color: #bfe3c9;
+        background: #f7fff3;
+    }
+
+    .formas-option:active {
+        transform: translateY(2px);
+        box-shadow: 0 2px 0 #e8f2eb;
+    }
+
+    .formas-option .formas-figura {
+        width: clamp(50px, 14vw, 66px);
+        height: clamp(50px, 14vw, 66px);
+    }
+
+    .formas-option__swatch {
+        display: block;
+        width: clamp(50px, 14vw, 66px);
+        aspect-ratio: 1 / 1;
+        border-radius: 16px;
+        box-shadow: inset 0 -6px 0 rgba(23, 63, 53, 0.13);
+    }
+
+    .formas-option__label {
+        overflow-wrap: anywhere;
+        font-size: 10.5px;
+        font-weight: 800;
+        line-height: 1.2;
+        color: #173f35;
+        text-align: center;
+    }
+
+    .formas-option:focus-visible,
+    .formas-pair__item:focus-visible,
+    .formas-pool__item:focus-visible,
+    .formas-bin:focus-visible {
+        outline: 3px solid #f7c45c;
+        outline-offset: 2px;
+    }
+
+    .formas-option.is-correct {
+        border-color: #4e9e38;
+        background: #e2f8e6;
+        box-shadow: 0 4px 0 #b8e3c3;
+        animation: juego-pop 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .formas-option.is-wrong {
+        border-color: #e9787a;
+        background: #ffecec;
+        animation: juego-shake 0.4s ease;
+    }
+
+    .formas-option[disabled] {
+        cursor: default;
+    }
+
+    .formas-option[disabled]:hover {
+        transform: none;
+    }
+
+    /* Parejas: se tocan dos figuras del conjunto */
+
+    .formas-pair {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        width: 100%;
+        max-width: 402px;
+    }
+
+    .formas-pair__item {
+        display: grid;
+        place-items: center;
+        aspect-ratio: 1 / 1;
+        border: 3px solid #e2efe6;
+        border-radius: 20px;
+        background: #ffffff;
+        padding: 10px;
+        box-shadow: 0 4px 0 #e8f2eb;
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: transform 0.14s ease, border-color 0.14s ease, background-color 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .formas-pair__item:hover {
+        transform: translateY(-2px);
+        border-color: #bfe3c9;
+    }
+
+    .formas-pair__item.is-selected {
+        border-color: #f7c45c;
+        background: #fffbef;
+        box-shadow: 0 0 0 3px rgba(247, 196, 92, 0.45), 0 4px 0 #e0a93b;
+        transform: translateY(-2px);
+    }
+
+    .formas-pair__item.is-matched {
+        border-color: #86dc72;
+        background: #f3fcef;
+        cursor: default;
+        animation: juego-pop 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .formas-pair__item.is-wrong {
+        border-color: #e9787a;
+        background: #ffecec;
+        animation: juego-shake 0.4s ease;
+    }
+
+    .formas-pair__item[disabled] {
+        cursor: default;
+    }
+
+    /* Clasificar: cajas por forma y bandeja de figuras */
+
+    .formas-sort {
+        display: grid;
+        gap: 14px;
+        width: 100%;
+    }
+
+    .formas-bins {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: stretch;
+        gap: 8px;
+        width: 100%;
+        max-width: 560px;
+        margin: 0 auto;
+    }
+
+    .formas-bin {
+        min-width: 0;
+        border: 3px dashed #bfe3c9;
+        border-radius: 18px;
+        background: #f4fbf6;
+        padding: 8px 6px;
+        text-align: center;
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .formas-bin:hover,
+    .formas-bin:focus-visible {
+        border-color: #86dc72;
+        background: #f0fbef;
+    }
+
+    .formas-bin.is-over {
+        border-style: solid;
+        border-color: #2f7d63;
+        background: #e2f8e6;
+        transform: translateY(-1px);
+    }
+
+    .formas-bin.is-wrong {
+        border-color: #e9787a;
+        background: #ffecec;
+        animation: juego-shake 0.4s ease;
+    }
+
+    .formas-bin__head {
+        display: grid;
+        justify-items: center;
+        gap: 3px;
+    }
+
+    .formas-bin__icon {
+        width: 30px;
+        height: 30px;
+    }
+
+    .formas-bin__name {
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1.15;
+        color: #2f7d63;
+    }
+
+    .formas-bin__drop {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        justify-content: center;
+        gap: 4px;
+        min-height: 38px;
+        margin-top: 6px;
+    }
+
+    .formas-bin__placed {
+        display: block;
+        width: clamp(26px, 8vw, 36px);
+        height: clamp(26px, 8vw, 36px);
+        animation: juego-pop 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .formas-pool {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 52px;
+    }
+
+    .formas-pool__item {
+        width: clamp(46px, 13vw, 60px);
+        height: clamp(46px, 13vw, 60px);
+        border: 3px solid #e2efe6;
+        border-radius: 16px;
+        background: #ffffff;
+        padding: 4px;
+        box-shadow: 0 3px 0 #e2efe6;
+        cursor: grab;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .formas-pool__item:hover {
+        transform: translateY(-2px);
+        border-color: #a9d6b9;
+    }
+
+    .formas-pool__item.is-selected {
+        border-color: #f7c45c;
+        box-shadow: 0 0 0 3px rgba(247, 196, 92, 0.5), 0 3px 0 #e0a93b;
+        transform: translateY(-3px);
+    }
+
+    .formas-pool__item.is-wrong {
+        border-color: #e9787a;
+        animation: juego-shake 0.4s ease;
+    }
+
+    .formas-pool__item.is-dragging {
+        opacity: 0.3;
+    }
+
+    /* Figura que acompaña al puntero durante el arrastre */
+
+    .formas-ghost {
+        position: fixed;
+        z-index: 90;
+        width: 64px;
+        height: 64px;
+        margin: 0;
+        border: 2px solid #d6c4ff;
+        border-radius: 16px;
+        background: #ffffff;
+        padding: 5px;
+        overflow: hidden;
+        opacity: 0.95;
+        pointer-events: none;
+        transform: translate(-50%, -50%) rotate(-4deg) scale(1.05);
+        box-shadow: 0 16px 24px -12px rgba(23, 63, 53, 0.7);
+    }
+
+    /* Secuencias: la figura que sigue queda como casilla vacía */
+
+    .formas-seq {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        max-width: 520px;
+    }
+
+    .formas-seq__item {
+        display: grid;
+        place-items: center;
+        width: clamp(40px, 12vw, 60px);
+        aspect-ratio: 1 / 1;
+        border: 2px solid #e2efe6;
+        border-radius: 14px;
+        background: #ffffff;
+        padding: 5px;
+    }
+
+    .formas-seq__item--next {
+        border-style: dashed;
+        border-color: #bfe3c9;
+        background: #f4fbf6;
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        font-size: clamp(18px, 5vw, 26px);
+        font-weight: 600;
+        color: #7bbf8f;
+    }
+
+    @media (min-width: 640px) {
+        .formas-stage {
+            min-height: 330px;
+            gap: 14px;
+        }
+
+        .formas-option {
+            width: 118px;
+        }
+
+        .formas-pair {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            max-width: 512px;
+        }
+
+        .formas-bins {
+            gap: 12px;
+        }
+
+        .formas-bin__icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .formas-bin__name {
+            font-size: 11px;
+        }
+    }
+
 @media (prefers-reduced-motion: reduce) {
     .aula-cloud,
     .aula-bird,
     .aula-mascot__fox,
-    .aula-pop {
+    .aula-pop,
+    .juego-pieza-colocada,
+    .juego-victoria.is-visible,
+    .juego-casilla.is-wrong,
+    .juego-pieza.is-wrong {
         animation: none !important;
     }
 
+    .frutas-numero.is-correct,
+    .frutas-numero.is-wrong,
+    .frutas-match__grupo.is-wrong,
+    .frutas-slot.is-filled img,
+    .formas-option.is-correct,
+    .formas-option.is-wrong,
+    .formas-pair__item.is-matched,
+    .formas-pair__item.is-wrong,
+    .formas-bin.is-wrong,
+    .formas-bin__placed,
+    .formas-pool__item.is-wrong,
+    .letras-tile.is-correct,
+    .letra-slot.is-wrong,
+    .letras-key.is-wrong {
+        animation: none !important;
+    }
+
+    .letras-mic.is-listening::after {
+        animation: none;
+    }
+
     .course-card,
-    .aula-round-btn {
+    .aula-round-btn,
+    .juego-pieza,
+    .juego-progreso__fill,
+    .frutas-numero,
+    .frutas-cesta,
+    .frutas-pool__item,
+    .frutas-match__grupo,
+    .formas-option,
+    .formas-pair__item,
+    .formas-bin,
+    .formas-pool__item,
+    .letras-tile,
+    .letra-slot,
+    .letras-key,
+    .letras-mic,
+    .letras-tab {
         transition: none;
     }
 }
@@ -1887,3 +4350,658 @@
     --tone-deep: #cf9a1c;
     color: #523c06;
 }
+
+/* -------------------------------------------------------------------------
+   Juego: Memoria de animales
+   -------------------------------------------------------------------------
+   Fotografías reales en tarjetas grandes, botón de audio generoso y una
+   cuadrícula de memoria que se adapta de 2 columnas en el celular a 4 en
+   escritorio. La interfaz es infantil; los animales nunca se caricaturizan.
+   ------------------------------------------------------------------------- */
+
+.juego-panel--animales {
+    scroll-margin-top: 88px;
+}
+
+.juego-panel--animales .juego-panel__head {
+    gap: 10px;
+}
+
+.animales-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.animales-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: #e2f8d9;
+    padding: 5px 10px;
+    font-size: 9.5px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    color: #22623c;
+    white-space: nowrap;
+}
+
+.animales-pares {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: #fff3cf;
+    padding: 5px 10px;
+    font-size: 9.5px;
+    font-weight: 900;
+    color: #7c5316;
+    white-space: nowrap;
+}
+
+.animales-stage {
+    display: grid;
+    align-content: start;
+    min-height: 330px;
+}
+
+.animales-consigna {
+    max-width: 540px;
+    margin: 2px auto 10px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.45;
+    color: #3c5349;
+}
+
+/* ------------------------------- Audio ------------------------------- */
+
+.animales-sonido {
+    display: grid;
+    justify-items: center;
+}
+
+.animales-play {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: min(260px, 86vw);
+    min-height: 68px;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(150deg, #86dc72, #4e9e38);
+    padding: 12px 26px;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #3a7a29, 0 18px 26px -18px rgba(23, 63, 53, 0.8);
+    transition: transform 0.14s ease, box-shadow 0.14s ease, background-color 0.14s ease;
+}
+
+.animales-play:hover {
+    background: linear-gradient(150deg, #93e57f, #58ab41);
+}
+
+.animales-play:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #3a7a29, 0 10px 18px -16px rgba(23, 63, 53, 0.8);
+}
+
+.animales-play:focus-visible {
+    outline: 4px solid #f7c45c;
+    outline-offset: 3px;
+}
+
+.animales-play__icono {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.animales-play__icono svg {
+    width: 23px;
+    height: 23px;
+}
+
+.animales-play__texto {
+    position: relative;
+    z-index: 1;
+}
+
+.animales-play__ondas {
+    display: none;
+    align-items: center;
+    gap: 3px;
+    height: 20px;
+}
+
+.animales-play.is-playing .animales-play__ondas {
+    display: inline-flex;
+}
+
+.animales-play__ondas i {
+    display: block;
+    width: 3px;
+    height: 8px;
+    border-radius: 999px;
+    background: #ffffff;
+    animation: animales-onda 0.9s ease-in-out infinite;
+}
+
+.animales-play__ondas i:nth-child(2) {
+    animation-delay: 0.12s;
+}
+
+.animales-play__ondas i:nth-child(3) {
+    animation-delay: 0.24s;
+}
+
+.animales-play__ondas i:nth-child(4) {
+    animation-delay: 0.36s;
+}
+
+@keyframes animales-onda {
+    0%,
+    100% {
+        height: 7px;
+        opacity: 0.7;
+    }
+
+    50% {
+        height: 18px;
+        opacity: 1;
+    }
+}
+
+.animales-audio-alert {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    max-width: 500px;
+    margin-top: 12px;
+    border-radius: 16px;
+    border: 1.5px solid #f3b9b9;
+    background: #fff0f0;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.4;
+    color: #a83b45;
+    text-align: center;
+}
+
+.animales-audio-alert[hidden] {
+    display: none;
+}
+
+.animales-audio-alert__btn {
+    border: 0;
+    border-radius: 999px;
+    background: #a83b45;
+    padding: 7px 12px;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 10.5px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+/* ----------------------------- Opciones ----------------------------- */
+
+.animales-opciones {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+    max-width: 620px;
+    margin: 14px auto 0;
+}
+
+.animales-opcion {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    border: 0;
+    border-radius: 20px;
+    background: #ffffff;
+    padding: 0;
+    overflow: hidden;
+    font-family: inherit;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #d9e9df, 0 14px 22px -18px rgba(23, 63, 53, 0.7);
+    transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.animales-opcion:hover:not(:disabled),
+.animales-opcion:focus-visible {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 0 #bfe3c9, 0 18px 24px -16px rgba(23, 63, 53, 0.75);
+}
+
+.animales-opcion:focus-visible {
+    outline: 4px solid #f7c45c;
+    outline-offset: 2px;
+}
+
+.animales-opcion:disabled {
+    cursor: default;
+}
+
+.animales-opcion__foto {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #eaf4ee;
+}
+
+.animales-opcion__foto img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.25s ease;
+}
+
+.animales-opcion:hover:not(:disabled) .animales-opcion__foto img {
+    transform: scale(1.035);
+}
+
+.animales-opcion__nombre {
+    display: block;
+    padding: 7px 6px 8px;
+    font-size: 12px;
+    font-weight: 900;
+    color: #173f35;
+}
+
+.animales-opcion__marca {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: none;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    border: 2.5px solid #ffffff;
+    background: #4e9e38;
+    color: #ffffff;
+    box-shadow: 0 4px 10px -4px rgba(23, 63, 53, 0.7);
+}
+
+.animales-opcion__marca svg {
+    width: 17px;
+    height: 17px;
+}
+
+.animales-opcion.is-correct {
+    box-shadow: 0 0 0 4px #86dc72, 0 14px 22px -18px rgba(23, 63, 53, 0.7);
+    animation: juego-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animales-opcion.is-correct .animales-opcion__marca {
+    display: grid;
+}
+
+.animales-opcion.is-wrong {
+    box-shadow: 0 0 0 4px #f3b9b9, 0 14px 22px -18px rgba(23, 63, 53, 0.7);
+    animation: juego-shake 0.4s ease;
+}
+
+/* ----------------------------- Memoria ----------------------------- */
+
+.animales-memoria-wrap {
+    width: 100%;
+    max-width: 620px;
+    margin: 0 auto;
+}
+
+.animales-memoria-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 10px;
+    margin-bottom: 4px;
+}
+
+.animales-memoria-head .animales-consigna {
+    flex: 1 1 240px;
+    margin-bottom: 0;
+    text-align: left;
+}
+
+.animales-memoria {
+    display: grid;
+    grid-template-columns: repeat(var(--animales-cols, 4), minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.animales-carta {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border: 0;
+    border-radius: 18px;
+    padding: 0;
+    background: transparent;
+    perspective: 900px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.animales-carta:focus-visible {
+    outline: 4px solid #f7c45c;
+    outline-offset: 2px;
+}
+
+.animales-carta__inner {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animales-carta.is-open .animales-carta__inner,
+.animales-carta.is-matched .animales-carta__inner {
+    transform: rotateY(180deg);
+}
+
+.animales-carta__reverso,
+.animales-carta__frente {
+    position: absolute;
+    inset: 0;
+    display: block;
+    overflow: hidden;
+    border-radius: 18px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.animales-carta__reverso {
+    display: grid;
+    place-items: center;
+    border: 2px solid #ffffff;
+    background: #eaf4ee;
+    box-shadow: 0 4px 0 #cfe5d7, 0 12px 18px -16px rgba(23, 63, 53, 0.7);
+}
+
+.animales-carta__reverso svg {
+    width: 72%;
+    height: 72%;
+}
+
+.animales-carta__frente {
+    transform: rotateY(180deg);
+    background: #eaf4ee;
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 0 #cfe5d7, 0 12px 18px -16px rgba(23, 63, 53, 0.7);
+}
+
+.animales-carta__frente img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.animales-carta.is-matched {
+    cursor: default;
+}
+
+.animales-carta.is-matched .animales-carta__frente {
+    box-shadow: 0 0 0 4px #86dc72, 0 12px 18px -16px rgba(23, 63, 53, 0.7);
+}
+
+.animales-carta.is-wrong .animales-carta__inner {
+    animation: juego-shake 0.4s ease;
+}
+
+.animales-carta:disabled {
+    opacity: 1;
+}
+
+.animales-carta__check {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 3;
+    display: none;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 2.5px solid #ffffff;
+    background: #4e9e38;
+    color: #ffffff;
+    box-shadow: 0 4px 10px -4px rgba(23, 63, 53, 0.7);
+}
+
+.animales-carta__check svg {
+    width: 16px;
+    height: 16px;
+}
+
+.animales-carta.is-matched .animales-carta__check {
+    display: grid;
+}
+
+/* ---------------------- Portada y celebración ---------------------- */
+
+.animales-portada__icono {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+}
+
+.animales-portada__icono svg {
+    width: 100%;
+    height: 100%;
+}
+
+.animales-victoria__fotos {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.animales-victoria__fotos img {
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+    border: 2.5px solid #ffffff;
+    object-fit: cover;
+    box-shadow: 0 10px 18px -14px rgba(23, 63, 53, 0.7);
+}
+
+/* ----------------------------- Créditos ----------------------------- */
+
+.animales-creditos {
+    max-height: min(84vh, 720px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.animales-creditos__eyebrow {
+    font-size: 9.5px;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #2f7d63;
+}
+
+.animales-creditos__list {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.animales-creditos__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border-radius: 16px;
+    border: 1.5px solid #edf4ef;
+    background: #ffffff;
+    padding: 8px;
+}
+
+.animales-creditos__foto {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 auto;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.animales-creditos__nombre {
+    font-family: 'Fredoka', 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #173f35;
+}
+
+.animales-creditos__linea {
+    margin-top: 1px;
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 1.45;
+    color: rgba(23, 63, 53, 0.6);
+}
+
+.animales-creditos__tipo {
+    display: inline-block;
+    margin-right: 2px;
+    border-radius: 999px;
+    background: #eaf4ee;
+    padding: 1px 5px;
+    font-size: 8.5px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #2f7d63;
+}
+
+.animales-creditos__link {
+    color: #2f7d63;
+    font-weight: 900;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.animales-creditos__nota {
+    margin-top: 12px;
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 1.5;
+    color: rgba(23, 63, 53, 0.5);
+}
+
+/* Tarjeta del juego con fotografía real */
+
+.game-card__art--photo {
+    overflow: hidden;
+    border: 2.5px solid #ffffff;
+    background: #fff;
+    box-shadow: 0 8px 16px -12px rgba(23, 63, 53, 0.7);
+}
+
+.game-card__art--photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@media (min-width: 640px) {
+    .animales-stage {
+        min-height: 380px;
+    }
+
+    .animales-opciones--3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .animales-opciones--4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .animales-opcion__nombre {
+        font-size: 13px;
+    }
+
+    .animales-consigna {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 639px) {
+    .animales-badges {
+        max-width: 46%;
+    }
+
+    .animales-badge,
+    .animales-pares {
+        padding: 4px 8px;
+        font-size: 8.5px;
+    }
+
+    .animales-play {
+        min-height: 62px;
+        font-size: 14px;
+    }
+
+    .animales-memoria {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .animales-memoria-head .animales-consigna {
+        text-align: center;
+    }
+
+    .animales-victoria__fotos img {
+        width: 56px;
+        height: 56px;
+    }
+
+    .animales-creditos {
+        max-height: 88vh;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animales-carta__inner {
+        transition-duration: 0.01ms;
+    }
+
+    .animales-play__ondas i {
+        animation: none;
+    }
+
+    .animales-opcion.is-correct,
+    .animales-opcion.is-wrong,
+    .animales-carta.is-wrong .animales-carta__inner {
+        animation: none;
+    }
+}
+

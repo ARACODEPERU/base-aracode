@@ -6,11 +6,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\Academic\Entities\AcaSchoolEnrollment;
 use Modules\Academic\Entities\AcaSchoolLevel;
 use Modules\Academic\Entities\AcaSchoolStudent;
 use Modules\Academic\Entities\AcaVirtualActivity;
 use Modules\Academic\Entities\AcaVirtualCourse;
+use Modules\Academic\Entities\AcaVirtualResource;
 use Modules\Academic\Entities\AcaVirtualSubmission;
 use Modules\Academic\Services\SchoolContextService;
 use Modules\Academic\Services\StudentPortalAuth;
@@ -138,6 +140,7 @@ class ColegioInicialController extends ColegioPublicController
         $model->load([
             'units' => fn ($query) => $query->where('status', true)->orderBy('sort_order')->orderBy('id'),
             'units.lessons' => fn ($query) => $query->where('status', true)->orderBy('sort_order')->orderBy('id'),
+            'units.lessons.resources' => fn ($query) => $query->where('status', true)->orderBy('sort_order')->orderBy('id'),
             'units.resources' => fn ($query) => $query->where('status', true)->orderBy('sort_order')->orderBy('id'),
             'units.activities' => fn ($query) => $query->where('status', true)->orderBy('sort_order')->orderBy('id'),
             'resources' => fn ($query) => $query->whereNull('unit_id')->where('status', true)->orderBy('sort_order'),
@@ -146,13 +149,79 @@ class ColegioInicialController extends ColegioPublicController
         return view('colegio.inicial.curso', [
             'portal' => $portal,
             'course' => $model,
+            // Lista unica del curso: alimenta el modal de materiales de apoyo.
+            'materials' => $this->courseMaterials($model),
             'messages' => $this->bubbleMessages($portal),
             'dockActive' => 'cursos',
         ]);
     }
 
     /**
-     * Zona de juegos (vista previa: los juegos se desarrollaran despues).
+     * Muestra un material dentro del aula (imagen o PDF en el visor del modal).
+     */
+    public function viewMaterial(int $resource)
+    {
+        return $this->sendMaterial($resource, false);
+    }
+
+    /**
+     * Descarga un material con un nombre legible para el alumno.
+     */
+    public function downloadMaterial(int $resource)
+    {
+        return $this->sendMaterial($resource, true);
+    }
+
+    /**
+     * Entrega el archivo de un material solo si pertenece a un curso del alumno.
+     */
+    private function sendMaterial(int $resourceId, bool $download)
+    {
+        [$portal, $redirect] = $this->guard();
+
+        if (! $portal) {
+            return $redirect;
+        }
+
+        $resource = AcaVirtualResource::query()
+            ->whereIn('course_id', $portal['courses']->pluck('id'))
+            ->where('status', true)
+            ->whereIn('visibility', ['all', 'students'])
+            ->find($resourceId);
+
+        $disk = Storage::disk('public');
+
+        abort_if(! $resource || ! $resource->path || ! $disk->exists($resource->path), 404);
+
+        $path = $disk->path($resource->path);
+        $extension = mb_strtolower(pathinfo($resource->path, PATHINFO_EXTENSION));
+        $name = Str::slug($resource->title ?: 'material') . ($extension ? '.' . $extension : '');
+
+        // Solo se sirven dentro del visor los formatos que el navegador puede
+        // mostrar; el resto se descarga para evitar contenido activo inline.
+        $inlineMimes = [
+            'png' => 'image/png',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            'gif' => 'image/gif',
+            'pdf' => 'application/pdf',
+            'mp4' => 'video/mp4',
+        ];
+
+        if ($download || ! isset($inlineMimes[$extension])) {
+            return response()->download($path, $name, ['X-Content-Type-Options' => 'nosniff']);
+        }
+
+        return response()->file($path, [
+            'Content-Type' => $inlineMimes[$extension],
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    /**
+     * Zona de juegos. Cinco tarjetas abren su juego real y el resto sigue
+     * marcado como proximamente.
      */
     public function games()
     {
@@ -167,6 +236,116 @@ class ColegioInicialController extends ColegioPublicController
             'messages' => $this->bubbleMessages($portal),
             'dockActive' => 'juegos',
         ]);
+    }
+
+    /**
+     * Juego de rompecabezas. La partida corre en el navegador; el portal solo
+     * comprueba, igual que el resto del aula, que el alumno tenga matricula.
+     */
+    public function puzzle()
+    {
+        [$portal, $redirect] = $this->guard();
+
+        if (! $portal) {
+            return $redirect;
+        }
+
+        return view('colegio.juegos.rompecabezas', [
+            'portal' => $portal,
+            'dockActive' => 'juegos',
+        ]);
+    }
+
+    /**
+     * Juego «Contando frutas»: diez niveles para contar del 1 al 10. La
+     * partida se resuelve en el navegador y no necesita datos adicionales.
+     */
+    public function fruits()
+    {
+        [$portal, $redirect] = $this->guard();
+
+        if (! $portal) {
+            return $redirect;
+        }
+
+        return view('colegio.juegos.contando-frutas', [
+            'portal' => $portal,
+            'dockActive' => 'juegos',
+        ]);
+    }
+
+    /**
+     * Juego «Reconoce la letra»: diez niveles para reconocer el abecedario
+     * español con la voz o el teclado. La partida se resuelve en el navegador.
+     */
+    public function letters()
+    {
+        [$portal, $redirect] = $this->guard();
+
+        if (! $portal) {
+            return $redirect;
+        }
+
+        return view('colegio.juegos.reconoce-letra', [
+            'portal' => $portal,
+            'dockActive' => 'juegos',
+        ]);
+    }
+
+    /**
+     * Juego «Colores y formas»: diez niveles para reconocer colores, figuras,
+     * parejas, clasificación y secuencias. La partida se resuelve en el navegador.
+     */
+    public function colors()
+    {
+        [$portal, $redirect] = $this->guard();
+
+        if (! $portal) {
+            return $redirect;
+        }
+
+        return view('colegio.juegos.colores-formas', [
+            'portal' => $portal,
+            'dockActive' => 'juegos',
+        ]);
+    }
+
+    /**
+     * Juego «Memoria de animales»: diez niveles con sonidos y fotografías
+     * reales de animales, y una mecánica de parejas. La configuración de los
+     * animales y sus créditos vive en config/colegio_animales.php.
+     */
+    public function memory()
+    {
+        [$portal, $redirect] = $this->guard();
+
+        if (! $portal) {
+            return $redirect;
+        }
+
+        return view('colegio.juegos.memoria-animales', [
+            'portal' => $portal,
+            'dockActive' => 'juegos',
+            'animals' => $this->animalGameAnimals(),
+        ]);
+    }
+
+    /**
+     * Animales del juego con las URLs reales de sus fotos y sonidos.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function animalGameAnimals(): array
+    {
+        return collect(config('colegio_animales.animals', []))
+            ->map(function (array $animal): array {
+                $animal['photo_url'] = asset($animal['photo']);
+                $animal['audio_url'] = asset($animal['audio']);
+
+                return $animal;
+            })
+            ->values()
+            ->all();
     }
 
     /**
@@ -343,6 +522,93 @@ class ColegioInicialController extends ColegioPublicController
         $tones = ['green', 'blue', 'lilac', 'yellow'];
 
         return ['key' => 'star', 'tone' => $tones[$index % count($tones)]];
+    }
+
+    /**
+     * Materiales visibles en el modal: los del curso, los de sus unidades y
+     * los de cada sesion, sin repetir el mismo recurso.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function courseMaterials(AcaVirtualCourse $course): array
+    {
+        $seen = [];
+        $materials = [];
+
+        $push = function (AcaVirtualResource $resource, string $origin) use (&$seen, &$materials) {
+            if (isset($seen[$resource->id])) {
+                return;
+            }
+
+            $seen[$resource->id] = true;
+            $materials[] = $this->materialPayload($resource, $origin);
+        };
+
+        foreach ($course->resources as $resource) {
+            $push($resource, 'Material del curso');
+        }
+
+        foreach ($course->units as $unit) {
+            foreach ($unit->resources as $resource) {
+                $push($resource, 'Unidad · ' . $unit->title);
+            }
+
+            foreach ($unit->lessons as $lesson) {
+                foreach ($lesson->resources as $resource) {
+                    $push($resource, 'Sesión · ' . $lesson->title);
+                }
+            }
+        }
+
+        return $materials;
+    }
+
+    /**
+     * Datos que usa el modal para previsualizar y descargar un material.
+     *
+     * @return array<string, mixed>
+     */
+    private function materialPayload(AcaVirtualResource $resource, string $origin): array
+    {
+        $mime = (string) $resource->mime_type;
+        $extension = $resource->path ? mb_strtolower(pathinfo($resource->path, PATHINFO_EXTENSION)) : '';
+        $hasFile = (bool) $resource->path;
+
+        if (str_starts_with($mime, 'image/') || in_array($extension, ['png', 'jpg', 'jpeg', 'webp', 'gif'], true)) {
+            $kind = $hasFile ? 'image' : 'link';
+        } elseif ($mime === 'application/pdf' || $extension === 'pdf') {
+            $kind = $hasFile ? 'pdf' : 'link';
+        } elseif (! $hasFile && $resource->type === 'embed') {
+            $kind = 'embed';
+        } elseif ($hasFile) {
+            $kind = 'file';
+        } else {
+            $kind = 'link';
+        }
+
+        return [
+            'id' => (int) $resource->id,
+            'title' => $resource->title ?: 'Material',
+            'kind' => $kind,
+            'origin' => $origin,
+            'size' => $resource->size_kb ? $this->formatSize((int) $resource->size_kb) : null,
+            'preview_url' => $hasFile ? route('colegio.inicial.material.view', $resource->id) : null,
+            'download_url' => $hasFile ? route('colegio.inicial.material.download', $resource->id) : null,
+            'external_url' => $resource->url ?: null,
+            'embed_html' => $resource->type === 'embed' ? $resource->content : null,
+        ];
+    }
+
+    /**
+     * Tamano en KB o MB con formato legible para el alumno.
+     */
+    private function formatSize(int $sizeKb): string
+    {
+        if ($sizeKb >= 1024) {
+            return number_format($sizeKb / 1024, 1, ',', '.') . ' MB';
+        }
+
+        return $sizeKb . ' KB';
     }
 
     /**

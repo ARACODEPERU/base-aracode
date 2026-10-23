@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Memoria de animales · Juegos del aula · Colegio de prueba</title>
+    <meta name="description" content="Juego con fotografías y sonidos reales de animales: reconoce quién hace cada sonido y encuentra las parejas de memoria, en diez niveles para el aula de Inicial.">
+    <meta name="theme-color" content="#173F35">
+    <link rel="canonical" href="http://127.0.0.1:8099">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Memoria de animales · Juegos del aula · Colegio de prueba">
+    <meta property="og:description" content="Juego con fotografías y sonidos reales de animales: reconoce quién hace cada sonido y encuentra las parejas de memoria, en diez niveles para el aula de Inicial.">
+    <meta property="og:url" content="http://127.0.0.1:8099">
+
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    
+    <link rel="stylesheet" href="http://127.0.0.1:8099/themes/colegio/css/colegio.css">
+
+    </head>
+<body class="font-body">
+        <div class="aula juego-animales" data-juego="memoria-animales">
+        <div class="aula-scene" aria-hidden="true">
+    <div class="aula-sun"></div>
+
+    <div class="aula-cloud aula-cloud--a"></div>
+    <div class="aula-cloud aula-cloud--b"></div>
+    <div class="aula-cloud aula-cloud--c"></div>
+
+    <svg class="aula-bird aula-bird--a" width="46" height="18" viewBox="0 0 46 18" fill="none" aria-hidden="true">
+        <path d="M2 12c6-8 12-8 18 0M24 12c6-8 12-8 18 0" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+    </svg>
+    <svg class="aula-bird aula-bird--b" width="34" height="14" viewBox="0 0 46 18" fill="none" aria-hidden="true">
+        <path d="M2 12c6-8 12-8 18 0M24 12c6-8 12-8 18 0" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+    </svg>
+
+    <svg class="aula-ground" viewBox="0 0 1440 300" preserveAspectRatio="xMidYMax slice" fill="none" xmlns="http://www.w3.org/2000/svg">
+        
+        <path d="M0 148C170 96 330 158 520 132 700 106 860 168 1040 134 1210 102 1330 152 1440 120V300H0Z" fill="#CBEFBB"/>
+        <path d="M0 196C200 152 380 212 560 184 760 152 940 214 1120 182 1280 154 1360 190 1440 172V300H0Z" fill="#ADE49C"/>
+
+        
+        <g>
+            <rect x="148" y="182" width="14" height="48" rx="6" fill="#8C6239"/>
+            <circle cx="155" cy="176" r="30" fill="#7CCB6F"/>
+            <circle cx="130" cy="188" r="22" fill="#6FBF63"/>
+            <circle cx="180" cy="188" r="22" fill="#6FBF63"/>
+        </g>
+
+        
+        <g>
+            <path d="M1180 196 1252 152l72 44z" fill="#C9695A"/>
+            <rect x="1190" y="196" width="124" height="64" rx="6" fill="#F0A08C"/>
+            <rect x="1210" y="214" width="34" height="46" rx="4" fill="#FFF3DA"/>
+            <path d="M1210 214l34 46M1244 214l-34 46" stroke="#E4B79B" stroke-width="2.4"/>
+            <rect x="1254" y="212" width="18" height="18" rx="3" fill="#FFF3DA"/>
+            <path d="M1188 252h128" stroke="#FFF3DA" stroke-width="4"/>
+        </g>
+
+        
+        <g stroke="#FFF0D2" stroke-width="7" stroke-linecap="round">
+            <path d="M352 236v34M392 232v38M432 230v40M472 232v38M512 236v34"/>
+            <path d="M344 246h178M344 258h178"/>
+        </g>
+
+        
+        <path d="M0 250C230 218 470 270 720 244 970 218 1210 272 1440 236V300H0Z" fill="#8FD881"/>
+
+        
+        <path d="M598 300c64-34 106-60 156-88l22-16 44-10c-42 34-74 58-96 84-16 18-26 26-34 30z" fill="#F4DDAF"/>
+        <path d="M634 300c58-30 96-52 140-76" stroke="#E7C88E" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 14"/>
+
+        
+        <g fill="#6FC46A">
+            <circle cx="286" cy="286" r="26"/>
+            <circle cx="316" cy="292" r="20"/>
+            <circle cx="1110" cy="290" r="24"/>
+            <circle cx="1082" cy="296" r="18"/>
+        </g>
+
+        
+        <g>
+            <circle cx="380" cy="288" r="4" fill="#FFF8D8"/>
+            <circle cx="392" cy="284" r="3.4" fill="#FFD3DF"/>
+            <circle cx="860" cy="282" r="4" fill="#FFF8D8"/>
+            <circle cx="884" cy="290" r="3.4" fill="#FFD3DF"/>
+            <circle cx="170" cy="286" r="3.6" fill="#FFF8D8"/>
+        </g>
+    </svg>
+</div>
+        <header class="aula-topbar">
+    <a href="http://127.0.0.1:8099/colegio/inicial/aula" class="aula-brand" aria-label="Ir al inicio del aula">
+        <span class="aula-brand__logo">
+                            <span class="font-display text-xl font-semibold leading-none">C</span>
+                    </span>
+        <span class="hidden sm:block">
+            <span class="aula-brand__eyebrow">Aula Virtual</span>
+            <span class="aula-brand__name">Colegio de prueba</span>
+        </span>
+    </a>
+
+    <div class="aula-chips">
+        <span class="aula-chip aula-chip--mint">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v3M12 18v3M4.2 7.2l2.1 2.1M17.7 14.7l2.1 2.1M3 12h3M18 12h3M4.2 16.8l2.1-2.1M17.7 9.3l2.1-2.1"/>
+                <circle cx="12" cy="12" r="3.2"/>
+            </svg>
+            Inicial · 3 a 5 años
+        </span>
+        <span class="aula-chip aula-chip--sun">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2.6l2.7 5.9 6.4.7-4.8 4.3 1.3 6.3-5.6-3.2-5.6 3.2 1.3-6.3L3 8.5l6.4-.7z"/>
+            </svg>
+            Nivel 2
+        </span>
+    </div>
+
+    <div class="aula-topbar__actions">
+        <button type="button" id="btnEscuchar" class="aula-icon-btn"
+                data-listen-target="[data-listen]"
+                aria-label="Escuchar esta pantalla" title="Escuchar esta pantalla">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5 6.5 9H3v6h3.5L11 19z"/>
+                <path stroke-linecap="round" d="M15 9.2a4 4 0 010 5.6M17.8 6.4a8 8 0 010 11.2"/>
+            </svg>
+        </button>
+
+        <button type="button" class="aula-user" data-profile-open aria-haspopup="dialog"
+                aria-label="Abrir mi perfil y cambiar mi contraseña">
+            <span class="aula-avatar">
+                                    <svg viewBox="0 0 150 152" class="h-8 w-8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <path d="M110 104c22 22 48 8 40-20-14 14-28 14-40 8z" fill="#F08A3C"/>
+    <path d="M146 86c4 6 3 13-3 18 2-6 2-12 3-18z" fill="#FFF4E6"/>
+
+    <path d="M38 68C28 44 26 26 34 18c10 4 20 18 24 34z" fill="#F49B4A"/>
+    <path d="M43 61c-6-15-7-26-3-32 6 4 12 14 15 24z" fill="#6A4227"/>
+    <path d="M112 68c10-24 12-42 4-50-10 4-20 18-24 34z" fill="#F49B4A"/>
+    <path d="M107 61c6-15 7-26 3-32-6 4-12 14-15 24z" fill="#6A4227"/>
+
+    <ellipse cx="75" cy="118" rx="34" ry="24" fill="#F08A3C"/>
+    <ellipse cx="75" cy="82" rx="47" ry="41" fill="#F49B4A"/>
+
+    <path d="M28 80c6-18 24-22 47-6 23-16 41-12 47 6-6 22-24 34-47 34S34 102 28 80z" fill="#FFF6EA"/>
+
+    <ellipse cx="75" cy="92" rx="7" ry="5.5" fill="#4A3226"/>
+    <path d="M75 97v4M75 101c-4 4-9 4-11 0M75 101c4 4 9 4 11 0" stroke="#4A3226" stroke-width="2.8" stroke-linecap="round"/>
+
+    <path d="M52 78c4-5 10-5 14 0M84 78c4-5 10-5 14 0" stroke="#4A3226" stroke-width="3.6" stroke-linecap="round"/>
+
+    <ellipse cx="42" cy="94" rx="8" ry="5" fill="#F79AA2" opacity=".6"/>
+    <ellipse cx="108" cy="94" rx="8" ry="5" fill="#F79AA2" opacity=".6"/>
+
+    <ellipse cx="28" cy="116" rx="12" ry="9" transform="rotate(-20 28 116)" fill="#F49B4A"/>
+    <ellipse cx="122" cy="116" rx="12" ry="9" transform="rotate(20 122 116)" fill="#F49B4A"/>
+
+    <ellipse cx="56" cy="140" rx="13" ry="8" fill="#E97F33"/>
+    <ellipse cx="94" cy="140" rx="13" ry="8" fill="#E97F33"/>
+</svg>
+                            </span>
+            <span class="hidden md:block">
+                <span class="aula-user__name">Ana</span>
+                <span class="aula-user__meta">Inicial · 4 años A</span>
+            </span>
+        </button>
+
+        <button type="button" class="aula-icon-btn" data-profile-open aria-haspopup="dialog"
+                aria-label="Mi perfil" title="Mi perfil">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="8.5" cy="12" r="3.2"/>
+                <path stroke-linecap="round" d="M11.7 12h8.3M17 12v3M19.5 12v2.2"/>
+            </svg>
+        </button>
+
+        <form method="POST" action="http://127.0.0.1:8099/colegio/inicial/salir">
+            <input type="hidden" name="_token" value="6HiLMMd7x7Q4XNF5vLAhq8r4nCsdh5rd3jw8TDjL" autocomplete="off">            <button type="submit" class="aula-icon-btn" aria-label="Cerrar sesión" title="Cerrar sesión">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 8l4 4-4 4M14 12H3"/>
+                </svg>
+            </button>
+        </form>
+    </div>
+</header>
+
+<dialog id="perfilDialog" class="aula-dialog" aria-labelledby="perfilTitle"
+        >
+    <div class="aula-dialog__card">
+        <div class="flex items-start justify-between gap-4">
+            <h2 id="perfilTitle" class="font-display text-xl text-cole-forest">Mi perfil</h2>
+            <button type="button" class="aula-icon-btn" data-profile-close aria-label="Cerrar mi perfil">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                    <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="mt-3 flex items-center gap-3 rounded-2xl border border-cole-sand bg-white p-3">
+            <span class="aula-avatar">
+                                    <svg viewBox="0 0 150 152" class="h-8 w-8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <path d="M110 104c22 22 48 8 40-20-14 14-28 14-40 8z" fill="#F08A3C"/>
+    <path d="M146 86c4 6 3 13-3 18 2-6 2-12 3-18z" fill="#FFF4E6"/>
+
+    <path d="M38 68C28 44 26 26 34 18c10 4 20 18 24 34z" fill="#F49B4A"/>
+    <path d="M43 61c-6-15-7-26-3-32 6 4 12 14 15 24z" fill="#6A4227"/>
+    <path d="M112 68c10-24 12-42 4-50-10 4-20 18-24 34z" fill="#F49B4A"/>
+    <path d="M107 61c6-15 7-26 3-32-6 4-12 14-15 24z" fill="#6A4227"/>
+
+    <ellipse cx="75" cy="118" rx="34" ry="24" fill="#F08A3C"/>
+    <ellipse cx="75" cy="82" rx="47" ry="41" fill="#F49B4A"/>
+
+    <path d="M28 80c6-18 24-22 47-6 23-16 41-12 47 6-6 22-24 34-47 34S34 102 28 80z" fill="#FFF6EA"/>
+
+    <ellipse cx="75" cy="92" rx="7" ry="5.5" fill="#4A3226"/>
+    <path d="M75 97v4M75 101c-4 4-9 4-11 0M75 101c4 4 9 4 11 0" stroke="#4A3226" stroke-width="2.8" stroke-linecap="round"/>
+
+    <path d="M52 78c4-5 10-5 14 0M84 78c4-5 10-5 14 0" stroke="#4A3226" stroke-width="3.6" stroke-linecap="round"/>
+
+    <ellipse cx="42" cy="94" rx="8" ry="5" fill="#F79AA2" opacity=".6"/>
+    <ellipse cx="108" cy="94" rx="8" ry="5" fill="#F79AA2" opacity=".6"/>
+
+    <ellipse cx="28" cy="116" rx="12" ry="9" transform="rotate(-20 28 116)" fill="#F49B4A"/>
+    <ellipse cx="122" cy="116" rx="12" ry="9" transform="rotate(20 122 116)" fill="#F49B4A"/>
+
+    <ellipse cx="56" cy="140" rx="13" ry="8" fill="#E97F33"/>
+    <ellipse cx="94" cy="140" rx="13" ry="8" fill="#E97F33"/>
+</svg>
+                            </span>
+            <div class="min-w-0">
+                <p class="truncate text-sm font-extrabold text-cole-forest">Ana Pérez</p>
+                <p class="text-[11px] font-bold text-cole-ink/55">
+                    Código A001 · Inicial · 4 años A
+                </p>
+            </div>
+        </div>
+
+        
+        
+        <form method="POST" action="http://127.0.0.1:8099/colegio/inicial/perfil/clave" class="mt-4">
+            <input type="hidden" name="_token" value="6HiLMMd7x7Q4XNF5vLAhq8r4nCsdh5rd3jw8TDjL" autocomplete="off">
+            <p class="text-sm font-extrabold text-cole-forest">Cambiar mi contraseña</p>
+            <p class="mt-1 text-[11.5px] font-semibold leading-relaxed text-cole-ink/60">
+                La primera vez entraste con tu DNI. Si quieres, elige una contraseña más fácil de recordar.
+            </p>
+
+            <div class="mt-3 space-y-3">
+                <div>
+                    <label for="clave_actual" class="cole-label">Contraseña actual</label>
+                    <div class="relative">
+                        <input id="clave_actual" name="clave_actual" type="password" autocomplete="current-password"
+                               class="cole-input pr-4" placeholder="Tu contraseña de ahora" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="clave_nueva" class="cole-label">Nueva contraseña</label>
+                    <div class="relative">
+                        <input id="clave_nueva" name="clave_nueva" type="password" autocomplete="new-password"
+                               class="cole-input pr-4" placeholder="Al menos 6 caracteres" minlength="6" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="clave_nueva_confirmation" class="cole-label">Repite la nueva contraseña</label>
+                    <div class="relative">
+                        <input id="clave_nueva_confirmation" name="clave_nueva_confirmation" type="password"
+                               autocomplete="new-password" class="cole-input pr-4" placeholder="Escríbela otra vez" required>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="cole-btn cole-btn-primary mt-4 h-12 w-full text-sm">
+                Guardar contraseña
+            </button>
+        </form>
+    </div>
+</dialog>
+
+        <main class="aula-main">
+            <a href="http://127.0.0.1:8099/colegio/inicial/juegos" class="aula-back">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M11 6l-6 6 6 6"/>
+                </svg>
+                Volver a los juegos
+            </a>
+
+            <section class="aula-hero aula-hero--juego aula-pop mt-4" data-listen>
+                <div>
+                    <p class="aula-eyebrow">Zona de juegos</p>
+                    <h1 class="aula-title">
+                        Memoria de animales
+                        <span aria-hidden="true">🎧</span>
+                    </h1>
+                    <p class="aula-subtitle">
+                        Escucha sonidos reales, reconoce animales y encuentra parejas.
+                        Diez niveles con fotografías reales, sin prisa y sin perder.
+                    </p>
+                </div>
+
+                <div class="aula-hero__stats">
+                    <div class="aula-stat">
+                        <span class="aula-stat__value">
+                            <span data-activity-current>1</span><span aria-hidden="true">/</span><span data-activity-total>4</span>
+                        </span>
+                        <span class="aula-stat__label">Actividad</span>
+                    </div>
+                    <div class="aula-stat">
+                        <span class="aula-stat__value" data-level-number>1</span>
+                        <span class="aula-stat__label">Nivel</span>
+                    </div>
+                    <div class="aula-stat">
+                        <span class="aula-stat__value">15</span>
+                        <span class="aula-stat__label">Animales</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="juego-layout">
+                <section class="juego-panel juego-panel--animales" aria-labelledby="animalesTableroTitle">
+    <div class="juego-panel__head">
+        <div>
+            <p class="juego-panel__eyebrow">
+                Nivel <span data-level-number>1</span>
+                <span aria-hidden="true">·</span>
+                <span data-activity-label>Actividad 1 de 4</span>
+            </p>
+            <h2 id="animalesTableroTitle" class="juego-panel__title" data-level-name>¿Quién hace ese sonido?</h2>
+            <p class="juego-panel__figure" data-level-focus>Perro y gato</p>
+        </div>
+
+        <div class="animales-badges">
+            <span class="animales-badge" data-mechanic>Sonidos</span>
+            <span class="animales-pares" data-pairs hidden>Parejas: 0 de 4</span>
+        </div>
+    </div>
+
+    <div class="juego-progreso" role="progressbar" aria-label="Progreso del nivel"
+         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-progress-bar>
+        <span class="juego-progreso__fill" data-progress-fill></span>
+    </div>
+
+    <div class="juego-escenario">
+        
+        <div class="animales-stage" data-stage inert></div>
+
+        
+        <div class="juego-portada animales-portada" data-intro>
+            <span class="animales-portada__icono" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none">
+                    <circle cx="32" cy="32" r="30" fill="#E2F8D9"/>
+                    <path d="M25 22h-5v20h5M39 22h5v20h-5" stroke="#2F7D63" stroke-width="3.4" stroke-linecap="round"/>
+                    <path d="M28 20h8v24h-8z" fill="#86DC72" opacity=".45"/>
+                    <path d="M15 27a6 6 0 0 0 0 10M49 27a6 6 0 0 1 0 10" stroke="#4E9E38" stroke-width="2.6" stroke-linecap="round"/>
+                </svg>
+            </span>
+
+            <p class="juego-portada__eyebrow">Nivel <span data-level-number>1</span></p>
+            <h3 class="juego-portada__title">¡Vamos a escuchar a los animales!</h3>
+            <p class="juego-portada__text" data-level-hint>
+                Escucha el sonido y toca la fotografía del animal que lo hace.
+            </p>
+
+            <ul class="juego-pasos">
+                <li>
+                    <span class="juego-pasos__num">1</span>
+                    Pulsa el botón grande para escuchar.
+                </li>
+                <li>
+                    <span class="juego-pasos__num">2</span>
+                    Mira las fotos con calma y elige una.
+                </li>
+                <li>
+                    <span class="juego-pasos__num">3</span>
+                    Si algo no sale, lo intentas otra vez.
+                </li>
+            </ul>
+
+            <button type="button" class="juego-btn juego-btn--primary" data-start>
+                ¡Vamos a jugar!
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h12M12 6l6 6-6 6"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="juego-victoria animales-victoria" data-victory hidden>
+    <div class="animales-victoria__fotos" aria-hidden="true">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/perro.jpg" alt="" loading="lazy" decoding="async">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/buho.jpg" alt="" loading="lazy" decoding="async">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/elefante.jpg" alt="" loading="lazy" decoding="async">
+            </div>
+
+    <p class="juego-victoria__eyebrow">¡Lo lograste!</p>
+    <h3 class="juego-victoria__title" data-victory-title>¡Nivel completado!</h3>
+    <p class="juego-victoria__text" data-victory-text>Completaste todas las actividades de este nivel.</p>
+
+    <div class="juego-victoria__actions">
+        <button type="button" class="juego-btn juego-btn--primary" data-next hidden>
+            Siguiente nivel
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h12M12 6l6 6-6 6"/>
+            </svg>
+        </button>
+
+        <button type="button" class="juego-btn juego-btn--ghost" data-replay>Jugar otra vez</button>
+
+        <a href="http://127.0.0.1:8099/colegio/inicial/juegos" class="juego-btn juego-btn--ghost">Volver a los juegos</a>
+    </div>
+</div>
+    </div>
+
+    <div class="juego-controles">
+        <button type="button" class="juego-btn juego-btn--ghost" data-restart>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/>
+            </svg>
+            Reiniciar
+        </button>
+
+        <button type="button" class="juego-btn juego-btn--ghost" data-stop-audio hidden>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                <rect x="7" y="7" width="10" height="10" rx="2"/>
+            </svg>
+            Detener sonido
+        </button>
+
+        <p class="juego-mensaje" data-message role="status" aria-live="polite">Pulsa «¡Vamos a jugar!» para empezar.</p>
+    </div>
+</section>
+
+                <aside class="juego-side">
+                    <section class="juego-card" aria-labelledby="animalesComoTitle">
+                        <h2 id="animalesComoTitle" class="juego-card__title">Cómo se juega</h2>
+                        <ul class="juego-pasos mt-2">
+                            <li>
+                                <span class="juego-pasos__num">1</span>
+                                Toca el botón grande para escuchar al animal.
+                            </li>
+                            <li>
+                                <span class="juego-pasos__num">2</span>
+                                Busca su fotografía entre las opciones.
+                            </li>
+                            <li>
+                                <span class="juego-pasos__num">3</span>
+                                En las parejas, voltea dos fotos iguales.
+                            </li>
+                        </ul>
+                        <p class="juego-card__text">
+                            Puedes repetir el sonido todas las veces que quieras. Un error no quita nada: siempre puedes intentarlo otra vez.
+                        </p>
+                    </section>
+
+                    <section class="juego-card" aria-labelledby="animalesNivelesTitle">
+                        <h2 id="animalesNivelesTitle" class="juego-card__title">Niveles</h2>
+                        <p class="juego-card__text">Diez niveles, de los sonidos de casa al reto final. Puedes jugar el que quieras.</p>
+                        <div class="juego-niveles" data-levels></div>
+                    </section>
+
+                    <section class="juego-card" aria-labelledby="animalesCreditosTitle">
+                        <h2 id="animalesCreditosTitle" class="juego-card__title">Fotos y sonidos reales</h2>
+                        <p class="juego-card__text">
+                            Las fotografías y los sonidos provienen de Wikimedia Commons y se guardan en el colegio: la partida no depende de internet.
+                        </p>
+                        <button type="button" class="juego-btn juego-btn--ghost mt-3 w-full" data-credits-open>
+                            Ver créditos y licencias
+                        </button>
+                    </section>
+
+                    <div class="aula-hint">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="12" r="8.6"/>
+                            <path stroke-linecap="round" d="M12 8h.01M11 12h1v4h1"/>
+                        </svg>
+                        <span>Si no escuchas nada, revisa el volumen del dispositivo. También puedes pedir una pista.</span>
+                    </div>
+                </aside>
+            </div>
+        </main>
+
+        <nav class="aula-dock" aria-label="Navegación del aula">
+    <a href="http://127.0.0.1:8099/colegio/inicial/aula"
+       class="aula-dock__item "
+       >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.5 10.6 12 4l8.5 6.6V19a1.4 1.4 0 0 1-1.4 1.4H4.9A1.4 1.4 0 0 1 3.5 19z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.6 20.4v-6h4.8v6"/>
+        </svg>
+        Inicio
+    </a>
+
+    <a href="http://127.0.0.1:8099/colegio/inicial/aula#cursos"
+       class="aula-dock__item ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3.5" y="3.5" width="7" height="7" rx="2.2"/>
+            <rect x="13.5" y="3.5" width="7" height="7" rx="2.2"/>
+            <rect x="3.5" y="13.5" width="7" height="7" rx="2.2"/>
+            <rect x="13.5" y="13.5" width="7" height="7" rx="2.2"/>
+        </svg>
+        Cursos
+    </a>
+
+    <a href="http://127.0.0.1:8099/colegio/inicial/juegos"
+       class="aula-dock__item is-active"
+        aria-current="page" >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7.4 7.5h9.2a5 5 0 0 1 4.9 4l.5 3.4a3 3 0 0 1-5.4 2.3l-1.2-1.7H8.6l-1.2 1.7a3 3 0 0 1-5.4-2.3l.5-3.4a5 5 0 0 1 4.9-4z"/>
+            <path stroke-linecap="round" d="M7.6 11v3M6.1 12.5h3M16 11.4h.01M18 13.6h.01"/>
+        </svg>
+        Juegos
+    </a>
+
+    <button type="button" class="aula-dock__item" data-help-open aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.6"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.6 9.4a2.5 2.5 0 1 1 3.7 2.2c-.8.5-1.3 1-1.3 1.9"/>
+            <path stroke-linecap="round" d="M12 17h.01"/>
+        </svg>
+        Ayuda
+    </button>
+</nav>
+        <dialog id="ayudaDialog" class="aula-dialog" aria-labelledby="ayudaTitle">
+    <div class="aula-dialog__card">
+        <div class="flex items-start justify-between gap-4">
+            <h2 id="ayudaTitle" class="font-display text-xl text-cole-forest">¿Necesitas ayuda?</h2>
+            <button type="button" class="aula-icon-btn" data-help-close aria-label="Cerrar la ayuda">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                    <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/>
+                </svg>
+            </button>
+        </div>
+
+        <p class="mt-2 text-xs font-semibold leading-relaxed text-cole-ink/65">
+            Este es tu espacio para aprender en el nivel Inicial. Todo lo que ves lo prepara tu profesora.
+        </p>
+
+        <div class="aula-dialog__step">
+            <span>1</span>
+            <span>Elige una tarjeta de curso para ver sus unidades y sesiones.</span>
+        </div>
+        <div class="aula-dialog__step">
+            <span>2</span>
+            <span>Abre cada sesión para leer lo que aprenderás y ver sus materiales.</span>
+        </div>
+        <div class="aula-dialog__step">
+            <span>3</span>
+            <span>Si tu matrícula cambió de nivel, pide en secretaría que actualicen tus datos.</span>
+        </div>
+
+        
+        <button type="button" class="cole-btn cole-btn-primary mt-4 h-12 w-full text-sm" data-help-close>
+            Entendido
+        </button>
+    </div>
+</dialog>
+        <dialog id="creditosAnimales" class="aula-dialog" aria-labelledby="creditosAnimalesTitle">
+    <div class="aula-dialog__card animales-creditos">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <p class="animales-creditos__eyebrow">Fotografías y sonidos</p>
+                <h2 id="creditosAnimalesTitle" class="font-display text-xl text-cole-forest">Créditos y licencias</h2>
+            </div>
+            <button type="button" class="aula-icon-btn" data-credits-close aria-label="Cerrar los créditos">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                    <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/>
+                </svg>
+            </button>
+        </div>
+
+        <p class="mt-2 text-xs font-semibold leading-relaxed text-cole-ink/65">
+            Todas las imágenes y los sonidos son de animales reales y provienen de
+            <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">Wikimedia Commons</a>.
+            Los audios se convirtieron a MP3 para que funcionen en cualquier navegador.
+        </p>
+
+        <ul class="animales-creditos__list">
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/perro.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Perro</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            IDS.photos ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/2.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 2.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Labrador_on_Quantock_(2175262184).jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            Amada44 ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 3.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Barking_of_a_dog.ogg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/gato.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Gato</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            Alvesgaspar ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 3.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Cat_November_2010-1a.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            freemaster2 ·
+                                                            <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Meow_of_a_Siamese_cat_-_freemaster2.wav" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/gallina.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Gallina</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            Pete Cooper ·
+                                                            <a href="https://creativecommons.org/licenses/by/2.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY 2.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Buff_Orpington_chicken,_UK.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            alys ·
+                                                            Dominio público
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Chickens_demanding_food.ogg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/vaca.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Vaca</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            Kim Hansen ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 3.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Cow_(Fleckvieh_breed)_Oeschinensee_Slaunger_2009-07-07.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            MichaeltheFox8621 ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 4.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Single_Cow_Moo.ogg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/cerdo.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Cerdo</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            kallerna ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 4.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Pig_farm_Vampula_1.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            erdie ·
+                                                            <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY 3.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Pig_grunt_-_Erdie.ogg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/oveja.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Oveja</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            CattleGirl ·
+                                                            Dominio público
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Romneyram1.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            earthcalling ·
+                                                            Dominio público
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Sheep_bleating.ogg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/pato.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Pato</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            Richard Bartz ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/2.5/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 2.5</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Anas_platyrhynchos_male_female_quadrat.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            Jonathon Jongsma ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 3.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Anas_platyrhynchos_-_Mallard_-_XC62258.ogg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/caballo.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Caballo</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            Ealdgyth ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 3.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Halterstandingshotarabianone.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            Hü. ·
+                                                            Dominio público
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Wiehern.ogg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/gallo.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Gallo</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            Sundaram Perumal ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 4.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Looking_my_camera!.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            Filo gèn&#039; ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 4.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Rooster_crowing.ogg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/leon.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">León</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            Giles Laurent ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 4.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:020_The_lion_king_Snyggve_in_the_Serengeti_National_Park_Photo_by_Giles_Laurent.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            த*உழவன் ·
+                                                            Dominio público
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Lion_raring-sound1TamilNadu178.ogg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/elefante.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Elefante</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            Giles Laurent ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 4.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:178_Male_African_bush_elephant_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            தகவலுழவன் ·
+                                                            <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Elephant_voice_-_trumpeting.ogg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/mono.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Mono</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            David M. Jensen (Storkk) ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 3.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Capuchin_Costa_Rica.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            Kai Medina (Mk170101) ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 4.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Brown_woolly_monkey_alarm_call.wav" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/rana.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Rana</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            Richard Bartz ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/2.5/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 2.5</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:European_Common_Frog_Rana_temporaria.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            MichaeltheFox8621 ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 4.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Single_Frog_Croak.oga" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/pajaro.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Pájaro</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            Francis C. Franklin ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 3.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Erithacus_rubecula_with_cocked_head.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            ezwa ·
+                                                            Dominio público
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Birds_singing_in_garden.ogg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                            <li class="animales-creditos__item">
+                    <img src="http://127.0.0.1:8099/themes/colegio/img/juegos/animales/buho.jpg" alt="" loading="lazy" decoding="async" class="animales-creditos__foto">
+                    <div class="min-w-0">
+                        <p class="animales-creditos__nombre">Búho</p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Foto</span>
+                            Greg Hume ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 3.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Bubo_virginianus_06.jpg" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+
+                        <p class="animales-creditos__linea">
+                            <span class="animales-creditos__tipo">Sonido</span>
+                            Vianney Bajart ·
+                                                            <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">CC BY-SA 4.0</a>
+                                                        · <a href="https://commons.wikimedia.org/wiki/File:Strix_aluco_male.oga" target="_blank" rel="noopener noreferrer" class="animales-creditos__link">ficha</a>
+                        </p>
+                    </div>
+                </li>
+                    </ul>
+
+        <p class="animales-creditos__nota">
+            Las licencias CC BY y CC BY-SA permiten usar estos recursos citando autor y licencia.
+            Si un archivo cambia en su ficha original, prevalece la información publicada allí.
+        </p>
+
+        <button type="button" class="cole-btn cole-btn-primary mt-4 h-12 w-full text-sm" data-credits-close>
+            Entendido
+        </button>
+    </div>
+</dialog>
+    </div>
+
+        <script type="application/json" id="animalesConfig">[{"id":"perro","name":"perro","article":"el","group":"casa","photo":"themes\/colegio\/img\/juegos\/animales\/perro.jpg","audio":"themes\/colegio\/audio\/animales\/perro.mp3","photo_credit":{"author":"IDS.photos","license":"CC BY-SA 2.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/2.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Labrador_on_Quantock_(2175262184).jpg"},"audio_credit":{"author":"Amada44","license":"CC BY-SA 3.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/3.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Barking_of_a_dog.ogg"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/perro.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/perro.mp3"},{"id":"gato","name":"gato","article":"el","group":"casa","photo":"themes\/colegio\/img\/juegos\/animales\/gato.jpg","audio":"themes\/colegio\/audio\/animales\/gato.mp3","photo_credit":{"author":"Alvesgaspar","license":"CC BY-SA 3.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/3.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Cat_November_2010-1a.jpg"},"audio_credit":{"author":"freemaster2","license":"CC0","license_url":"https:\/\/creativecommons.org\/publicdomain\/zero\/1.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Meow_of_a_Siamese_cat_-_freemaster2.wav"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/gato.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/gato.mp3"},{"id":"gallina","name":"gallina","article":"la","group":"granja","photo":"themes\/colegio\/img\/juegos\/animales\/gallina.jpg","audio":"themes\/colegio\/audio\/animales\/gallina.mp3","photo_credit":{"author":"Pete Cooper","license":"CC BY 2.0","license_url":"https:\/\/creativecommons.org\/licenses\/by\/2.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Buff_Orpington_chicken,_UK.jpg"},"audio_credit":{"author":"alys","license":"Dominio p\u00fablico","license_url":"","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Chickens_demanding_food.ogg"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/gallina.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/gallina.mp3"},{"id":"vaca","name":"vaca","article":"la","group":"granja","photo":"themes\/colegio\/img\/juegos\/animales\/vaca.jpg","audio":"themes\/colegio\/audio\/animales\/vaca.mp3","photo_credit":{"author":"Kim Hansen","license":"CC BY-SA 3.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/3.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Cow_(Fleckvieh_breed)_Oeschinensee_Slaunger_2009-07-07.jpg"},"audio_credit":{"author":"MichaeltheFox8621","license":"CC BY-SA 4.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/4.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Single_Cow_Moo.ogg"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/vaca.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/vaca.mp3"},{"id":"cerdo","name":"cerdo","article":"el","group":"granja","photo":"themes\/colegio\/img\/juegos\/animales\/cerdo.jpg","audio":"themes\/colegio\/audio\/animales\/cerdo.mp3","photo_credit":{"author":"kallerna","license":"CC BY-SA 4.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/4.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Pig_farm_Vampula_1.jpg"},"audio_credit":{"author":"erdie","license":"CC BY 3.0","license_url":"https:\/\/creativecommons.org\/licenses\/by\/3.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Pig_grunt_-_Erdie.ogg"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/cerdo.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/cerdo.mp3"},{"id":"oveja","name":"oveja","article":"la","group":"granja","photo":"themes\/colegio\/img\/juegos\/animales\/oveja.jpg","audio":"themes\/colegio\/audio\/animales\/oveja.mp3","photo_credit":{"author":"CattleGirl","license":"Dominio p\u00fablico","license_url":"","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Romneyram1.jpg"},"audio_credit":{"author":"earthcalling","license":"Dominio p\u00fablico","license_url":"","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Sheep_bleating.ogg"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/oveja.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/oveja.mp3"},{"id":"pato","name":"pato","article":"el","group":"granja","photo":"themes\/colegio\/img\/juegos\/animales\/pato.jpg","audio":"themes\/colegio\/audio\/animales\/pato.mp3","photo_credit":{"author":"Richard Bartz","license":"CC BY-SA 2.5","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/2.5\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Anas_platyrhynchos_male_female_quadrat.jpg"},"audio_credit":{"author":"Jonathon Jongsma","license":"CC BY-SA 3.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/3.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Anas_platyrhynchos_-_Mallard_-_XC62258.ogg"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/pato.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/pato.mp3"},{"id":"caballo","name":"caballo","article":"el","group":"granja","photo":"themes\/colegio\/img\/juegos\/animales\/caballo.jpg","audio":"themes\/colegio\/audio\/animales\/caballo.mp3","photo_credit":{"author":"Ealdgyth","license":"CC BY-SA 3.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/3.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Halterstandingshotarabianone.jpg"},"audio_credit":{"author":"H\u00fc.","license":"Dominio p\u00fablico","license_url":"","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Wiehern.ogg"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/caballo.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/caballo.mp3"},{"id":"gallo","name":"gallo","article":"el","group":"granja","photo":"themes\/colegio\/img\/juegos\/animales\/gallo.jpg","audio":"themes\/colegio\/audio\/animales\/gallo.mp3","photo_credit":{"author":"Sundaram Perumal","license":"CC BY-SA 4.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/4.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Looking_my_camera!.jpg"},"audio_credit":{"author":"Filo g\u00e8n\u0027","license":"CC BY-SA 4.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/4.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Rooster_crowing.ogg"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/gallo.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/gallo.mp3"},{"id":"leon","name":"le\u00f3n","article":"el","group":"selva","photo":"themes\/colegio\/img\/juegos\/animales\/leon.jpg","audio":"themes\/colegio\/audio\/animales\/leon.mp3","photo_credit":{"author":"Giles Laurent","license":"CC BY-SA 4.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/4.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:020_The_lion_king_Snyggve_in_the_Serengeti_National_Park_Photo_by_Giles_Laurent.jpg"},"audio_credit":{"author":"\u0ba4*\u0b89\u0bb4\u0bb5\u0ba9\u0bcd","license":"Dominio p\u00fablico","license_url":"","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Lion_raring-sound1TamilNadu178.ogg"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/leon.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/leon.mp3"},{"id":"elefante","name":"elefante","article":"el","group":"selva","photo":"themes\/colegio\/img\/juegos\/animales\/elefante.jpg","audio":"themes\/colegio\/audio\/animales\/elefante.mp3","photo_credit":{"author":"Giles Laurent","license":"CC BY-SA 4.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/4.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:178_Male_African_bush_elephant_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg"},"audio_credit":{"author":"\u0ba4\u0b95\u0bb5\u0bb2\u0bc1\u0bb4\u0bb5\u0ba9\u0bcd","license":"CC0","license_url":"https:\/\/creativecommons.org\/publicdomain\/zero\/1.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Elephant_voice_-_trumpeting.ogg"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/elefante.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/elefante.mp3"},{"id":"mono","name":"mono","article":"el","group":"selva","photo":"themes\/colegio\/img\/juegos\/animales\/mono.jpg","audio":"themes\/colegio\/audio\/animales\/mono.mp3","photo_credit":{"author":"David M. Jensen (Storkk)","license":"CC BY-SA 3.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/3.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Capuchin_Costa_Rica.jpg"},"audio_credit":{"author":"Kai Medina (Mk170101)","license":"CC BY-SA 4.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/4.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Brown_woolly_monkey_alarm_call.wav"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/mono.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/mono.mp3"},{"id":"rana","name":"rana","article":"la","group":"bosque","photo":"themes\/colegio\/img\/juegos\/animales\/rana.jpg","audio":"themes\/colegio\/audio\/animales\/rana.mp3","photo_credit":{"author":"Richard Bartz","license":"CC BY-SA 2.5","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/2.5\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:European_Common_Frog_Rana_temporaria.jpg"},"audio_credit":{"author":"MichaeltheFox8621","license":"CC BY-SA 4.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/4.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Single_Frog_Croak.oga"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/rana.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/rana.mp3"},{"id":"pajaro","name":"p\u00e1jaro","article":"el","group":"bosque","photo":"themes\/colegio\/img\/juegos\/animales\/pajaro.jpg","audio":"themes\/colegio\/audio\/animales\/pajaro.mp3","photo_credit":{"author":"Francis C. Franklin","license":"CC BY-SA 3.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/3.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Erithacus_rubecula_with_cocked_head.jpg"},"audio_credit":{"author":"ezwa","license":"Dominio p\u00fablico","license_url":"","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Birds_singing_in_garden.ogg"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/pajaro.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/pajaro.mp3"},{"id":"buho","name":"b\u00faho","article":"el","group":"bosque","photo":"themes\/colegio\/img\/juegos\/animales\/buho.jpg","audio":"themes\/colegio\/audio\/animales\/buho.mp3","photo_credit":{"author":"Greg Hume","license":"CC BY-SA 3.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/3.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Bubo_virginianus_06.jpg"},"audio_credit":{"author":"Vianney Bajart","license":"CC BY-SA 4.0","license_url":"https:\/\/creativecommons.org\/licenses\/by-sa\/4.0\/","page":"https:\/\/commons.wikimedia.org\/wiki\/File:Strix_aluco_male.oga"},"photo_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/img\/juegos\/animales\/buho.jpg","audio_url":"http:\/\/127.0.0.1:8099\/themes\/colegio\/audio\/animales\/buho.mp3"}]</script>
+    <script src="http://127.0.0.1:8099/themes/colegio/js/aula.js"></script>
+    <script src="http://127.0.0.1:8099/themes/colegio/js/juegos/memoria-animales.js"></script>
+</body>
+</html>
