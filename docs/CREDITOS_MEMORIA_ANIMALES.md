@@ -44,13 +44,13 @@ generaron sonidos sintéticos ni imitaciones humanas.
 | Animal | Archivo local | Autor | Licencia | Ficha original |
 |---|---|---|---|---|
 | Perro | `perro.mp3` | Amada44 | CC BY-SA 3.0 | [Barking of a dog](https://commons.wikimedia.org/wiki/File:Barking_of_a_dog.ogg) |
-| Gato | `gato.mp3` | freemaster2 | CC0 | [Meow of a Siamese cat](https://commons.wikimedia.org/wiki/File:Meow_of_a_Siamese_cat_-_freemaster2.wav) |
+| Gato | `gato.mp3` | George Miquilena | CC0 | [Maullido de gata hembra joven](https://commons.wikimedia.org/wiki/File:Maullido_de_gata_hembra_joven.ogg) |
 | Gallina | `gallina.mp3` | alys | Dominio público | [Chickens demanding food](https://commons.wikimedia.org/wiki/File:Chickens_demanding_food.ogg) |
 | Vaca | `vaca.mp3` | MichaeltheFox8621 | CC BY-SA 4.0 | [Single Cow Moo](https://commons.wikimedia.org/wiki/File:Single_Cow_Moo.ogg) |
-| Cerdo | `cerdo.mp3` | erdie | CC BY 3.0 | [Pig grunt](https://commons.wikimedia.org/wiki/File:Pig_grunt_-_Erdie.ogg) |
+| Cerdo | `cerdo.mp3` | Secretlondon | CC BY-SA 3.0 | [Mudchute pig 2](https://commons.wikimedia.org/wiki/File:Mudchute_pig_2.ogg) |
 | Oveja | `oveja.mp3` | earthcalling | Dominio público | [Sheep bleating](https://commons.wikimedia.org/wiki/File:Sheep_bleating.ogg) |
 | Pato | `pato.mp3` | Jonathon Jongsma | CC BY-SA 3.0 | [Mallard XC62258](https://commons.wikimedia.org/wiki/File:Anas_platyrhynchos_-_Mallard_-_XC62258.ogg) |
-| Caballo | `caballo.mp3` | Hü. | Dominio público | [Wiehern](https://commons.wikimedia.org/wiki/File:Wiehern.ogg) |
+| Caballo | `caballo.mp3` | Lemasson A, Remeuf K, Trabalon M, Cuir F, Hausberger M | CC BY 4.0 | [Stallion whinny (PLOS ONE)](https://commons.wikimedia.org/wiki/File:Mares-Prefer-the-Voices-of-Highly-Fertile-Stallions-pone.0118468.s001.oga) |
 | Gallo | `gallo.mp3` | Filo gèn' | CC BY-SA 4.0 | [Rooster crowing](https://commons.wikimedia.org/wiki/File:Rooster_crowing.ogg) |
 | León | `leon.mp3` | த*உழவன் | Dominio público | [Lion roaring](https://commons.wikimedia.org/wiki/File:Lion_raring-sound1TamilNadu178.ogg) |
 | Elefante | `elefante.mp3` | தகவலுழவன் | CC0 | [Elephant trumpeting](https://commons.wikimedia.org/wiki/File:Elephant_voice_-_trumpeting.ogg) |
@@ -61,8 +61,13 @@ generaron sonidos sintéticos ni imitaciones humanas.
 
 ### Notas de fidelidad
 
-- El gruñido del cerdo original dura 0,65 s; se repitió tres veces para que el
-  niño alcance a escucharlo. Sigue siendo el mismo audio real, sin síntesis.
+- El oink del cerdo dura 0,33 s; se repite dos veces con una pausa breve para
+  que el niño alcance a escucharlo. Sigue siendo el mismo audio real, sin
+  síntesis.
+- Gato, cerdo y caballo se cambiaron por grabaciones de un solo sonido, más
+  cortas y directas, porque los audios anteriores se confundían con facilidad.
+  El maullido es de una gata joven, el oink de un cerdo de granja y el relincho
+  de un semental adulto.
 - Las categorías «mono», «pájaro» y «búho» son genéricas: la foto y el audio
   pueden ser de especies distintas dentro de la misma categoría (mono capuchino
   y mono lanudo; petirrojo y coro de aves; búho cornudo y cárabo común). Ambos

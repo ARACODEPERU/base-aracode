@@ -57,10 +57,10 @@ return [
                 'page' => 'https://commons.wikimedia.org/wiki/File:Cat_November_2010-1a.jpg',
             ],
             'audio_credit' => [
-                'author' => 'freemaster2',
+                'author' => 'George Miquilena',
                 'license' => 'CC0',
                 'license_url' => 'https://creativecommons.org/publicdomain/zero/1.0/',
-                'page' => 'https://commons.wikimedia.org/wiki/File:Meow_of_a_Siamese_cat_-_freemaster2.wav',
+                'page' => 'https://commons.wikimedia.org/wiki/File:Maullido_de_gata_hembra_joven.ogg',
             ],
         ],
 
@@ -120,10 +120,10 @@ return [
                 'page' => 'https://commons.wikimedia.org/wiki/File:Pig_farm_Vampula_1.jpg',
             ],
             'audio_credit' => [
-                'author' => 'erdie',
-                'license' => 'CC BY 3.0',
-                'license_url' => 'https://creativecommons.org/licenses/by/3.0/',
-                'page' => 'https://commons.wikimedia.org/wiki/File:Pig_grunt_-_Erdie.ogg',
+                'author' => 'Secretlondon',
+                'license' => 'CC BY-SA 3.0',
+                'license_url' => 'https://creativecommons.org/licenses/by-sa/3.0/',
+                'page' => 'https://commons.wikimedia.org/wiki/File:Mudchute_pig_2.ogg',
             ],
         ],
 
@@ -183,10 +183,10 @@ return [
                 'page' => 'https://commons.wikimedia.org/wiki/File:Halterstandingshotarabianone.jpg',
             ],
             'audio_credit' => [
-                'author' => 'Hü.',
-                'license' => 'Dominio público',
-                'license_url' => '',
-                'page' => 'https://commons.wikimedia.org/wiki/File:Wiehern.ogg',
+                'author' => 'Lemasson A, Remeuf K, Trabalon M, Cuir F, Hausberger M',
+                'license' => 'CC BY 4.0',
+                'license_url' => 'https://creativecommons.org/licenses/by/4.0/',
+                'page' => 'https://commons.wikimedia.org/wiki/File:Mares-Prefer-the-Voices-of-Highly-Fertile-Stallions-pone.0118468.s001.oga',
             ],
         ],
 

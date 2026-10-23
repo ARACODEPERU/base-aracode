@@ -109,37 +109,23 @@ test('las tarjetas panel y el navegador contrastan con el fondo solo en tema Tor
     assert.match(estilos, /html\.theme-torneos \.dark nav\[aria-label="Breadcrumb"\] > ol\s*\{/);
 });
 
-test('el acta del partido usa tarjetas del tema y textos legibles sobre el estadio', () => {
-    // Los bloques del acta dejan de ser transparentes: cada sección lleva su clase.
-    assert.match(actaPartido, /class="sports-match-score-page/);
-    assert.match(actaPartido, /class="se-acta-header /);
-    assert.match(actaPartido, /class="se-acta-card rounded-xl/);
-    assert.match(actaPartido, /class="se-acta-subcard /);
-    assert.match(actaPartido, /class="se-acta-card se-acta-card--penales/);
-    assert.match(actaPartido, /class="se-acta-card se-acta-card--flush w-full/);
-    assert.match(actaPartido, /se-acta-table/);
-    assert.match(actaPartido, /class="se-acta-toggle /);
+test('el acta del partido usa el tema deportivo con superficies sólidas y textos legibles', () => {
+    // Mismo criterio que el resto de la gestión deportiva: azul noche y lima
+    // cuando la organización es deportiva; el aspecto clásico sigue intacto en
+    // Eventos sociales.
+    assert.match(actaPartido, /const sportsMode = computed\(\(\) => page\.props\.sportsOrganization\?\.mode === true\)/);
+    assert.match(actaPartido, /sportsMode\s*\?\s*'border-white\/10 bg-\[#0b1f2b\] text-white/);
+    assert.match(actaPartido, /sportsMode\s*\?\s*'border-\[#234052\] bg-\[#0b1f2b\] text-slate-100/);
+    assert.match(actaPartido, /:style="sportsMode \? sportsControlVars : null"/);
+    assert.match(actaPartido, /'--torneos-control-bg': '#0e2532'/);
+    assert.match(actaPartido, /sportsMode\s*\?\s*'bg-\[#122c3a\] text-lime-200'/);
 
-    // Superficie, borde, sombra y color salen de los tokens del tema.
-    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-card\s*\{[^}]*background-color:\s*var\(--torneos-panel-surface\);[^}]*border:\s*1px solid var\(--torneos-panel-border\);[^}]*box-shadow:\s*var\(--torneos-panel-shadow\);[^}]*color:\s*var\(--torneos-panel-text\);/);
-    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-subcard\s*\{[^}]*background-color:\s*var\(--torneos-panel-header-surface\)/);
-    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-card :is\(\.text-gray-400, \.text-gray-500, \.text-gray-600, \.text-gray-700, \.text-body\)\s*\{\s*color:\s*var\(--torneos-panel-muted-text\)/);
+    // El modo clásico conserva sus clases: no se fuerza el tema deportivo.
+    assert.match(actaPartido, /: 'border-default dark:border-blue-900'/);
 
-    // Cabecera y alineaciones no dependen del gris ni del azul fijos.
-    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-header\s*\{[^}]*background-color:\s*rgb\(2 44 34 \/ 78%\)/);
-    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-table thead th\s*\{[^}]*background-color:\s*var\(--torneos-panel-header-surface\)/);
-    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-table tbody td\s*\{[^}]*background-color:\s*rgb\(255 255 255 \/ 72%\)/);
-
-    // El modo oscuro se apoya en los mismos tokens y solo ajusta acentos.
-    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-toggle\s*\{[^}]*background-color:\s*rgb\(2 44 34 \/ 62%\)/);
-    assert.match(estilos, /html\.theme-torneos \.sports-match-score-page \.se-acta-card--flush\s*\{\s*overflow:\s*hidden;/);
-    assert.match(estilos, /html\.theme-torneos body\.dark \.sports-match-score-page \.se-acta-table thead th\s*\{\s*background-color:\s*#0b3b30/);
-    assert.match(estilos, /html\.theme-torneos body\.dark \.sports-match-score-page \.se-acta-card--penales\s*\{/);
-
-    // Ninguna regla del acta se aplica fuera del tema futbolero.
-    assert.doesNotMatch(estilos, /^\.se-acta-card\s*\{/m);
-    assert.doesNotMatch(estilos, /^\.se-acta-header\s*\{/m);
-    assert.doesNotMatch(estilos, /^\.se-acta-table\s*\{/m);
+    // Las clases del esquema anterior quedaron sin uso al migrar al tema.
+    assert.doesNotMatch(actaPartido, /se-acta-/);
+    assert.doesNotMatch(actaPartido, /sports-match-score-page/);
 });
 
 test('los cuatro modales generales exponen ganchos de tema para encabezado, cuerpo y acciones', () => {

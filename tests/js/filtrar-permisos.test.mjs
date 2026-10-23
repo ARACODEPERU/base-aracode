@@ -188,3 +188,35 @@ test('cuenta los permisos habilitados y no habilitados de cada botón', () => {
         total: 5,
     });
 });
+
+test('cada permiso se activa desde toda la fila, sin ids que puedan repetirse', () => {
+    const form = readFileSync(new URL('../../Modules/Security/Resources/assets/js/Pages/Roles/Pertials/editForm.vue', import.meta.url), 'utf8');
+
+    // El label envuelve al checkbox: el interruptor y el nombre responden al
+    // clic, sin depender del atributo `for`.
+    assert.match(form, /<label\s+v-for="item in row\.permissions"[\s\S]*?v-model="form\.permissions"/);
+    assert.match(form, /class="peer sr-only"/);
+
+    // Los ids se armaban con el índice de la carpeta y el del permiso, y se
+    // repetían (1 + 23 = 12 + 3): el clic terminaba marcando otra casilla.
+    assert.doesNotMatch(form, /:id="'checkbox'/);
+
+    // El candado era un div decorativo y no disparaba el cambio; además todos
+    // los checkbox nacían con `checked`.
+    assert.doesNotMatch(form, /can-container/);
+    assert.doesNotMatch(form, /checked="checked"/);
+});
+
+test('la lista de permisos es compacta y tiene su propio scroll', () => {
+    const form = readFileSync(new URL('../../Modules/Security/Resources/assets/js/Pages/Roles/Pertials/editForm.vue', import.meta.url), 'utf8');
+
+    // Panel acotado en alto: el botón de guardar deja de quedar a cientos de
+    // píxeles de distancia cuando el rol tiene cientos de permisos.
+    assert.match(form, /max-h-\[65vh\][^"]*overflow-y-auto/);
+
+    // Varias columnas en escritorio y una sola en móvil.
+    assert.match(form, /sm:grid-cols-2 xl:grid-cols-3/);
+
+    // Contador de habilitados por carpeta.
+    assert.match(form, /habilitadosEnModulo\(row\)/);
+});
