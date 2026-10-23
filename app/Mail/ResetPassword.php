@@ -34,10 +34,35 @@ class ResetPassword extends Mailable implements ShouldQueue
      */
     public string $url;
 
-    public function __construct($user)
+    /**
+     * Vista del correo. Por defecto es la genérica; el flujo de recuperación de
+     * organizadores pasa la variante de Pichanguero solo cuando PW00001 = 2.
+     */
+    public string $vista;
+
+    public function __construct($user, ?string $vista = null)
     {
         $this->user = $user;
+        $this->vista = $vista ?: 'emails.reset_password';
         $this->url = route('password.reset', Password::createToken($user));
+    }
+
+    /**
+     * true cuando el correo usa la identidad de Pichanguero.
+     */
+    private function esPichanguero(): bool
+    {
+        return $this->vista === 'emails.reset_password_pichanguero';
+    }
+
+    /**
+     * Asunto del correo según su variante.
+     */
+    private function asunto(): string
+    {
+        return $this->esPichanguero()
+            ? 'Restablece tu contraseña · Pichanguero'
+            : 'Restablecer Contraseña';
     }
 
     /**
@@ -46,7 +71,7 @@ class ResetPassword extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Restablecer Contraseña',
+            subject: $this->asunto(),
         );
     }
 
@@ -55,8 +80,8 @@ class ResetPassword extends Mailable implements ShouldQueue
      */
     public function build()
     {
-        return $this->view('emails.reset_password')
-            ->subject('Restablecer Contraseña')
+        return $this->view($this->vista)
+            ->subject($this->asunto())
             ->with([
                 'url' => $this->url,
                 'user' => $this->user

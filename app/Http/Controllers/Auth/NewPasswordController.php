@@ -13,6 +13,7 @@ use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class NewPasswordController extends Controller
 {
@@ -21,7 +22,13 @@ class NewPasswordController extends Controller
      */
     public function create(Request $request): Response
     {
-        return Inertia::render('Auth/ResetPassword', [
+        // Con PW00001 = 2 el organizador ve la pantalla con la piel de
+        // Pichanguero; el resto de modos conserva la pantalla general.
+        $componente = app(SportsOrganizationService::class)->sportsMode()
+            ? 'Auth/ResetPasswordOrganizer'
+            : 'Auth/ResetPassword';
+
+        return Inertia::render($componente, [
             'email' => $request->email,
             'token' => $request->route('token'),
         ]);

@@ -11,6 +11,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Support\Facades\Mail;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class PasswordResetLinkController extends Controller
 {
@@ -19,7 +20,13 @@ class PasswordResetLinkController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Auth/ForgotPassword', [
+        // Con PW00001 = 2 el organizador ve la pantalla con la piel de
+        // Pichanguero; el resto de modos conserva la pantalla general.
+        $componente = app(SportsOrganizationService::class)->sportsMode()
+            ? 'Auth/ForgotPasswordOrganizer'
+            : 'Auth/ForgotPassword';
+
+        return Inertia::render($componente, [
             'status' => session('status'),
         ]);
     }
@@ -48,8 +55,14 @@ class PasswordResetLinkController extends Controller
         // Genera un token de restablecimiento
 
 
-        // Envía la notificación personalizada
-        Mail::to($user->email)->queue(new ResetPassword($user));
+        // Solo el flujo de recuperación de organizadores con PW00001 = 2 usa la
+        // identidad de Pichanguero. El resto de flujos y modos conserva el
+        // correo genérico.
+        $vista = app(SportsOrganizationService::class)->sportsMode()
+            ? 'emails.reset_password_pichanguero'
+            : null;
+
+        Mail::to($user->email)->queue(new ResetPassword($user, $vista));
 
         return back()->with('status', __('Se ha enviado el enlace de restablecimiento de contraseña.'));
     }

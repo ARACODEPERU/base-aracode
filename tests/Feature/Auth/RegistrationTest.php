@@ -1,36 +1,117 @@
 <?php
 
+use App\Models\Parameter;
+use App\Models\User;
 use App\Providers\RouteServiceProvider;
+use Illuminate\Support\Facades\Hash;
+use Inertia\Testing\AssertableInertia as Assert;
 
-test('registration screen can be rendered', function () {
-    $response = $this->get('/register');
+/*
+|--------------------------------------------------------------------------
+| Registro de organizadores
+|--------------------------------------------------------------------------
+|
+| El alta crea el usuario responsable y su organización con prueba gratuita.
+| La pantalla la elige la portada publicada (config/registro.php), pero el
+| formulario y el envío son los mismos para todas las variantes.
+|
+*/
 
-    $response->assertStatus(200);
+beforeEach(function () {
+    Parameter::updateOrCreate(
+        ['parameter_code' => 'PW00001'],
+        ['description' => 'Pagina web principal', 'control_type' => 'sa', 'value_default' => '2'],
+    );
 });
 
-test('new users can register', function () {
-    $response = $this->post('/register', [
-        'name' => 'Test User',
-        'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-        // La cuenta se crea con datos personales: la aceptacion es obligatoria.
+function datosDeRegistro(array $cambios = []): array
+{
+    return array_merge([
+        'organization_name' => 'Academia Local',
+        'organization_type' => 'persona_natural',
+        'ruc' => null,
+        'first_name' => 'Ana',
+        'apellido_paterno' => 'Pérez',
+        'apellido_materno' => 'Ruiz',
+        'telefono' => '999888777',
+        'tipo_identidad' => 'DNI',
+        'numero_identidad' => '12345678',
+        'sexo' => 'F',
+        'direccion' => 'Av. Siempre Viva 123',
+        'email' => 'ana@example.com',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
         'acepto' => '1',
-    ]);
+    ], $cambios);
+}
+
+it('muestra la variante de torneos en su portada', function () {
+    $this->get('/register')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('Auth/RegisterPichanguero'));
+});
+
+it('responde 404 en las portadas que todavía no habilitan el registro', function () {
+    Parameter::where('parameter_code', 'PW00001')->update(['value_default' => '3']);
+
+    $this->get('/register')->assertNotFound();
+});
+
+it('crea el usuario responsable y su organización con la prueba gratuita', function () {
+    $respuesta = $this->post('/register', datosDeRegistro());
+
+    $respuesta->assertRedirect(RouteServiceProvider::HOME);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(RouteServiceProvider::HOME);
+
+    $usuario = User::where('email', 'ana@example.com')->first();
+    expect($usuario)->not->toBeNull()
+        ->and($usuario->socialevent_organization_id)->not->toBeNull()
+        ->and($usuario->hasRole('sports_organizer'))->toBeTrue();
+
+    $this->assertDatabaseHas('socialevent_organizations', [
+        'id' => $usuario->socialevent_organization_id,
+        'name' => 'Academia Local',
+        'status' => 'trial',
+    ]);
 });
 
-test('no se crea la cuenta sin aceptar los terminos y la politica', function () {
-    $response = $this->post('/register', [
-        'name' => 'Test User',
-        'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+it('no crea la cuenta si el correo ya está registrado', function () {
+    User::create([
+        'name' => 'Otra',
+        'email' => 'ana@example.com',
+        'password' => Hash::make('Password123!'),
     ]);
 
+    $this->post('/register', datosDeRegistro())
+        ->assertRedirect(route('login'))
+        ->assertSessionHas('error');
+
     $this->assertGuest();
-    $this->assertDatabaseMissing('users', ['email' => 'test@example.com']);
-    $response->assertSessionHasErrors('acepto');
+    $this->assertDatabaseCount('users', 1);
+});
+
+it('no crea la cuenta si el número de identidad ya está registrado', function () {
+    User::create([
+        'name' => 'Otra',
+        'email' => 'otra@example.com',
+        'numero_identidad' => '12345678',
+        'password' => Hash::make('Password123!'),
+    ]);
+
+    $this->post('/register', datosDeRegistro())
+        ->assertRedirect(route('login'))
+        ->assertSessionHas('error');
+
+    $this->assertGuest();
+    $this->assertDatabaseMissing('users', ['email' => 'ana@example.com']);
+});
+
+it('no crea nada fuera del modo torneos aunque se envíe la petición', function () {
+    Parameter::where('parameter_code', 'PW00001')->update(['value_default' => '1']);
+
+    $this->post('/register', datosDeRegistro())->assertNotFound();
+
+    $this->assertGuest();
+    $this->assertDatabaseMissing('users', ['email' => 'ana@example.com']);
 });

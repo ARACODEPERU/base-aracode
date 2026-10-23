@@ -45,12 +45,12 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('themes/pichanguero/images/favicon.svg') }}">
 
     {{-- Color de la barra del navegador en móvil --}}
-    <meta name="theme-color" content="#071F36">
+    <meta name="theme-color" content="#101D2D">
 
     {{-- Tipografía: Montserrat para titulares, Inter para interfaz y datos --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:ital,wght@0,600;0,700;0,800;1,800;1,900&display=swap" rel="stylesheet">
 
     {{-- Estilos propios del sitio (fuente: resources/css/pichanguero) --}}
     <link rel="stylesheet" href="{{ asset('themes/pichanguero/css/pichanguero.css') }}">

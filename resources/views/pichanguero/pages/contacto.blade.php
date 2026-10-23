@@ -16,8 +16,8 @@
         <div class="pg-slash left-[-6%] top-20 h-[380px] w-2 rotate-[14deg] opacity-40" aria-hidden="true"></div>
 
         <div class="pg-container relative">
-            <span class="pg-badge pg-badge-accent">Contacto</span>
-            <h1 class="mt-6 text-3xl font-extrabold text-white sm:text-5xl">
+            <p class="pg-kicker">Contacto</p>
+            <h1 class="text-3xl font-extrabold text-white sm:text-5xl">
                 Hablemos de tu <span class="pg-accent">torneo</span>
             </h1>
             <p class="pg-lead mt-5">

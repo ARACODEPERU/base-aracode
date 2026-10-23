@@ -10,6 +10,8 @@
     $inscriptionLabel = $inscriptionLabel ?? (filled($edition->inscription_fee) ? 'S/ ' . number_format((float) $edition->inscription_fee, 0) : null);
     $prizePlaces = $prizePlaces ?? [];
     $hasPrizeSection = $hasPrizeSection ?? (count($prizePlaces) > 0);
+    // La landing viste la identidad fija de Pichanguero; el color de la
+    // edición se conserva solo como punto del distintivo del torneo.
     $accentColor = $accentColor ?? $edition->accentColor();
     $showAppDownload = $showAppDownload ?? ($edition->mobile_enabled && !empty($appDownloadUrl));
     $appDownloadUrl = $appDownloadUrl ?? null;
@@ -45,12 +47,12 @@
     <meta name="twitter:title" content="{{ $seoTitle }}">
     <meta name="twitter:description" content="{{ $seoDescription }}">
     <meta name="twitter:image" content="{{ $seoImage }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     @if (!empty($accentColor))
         <style>
-            :root { --se-accent: {{ $accentColor }}; }
+            :root { --se-edition-accent: {{ $accentColor }}; }
         </style>
     @endif
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     @vite(['Modules/Socialevents/Resources/assets/js/torneos-landing.js'])
 </head>
 <body class="se-landing">
@@ -120,7 +122,6 @@
             </nav>
 
             <div class="se-header__actions">
-                <a href="#contacto" class="se-btn se-btn--primary se-btn--contact-desktop">Contacto</a>
                 <button type="button" class="se-menu-toggle" data-se-menu-toggle aria-expanded="false" aria-controls="se-mobile-nav" aria-label="Abrir menú">
                     <i class="fas fa-bars"></i>
                 </button>

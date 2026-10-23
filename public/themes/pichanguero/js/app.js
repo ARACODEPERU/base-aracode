@@ -92,12 +92,61 @@
         }
     }
 
-    /* ---------- 4) Año actual donde se pida ---------- */
+    /* ---------- 4) Pestañas del panel de la portada ---------- */
+    document.querySelectorAll('[data-pg-tabs]').forEach(function (group) {
+        var tabs = Array.prototype.slice.call(group.querySelectorAll('[role="tab"]'));
+
+        if (!tabs.length) {
+            return;
+        }
+
+        function activate(tab) {
+            tabs.forEach(function (other) {
+                var panel = document.getElementById(other.getAttribute('aria-controls'));
+                var active = other === tab;
+
+                other.setAttribute('aria-selected', active ? 'true' : 'false');
+                other.tabIndex = active ? 0 : -1;
+
+                if (panel) {
+                    panel.hidden = !active;
+                }
+            });
+        }
+
+        tabs.forEach(function (tab, index) {
+            tab.addEventListener('click', function () {
+                activate(tab);
+            });
+
+            tab.addEventListener('keydown', function (event) {
+                var target = null;
+
+                if (event.key === 'ArrowRight') {
+                    target = tabs[(index + 1) % tabs.length];
+                } else if (event.key === 'ArrowLeft') {
+                    target = tabs[(index - 1 + tabs.length) % tabs.length];
+                } else if (event.key === 'Home') {
+                    target = tabs[0];
+                } else if (event.key === 'End') {
+                    target = tabs[tabs.length - 1];
+                }
+
+                if (target) {
+                    event.preventDefault();
+                    activate(target);
+                    target.focus();
+                }
+            });
+        });
+    });
+
+    /* ---------- 5) Año actual donde se pida ---------- */
     document.querySelectorAll('[data-year]').forEach(function (element) {
         element.textContent = String(new Date().getFullYear());
     });
 
-    /* ---------- 5) Tema claro / oscuro ---------- */
+    /* ---------- 6) Tema claro / oscuro ---------- */
     /* El estado vive en el atributo data-tema del <html>, que el layout dejó en
        'claro', o ya en 'oscuro' si había una elección guardada (lo aplica antes
        de pintar, así que aquí no hay nada que corregir a la vista).
