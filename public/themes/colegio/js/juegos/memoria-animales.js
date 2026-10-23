@@ -345,7 +345,23 @@
             });
         } else {
             var rounds = Math.min(settings.rounds || 4, pool.length);
-            targets = shuffle(pool).slice(0, rounds);
+            var previous = null;
+            targets = [];
+
+            // En las rondas al azar no se repite el animal anterior si hay
+            // otras opciones: así el niño no escucha dos veces seguidas lo mismo.
+            while (targets.length < rounds) {
+                var candidates = pool.filter(function (id) {
+                    return id !== previous;
+                });
+
+                if (!candidates.length) {
+                    candidates = pool.slice();
+                }
+
+                previous = pick(candidates);
+                targets.push(previous);
+            }
         }
 
         optionCount = Math.min(settings.options || 3, pool.length);
@@ -1264,14 +1280,4 @@
     buildLevel(0);
     updateChrome();
     showIntro();
-
-    window.__animalesDebug = {
-        ANIMALS: ANIMALS,
-        LEVELS: LEVELS,
-        state: state,
-        soundPool: soundPool,
-        buildSoundActivities: buildSoundActivities,
-        buildMemoryActivity: buildMemoryActivity,
-        buildLevel: buildLevel,
-    };
 })();

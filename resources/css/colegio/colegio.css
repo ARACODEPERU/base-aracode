@@ -4399,6 +4399,12 @@
     white-space: nowrap;
 }
 
+/* El atributo hidden debe ganar al display de la píldora y del botón de audio. */
+.animales-pares[hidden],
+.juego-panel--animales [data-stop-audio][hidden] {
+    display: none;
+}
+
 .animales-stage {
     display: grid;
     align-content: start;
@@ -4936,6 +4942,20 @@
 @media (min-width: 640px) {
     .animales-stage {
         min-height: 380px;
+    }
+
+    /* En pantallas grandes las fotos ganan tamaño sin perder la cuadrícula. */
+    .animales-opciones--2 {
+        max-width: 560px;
+    }
+
+    .animales-opciones--3,
+    .animales-opciones--4 {
+        max-width: 780px;
+    }
+
+    .animales-memoria-wrap {
+        max-width: 720px;
     }
 
     .animales-opciones--3 {
