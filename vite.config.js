@@ -23,7 +23,8 @@ function resolveEditorRoot() {
         }
     }
 
-    return candidates[0];
+    // Sin paquete instalado se usa el sustituto para no romper la compilación.
+    return null;
 }
 
 function resolveEditorCssBundle(root) {
@@ -51,11 +52,22 @@ function resolveEditorDarkCss(root) {
 }
 
 const editorRoot = resolveEditorRoot();
-const editorBundleCss = resolveEditorCssBundle(editorRoot);
-const editorDarkCss = resolveEditorDarkCss(editorRoot);
-const editorEntryJs = fs.existsSync(path.join(editorRoot, "src/index.js"))
-    ? path.join(editorRoot, "src/index.js")
-    : path.join(editorRoot, "dist/aracode-editor.es.js");
+const editorDisponible = editorRoot !== null;
+
+const editorStubEntry = path.resolve(__dirname, "resources/js/stubs/editor-aracode-stub.js");
+const editorStubCss = path.resolve(__dirname, "resources/js/stubs/empty.css");
+
+const editorBundleCss = editorDisponible
+    ? resolveEditorCssBundle(editorRoot)
+    : editorStubCss;
+const editorDarkCss = editorDisponible
+    ? resolveEditorDarkCss(editorRoot)
+    : editorStubCss;
+const editorEntryJs = !editorDisponible
+    ? editorStubEntry
+    : fs.existsSync(path.join(editorRoot, "src/index.js"))
+      ? path.join(editorRoot, "src/index.js")
+      : path.join(editorRoot, "dist/aracode-editor.es.js");
 
 export default defineConfig(({ command }) => {
     const useEditorSource = command === "serve";
@@ -85,19 +97,27 @@ export default defineConfig(({ command }) => {
                 Modules: path.resolve(__dirname, "./Modules"),
                 "@Public": path.resolve(__dirname, "./public"),
                 "@stores": path.resolve(__dirname, "./resources/js/stores"),
-                "@editor-aracode-styles": useEditorSource
-                    ? path.resolve(__dirname, "resources/js/editor-aracode-dev-styles.js")
-                    : path.resolve(__dirname, "resources/js/editor-aracode-prod-styles.js"),
-                ...(useEditorSource
+                "@editor-aracode-styles": !editorDisponible
+                    ? editorStubCss
+                    : useEditorSource
+                      ? path.resolve(__dirname, "resources/js/editor-aracode-dev-styles.js")
+                      : path.resolve(__dirname, "resources/js/editor-aracode-prod-styles.js"),
+                ...(!editorDisponible
                     ? {
-                          "@elmerrodriguez/editor-aracode$": editorEntryJs,
-                          "@elmerrodriguez/editor-aracode/style.css": editorBundleCss,
-                          "@elmerrodriguez/editor-aracode/theme-dark.css": editorDarkCss,
+                          "@elmerrodriguez/editor-aracode/style.css": editorStubCss,
+                          "@elmerrodriguez/editor-aracode/theme-dark.css": editorStubCss,
+                          "@elmerrodriguez/editor-aracode": editorStubEntry,
                       }
-                    : {
-                          "@elmerrodriguez/editor-aracode/style.css": editorBundleCss,
-                          "@elmerrodriguez/editor-aracode/theme-dark.css": editorDarkCss,
-                      }),
+                    : useEditorSource
+                      ? {
+                            "@elmerrodriguez/editor-aracode/style.css": editorBundleCss,
+                            "@elmerrodriguez/editor-aracode/theme-dark.css": editorDarkCss,
+                            "@elmerrodriguez/editor-aracode": editorEntryJs,
+                        }
+                      : {
+                            "@elmerrodriguez/editor-aracode/style.css": editorBundleCss,
+                            "@elmerrodriguez/editor-aracode/theme-dark.css": editorDarkCss,
+                        }),
             },
         },
         optimizeDeps: {
@@ -119,7 +139,7 @@ export default defineConfig(({ command }) => {
             fs: {
                 allow: [
                     path.resolve(__dirname, ".."),
-                    editorRoot,
+                    ...(editorDisponible ? [editorRoot] : []),
                 ],
             },
             watch: {

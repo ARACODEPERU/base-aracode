@@ -103,6 +103,13 @@ const showLeafIcon = ref(false);
 <template>
     <FormSection @submitted="createNow" class="">
         <template #title>
+            <span
+                v-if="sportsMode"
+                class="mb-2 flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-lime-300"
+            >
+                <span class="inline-block h-1.5 w-1.5 rounded-full bg-lime-300"></span>
+                Nuevo torneo
+            </span>
             {{ sportsMode ? 'Detalles del torneo' : 'Eventos Detalles' }}
         </template>
 

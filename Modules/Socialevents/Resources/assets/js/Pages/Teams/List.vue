@@ -112,7 +112,7 @@
                  >
                     <!-- From Uiverse.io by narmesh_sah -->
 
-                    <div v-for="team in teams.data" class="relative bg-white border border-gray-200 border-t-4 border-t-primary shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:border-t-primary dark:shadow-neutral-700/70 p-6">
+                    <div v-for="team in teams.data" class="team-card relative bg-white border border-gray-200 border-t-4 border-t-primary shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:border-t-primary dark:shadow-neutral-700/70 p-6">
 
                         <div class="w-24 h-24 rounded-full bg-gray-100 mx-auto mb-4 overflow-hidden border-2 border-white shadow-md flex items-center justify-center">
                             <img v-if="team.logo_path" :src="xhttp + 'storage/' + team.logo_path" class="w-full h-full object-cover" />

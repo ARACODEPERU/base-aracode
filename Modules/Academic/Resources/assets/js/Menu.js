@@ -20,6 +20,7 @@ import {
     faCalendarWeek,
     faSitemap,
     faFileSignature,
+    faChalkboard,
     faChalkboardUser,
     faLayerGroup,
     faBell,
@@ -320,7 +321,7 @@ const colegioGroup = {
             route: route('aca_virtual_classroom_index'),
             status: false,
             text: 'Aula Virtual',
-            icom: faBook,
+            icom: faChalkboard,
             permissions: 'aca_virtual_listado',
             info: {
                 title: 'Aula Virtual',

@@ -3,11 +3,16 @@
     import { useAppStore } from '@/stores/index';
     import { Head, usePage } from '@inertiajs/vue3';
     import { variablesDeMarca } from '@/utils/colorMarca';
+    import { reservarTemaDeportivo } from '@/utils/temaDeportivo';
 
     const store = useAppStore();
     const page = usePage();
     const showTopButton = ref(false);
     const sportsTheme = computed(() => page.props.sportsOrganization?.mode === true);
+
+    // Misma reserva que AppLayout: el desmontaje de un layout anterior no debe
+    // borrar el tema que ya publicó el nuevo.
+    const liberarTemaDeportivo = reservarTemaDeportivo();
     const companyData = page.props.company;
     const marcaEstilo = computed(() =>
         variablesDeMarca(sportsTheme.value
@@ -26,8 +31,10 @@
         }
     }, { immediate: true });
 
+    // Solo se limpia la clase si no quedó otro layout montado (Inertia monta la
+    // página nueva antes de desmontar la anterior).
     onBeforeUnmount(() => {
-        if (typeof document !== 'undefined') {
+        if (liberarTemaDeportivo() && typeof document !== 'undefined') {
             document.documentElement.classList.remove('theme-torneos');
         }
     });
