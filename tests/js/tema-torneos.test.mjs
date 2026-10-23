@@ -39,13 +39,30 @@ test('los estilos futboleros usan el mismo fondo de estadio del login en el cuer
 });
 
 test('los estilos futboleros incluyen header, sidebar, botones y diálogos', () => {
-    assert.match(estilos, /html\.theme-torneos \.main-content > header/);
+    // El chrome usa la paleta oficial: azul noche para el header y el sidebar,
+    // con el lima reservado para los estados activos y los acentos.
+    assert.match(
+        estilos,
+        /html\.theme-torneos \.main-content > header\s*\{\s*background:\s*linear-gradient\(105deg, #0d1b29 0%, #122a3a/
+    );
     assert.match(estilos, /html\.theme-torneos nav\.sidebar/);
-    assert.match(estilos, /html\.theme-torneos nav\.sidebar > #divSiempreVisible > div:nth-child\(2\)\s*\{\s*background-color:\s*#f0fdf4/);
-    assert.match(estilos, /html\.theme-torneos nav\.sidebar \.sidebar-option-item > :is\(button, a\)/);
-    assert.match(estilos, /html\.theme-torneos nav\.sidebar \.sidebar-option-item > :is\(button, a\)\.border-blue-200/);
-    assert.match(estilos, /html\.theme-torneos nav\.sidebar \.sidebar-option-item > :is\(button, a\)\.border-orange-200/);
-    assert.match(estilos, /html\.theme-torneos \.dark nav\.sidebar \.sidebar-option-item > :is\(button, a\)/);
+    assert.match(estilos, /html\.theme-torneos nav\.sidebar #divSiempreVisible\s*\{\s*background-color:\s*#071420/);
+    assert.match(
+        estilos,
+        /html\.theme-torneos nav\.sidebar > #divSiempreVisible > div:nth-child\(2\)\s*\{\s*background:\s*linear-gradient\(180deg, rgb\(8 27 41 \/ 97%\)/
+    );
+    assert.match(
+        estilos,
+        /html\.theme-torneos nav\.sidebar \.sidebar-option-item > :is\(button, a\)\s*\{\s*background:\s*linear-gradient\(150deg/
+    );
+    assert.match(
+        estilos,
+        /html\.theme-torneos nav\.sidebar > #divSiempreVisible > div:first-child :is\(button, a\)\.bg-primary,/
+    );
+    assert.match(
+        estilos,
+        /html\.theme-torneos nav\.sidebar \.sidebar-option-item > :is\(button, a\)\[class~="from-primary"\][\s\S]*?color:\s*#101d2d;/
+    );
     assert.match(estilos, /html\.theme-torneos nav\.sidebar \.sidebar-option-item a\.rounded-lg\.bg-blue-50/);
     assert.match(sidebar, /class="sidebar fixed/);
     assert.match(sidebar, /class="sidebar-option-item group relative"/);

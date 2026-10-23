@@ -112,6 +112,10 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(RouteServiceProvider::HOME);
+        // El alta crea al organizador y lo deja en su panel deportivo; si el
+        // modo cambiara, cae en el dashboard general.
+        return redirect(
+            $organizationService->organizerHome($user) ?? RouteServiceProvider::HOME
+        );
     }
 }

@@ -69,7 +69,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(RouteServiceProvider::HOME);
+        // El organizador deportivo entra a su panel de Gestión Deportiva; las
+        // demás cuentas conservan el dashboard general. Se respeta la URL que
+        // el usuario intentó abrir antes de autenticarse.
+        $home = app(SportsOrganizationService::class)->organizerHome($request->user())
+            ?? RouteServiceProvider::HOME;
+
+        return redirect()->intended($home);
     }
 
     /**

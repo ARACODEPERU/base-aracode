@@ -25,6 +25,36 @@ class SportsOrganizationService
         return $this->sportsMode();
     }
 
+    /**
+     * Pantalla de inicio del organizador deportivo.
+     *
+     * En modo torneos lleva al panel de Gestión Deportiva; si la organización
+     * está suspendida, a "Mis pagos" para que pueda reactivarse. El resto de
+     * cuentas conserva el dashboard general del sistema.
+     */
+    public function organizerHome($user): ?string
+    {
+        if (! $this->sportsMode() || ! $user) {
+            return null;
+        }
+
+        if (! $user->hasRole('sports_organizer') || ! $this->organizationId($user)) {
+            return null;
+        }
+
+        // Una organización suspendida no puede abrir el panel deportivo, pero
+        // conserva "Mis pagos" para recargar saldo y reactivarse.
+        if ($this->organizationStatus($user) === 'suspended') {
+            return route('even_organizations.topup.index');
+        }
+
+        if (! $this->canRead($user)) {
+            return null;
+        }
+
+        return route('even_dashboard');
+    }
+
     public function isSuperAdmin($user): bool
     {
         return $user && ($user->hasRole('admin') || $user->hasRole('Administrador'));

@@ -60,7 +60,8 @@ it('responde 404 en las portadas que todavía no habilitan el registro', functio
 it('crea el usuario responsable y su organización con la prueba gratuita', function () {
     $respuesta = $this->post('/register', datosDeRegistro());
 
-    $respuesta->assertRedirect(RouteServiceProvider::HOME);
+    // El alta autentica al organizador y lo deja en su panel deportivo.
+    $respuesta->assertRedirect(route('even_dashboard'));
 
     $this->assertAuthenticated();
 
