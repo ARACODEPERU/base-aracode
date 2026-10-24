@@ -68,6 +68,11 @@ html.theme-torneos {
     --torneos-dropdown-bg: #f0fdf4;
     --torneos-dropdown-border: #6ee7b7;
     --torneos-dropdown-shadow: 0 12px 32px rgb(2 44 34 / 22%);
+    /* Texto propio de las listas desplegables. No reutiliza el token de los
+       controles porque dentro de FormSection ese token cambia a claro para
+       los campos del panel deportivo y dejaría el texto ilegible sobre el
+       fondo claro de esta lista. */
+    --torneos-dropdown-text: #0f2e25;
     --torneos-dropdown-option-hover: #dcfce7;
     --torneos-dropdown-option-selected: #d1fae5;
     --torneos-dropdown-option-selected-text: #064e3b;
@@ -138,6 +143,7 @@ html.theme-torneos body.dark {
     --torneos-dropdown-bg: #052e24;
     --torneos-dropdown-border: #047857;
     --torneos-dropdown-shadow: 0 14px 36px rgb(0 0 0 / 48%);
+    --torneos-dropdown-text: #ecfdf5;
     --torneos-dropdown-option-hover: #064e3b;
     --torneos-dropdown-option-selected: #047857;
     --torneos-dropdown-option-selected-text: #ecfccb;
@@ -1635,8 +1641,15 @@ html.theme-torneos ul.absolute.z-50.bg-white,
 html.theme-torneos .max-h-48.overflow-y-auto.rounded-lg.border.bg-white {
     background-color: var(--torneos-dropdown-bg) !important;
     border-color: var(--torneos-dropdown-border) !important;
-    color: var(--torneos-control-text) !important;
+    color: var(--torneos-dropdown-text) !important;
     box-shadow: var(--torneos-dropdown-shadow);
+}
+
+/* Las opciones no heredan el texto claro de los campos del FormSection:
+   en modo claro la lista tiene fondo claro y necesita texto oscuro. */
+html.theme-torneos ul.absolute.z-50.bg-white > li,
+html.theme-torneos .max-h-48.overflow-y-auto.rounded-lg.border.bg-white > button {
+    color: var(--torneos-dropdown-text) !important;
 }
 
 html.theme-torneos ul.absolute.z-50.bg-white > li:hover,

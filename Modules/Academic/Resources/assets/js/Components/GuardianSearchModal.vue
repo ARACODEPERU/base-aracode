@@ -10,8 +10,7 @@
     import TextInput from '@/Components/TextInput.vue';
     import { faShareFromSquare } from "@fortawesome/free-solid-svg-icons";
     import Swal2 from 'sweetalert2';
-    import Multiselect from "@suadelabs/vue3-multiselect";
-    import "@suadelabs/vue3-multiselect/dist/vue3-multiselect.css";
+    import SelectCities from '@/Components/SelectCities.vue';
     import iconCompany from '@/Components/vristo/icon/icon-company.vue';
     import iconLoader from '@/Components/vristo/icon/icon-loader.vue';
 
@@ -173,10 +172,7 @@
                     form.full_name =  res.data.person['razon_social'];
                     form.email = null;
                     form.address = res.data.person['direccion'] == '-' ? null : res.data.person['direccion'];
-                    form.ubigeo = {
-                        district_id: res.data.person['ubigeo'],
-                        city_name: res.data.person['departamento'] + '-' + res.data.person['provincia'] + '-'+ res.data.person['distrito']
-                    };
+                    form.ubigeo = res.data.person['ubigeo'];
                     form.ubigeo_description = res.data.person['departamento'] + '-' + res.data.person['provincia'] + '-'+ res.data.person['distrito'];
                     form.estado = res.data.person['estado'];
                     form.condicion = res.data.person['condicion'];
@@ -242,23 +238,13 @@
                         <InputError :message="form.errors.email" class="mt-2" />
                     </div>
                     <div class="col-span-6 sm:col-span-2">
-                        <InputLabel for="guardian_city" value="Ciudad" />
-                        <multiselect
-                            id="guardian_city"
+                        <SelectCities
                             v-model="form.ubigeo"
+                            v-model:description="form.ubigeo_description"
                             :options="ubigeo"
-                            class="custom-multiselect"
-                            :searchable="true"
-                            placeholder="Buscar ciudad"
-                            selected-label="seleccionado"
-                            select-label="Elegir"
-                            deselect-label="Quitar"
-                            label="city_name"
-                            track-by="district_id"
-                        ></multiselect>
-                        <div>
-                            <InputError :message="form.errors.ubigeo" class="mt-2" />
-                        </div>
+                            label="Ciudad"
+                            :error="form.errors.ubigeo"
+                        />
                     </div>
                     <div class="col-span-6 sm:col-span-2">
                         <InputLabel for="guardian_address" value="Dirección" />

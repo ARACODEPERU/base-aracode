@@ -7,6 +7,7 @@ const page = usePage();
 import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
 import Swal from 'sweetalert2';
 import InputLabel from '@/Components/InputLabel.vue';
+import SelectCities from '@/Components/SelectCities.vue';
 import TextInput from '@/Components/TextInput.vue';
 import InputError from '@/Components/InputError.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -376,7 +377,6 @@ const summary = ref(props.patientSummary);
 const showCreatePatientModal = ref(false);
 const creatingPatient = ref(false);
 const createPatientErrors = ref({});
-const createPatientUbigeos = ref([]);
 const identityDocumentTypeOptions = computed(() => (
     Array.isArray(props.identityDocumentTypes)
         ? props.identityDocumentTypes
@@ -511,7 +511,6 @@ const resetCreatePatientForm = () => {
         gender: 'M',
     });
     createPatientErrors.value = {};
-    createPatientUbigeos.value = [];
 };
 
 const openCreatePatientModal = () => {
@@ -529,25 +528,6 @@ const closeCreatePatientModal = () => {
     }
 
     showCreatePatientModal.value = false;
-};
-
-const filterCreatePatientCities = () => {
-    const term = (createPatientForm.ubigeo_description || '').trim().toLowerCase();
-
-    if (!term) {
-        createPatientUbigeos.value = [];
-        return;
-    }
-
-    createPatientUbigeos.value = ubigeoOptions.value
-        .filter((row) => `${row.department_name} ${row.province_name} ${row.district_name}`.toLowerCase().includes(term))
-        .slice(0, 30);
-};
-
-const selectCreatePatientCity = (item) => {
-    createPatientForm.ubigeo_description = `${item.department_name}-${item.province_name}-${item.district_name}`;
-    createPatientForm.ubigeo = item.district_id;
-    createPatientUbigeos.value = [];
 };
 
 const createPatientFromAttention = () => {
@@ -2236,28 +2216,14 @@ watch(selectedCie10, (value) => {
                             <InputError :message="createPatientErrors.address?.[0]" class="mt-1" />
                         </div>
                         <div class="md:col-span-3">
-                            <InputLabel value="Ciudad *" />
-                            <div class="relative">
-                                <TextInput
-                                    v-model="createPatientForm.ubigeo_description"
-                                    type="text"
-                                    class="form-input"
-                                    placeholder="Buscar distrito"
-                                    @input="filterCreatePatientCities"
-                                />
-                                <div v-if="createPatientUbigeos.length" class="absolute z-30 mt-1 max-h-52 w-full overflow-auto rounded border border-slate-200 bg-white shadow dark:border-slate-700 dark:bg-slate-900">
-                                    <button
-                                        v-for="item in createPatientUbigeos"
-                                        :key="item.district_id"
-                                        type="button"
-                                        class="block w-full px-3 py-2 text-left text-sm hover:bg-primary/10"
-                                        @click="selectCreatePatientCity(item)"
-                                    >
-                                        {{ item.department_name }}-{{ item.province_name }}-{{ item.district_name }}
-                                    </button>
-                                </div>
-                            </div>
-                            <InputError :message="createPatientErrors.ubigeo?.[0]" class="mt-1" />
+                            <SelectCities
+                                v-model="createPatientForm.ubigeo"
+                                v-model:description="createPatientForm.ubigeo_description"
+                                :options="ubigeoOptions"
+                                label="Ciudad"
+                                required
+                                :error="createPatientErrors.ubigeo?.[0]"
+                            />
                         </div>
                         <div class="md:col-span-2">
                             <InputLabel value="Telefono *" />

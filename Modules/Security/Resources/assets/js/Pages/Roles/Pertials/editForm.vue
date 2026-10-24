@@ -246,7 +246,7 @@
                 </div>
                 <!-- Un panel con scroll propio: con cientos de permisos la página
                      no se alarga hasta el botón de guardar. -->
-                <div class="permissions-panel max-h-[65vh] overflow-y-auto overscroll-contain rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-[#0e1726]">
+                <div class="permissions-panel rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-[#0e1726]">
                     <ul>
                         <li
                             v-for="row in filteredSorted"

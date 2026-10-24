@@ -9,6 +9,7 @@ import Keypad from '@/Components/Keypad.vue';
 import Swal2 from 'sweetalert2';
 import { ref, onMounted } from 'vue';
 import { Select, SelectOption } from 'ant-design-vue';
+import SelectCities from '@/Components/SelectCities.vue';
 import Multiselect from '@suadelabs/vue3-multiselect';
 import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
 
@@ -54,11 +55,6 @@ const getFlagImage = (path) => {
 }
 
 const filteredCountries = ref([]);
-const ubigeoSelected = ref({
-    district_id: props.student.ubigeo,
-    ubigeo_description: props.student.ubigeo_description
-})
-
 const form = useForm({
     id: props.student.id,
     student_id: props.student.student_id,
@@ -108,11 +104,6 @@ const createPatient = () => {
     });
 }
 
-
-const selectCity = () => {
-    form.ubigeo_description = ubigeoSelected.value.ubigeo_description;
-    form.ubigeo = ubigeoSelected.value.district_id;
-}
 
 const imagePreviewRef = ref(null);
 
@@ -275,22 +266,13 @@ const handleChange = (val) => {
             <div class="col-span-6 sm:col-span-3">
                 <InputLabel for="ubigeo" value="Ciudad *" />
                 <template v-if="form.country_id == 1">
-                    <multiselect
-                        id="industry_id"
-                        :model-value="ubigeoSelected"
-                        v-model="ubigeoSelected"
+                    <SelectCities
+                        v-model="form.ubigeo"
+                        v-model:description="form.ubigeo_description"
                         :options="ubigeo"
-                        class="custom-multiselect"
-                        :searchable="true"
-                        placeholder="Buscar"
-                        selected-label="seleccionado"
-                        select-label="Elegir"
-                        deselect-label="Quitar"
-                        label="ubigeo_description"
-                        track-by="district_id"
-                        @update:model-value="selectCity"
-                    ></multiselect>
-                    <InputError :message="form.errors.ubigeo" class="mt-2" />
+                        label=""
+                        :error="form.errors.ubigeo"
+                    />
                 </template>
                 <template v-else>
                     <TextInput

@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
 import CropperImage from '@/Components/CropperImage.vue';
+import SelectCities from '@/Components/SelectCities.vue';
 import Swal2 from 'sweetalert2';
 import { ref, watch } from 'vue';
 
@@ -69,24 +70,6 @@ const updatePatient = () => {
             //form.reset()
         },
     });
-}
-
-const searchUbigeos = ref([]);
-
-const filterCities = () => {
-    if (form.ubigeo_description.trim() === '') {
-        searchUbigeos.value = [];
-        return;
-    }
-
-    searchUbigeos.value = props.ubigeo.filter(row =>
-        row.district_name.toLowerCase().includes(form.ubigeo_description.toLowerCase())
-    );
-}
-const selectCity = (item) => {
-    form.ubigeo_description = item.department_name+'-'+item.province_name+'-'+item.district_name;
-    form.ubigeo = item.district_id;
-    searchUbigeos.value = []; // Limpiar la lista de búsqueda después de seleccionar una ciudad
 }
 
 const loadFile = (event) => {
@@ -208,21 +191,14 @@ const cropImageAndSave = (res) => {
                 <InputError :message="form.errors.address" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-6 ">
-                <InputLabel for="ubigeo" value="Ciudad *" />
-                <div class="relative">
-                    <TextInput 
-                    v-model="form.ubigeo_description" 
-                    @input="filterCities"
-                    placeholder="Buscar Distrito"
-                    type="text" 
-                    class="block w-full mt-1" />
-                    <ul v-if="searchUbigeos && searchUbigeos.length > 0" style="max-height: 200px; overflow-y: auto;" class="list-disc list-inside absolute z-50 w-full bg-white border border-gray-300 rounded-md mt-1">
-                        <li v-for="item in searchUbigeos" :key="item.id" class="px-4 cursor-pointer hover:bg-gray-100" @click="selectCity(item)">
-                            {{ item.department_name+'-'+item.province_name+'-'+item.district_name }}
-                        </li>
-                    </ul>
-                </div>
-                <InputError :message="form.errors.ubigeo" class="mt-2" />
+                <SelectCities
+                    v-model="form.ubigeo"
+                    v-model:description="form.ubigeo_description"
+                    :options="ubigeo"
+                    label="Ciudad"
+                    required
+                    :error="form.errors.ubigeo"
+                />
             </div>
             <div class="col-span-6 sm:col-span-3 ">
                 <InputLabel for="telephone" value="Teléfono *" />

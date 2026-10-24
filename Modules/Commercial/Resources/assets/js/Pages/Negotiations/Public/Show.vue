@@ -5,6 +5,7 @@ import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
 import Multiselect from "@suadelabs/vue3-multiselect";
+import SelectCities from '@/Components/SelectCities.vue';
 import "@suadelabs/vue3-multiselect/dist/vue3-multiselect.css";
 import { useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch, nextTick } from "vue";
@@ -77,7 +78,6 @@ const accepted = ref(false);
 const searchLoading = ref(false);
 const fileInput = ref(null);
 const voucherPreview = ref(null);
-const ubigeoSelected = ref(null);
 
 const form = useForm({
     accepted: false,
@@ -290,11 +290,6 @@ const onlyNumbers = () => {
     form.number = form.number ? String(form.number).replace(/\D/g, "") : null;
 };
 
-const selectCity = () => {
-    form.ubigeo = ubigeoSelected.value?.district_id ?? null;
-    form.ubigeo_description = ubigeoSelected.value?.ubigeo_description ?? null;
-};
-
 // Carga la ficha de una persona (busqueda interna o cuenta existente). Sus datos
 // quedan verificados al venir de una fuente confiable, asi que no se pide RENIEC.
 const loadVerifiedPerson = (person) => {
@@ -336,7 +331,6 @@ const loadVerifiedPerson = (person) => {
     } else if (person.ubigeo) {
         form.ubigeo = person.ubigeo;
         form.ubigeo_description = person.ubigeo_description ?? form.ubigeo_description;
-        ubigeoSelected.value = { district_id: person.ubigeo, ubigeo_description: person.ubigeo_description };
     }
 
     // La verificacion se aplica un tick despues: si la ficha trae otro tipo de documento,
@@ -580,7 +574,6 @@ watch(() => form.document_type_id, (current, previous) => {
     if (isForeignLocation.value) {
         form.ubigeo = null;
         form.ubigeo_description = null;
-        ubigeoSelected.value = null;
     } else {
         form.foreign_country_id = null;
         form.foreign_state = null;
@@ -1358,22 +1351,14 @@ watch(brickFormVisible, async (visible) => {
 
                             <template v-if="!isForeignLocation">
                                 <div class="col-span-6 sm:col-span-3">
-                                    <InputLabel for="ubigeo" value="Ciudad *" />
-                                    <multiselect
-                                        id="ubigeo"
-                                        v-model="ubigeoSelected"
+                                    <SelectCities
+                                        v-model="form.ubigeo"
+                                        v-model:description="form.ubigeo_description"
                                         :options="ubigeo"
-                                        class="custom-multiselect"
-                                        :searchable="true"
-                                        placeholder="Buscar ciudad"
-                                        selected-label="seleccionado"
-                                        select-label="Elegir"
-                                        deselect-label="Quitar"
-                                        label="ubigeo_description"
-                                        track-by="district_id"
-                                        @update:model-value="selectCity"
-                                    ></multiselect>
-                                    <InputError :message="form.errors.ubigeo" class="mt-1" />
+                                        label="Ciudad"
+                                        required
+                                        :error="form.errors.ubigeo"
+                                    />
                                 </div>
                             </template>
 

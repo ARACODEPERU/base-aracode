@@ -5,8 +5,7 @@ import flatPickr from 'vue-flatpickr-component';
 import 'flatpickr/dist/flatpickr.css';
 import { Spanish } from 'flatpickr/dist/l10n/es.js';
 import InputError from '@/Components/InputError.vue';
-import Multiselect from '@suadelabs/vue3-multiselect';
-import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
+import SelectCities from '@/Components/SelectCities.vue';
 import IconLinkedin from '@/Components/vristo/icon/icon-linkedin.vue';
 import IconTwitter from '@/Components/vristo/icon/icon-twitter.vue';
 import IconFacebook from '@/Components/vristo/icon/icon-facebook.vue';
@@ -45,7 +44,8 @@ import Swal2 from 'sweetalert2';
         email: (props.person && props.person.email) ? props.person.email : user_email,
         image: props.person ? props.person.image : null,
         address: props.person ? props.person.address : null,
-        ubigeo: props.person ? {"district_id" : props.person.ubigeo, "name_city" : props.person.ubigeo_description} : null,
+        ubigeo: props.person ? props.person.ubigeo : null,
+        ubigeo_description: props.person ? props.person.ubigeo_description : null,
         birthdate: props.person ? props.person.birthdate : null,
         names: props.person ? props.person.names : null,
         father_lastname: props.person ? props.person.father_lastname : null,
@@ -210,21 +210,13 @@ import Swal2 from 'sweetalert2';
                 <!-- UBIGEO PERUANO -->
                 <template v-if="!isForeignDocument">
                     <div class="col-span-3 sm:col-span-2 md:col-span-2">
-                        <label for="ubigeo">Ciudad</label>
-                        <multiselect
-                            id="ubigeo"
+                        <SelectCities
                             v-model="form.ubigeo"
+                            v-model:description="form.ubigeo_description"
                             :options="ubigeo"
-                            class="custom-multiselect"
-                            :searchable="true"
-                            placeholder="Buscar ciudad"
-                            selected-label="seleccionado"
-                            select-label="Elegir"
-                            deselect-label="Quitar"
-                            label="name_city"
-                            track-by="district_id"
-                            ></multiselect>
-                        <InputError class="mt-2" :message="form.errors.ubigeo" />
+                            label="Ciudad"
+                            :error="form.errors.ubigeo"
+                        />
                     </div>
                 </template>
 

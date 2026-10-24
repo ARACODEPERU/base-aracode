@@ -16,6 +16,7 @@
     import flatPickr from 'vue-flatpickr-component';
     import 'flatpickr/dist/flatpickr.css';
     import { Spanish } from "flatpickr/dist/l10n/es.js"
+    import SelectCities from '@/Components/SelectCities.vue';
     import Multiselect from '@suadelabs/vue3-multiselect';
     import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
     import relationships from '@/Components/vristo/selects/relationships.vue';
@@ -49,11 +50,6 @@
             type: Object,
             default: () => ({})
         }
-    });
-
-    const ubigeoSelected = ref({
-        ubigeo_description: null,
-        district_id: null
     });
 
     const form = useForm({
@@ -108,11 +104,6 @@
     const closeModalChildren = () => {
         displayModalChildren.value = false;
     };
-
-    const selectCity = () => {
-        form.ubigeo_description = ubigeoSelected.value.ubigeo_description;
-        form.ubigeo = ubigeoSelected.value.district_id;
-    }
 
     const createBeliever = () => {
         form.post(route('cigle_member_believing_store'), {
@@ -190,9 +181,6 @@
                 form.email = result.data.person.email;
                 form.status = result.data.person.status;
                 form.gender = result.data.person.gender;
-
-                ubigeoSelected.value.ubigeo_description = result.data.person.ubigeo_description;
-                ubigeoSelected.value.district_id = result.data.person.ubigeo;
 
                 let personRelatives = result.data.person.relatives;
 
@@ -500,24 +488,15 @@
                         <InputError :message="form.errors.address" class="mt-2" />
                     </div>
                     <div class="col-span-6 sm:col-span-3 ">
-                        <InputLabel for="ubigeo" value="Ciudad *" />
-                        <multiselect
-                            id="industry_id"
-                            :model-value="ubigeoSelected"
-                            v-model="ubigeoSelected"
+                        <SelectCities
+                            v-model="form.ubigeo"
+                            v-model:description="form.ubigeo_description"
                             :options="ubigeo"
-                            class="custom-multiselect"
-                            :searchable="true"
-                            placeholder="Buscar"
-                            selected-label="seleccionado"
-                            select-label="Elegir"
-                            deselect-label="Quitar"
-                            label="ubigeo_description"
-                            track-by="district_id"
-                            @update:model-value="selectCity"
-                            :disabled="formIsDisabled" :class="formIsDisabled ? 'bg-gray-300/50 cursor-not-allowed' : ''"
-                        ></multiselect>
-                        <InputError :message="form.errors.ubigeo" class="mt-2" />
+                            label="Ciudad"
+                            required
+                            :disabled="formIsDisabled"
+                            :error="form.errors.ubigeo"
+                        />
                     </div>
                     <div class="sm:col-span-2">
                         <InputLabel for="telephone" value="Teléfono *" />

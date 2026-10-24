@@ -12,9 +12,8 @@
     import 'datatables.net-buttons'; // Importa el plugin de botones
     import 'datatables.net-buttons-dt'; // Importa los estilos de los botones
     import es_PE from '@/Components/vristo/datatables/datatables-es.js'
-    import { ref, onMounted, computed } from 'vue';
-    import Multiselect from '@suadelabs/vue3-multiselect';
-    import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
+    import { ref, onMounted, computed, watch } from 'vue';
+    import SelectCities from '@/Components/SelectCities.vue';
     import { faPencil } from "@fortawesome/free-solid-svg-icons";
 
     DataTable.use(DataTablesCore);
@@ -107,16 +106,8 @@
         ...props.ubigeo
     ]);
 
-    const ubigeoSelected = ref({
-        ubigeo_description: null,
-        district_id: null
-    });
-
-    const selectCity = () => {
-        //filters.ubigeo_description = ubigeoSelected.value.ubigeo_description;
-        filters.value.ubigeo = ubigeoSelected.value.district_id;
-        refreshTable();
-    }
+    // El filtro por ciudad se aplica en cuanto cambia la selección.
+    watch(() => filters.value.ubigeo, () => refreshTable());
 </script>
 <template>
     <AppLayout title="Comunidad de la iglesia">
@@ -172,22 +163,12 @@
                         </select>
                     </div>
                     <div class="col-span-6 sm:col-span-2">
-                        <InputLabel for="ubigeo" value="Ciudad" />
-                        <multiselect
-                            id="industry_id"
-                            :model-value="ubigeoSelected"
-                            v-model="ubigeoSelected"
+                        <SelectCities
+                            v-model="filters.ubigeo"
                             :options="optionsWithAll"
-                            class="custom-multiselect"
-                            :searchable="true"
+                            label="Ciudad"
                             placeholder="Todos"
-                            selected-label="seleccionado"
-                            select-label="Elegir"
-                            deselect-label="Quitar"
-                            label="ubigeo_description"
-                            track-by="district_id"
-                            @update:model-value="selectCity"
-                        ></multiselect>
+                        />
                     </div>
                 </div>
                 <DataTable ref="memberTable" :options="options" :columns="columns">
