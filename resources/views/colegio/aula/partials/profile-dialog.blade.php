@@ -42,7 +42,7 @@
             </p>
         @endif
 
-        <form method="POST" action="{{ route('colegio.inicial.profile.password') }}" class="mt-4">
+        <form method="POST" action="{{ route('colegio.aula.profile.password') }}" class="mt-4">
             @csrf
 
             <p class="text-sm font-extrabold text-cole-forest">Cambiar mi contraseña</p>

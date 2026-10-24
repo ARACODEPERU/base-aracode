@@ -320,8 +320,12 @@ class AcaVirtualClassroomController extends Controller
                 'file_name' => $resource->path ? basename($resource->path) : null,
             ])->values(),
             'activities' => $course->activities->map(function (AcaVirtualActivity $activity) {
-                // El intento de cada alumno permite al docente revisar respuestas abiertas.
-                $attemptsByStudent = $activity->attempts->keyBy('student_id');
+                // Con varios intentos, la revisión del docente usa el último de
+                // cada alumno: su nota es la que reemplaza a la anterior.
+                $attemptsByStudent = $activity->attempts
+                    ->sortByDesc('attempt_number')
+                    ->unique('student_id')
+                    ->keyBy('student_id');
 
                 return [
                 'id' => $activity->id,
@@ -335,6 +339,9 @@ class AcaVirtualClassroomController extends Controller
                 'open_at' => $activity->open_at?->format('Y-m-d\\TH:i'),
                 'close_at' => $activity->close_at?->format('Y-m-d\\TH:i'),
                 'allow_late' => $activity->allow_late,
+                'attempts_allowed' => max(1, (int) ($activity->attempts_allowed ?? 1)),
+                'allow_result_download' => (bool) $activity->allow_result_download,
+                'duration_minutes' => max(1, (int) ($activity->duration_minutes ?? 30)),
                 'max_score' => $activity->max_score,
                 'grading_scale' => $activity->grading_scale,
                 'sort_order' => $activity->sort_order,
@@ -352,6 +359,7 @@ class AcaVirtualClassroomController extends Controller
                 'questions_points' => round((float) $activity->questions->sum('points'), 2),
                 'auto_graded_count' => $activity->attempts
                     ->where('status', AcaVirtualQuizAttempt::STATUS_FINISHED)
+                    ->unique('student_id')
                     ->count(),
                 'questions' => $activity->questions->map(fn (AcaVirtualActivityQuestion $question) => [
                     'id' => $question->id,
@@ -521,6 +529,9 @@ class AcaVirtualClassroomController extends Controller
                     'open_at' => null,
                     'close_at' => null,
                     'allow_late' => $activity->allow_late,
+                    'attempts_allowed' => max(1, (int) ($activity->attempts_allowed ?? 1)),
+                    'allow_result_download' => (bool) $activity->allow_result_download,
+                    'duration_minutes' => max(1, (int) ($activity->duration_minutes ?? 30)),
                     'max_score' => $activity->max_score,
                     'grading_scale' => $activity->grading_scale,
                     'sort_order' => $activity->sort_order,
@@ -877,6 +888,11 @@ class AcaVirtualClassroomController extends Controller
             'open_at' => $validated['open_at'] ?? null,
             'close_at' => $validated['close_at'] ?? null,
             'allow_late' => $request->boolean('allow_late'),
+            'attempts_allowed' => $validated['type'] === 'quiz' ? max(1, (int) ($validated['attempts_allowed'] ?? 1)) : 1,
+            'allow_result_download' => $validated['type'] === 'quiz' && $request->boolean('allow_result_download'),
+            // La duración solo se usa en evaluaciones; en otros tipos queda el
+            // valor por defecto para mantener la columna completa.
+            'duration_minutes' => max(1, min(300, (int) ($validated['duration_minutes'] ?? 30))),
             'max_score' => $validated['max_score'] ?? 20,
             'grading_scale' => $validated['grading_scale'] ?? 'numeric',
             'sort_order' => ($maxOrder ?? -1) + 1,
@@ -907,6 +923,11 @@ class AcaVirtualClassroomController extends Controller
             'open_at' => $validated['open_at'] ?? null,
             'close_at' => $validated['close_at'] ?? null,
             'allow_late' => $request->boolean('allow_late'),
+            'attempts_allowed' => $validated['type'] === 'quiz' ? max(1, (int) ($validated['attempts_allowed'] ?? 1)) : 1,
+            'allow_result_download' => $validated['type'] === 'quiz' && $request->boolean('allow_result_download'),
+            // La duración solo se usa en evaluaciones; en otros tipos queda el
+            // valor por defecto para mantener la columna completa.
+            'duration_minutes' => max(1, min(300, (int) ($validated['duration_minutes'] ?? 30))),
             'max_score' => $validated['max_score'] ?? $activity->max_score,
             'grading_scale' => $validated['grading_scale'] ?? $activity->grading_scale,
             'status' => $request->has('status') ? $request->boolean('status') : $activity->status,
@@ -1062,6 +1083,9 @@ class AcaVirtualClassroomController extends Controller
             'open_at' => 'nullable|date',
             'close_at' => 'nullable|date|after_or_equal:open_at',
             'allow_late' => 'nullable|boolean',
+            'attempts_allowed' => 'nullable|integer|min:1|max:20',
+            'allow_result_download' => 'nullable|boolean',
+            'duration_minutes' => 'nullable|integer|min:1|max:300',
             'max_score' => 'nullable|numeric|min:0|max:100',
             'grading_scale' => ['nullable', Rule::in(['numeric', 'qualitative'])],
             'status' => 'nullable|boolean',

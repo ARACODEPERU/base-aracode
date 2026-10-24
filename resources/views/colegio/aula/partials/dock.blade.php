@@ -3,7 +3,7 @@
     lo decide cada vista con $dockActive.
 --}}
 <nav class="aula-dock" aria-label="Navegación del aula">
-    <a href="{{ route('colegio.inicial.dashboard') }}"
+    <a href="{{ route('colegio.aula.dashboard') }}"
        class="aula-dock__item {{ ($dockActive ?? '') === 'inicio' ? 'is-active' : '' }}"
        @if (($dockActive ?? '') === 'inicio') aria-current="page" @endif>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -13,7 +13,7 @@
         Inicio
     </a>
 
-    <a href="{{ route('colegio.inicial.dashboard') }}#cursos"
+    <a href="{{ route('colegio.aula.dashboard') }}#cursos"
        class="aula-dock__item {{ ($dockActive ?? '') === 'cursos' ? 'is-active' : '' }}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <rect x="3.5" y="3.5" width="7" height="7" rx="2.2"/>
@@ -24,7 +24,7 @@
         Cursos
     </a>
 
-    <a href="{{ route('colegio.inicial.games') }}"
+    <a href="{{ route('colegio.aula.games') }}"
        class="aula-dock__item {{ ($dockActive ?? '') === 'juegos' ? 'is-active' : '' }}"
        @if (($dockActive ?? '') === 'juegos') aria-current="page" @endif>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">

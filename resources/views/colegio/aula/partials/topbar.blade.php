@@ -1,10 +1,11 @@
 {{--
-    Cabecera del aula de Inicial. Muestra la identidad del colegio (el mismo
-    logo de la página institucional), el nivel gamificado, el botón de audio
-    para escuchar la pantalla y el acceso a la cuenta del alumno.
+    Cabecera del aula compartida de Inicial y Primaria. Muestra la identidad
+    del colegio (el mismo logo de la página institucional), el nivel del
+    alumno, el botón de audio para escuchar la pantalla y el acceso a la
+    cuenta del alumno.
 --}}
 <header class="aula-topbar">
-    <a href="{{ route('colegio.inicial.dashboard') }}" class="aula-brand" aria-label="Ir al inicio del aula">
+    <a href="{{ route('colegio.aula.dashboard') }}" class="aula-brand" aria-label="Ir al inicio del aula">
         <span class="aula-brand__logo">
             @if ($portal['school']['logo_url'])
                 <img src="{{ $portal['school']['logo_url'] }}" alt="{{ $portal['school']['name'] }}" class="h-full w-full object-cover">
@@ -24,7 +25,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v3M12 18v3M4.2 7.2l2.1 2.1M17.7 14.7l2.1 2.1M3 12h3M18 12h3M4.2 16.8l2.1-2.1M17.7 9.3l2.1-2.1"/>
                 <circle cx="12" cy="12" r="3.2"/>
             </svg>
-            Inicial · 3 a 5 años
+            {{ $portal['grade']['level'] }}@if ($portal['grade']['level_ages']) · {{ $portal['grade']['level_ages'] }}@endif
         </span>
         <span class="aula-chip aula-chip--sun">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -67,7 +68,7 @@
             </svg>
         </button>
 
-        <form method="POST" action="{{ route('colegio.inicial.logout') }}">
+        <form method="POST" action="{{ route('colegio.aula.logout') }}">
             @csrf
             <button type="submit" class="aula-icon-btn" aria-label="Cerrar sesión" title="Cerrar sesión">
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -78,4 +79,4 @@
     </div>
 </header>
 
-@include('colegio.inicial.partials.profile-dialog')
+@include('colegio.aula.partials.profile-dialog')

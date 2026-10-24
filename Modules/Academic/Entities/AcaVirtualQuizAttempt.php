@@ -17,8 +17,12 @@ class AcaVirtualQuizAttempt extends Model
     protected $fillable = [
         'activity_id',
         'student_id',
+        'attempt_number',
         'status',
         'started_at',
+        'expires_at',
+        'question_order',
+        'option_order',
         'finished_at',
         'points_earned',
         'points_total',
@@ -26,7 +30,11 @@ class AcaVirtualQuizAttempt extends Model
     ];
 
     protected $casts = [
+        'attempt_number' => 'integer',
         'started_at' => 'datetime',
+        'expires_at' => 'datetime',
+        'question_order' => 'array',
+        'option_order' => 'array',
         'finished_at' => 'datetime',
         'points_earned' => 'decimal:2',
         'points_total' => 'decimal:2',
@@ -46,5 +54,13 @@ class AcaVirtualQuizAttempt extends Model
     public function answers(): HasMany
     {
         return $this->hasMany(AcaVirtualQuizAnswer::class, 'attempt_id');
+    }
+
+    /** Indica si el tiempo del intento ya terminó. */
+    public function isExpired(): bool
+    {
+        return $this->status === self::STATUS_IN_PROGRESS
+            && $this->expires_at !== null
+            && now()->greaterThanOrEqualTo($this->expires_at);
     }
 }

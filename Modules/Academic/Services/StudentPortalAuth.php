@@ -19,8 +19,10 @@ use Throwable;
  * primera entrada crea el usuario con su número de documento como contraseña
  * inicial; después puede cambiarla desde «Mi perfil».
  *
- * El servicio recibe el código de nivel para que Inicial, Primaria y
- * Secundaria compartan exactamente la misma validación de matrícula.
+ * El servicio recibe los códigos de nivel habilitados para que Inicial,
+ * Primaria y Secundaria compartan exactamente la misma validación de
+ * matrícula. La pantalla a la que se dirige cada nivel la decide el
+ * controlador del aula.
  */
 class StudentPortalAuth
 {
@@ -29,11 +31,12 @@ class StudentPortalAuth
     }
 
     /**
-     * Valida código + contraseña y devuelve la matrícula del nivel pedido.
+     * Valida código + contraseña y devuelve la matrícula activa del alumno.
      *
-     * @return array{user?: User, student?: AcaSchoolStudent, enrollment?: AcaSchoolEnrollment, error?: string}
+     * @param  array<int, string>  $levelCodes  Niveles habilitados; vacío acepta cualquier matrícula activa.
+     * @return array{user?: User, student?: AcaSchoolStudent, enrollment?: AcaSchoolEnrollment, level?: AcaSchoolLevel, error?: string}
      */
-    public function authenticate(string $code, string $password, string $levelCode): array
+    public function authenticate(string $code, string $password, array $levelCodes = []): array
     {
         $school = $this->context->currentSchool();
 
@@ -61,7 +64,7 @@ class StudentPortalAuth
             }
         }
 
-        $membership = $this->membershipForStudent($student, $levelCode);
+        $membership = $this->membershipForStudent($student, $levelCodes);
 
         if (isset($membership['error'])) {
             return $membership;
@@ -81,15 +84,17 @@ class StudentPortalAuth
             'user' => $user,
             'student' => $student,
             'enrollment' => $membership['enrollment'],
+            'level' => $membership['level'],
         ];
     }
 
     /**
-     * Matrícula activa del año vigente para el nivel indicado.
+     * Matrícula activa del año vigente para los niveles habilitados.
      *
-     * @return array{student?: AcaSchoolStudent, enrollment?: AcaSchoolEnrollment, error?: string}
+     * @param  array<int, string>  $levelCodes
+     * @return array{student?: AcaSchoolStudent, enrollment?: AcaSchoolEnrollment, level?: AcaSchoolLevel, error?: string}
      */
-    public function membership(User $user, string $levelCode): array
+    public function membership(User $user, array $levelCodes = []): array
     {
         if (! $user->person_id) {
             return ['error' => 'Tu cuenta no tiene una ficha de estudiante asociada. Pide apoyo en secretaría.'];
@@ -110,7 +115,7 @@ class StudentPortalAuth
             return ['error' => 'No encontramos tu matrícula en este colegio. Pide apoyo en secretaría.'];
         }
 
-        return $this->membershipForStudent($student, $levelCode);
+        return $this->membershipForStudent($student, $levelCodes);
     }
 
     /**
@@ -209,9 +214,14 @@ class StudentPortalAuth
     }
 
     /**
-     * @return array{student?: AcaSchoolStudent, enrollment?: AcaSchoolEnrollment, error?: string}
+     * Primera matrícula activa cuyo nivel esté habilitado. Si el alumno tiene
+     * matrícula pero su nivel no está habilitado, devuelve el nivel para que
+     * el controlador explique qué ocurre.
+     *
+     * @param  array<int, string>  $levelCodes
+     * @return array{student?: AcaSchoolStudent, enrollment?: AcaSchoolEnrollment, level?: AcaSchoolLevel|null, error?: string}
      */
-    private function membershipForStudent(AcaSchoolStudent $student, string $levelCode): array
+    private function membershipForStudent(AcaSchoolStudent $student, array $levelCodes = []): array
     {
         $activeYear = AcaSchoolYear::where('school_id', $student->school_id)
             ->where('status', AcaSchoolYear::STATUS_ACTIVE)
@@ -232,19 +242,23 @@ class StudentPortalAuth
         }
 
         $enrollment = $enrollments->first(
-            fn (AcaSchoolEnrollment $item) => $item->section?->grade?->level?->code === $levelCode
+            fn (AcaSchoolEnrollment $item) => $levelCodes === []
+                || in_array($item->section?->grade?->level?->code, $levelCodes, true)
         );
 
         if (! $enrollment) {
-            $levelName = $enrollments->first()->section?->grade?->level?->name
-                ?: (collect(AcaSchoolLevel::standardPeruStructure())->firstWhere('code', $levelCode)['name'] ?? 'otro nivel');
+            $level = $enrollments->first()->section?->grade?->level;
 
-            return ['error' => 'Tu matrícula pertenece al nivel ' . $levelName . '. Ingresa por el acceso de ' . $levelName . '.'];
+            return [
+                'error' => 'Tu matrícula pertenece al nivel ' . ($level?->name ?? 'otro nivel') . '.',
+                'level' => $level,
+            ];
         }
 
         return [
             'student' => $student,
             'enrollment' => $enrollment,
+            'level' => $enrollment->section?->grade?->level,
         ];
     }
 

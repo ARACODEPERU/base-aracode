@@ -9,10 +9,10 @@
     <div class="aula juego-rompecabezas" data-juego="rompecabezas"
          data-image-base="{{ asset('themes/colegio/img/juegos') }}">
         @include('colegio.components.aula.scene')
-        @include('colegio.inicial.partials.topbar')
+        @include('colegio.aula.partials.topbar')
 
         <main class="aula-main">
-            <a href="{{ route('colegio.inicial.games') }}" class="aula-back">
+            <a href="{{ route('colegio.aula.games') }}" class="aula-back">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M11 6l-6 6 6 6"/>
                 </svg>
@@ -81,8 +81,8 @@
             </div>
         </main>
 
-        @include('colegio.inicial.partials.dock')
-        @include('colegio.inicial.partials.help-dialog')
+        @include('colegio.aula.partials.dock')
+        @include('colegio.aula.partials.help-dialog')
     </div>
 @endsection
 

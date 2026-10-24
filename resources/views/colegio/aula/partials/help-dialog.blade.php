@@ -11,7 +11,7 @@
         </div>
 
         <p class="mt-2 text-xs font-semibold leading-relaxed text-cole-ink/65">
-            Este es tu espacio para aprender en el nivel Inicial. Todo lo que ves lo prepara tu profesora.
+            Este es tu espacio para aprender. Todo lo que ves lo prepara tu profesora.
         </p>
 
         <div class="aula-dialog__step">

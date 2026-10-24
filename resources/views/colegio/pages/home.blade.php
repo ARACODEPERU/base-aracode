@@ -256,7 +256,7 @@
             </div>
 
             <p class="mt-6 text-center text-xs font-semibold text-cole-ink/45">
-                El acceso de Primaria y Secundaria se habilitará en la siguiente etapa del aula virtual.
+                Los tres niveles ya tienen aula virtual. Ingresa con el código de alumno que entregó la institución.
             </p>
         </div>
     </section>
@@ -333,7 +333,7 @@
                 <a href="#institucion" class="hover:text-cole-emerald">Institución</a>
                 <a href="#niveles" class="hover:text-cole-emerald">Niveles</a>
                 <a href="#contacto" class="hover:text-cole-emerald">Contacto</a>
-                <a href="{{ route('colegio.inicial.login') }}" class="hover:text-cole-emerald">Aula virtual · Inicial</a>
+                <a href="{{ route('colegio.aula.login') }}" class="hover:text-cole-emerald">Aula virtual · Inicial, Primaria y Secundaria</a>
             </nav>
         </div>
     </footer>

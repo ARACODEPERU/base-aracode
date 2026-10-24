@@ -34,26 +34,31 @@ class ColegioPublicTest extends TestCase
             ->assertSee('Ingresar Inicial')
             ->assertSee('Ingresar Primaria')
             ->assertSee('Ingresar Secundaria')
-            ->assertSee('Próximamente');
+            ->assertSee('Habilitado');
     }
 
-    public function test_el_acceso_de_inicial_esta_habilitado_y_el_de_los_otros_niveles_todavia_no(): void
+    public function test_los_tres_niveles_comparten_el_acceso_al_aula(): void
     {
         $response = $this->get(route('colegio.home'));
 
         $response->assertOk()
-            ->assertSee('href="' . route('colegio.inicial.login') . '"', false);
+            ->assertSee('href="' . route('colegio.aula.login') . '"', false)
+            ->assertSee('href="' . route('colegio.secundaria.login') . '"', false)
+            ->assertSee('Ingresar Inicial')
+            ->assertSee('Ingresar Primaria')
+            ->assertSee('Ingresar Secundaria')
+            ->assertSee('Los tres niveles ya tienen aula virtual');
 
         $this->get('/colegio/primaria/login')->assertNotFound();
-        $this->get('/colegio/secundaria/login')->assertNotFound();
+        $this->get(route('colegio.secundaria.login'))->assertOk();
     }
 
-    public function test_el_login_de_inicial_se_muestra_sin_autenticacion_con_sus_assets(): void
+    public function test_el_login_del_aula_se_muestra_sin_autenticacion_con_sus_assets(): void
     {
-        $response = $this->get(route('colegio.inicial.login'));
+        $response = $this->get(route('colegio.aula.login'));
 
         $response->assertOk()
-            ->assertSee('Aula Virtual · Inicial')
+            ->assertSee('Aula Virtual · Todos los niveles')
             ->assertSee('¡Hola! Vamos a aprender')
             ->assertSee('id="loginForm"', false)
             ->assertSee('id="panelStart"', false)
@@ -66,7 +71,7 @@ class ColegioPublicTest extends TestCase
         AcaSchool::query()->delete();
 
         $this->get(route('colegio.home'))->assertOk();
-        $this->get(route('colegio.inicial.login'))->assertOk();
+        $this->get(route('colegio.aula.login'))->assertOk();
     }
 
     public function test_el_logo_del_colegio_se_publica_cuando_el_archivo_existe(): void
@@ -80,7 +85,7 @@ class ColegioPublicTest extends TestCase
             ->assertOk()
             ->assertSee('/storage/uploads/schools/logo.png');
 
-        $this->get(route('colegio.inicial.login'))
+        $this->get(route('colegio.aula.login'))
             ->assertOk()
             ->assertSee('/storage/uploads/schools/logo.png');
     }

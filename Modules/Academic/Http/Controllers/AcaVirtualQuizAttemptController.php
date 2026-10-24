@@ -34,16 +34,33 @@ class AcaVirtualQuizAttemptController extends Controller
         $activity = $this->resolveActivity($activityId);
         $student = $this->resolveStudent($activity);
 
-        $attempt = AcaVirtualQuizAttempt::firstOrCreate(
-            ['activity_id' => $activity->id, 'student_id' => $student->id],
-            ['status' => AcaVirtualQuizAttempt::STATUS_IN_PROGRESS, 'started_at' => now()]
-        );
+        // Si el alumno dejó un intento sin terminar, se retoma. Si no, se crea
+        // el siguiente siempre que le queden intentos habilitados por el docente.
+        $attempt = AcaVirtualQuizAttempt::where('activity_id', $activity->id)
+            ->where('student_id', $student->id)
+            ->where('status', AcaVirtualQuizAttempt::STATUS_IN_PROGRESS)
+            ->latest('attempt_number')
+            ->first();
 
-        if ($attempt->status === AcaVirtualQuizAttempt::STATUS_FINISHED) {
-            return response()->json([
-                'message' => 'Ya rendiste esta evaluación.',
-                'attempt' => $this->attemptPayload($attempt),
-            ], 409);
+        if (! $attempt) {
+            $used = AcaVirtualQuizAttempt::where('activity_id', $activity->id)
+                ->where('student_id', $student->id)
+                ->count();
+            $allowed = max(1, (int) ($activity->attempts_allowed ?? 1));
+
+            if ($used >= $allowed) {
+                return response()->json([
+                    'message' => 'Ya usaste todos los intentos de esta evaluación.',
+                ], 409);
+            }
+
+            $attempt = AcaVirtualQuizAttempt::create([
+                'activity_id' => $activity->id,
+                'student_id' => $student->id,
+                'attempt_number' => $used + 1,
+                'status' => AcaVirtualQuizAttempt::STATUS_IN_PROGRESS,
+                'started_at' => now(),
+            ]);
         }
 
         return response()->json([
@@ -95,6 +112,7 @@ class AcaVirtualQuizAttemptController extends Controller
         return response()->json([
             'message' => 'Evaluación calificada automáticamente.',
             'attempt' => $this->attemptPayload($graded),
+            'attempts_allowed' => max(1, (int) ($activity->attempts_allowed ?? 1)),
             'grade_text' => $graded->score !== null && $activity->grading_scale === 'qualitative'
                 ? $this->grader->qualitativeGrade(
                     (float) $graded->points_total > 0
@@ -109,6 +127,7 @@ class AcaVirtualQuizAttemptController extends Controller
     {
         return [
             'id' => $attempt->id,
+            'attempt_number' => (int) ($attempt->attempt_number ?? 1),
             'status' => $attempt->status,
             'started_at' => $attempt->started_at?->toIso8601String(),
             'finished_at' => $attempt->finished_at?->toIso8601String(),

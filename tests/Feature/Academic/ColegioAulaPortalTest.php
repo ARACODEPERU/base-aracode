@@ -22,10 +22,11 @@ use Modules\Academic\Entities\AcaVirtualUnit;
 use Tests\TestCase;
 
 /**
- * Portal del alumno de Inicial: el login solo deja pasar a matrículas activas
- * del nivel y el aula muestra los cursos configurados por el administrador.
+ * Portal del alumno de Inicial y Primaria: el login solo deja pasar a
+ * matrículas activas de los niveles habilitados y el aula muestra los cursos
+ * configurados por el administrador para la sección del alumno.
  */
-class ColegioInicialPortalTest extends TestCase
+class ColegioAulaPortalTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -136,12 +137,12 @@ class ColegioInicialPortalTest extends TestCase
 
     public function test_el_alumno_entra_con_su_codigo_y_su_contrasena(): void
     {
-        $response = $this->post(route('colegio.inicial.login.store'), [
+        $response = $this->post(route('colegio.aula.login.store'), [
             'codigo' => '2026-0001',
             'clave' => 'inicial123',
         ]);
 
-        $response->assertRedirect(route('colegio.inicial.dashboard'));
+        $response->assertRedirect(route('colegio.aula.dashboard'));
         $this->assertAuthenticatedAs($this->user);
     }
 
@@ -150,12 +151,12 @@ class ColegioInicialPortalTest extends TestCase
         // Alumno sin cuenta todavía: entra con su código y su DNI.
         User::where('person_id', $this->student->person_id)->delete();
 
-        $response = $this->post(route('colegio.inicial.login.store'), [
+        $response = $this->post(route('colegio.aula.login.store'), [
             'codigo' => '2026-0001',
             'clave' => '87654321',
         ]);
 
-        $response->assertRedirect(route('colegio.inicial.dashboard'));
+        $response->assertRedirect(route('colegio.aula.dashboard'));
 
         $user = User::where('person_id', $this->student->person_id)->first();
 
@@ -167,12 +168,12 @@ class ColegioInicialPortalTest extends TestCase
     public function test_el_correo_y_el_dni_no_sirven_como_codigo_de_alumno(): void
     {
         foreach (['lucia@colegio.test', '87654321'] as $identificador) {
-            $response = $this->from(route('colegio.inicial.login'))->post(route('colegio.inicial.login.store'), [
+            $response = $this->from(route('colegio.aula.login'))->post(route('colegio.aula.login.store'), [
                 'codigo' => $identificador,
                 'clave' => 'inicial123',
             ]);
 
-            $response->assertRedirect(route('colegio.inicial.login'))
+            $response->assertRedirect(route('colegio.aula.login'))
                 ->assertSessionHasErrors('codigo');
 
             $this->assertGuest();
@@ -185,19 +186,19 @@ class ColegioInicialPortalTest extends TestCase
         // La columna no admite NULL: sin DNI equivale a un número vacío.
         $this->student->person->update(['number' => '']);
 
-        $response = $this->from(route('colegio.inicial.login'))->post(route('colegio.inicial.login.store'), [
+        $response = $this->from(route('colegio.aula.login'))->post(route('colegio.aula.login.store'), [
             'codigo' => '2026-0001',
             'clave' => '87654321',
         ]);
 
-        $response->assertRedirect(route('colegio.inicial.login'))
+        $response->assertRedirect(route('colegio.aula.login'))
             ->assertSessionHasErrors('codigo');
 
         $this->assertGuest();
         $this->assertStringContainsString('contraseña inicial es tu número de DNI', session('errors')->first('codigo'));
     }
 
-    public function test_una_matricula_de_primaria_no_entra_por_el_acceso_de_inicial(): void
+    public function test_un_alumno_de_primaria_entra_al_mismo_aula_y_ve_sus_cursos(): void
     {
         $primaria = AcaSchoolLevel::create([
             'school_id' => $this->school->id,
@@ -231,32 +232,112 @@ class ColegioInicialPortalTest extends TestCase
             'type' => AcaSchoolEnrollment::TYPE_PROMOVIDA,
         ]);
 
-        $response = $this->from(route('colegio.inicial.login'))->post(route('colegio.inicial.login.store'), [
+        $area = AcaSchoolArea::create([
+            'school_id' => $this->school->id,
+            'name' => 'Matemática',
+            'level' => AcaSchoolArea::LEVEL_PRIMARIA,
+            'sort_order' => 1,
+            'status' => true,
+        ]);
+
+        $course = AcaVirtualCourse::create([
+            'school_id' => $this->school->id,
+            'year_id' => $this->year->id,
+            'section_id' => $section->id,
+            'area_id' => $area->id,
+            'name' => null,
+            'status' => true,
+            'sort_order' => 1,
+        ]);
+
+        AcaVirtualUnit::create([
+            'course_id' => $course->id,
+            'title' => 'Unidad de los números',
+            'purpose' => 'Contar y comparar cantidades.',
+            'duration_hours' => 4,
+            'sort_order' => 1,
+            'status' => true,
+        ]);
+
+        $response = $this->from(route('colegio.aula.login'))->post(route('colegio.aula.login.store'), [
             'codigo' => '2026-0001',
             'clave' => 'inicial123',
         ]);
 
-        $response->assertRedirect(route('colegio.inicial.login'))
-            ->assertSessionHasErrors('codigo');
+        $response->assertRedirect(route('colegio.aula.dashboard'));
+        $this->assertAuthenticatedAs($this->user);
 
-        $this->assertGuest();
+        $this->get(route('colegio.aula.dashboard'))
+            ->assertOk()
+            ->assertSee('Primaria · 6 a 11 años')
+            ->assertSee('1° · Aula B')
+            ->assertSee('Matemática')
+            // El aula muestra solo los cursos de la sección del alumno.
+            ->assertDontSee('Desarrollo personal, social y comunicación');
+    }
 
-        $this->assertStringContainsString(
-            'nivel Primaria',
-            session('errors')->first('codigo')
-        );
+    public function test_un_alumno_de_secundaria_es_dirigido_a_su_propio_aula(): void
+    {
+        $secundaria = AcaSchoolLevel::create([
+            'school_id' => $this->school->id,
+            'year_id' => $this->year->id,
+            'code' => AcaSchoolLevel::SECUNDARIA,
+            'name' => 'Secundaria',
+            'status' => true,
+        ]);
+
+        $grade = AcaSchoolGrade::create([
+            'school_id' => $this->school->id,
+            'year_id' => $this->year->id,
+            'level_id' => $secundaria->id,
+            'name' => '1°',
+            'status' => true,
+        ]);
+
+        $section = AcaSchoolSection::create([
+            'school_id' => $this->school->id,
+            'year_id' => $this->year->id,
+            'grade_id' => $grade->id,
+            'name' => 'A',
+            'capacity' => 20,
+            'shift' => AcaSchoolSection::SHIFT_MANANA,
+            'status' => true,
+        ]);
+
+        AcaSchoolEnrollment::where('student_id', $this->student->id)->update([
+            'section_id' => $section->id,
+            'type' => AcaSchoolEnrollment::TYPE_PROMOVIDA,
+        ]);
+
+        $response = $this->from(route('colegio.aula.login'))->post(route('colegio.aula.login.store'), [
+            'codigo' => '2026-0001',
+            'clave' => 'inicial123',
+        ]);
+
+        $response->assertRedirect(route('colegio.secundaria.dashboard'));
+        $this->assertAuthenticatedAs($this->user);
+
+        // El aula infantil no deja entrar al alumno de Secundaria: lo envía a
+        // sus propias vistas.
+        $this->get(route('colegio.aula.dashboard'))
+            ->assertRedirect(route('colegio.secundaria.dashboard'));
+
+        $this->get(route('colegio.secundaria.dashboard'))
+            ->assertOk()
+            ->assertSee('Aula virtual · Secundaria')
+            ->assertSee('Secundaria');
     }
 
     public function test_un_alumno_sin_matricula_activa_no_entra_al_aula(): void
     {
         $this->section->enrollments()->update(['status' => AcaSchoolEnrollment::STATUS_RETIRADO]);
 
-        $response = $this->from(route('colegio.inicial.login'))->post(route('colegio.inicial.login.store'), [
+        $response = $this->from(route('colegio.aula.login'))->post(route('colegio.aula.login.store'), [
             'codigo' => '2026-0001',
             'clave' => 'inicial123',
         ]);
 
-        $response->assertRedirect(route('colegio.inicial.login'))
+        $response->assertRedirect(route('colegio.aula.login'))
             ->assertSessionHasErrors('codigo');
 
         $this->assertGuest();
@@ -265,12 +346,12 @@ class ColegioInicialPortalTest extends TestCase
 
     public function test_una_contrasena_incorrecta_no_abre_la_sesion(): void
     {
-        $response = $this->from(route('colegio.inicial.login'))->post(route('colegio.inicial.login.store'), [
+        $response = $this->from(route('colegio.aula.login'))->post(route('colegio.aula.login.store'), [
             'codigo' => '2026-0001',
             'clave' => 'no-es-la-clave',
         ]);
 
-        $response->assertRedirect(route('colegio.inicial.login'))
+        $response->assertRedirect(route('colegio.aula.login'))
             ->assertSessionHasErrors('codigo');
 
         $this->assertGuest();
@@ -278,7 +359,7 @@ class ColegioInicialPortalTest extends TestCase
 
     public function test_el_dashboard_muestra_los_cursos_y_sus_conteos(): void
     {
-        $response = $this->actingAs($this->user)->get(route('colegio.inicial.dashboard'));
+        $response = $this->actingAs($this->user)->get(route('colegio.aula.dashboard'));
 
         $response->assertOk()
             ->assertSee('Lucía')
@@ -292,7 +373,7 @@ class ColegioInicialPortalTest extends TestCase
 
     public function test_la_vista_de_curso_muestra_unidades_y_sesiones_configuradas(): void
     {
-        $response = $this->actingAs($this->user)->get(route('colegio.inicial.course', $this->course->id));
+        $response = $this->actingAs($this->user)->get(route('colegio.aula.course', $this->course->id));
 
         $response->assertOk()
             ->assertSee('Mis unidades y sesiones')
@@ -322,7 +403,7 @@ class ColegioInicialPortalTest extends TestCase
             'mime_type' => 'image/jpeg',
         ]);
 
-        $response = $this->actingAs($this->user)->get(route('colegio.inicial.course', $this->course->id));
+        $response = $this->actingAs($this->user)->get(route('colegio.aula.course', $this->course->id));
 
         $response->assertOk()
             ->assertSee('materialDialog', false)
@@ -330,8 +411,8 @@ class ColegioInicialPortalTest extends TestCase
             ->assertSee('2 materiales disponibles')
             ->assertSee('Ficha de nombres')
             ->assertSee('Foto del aula')
-            ->assertSee(route('colegio.inicial.material.view', $ficha->id), false)
-            ->assertSee(route('colegio.inicial.material.download', $foto->id), false);
+            ->assertSee(route('colegio.aula.material.view', $ficha->id), false)
+            ->assertSee(route('colegio.aula.material.download', $foto->id), false);
     }
 
     public function test_el_alumno_ve_la_imagen_del_material_en_el_visor(): void
@@ -346,7 +427,7 @@ class ColegioInicialPortalTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->get(route('colegio.inicial.material.view', $resource->id));
+            ->get(route('colegio.aula.material.view', $resource->id));
 
         $response->assertOk()
             ->assertHeader('content-type', 'image/png');
@@ -369,7 +450,7 @@ class ColegioInicialPortalTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.material.download', $resource->id))
+            ->get(route('colegio.aula.material.download', $resource->id))
             ->assertOk()
             ->assertDownload('ficha-de-nombres.pdf');
     }
@@ -404,11 +485,11 @@ class ColegioInicialPortalTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.material.view', $resource->id))
+            ->get(route('colegio.aula.material.view', $resource->id))
             ->assertNotFound();
 
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.material.download', $resource->id))
+            ->get(route('colegio.aula.material.download', $resource->id))
             ->assertNotFound();
     }
 
@@ -435,38 +516,38 @@ class ColegioInicialPortalTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.course', $ajeno->id))
+            ->get(route('colegio.aula.course', $ajeno->id))
             ->assertNotFound();
     }
 
     public function test_el_invitado_es_redirigido_al_login_del_aula(): void
     {
-        $this->get(route('colegio.inicial.dashboard'))
-            ->assertRedirect(route('colegio.inicial.login'));
+        $this->get(route('colegio.aula.dashboard'))
+            ->assertRedirect(route('colegio.aula.login'));
 
-        $this->get(route('colegio.inicial.games'))
-            ->assertRedirect(route('colegio.inicial.login'));
+        $this->get(route('colegio.aula.games'))
+            ->assertRedirect(route('colegio.aula.login'));
 
-        $this->get(route('colegio.inicial.puzzle'))
-            ->assertRedirect(route('colegio.inicial.login'));
+        $this->get(route('colegio.aula.puzzle'))
+            ->assertRedirect(route('colegio.aula.login'));
 
-        $this->get(route('colegio.inicial.fruits'))
-            ->assertRedirect(route('colegio.inicial.login'));
+        $this->get(route('colegio.aula.fruits'))
+            ->assertRedirect(route('colegio.aula.login'));
 
-        $this->get(route('colegio.inicial.letters'))
-            ->assertRedirect(route('colegio.inicial.login'));
+        $this->get(route('colegio.aula.letters'))
+            ->assertRedirect(route('colegio.aula.login'));
 
-        $this->get(route('colegio.inicial.colors'))
-            ->assertRedirect(route('colegio.inicial.login'));
+        $this->get(route('colegio.aula.colors'))
+            ->assertRedirect(route('colegio.aula.login'));
 
-        $this->get(route('colegio.inicial.memory'))
-            ->assertRedirect(route('colegio.inicial.login'));
+        $this->get(route('colegio.aula.memory'))
+            ->assertRedirect(route('colegio.aula.login'));
     }
 
     public function test_la_zona_de_juegos_muestra_la_vista_previa(): void
     {
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.games'))
+            ->get(route('colegio.aula.games'))
             ->assertOk()
             ->assertSee('Aprender jugando')
             ->assertSee('Próximamente')
@@ -476,17 +557,17 @@ class ColegioInicialPortalTest extends TestCase
     public function test_la_tarjeta_del_rompecabezas_lleva_al_juego(): void
     {
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.games'))
+            ->get(route('colegio.aula.games'))
             ->assertOk()
             ->assertSee('Rompecabezas')
-            ->assertSee(route('colegio.inicial.puzzle'), false)
+            ->assertSee(route('colegio.aula.puzzle'), false)
             ->assertSee('4 niveles');
     }
 
     public function test_el_rompecabezas_se_abre_con_sus_ilustraciones(): void
     {
         $response = $this->actingAs($this->user)
-            ->get(route('colegio.inicial.puzzle'));
+            ->get(route('colegio.aula.puzzle'));
 
         $response->assertOk()
             ->assertSee('data-juego="rompecabezas"', false)
@@ -503,17 +584,17 @@ class ColegioInicialPortalTest extends TestCase
     public function test_la_tarjeta_de_contando_frutas_lleva_al_juego(): void
     {
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.games'))
+            ->get(route('colegio.aula.games'))
             ->assertOk()
             ->assertSee('Contando frutas')
-            ->assertSee(route('colegio.inicial.fruits'), false)
+            ->assertSee(route('colegio.aula.fruits'), false)
             ->assertSee('10 niveles · del 1 al 10');
     }
 
     public function test_contando_frutas_se_abre_con_sus_frutas(): void
     {
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.fruits'))
+            ->get(route('colegio.aula.fruits'))
             ->assertOk()
             ->assertSee('data-juego="contando-frutas"', false)
             ->assertSee(asset('themes/colegio/js/juegos/contando-frutas.js'), false)
@@ -530,10 +611,10 @@ class ColegioInicialPortalTest extends TestCase
     public function test_la_tarjeta_de_reconoce_la_letra_lleva_al_juego(): void
     {
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.games'))
+            ->get(route('colegio.aula.games'))
             ->assertOk()
             ->assertSee('Reconoce la letra')
-            ->assertSee(route('colegio.inicial.letters'), false)
+            ->assertSee(route('colegio.aula.letters'), false)
             ->assertSee('10 niveles · voz y teclado')
             ->assertDontSee('Traza las letras');
     }
@@ -541,7 +622,7 @@ class ColegioInicialPortalTest extends TestCase
     public function test_reconoce_la_letra_se_abre_con_su_teclado(): void
     {
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.letters'))
+            ->get(route('colegio.aula.letters'))
             ->assertOk()
             ->assertSee('data-juego="reconoce-letra"', false)
             ->assertSee(asset('themes/colegio/js/juegos/reconoce-letra.js'), false)
@@ -552,17 +633,17 @@ class ColegioInicialPortalTest extends TestCase
     public function test_la_tarjeta_de_colores_y_formas_lleva_al_juego(): void
     {
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.games'))
+            ->get(route('colegio.aula.games'))
             ->assertOk()
             ->assertSee('Colores y formas')
-            ->assertSee(route('colegio.inicial.colors'), false)
+            ->assertSee(route('colegio.aula.colors'), false)
             ->assertSee('10 niveles · colores y figuras');
     }
 
     public function test_colores_y_formas_se_abre_con_su_tablero(): void
     {
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.colors'))
+            ->get(route('colegio.aula.colors'))
             ->assertOk()
             ->assertSee('data-juego="colores-formas"', false)
             ->assertSee(asset('themes/colegio/js/juegos/colores-formas.js'), false)
@@ -573,10 +654,10 @@ class ColegioInicialPortalTest extends TestCase
     public function test_la_tarjeta_de_memoria_de_animales_lleva_al_juego(): void
     {
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.games'))
+            ->get(route('colegio.aula.games'))
             ->assertOk()
             ->assertSee('Memoria de animales')
-            ->assertSee(route('colegio.inicial.memory'), false)
+            ->assertSee(route('colegio.aula.memory'), false)
             ->assertSee('10 niveles · sonidos y parejas')
             ->assertSee(asset('themes/colegio/img/juegos/animales/perro.jpg'), false);
     }
@@ -584,7 +665,7 @@ class ColegioInicialPortalTest extends TestCase
     public function test_memoria_de_animales_se_abre_con_su_configuracion(): void
     {
         $this->actingAs($this->user)
-            ->get(route('colegio.inicial.memory'))
+            ->get(route('colegio.aula.memory'))
             ->assertOk()
             ->assertSee('data-juego="memoria-animales"', false)
             ->assertSee(asset('themes/colegio/js/juegos/memoria-animales.js'), false)
@@ -653,20 +734,20 @@ class ColegioInicialPortalTest extends TestCase
     public function test_cerrar_sesion_vuelve_al_login_del_aula(): void
     {
         $this->actingAs($this->user)
-            ->post(route('colegio.inicial.logout'))
-            ->assertRedirect(route('colegio.inicial.login'));
+            ->post(route('colegio.aula.logout'))
+            ->assertRedirect(route('colegio.aula.login'));
 
         $this->assertGuest();
     }
 
     public function test_el_login_muestra_el_error_y_abre_el_formulario(): void
     {
-        $this->from(route('colegio.inicial.login'))->post(route('colegio.inicial.login.store'), [
+        $this->from(route('colegio.aula.login'))->post(route('colegio.aula.login.store'), [
             'codigo' => '2026-0001',
             'clave' => 'incorrecta',
         ]);
 
-        $this->get(route('colegio.inicial.login'))
+        $this->get(route('colegio.aula.login'))
             ->assertOk()
             ->assertSee('El código o la contraseña no son correctos.')
             ->assertSee('data-open-login="true"', false);

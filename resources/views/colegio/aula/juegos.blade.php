@@ -1,16 +1,16 @@
 @extends('colegio.layouts.base')
 
-@section('title', 'Juegos · Aula Inicial · ' . $portal['school']['name'])
-@section('description', 'Zona de juegos del aula virtual de Inicial: rompecabezas, conteo de frutas, reconocimiento de letras, colores y formas, memoria, sonidos y más actividades para aprender jugando.')
+@section('title', 'Juegos · Aula ' . $portal['grade']['level'] . ' · ' . $portal['school']['name'])
+@section('description', 'Zona de juegos del aula virtual: rompecabezas, conteo de frutas, reconocimiento de letras, colores y formas, memoria, sonidos y más actividades para aprender jugando.')
 @section('body_class', 'font-body')
 
 @section('content')
     <div class="aula">
         @include('colegio.components.aula.scene')
-        @include('colegio.inicial.partials.topbar')
+        @include('colegio.aula.partials.topbar')
 
         <main class="aula-main">
-            <a href="{{ route('colegio.inicial.dashboard') }}" class="aula-back">
+            <a href="{{ route('colegio.aula.dashboard') }}" class="aula-back">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M11 6l-6 6 6 6"/>
                 </svg>
@@ -57,7 +57,7 @@
 
                     <div class="game-grid">
                         {{-- Memoria de animales: quinto juego disponible --}}
-                        <a href="{{ route('colegio.inicial.memory') }}" class="game-card game-card--orange game-card--link">
+                        <a href="{{ route('colegio.aula.memory') }}" class="game-card game-card--orange game-card--link">
                             <span class="game-card__art game-card__art--photo" aria-hidden="true">
                                 <img src="{{ asset('themes/colegio/img/juegos/animales/perro.jpg') }}"
                                      alt="" loading="lazy" decoding="async">
@@ -73,7 +73,7 @@
                         </a>
 
                         {{-- Contando frutas: segundo juego disponible --}}
-                        <a href="{{ route('colegio.inicial.fruits') }}" class="game-card game-card--blue game-card--link">
+                        <a href="{{ route('colegio.aula.fruits') }}" class="game-card game-card--blue game-card--link">
                             <span class="game-card__art" aria-hidden="true">
                                 <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M21 24c-4-4-11-3-13 3-2 6 3 15 7 16 2 1 4-1 6-1s4 2 6 1c4-1 9-10 7-16-2-6-9-7-13-3z" fill="#FF7A6B"/>
@@ -109,7 +109,7 @@
                         </div>
 
                         {{-- Rompecabezas: primer juego disponible --}}
-                        <a href="{{ route('colegio.inicial.puzzle') }}" class="game-card game-card--green game-card--link">
+                        <a href="{{ route('colegio.aula.puzzle') }}" class="game-card game-card--green game-card--link">
                             <span class="game-card__art" aria-hidden="true">
                                 <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M24 11h15a4 4 0 0 1 4 4v9h5a4 4 0 0 1 0 8h-5v13a4 4 0 0 1-4 4H26v-6a4 4 0 1 0-8 0v6h-6a4 4 0 0 1-4-4V30h5a4 4 0 0 0 0-8h-5v-7a4 4 0 0 1 4-4h12z" fill="currentColor" opacity=".55"/>
@@ -126,7 +126,7 @@
                         </a>
 
                         {{-- Colores y formas: cuarto juego disponible --}}
-                        <a href="{{ route('colegio.inicial.colors') }}" class="game-card game-card--yellow game-card--link">
+                        <a href="{{ route('colegio.aula.colors') }}" class="game-card game-card--yellow game-card--link">
                             <span class="game-card__art" aria-hidden="true">
                                 <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <circle cx="19" cy="22" r="12" fill="#FF8A65"/>
@@ -146,7 +146,7 @@
                         </a>
 
                         {{-- Letras: tercer juego disponible --}}
-                        <a href="{{ route('colegio.inicial.letters') }}" class="game-card game-card--lilac game-card--link">
+                        <a href="{{ route('colegio.aula.letters') }}" class="game-card game-card--lilac game-card--link">
                             <span class="game-card__art" aria-hidden="true">
                                 <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <rect x="7" y="9" width="32" height="40" rx="9" fill="#FFFFFF"/>
@@ -173,7 +173,7 @@
                 </section>
 
                 <aside class="space-y-4">
-                    @include('colegio.inicial.partials.mascot')
+                    @include('colegio.aula.partials.mascot')
 
                     <div class="aula-hint">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -186,8 +186,8 @@
             </div>
         </main>
 
-        @include('colegio.inicial.partials.dock')
-        @include('colegio.inicial.partials.help-dialog')
+        @include('colegio.aula.partials.dock')
+        @include('colegio.aula.partials.help-dialog')
     </div>
 @endsection
 

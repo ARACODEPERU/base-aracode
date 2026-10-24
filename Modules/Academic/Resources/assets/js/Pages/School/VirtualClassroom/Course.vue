@@ -394,6 +394,9 @@ const activityForm = useForm({
     open_at: '',
     close_at: '',
     allow_late: false,
+    attempts_allowed: 1,
+    allow_result_download: false,
+    duration_minutes: 30,
     max_score: 20,
     grading_scale: 'numeric',
     status: true,
@@ -431,6 +434,9 @@ const openActivityCreate = () => {
     activityForm.type = 'task';
     activityForm.grading_scale = 'numeric';
     activityForm.max_score = 20;
+    activityForm.attempts_allowed = 1;
+    activityForm.allow_result_download = false;
+    activityForm.duration_minutes = 30;
     activityForm.status = true;
     activityForm.files = [];
     activityForm.remove_file_ids = [];
@@ -453,6 +459,9 @@ const openActivityEdit = (activity) => {
     activityForm.open_at = activity.open_at || '';
     activityForm.close_at = activity.close_at || '';
     activityForm.allow_late = !! activity.allow_late;
+    activityForm.attempts_allowed = Number(activity.attempts_allowed ?? 1);
+    activityForm.allow_result_download = !! activity.allow_result_download;
+    activityForm.duration_minutes = Number(activity.duration_minutes ?? 30);
     activityForm.max_score = Number(activity.max_score ?? 20);
     activityForm.grading_scale = activity.grading_scale || 'numeric';
     activityForm.status = !! activity.status;
@@ -1329,14 +1338,19 @@ const copyPrevious = () => {
                                         >
                                             <font-awesome-icon :icon="faPaperclip" class="w-3 h-3" />
                                             {{ activity.files_count }}
-                                        </span>
-                                        <span
-                                            v-if="activity.type === 'quiz' && activity.questions_count"
+                                        </span>                                        <span v-if="activity.type === 'quiz' && activity.questions_count"
                                             class="inline-flex items-center gap-1 text-success"
                                             :title="`${activity.questions_count} pregunta(s) · ${activity.questions_points} puntos`"
                                         >
                                             <font-awesome-icon :icon="faCircleQuestion" class="w-3 h-3" />
                                             {{ activity.questions_count }}
+                                        </span>
+                                        <span
+                                            v-if="activity.type === 'quiz'"
+                                            class="badge bg-info"
+                                            :title="`${activity.attempts_allowed} intento(s) por alumno · ${activity.duration_minutes} minuto(s) por intento`"
+                                        >
+                                            {{ activity.attempts_allowed }} intento(s) · {{ activity.duration_minutes }} min
                                         </span>
                                         <span
                                             v-if="activity.type === 'quiz' && ! activity.questions_count"
@@ -1593,6 +1607,53 @@ const copyPrevious = () => {
                     <div v-if="activityForm.type === 'quiz'" class="rounded-md bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 p-3 text-xs text-blue-700 dark:text-blue-300">
                         Guarda la evaluación y luego usa el botón <strong>Configurar preguntas</strong> de la lista para
                         registrar las preguntas, las alternativas y la respuesta correcta. Así el sistema califica sola.
+                    </div>
+
+                    <div v-if="activityForm.type === 'quiz'" class="rounded-lg border border-[#e0e6ed] dark:border-[#1b2e4b] p-3">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                            <div>
+                                <label class="form-label">Intentos permitidos</label>
+                                <input
+                                    v-model.number="activityForm.attempts_allowed"
+                                    type="number"
+                                    min="1"
+                                    max="20"
+                                    step="1"
+                                    class="form-input"
+                                />
+                                <p class="text-xs text-white-dark mt-1">
+                                    La nota del último intento reemplaza a la anterior.
+                                </p>
+                            </div>
+                            <div>
+                                <label class="form-label">Tiempo para resolver (minutos)</label>
+                                <input
+                                    v-model.number="activityForm.duration_minutes"
+                                    type="number"
+                                    min="1"
+                                    max="300"
+                                    step="1"
+                                    class="form-input"
+                                />
+                                <p class="text-xs text-white-dark mt-1">
+                                    El tiempo empieza cuando el alumno pulsa «Iniciar examen».
+                                </p>
+                            </div>
+                            <div class="flex items-start gap-2 md:pt-7">
+                                <input
+                                    id="allow_result_download"
+                                    v-model="activityForm.allow_result_download"
+                                    type="checkbox"
+                                    class="form-checkbox mt-0.5"
+                                />
+                                <label for="allow_result_download" class="text-sm leading-snug">
+                                    Permitir que el alumno descargue su examen resuelto con la nota
+                                    <span class="block text-xs text-white-dark mt-0.5">
+                                        El PDF muestra sus respuestas y la nota, sin las respuestas correctas.
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">

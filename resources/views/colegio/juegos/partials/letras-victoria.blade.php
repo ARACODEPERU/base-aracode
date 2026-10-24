@@ -19,6 +19,6 @@
 
         <button type="button" class="juego-btn juego-btn--ghost" data-replay>Jugar otra vez</button>
 
-        <a href="{{ route('colegio.inicial.games') }}" class="juego-btn juego-btn--ghost">Volver a los juegos</a>
+        <a href="{{ route('colegio.aula.games') }}" class="juego-btn juego-btn--ghost">Volver a los juegos</a>
     </div>
 </div>

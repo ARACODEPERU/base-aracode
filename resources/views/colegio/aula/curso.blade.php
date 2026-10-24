@@ -1,7 +1,7 @@
 @extends('colegio.layouts.base')
 
-@section('title', $course->aula['name'] . ' · Aula Inicial · ' . $portal['school']['name'])
-@section('description', 'Unidades, sesiones y materiales del curso ' . $course->aula['name'] . ' del nivel Inicial.')
+@section('title', $course->aula['name'] . ' · Aula ' . $portal['grade']['level'] . ' · ' . $portal['school']['name'])
+@section('description', 'Unidades, sesiones y materiales del curso ' . $course->aula['name'] . ' del nivel ' . $portal['grade']['level'] . '.')
 @section('body_class', 'font-body')
 
 <?php
@@ -11,10 +11,10 @@
 @section('content')
     <div class="aula">
         @include('colegio.components.aula.scene')
-        @include('colegio.inicial.partials.topbar')
+        @include('colegio.aula.partials.topbar')
 
         <main class="aula-main">
-            <a href="{{ route('colegio.inicial.dashboard') }}#cursos" class="aula-back">
+            <a href="{{ route('colegio.aula.dashboard') }}#cursos" class="aula-back">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M11 6l-6 6 6 6"/>
                 </svg>
@@ -181,14 +181,18 @@
                                                 @if ($lesson->activities->isNotEmpty())
                                                     <div class="lesson__block">
                                                         <span class="lesson__block-label">Actividades</span>
-                                                        <div class="material-list">
+                                                        <div class="aula-activity-list">
                                                             @foreach ($lesson->activities as $activity)
-                                                                <span class="material">
-                                                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 5.5h14v11H9l-4 3z"/>
-                                                                    </svg>
-                                                                    {{ $activity->title }}
-                                                                </span>
+                                                                @if ($portal['grade']['level_code'] === \Modules\Academic\Entities\AcaSchoolLevel::PRIMARIA)
+                                                                    @include('colegio.aula.partials.activity', ['activity' => $activity])
+                                                                @else
+                                                                    <span class="material">
+                                                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 5.5h14v11H9l-4 3z"/>
+                                                                        </svg>
+                                                                        {{ $activity->title }}
+                                                                    </span>
+                                                                @endif
                                                             @endforeach
                                                         </div>
                                                     </div>
@@ -202,12 +206,40 @@
                                     Tu profesora todavía está preparando las sesiones de esta unidad.
                                 </p>
                             @endif
+
+                            @if ($portal['grade']['level_code'] === \Modules\Academic\Entities\AcaSchoolLevel::PRIMARIA && $unit->activities->isNotEmpty())
+                                <div class="px-4 pb-4">
+                                    <span class="lesson__block-label">Actividades de la unidad</span>
+                                    <div class="aula-activity-list mt-2">
+                                        @foreach ($unit->activities as $activity)
+                                            @include('colegio.aula.partials.activity', ['activity' => $activity])
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
                         </article>
                     @endforeach
+
+                    @if ($portal['grade']['level_code'] === \Modules\Academic\Entities\AcaSchoolLevel::PRIMARIA && $course->activities->isNotEmpty())
+                        <article class="unit-card mt-4">
+                            <div class="unit-card__head">
+                                <span class="unit-card__number">+</span>
+                                <div>
+                                    <h3 class="unit-card__title">Actividades del curso</h3>
+                                    <p class="unit-card__purpose">Tareas y evaluaciones de todo el curso.</p>
+                                </div>
+                            </div>
+                            <div class="aula-activity-list px-4 pb-4">
+                                @foreach ($course->activities as $activity)
+                                    @include('colegio.aula.partials.activity', ['activity' => $activity])
+                                @endforeach
+                            </div>
+                        </article>
+                    @endif
                 </section>
 
                 <aside class="space-y-4">
-                    @include('colegio.inicial.partials.mascot')
+                    @include('colegio.aula.partials.mascot')
 
                     @if (! empty($materials))
                         <div class="aula-info-card">
@@ -252,9 +284,20 @@
             </div>
         </main>
 
-        @include('colegio.inicial.partials.dock')
-        @include('colegio.inicial.partials.help-dialog')
+        @include('colegio.aula.partials.dock')
+        @include('colegio.aula.partials.help-dialog')
         @include('colegio.components.aula.material-dialog', ['materials' => $materials])
+
+        @if (session('task_status') || $errors->any())
+            <div class="aula-flash-wrap" role="status">
+                @if (session('task_status'))
+                    <p class="aula-flash aula-flash--ok">{{ session('task_status') }}</p>
+                @endif
+                @foreach ($errors->all() as $error)
+                    <p class="aula-flash aula-flash--error">{{ $error }}</p>
+                @endforeach
+            </div>
+        @endif
     </div>
 @endsection
 

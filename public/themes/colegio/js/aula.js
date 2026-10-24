@@ -360,12 +360,18 @@
        Entrada suave de las tarjetas
        ------------------------------------------------------------------ */
     if (canAnimate) {
-        anime.animate('.aula-hero', {
-            opacity: [0, 1],
-            translateY: [16, 0],
-            duration: 520,
-            ease: 'outCubic',
-        });
+        // Las vistas de Secundaria reutilizan este archivo solo por el visor de
+        // materiales, así que las animaciones del aula infantil son opcionales.
+        var hero = document.querySelector('.aula-hero');
+
+        if (hero) {
+            anime.animate(hero, {
+                opacity: [0, 1],
+                translateY: [16, 0],
+                duration: 520,
+                ease: 'outCubic',
+            });
+        }
 
         // Se pasa una lista real de elementos: con un selector combinado,
         // anime.js avisa cuando alguna de las clases no existe en la página.
@@ -381,13 +387,17 @@
             });
         }
 
-        anime.animate('.aula-mascot', {
-            opacity: [0, 1],
-            scale: [0.97, 1],
-            duration: 620,
-            delay: 280,
-            ease: 'outCubic',
-        });
+        var mascot = document.querySelector('.aula-mascot');
+
+        if (mascot) {
+            anime.animate(mascot, {
+                opacity: [0, 1],
+                scale: [0.97, 1],
+                duration: 620,
+                delay: 280,
+                ease: 'outCubic',
+            });
+        }
     }
 
     /* ------------------------------------------------------------------

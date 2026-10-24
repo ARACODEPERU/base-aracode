@@ -1,19 +1,19 @@
 @extends('colegio.layouts.base')
 
-@section('title', 'Mi aula de Inicial · ' . $portal['school']['name'])
-@section('description', 'Aula virtual del nivel Inicial de ' . $portal['school']['name'] . ': cursos, unidades y sesiones preparados por tu profesora.')
+@section('title', 'Mi aula de ' . $portal['grade']['level'] . ' · ' . $portal['school']['name'])
+@section('description', 'Aula virtual del nivel ' . $portal['grade']['level'] . ' de ' . $portal['school']['name'] . ': cursos, unidades y sesiones preparados por tu profesora.')
 @section('body_class', 'font-body')
 
 @section('content')
     <div class="aula">
         @include('colegio.components.aula.scene')
-        @include('colegio.inicial.partials.topbar')
+        @include('colegio.aula.partials.topbar')
 
         <main class="aula-main">
             {{-- Saludo y resumen del aula --}}
             <section class="aula-hero aula-pop" data-listen>
                 <div>
-                    <p class="aula-eyebrow">Mi aula de Inicial</p>
+                    <p class="aula-eyebrow">Mi aula de {{ $portal['grade']['level'] }}</p>
                     <h1 class="aula-title">
                         ¡Hola, {{ $portal['student']['name'] }}!
                         <span aria-hidden="true">👋</span>
@@ -23,7 +23,9 @@
                     </p>
 
                     <div class="mt-3 flex flex-wrap gap-2">
-                        <span class="aula-chip aula-chip--mint">Inicial · 3 a 5 años</span>
+                        <span class="aula-chip aula-chip--mint">
+                            {{ $portal['grade']['level'] }}@if ($portal['grade']['level_ages']) · {{ $portal['grade']['level_ages'] }}@endif
+                        </span>
                         <span class="aula-chip aula-chip--sky">{{ $portal['grade']['label'] }}</span>
                         @if ($portal['grade']['year'])
                             <span class="aula-chip aula-chip--sun">Año {{ $portal['grade']['year'] }}</span>
@@ -72,7 +74,7 @@
 
                     <div class="course-grid">
                         @foreach ($courses as $course)
-                            <a href="{{ route('colegio.inicial.course', $course->id) }}"
+                            <a href="{{ route('colegio.aula.course', $course->id) }}"
                                class="course-card course-card--{{ $course->aula['tone'] }}">
                                 <span class="course-card__badge">
                                     {{ $course->aula['units'] }} {{ $course->aula['units'] === 1 ? 'unidad' : 'unidades' }}
@@ -100,7 +102,7 @@
                         @endforeach
 
                         {{-- Zona de juegos: siempre visible --}}
-                        <a href="{{ route('colegio.inicial.games') }}" class="course-card course-card--green">
+                        <a href="{{ route('colegio.aula.games') }}" class="course-card course-card--green">
                             <span class="course-card__badge">Zona de juegos</span>
 
                             <span class="course-card__art" aria-hidden="true">
@@ -128,7 +130,7 @@
 
                 {{-- Mascota y datos del aula --}}
                 <aside class="space-y-4">
-                    @include('colegio.inicial.partials.mascot')
+                    @include('colegio.aula.partials.mascot')
 
                     <div class="aula-info-card">
                         <h2 class="font-display text-base font-semibold text-cole-forest">Mi clase</h2>
@@ -156,8 +158,8 @@
             </div>
         </main>
 
-        @include('colegio.inicial.partials.dock')
-        @include('colegio.inicial.partials.help-dialog')
+        @include('colegio.aula.partials.dock')
+        @include('colegio.aula.partials.help-dialog')
     </div>
 @endsection
 

@@ -382,6 +382,33 @@ class VirtualClassroomTest extends TestCase
                 ->has('activities.0.files'));
     }
 
+    public function test_configura_el_tiempo_y_los_intentos_de_una_evaluacion(): void
+    {
+        $user = $this->userWithPermission('aca_virtual_actividad_gestionar');
+        $course = $this->activeCourse($user);
+
+        $this->actingAs($user)
+            ->post(route('aca_virtual_classroom_activity_store', $course->id), [
+                'type' => 'quiz',
+                'title' => 'Evaluación cronometrada',
+                'attempts_allowed' => 3,
+                'duration_minutes' => 40,
+                'allow_result_download' => true,
+                'max_score' => 20,
+                'grading_scale' => 'numeric',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('aca_virtual_activities', [
+            'course_id' => $course->id,
+            'title' => 'Evaluación cronometrada',
+            'attempts_allowed' => 3,
+            'duration_minutes' => 40,
+            'allow_result_download' => true,
+        ]);
+    }
+
     public function test_permite_adjuntar_material_de_apoyo_a_una_actividad(): void
     {
         Storage::fake('public');

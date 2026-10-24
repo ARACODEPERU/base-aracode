@@ -1,7 +1,7 @@
 @extends('colegio.layouts.base')
 
-@section('title', 'Aula Virtual Inicial · ' . $school['name'])
-@section('description', 'Bienvenida al aula virtual del nivel Inicial de ' . $school['name'] . '. Ingresa con tu usuario para ver tus clases y juegos.')
+@section('title', 'Aula Virtual · Inicial, Primaria y Secundaria · ' . $school['name'])
+@section('description', 'Bienvenida al aula virtual de ' . $school['name'] . '. Ingresa con tu código de alumno para ver tus clases, materiales y actividades.')
 @section('body_class', 'font-body')
 
 @section('content')
@@ -41,14 +41,14 @@
 
                         <span class="mt-4 inline-flex items-center gap-1.5 rounded-full bg-cole-mint px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-cole-emerald">
                             <span class="h-1.5 w-1.5 rounded-full bg-cole-emerald"></span>
-                            Aula Virtual · Inicial
+                            Aula Virtual · Todos los niveles
                         </span>
 
                         <h1 id="tituloBienvenida" class="mt-3 font-display text-[26px] leading-[1.15] text-cole-forest sm:text-[28px]">
                             ¡Hola! Vamos a aprender
                         </h1>
                         <p class="mt-2 max-w-[19rem] text-sm font-semibold leading-relaxed text-cole-ink/60">
-                            Entra con tu código de alumno y tu contraseña para descubrir tus clases, cuentos y juegos.
+                            Entra con tu código de alumno y tu contraseña para descubrir tus clases, materiales y actividades.
                         </p>
                     </div>
 
@@ -77,7 +77,7 @@
                     {{-- Formulario de acceso --}}
                     <div id="panelLogin" class="cole-collapse" aria-hidden="true">
                         <div class="cole-collapse__inner">
-                            <form id="loginForm" method="POST" action="{{ route('colegio.inicial.login.store') }}"
+                            <form id="loginForm" method="POST" action="{{ route('colegio.aula.login.store') }}"
                                   class="rounded-3xl border border-cole-sand/80 bg-white/75 p-4 text-left" novalidate>
                                 @csrf
 
@@ -207,7 +207,7 @@
         </main>
 
         <footer class="relative z-10 pb-5 text-center text-[11px] font-bold text-cole-forest/45">
-            © {{ $year }} {{ $school['name'] }} · Aula Virtual Inicial
+            © {{ $year }} {{ $school['name'] }} · Aula Virtual · Inicial, Primaria y Secundaria
         </footer>
     </div>
 @endsection

@@ -65,8 +65,8 @@ class ColegioPublicController extends Controller
     /**
      * Niveles educativos que se ofrecen en el sitio.
      *
-     * Solo Inicial tiene acceso habilitado: las otras dos rutas se abrirán
-     * cuando se aprueben sus pantallas de ingreso.
+     * Los tres niveles comparten el mismo login: después de validar la
+     * matrícula, cada alumno entra a las vistas de su nivel.
      */
     private function levels(): array
     {
@@ -78,7 +78,7 @@ class ColegioPublicController extends Controller
                 'description' => 'Juego, exploración y afecto en un entorno seguro para dar los primeros pasos.',
                 'icon' => 'sun',
                 'available' => true,
-                'url' => route('colegio.inicial.login'),
+                'url' => route('colegio.aula.login'),
             ],
             [
                 'key' => 'primaria',
@@ -86,8 +86,8 @@ class ColegioPublicController extends Controller
                 'ages' => '6 a 11 años',
                 'description' => 'Lectura, curiosidad y pensamiento crítico acompañados por docentes cercanos.',
                 'icon' => 'book',
-                'available' => false,
-                'url' => null,
+                'available' => true,
+                'url' => route('colegio.aula.login'),
             ],
             [
                 'key' => 'secundaria',
@@ -95,8 +95,8 @@ class ColegioPublicController extends Controller
                 'ages' => '12 a 16 años',
                 'description' => 'Formación académica sólida y acompañamiento para construir su proyecto de vida.',
                 'icon' => 'star',
-                'available' => false,
-                'url' => null,
+                'available' => true,
+                'url' => route('colegio.secundaria.login'),
             ],
         ];
     }
