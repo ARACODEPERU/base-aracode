@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Modules\Socialevents\Entities\EventEdition;
+use Modules\Socialevents\Services\TournamentLandingVisitService;
 use Modules\Socialevents\Services\TournamentPublicDataService;
 use Modules\Socialevents\Services\TournamentRankingsService;
 use Modules\Socialevents\Support\TournamentLandingCache;
@@ -16,6 +17,7 @@ class TournamentLandingController extends Controller
     public function __construct(
         private TournamentPublicDataService $publicDataService,
         private TournamentRankingsService $rankingsService,
+        private TournamentLandingVisitService $visitService,
     ) {}
 
     public function show(string $slug)
@@ -39,6 +41,9 @@ class TournamentLandingController extends Controller
         if (! $edition->landing_published) {
             abort(404, 'La landing de este torneo no está publicada.');
         }
+
+        // El contador no debe impedir que la landing se muestre si algo falla.
+        $this->visitService->record($edition, request());
 
         $editionId = $edition->id;
 

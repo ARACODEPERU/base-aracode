@@ -694,7 +694,7 @@ class SportsOrganizationService
         // El propio panel del módulo también es lectura: si se bloquea, el
         // organizador vencido llega a un 403 desde el menú que sigue viendo.
         $read = ($method === 'GET' && in_array($path, ['socialevents/dashboard', 'socialevents/events', 'socialevents/teams', 'socialevents/editions'], true))
-            || ($method === 'GET' && preg_match('#^socialevents/editions/[0-9]+/(teams|fixtures|reports|gallery|exclusions|suspensions|collection/penalties|sanctions/pdf)$#', $path))
+            || ($method === 'GET' && preg_match('#^socialevents/editions/[0-9]+/(teams|fixtures|reports|gallery|exclusions|suspensions|collection/penalties|sanctions/pdf|landing-visits)$#', $path))
             || ($method === 'GET' && preg_match('#^socialevents/editions/[0-9]+/fixtures/create/availability$#', $path))
             || ($method === 'GET' && preg_match('#^socialevents/editions/[0-9]+/fixtures/match/[0-9]+/(resultado|pdf-sheet)$#', $path))
             || ($method === 'GET' && preg_match('#^socialevents/editions/match/reports/[0-9]+/edit$#', $path))

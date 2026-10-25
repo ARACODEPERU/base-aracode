@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import Keypad from '@/Components/Keypad.vue';
@@ -7,6 +7,7 @@ import Pagination from '@/Components/Pagination.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import Swal2 from 'sweetalert2';
 import { etiquetaPuestoPremio, obtenerPremios } from '../../utils/editionPrizes.js';
+import LandingVisitsModal from './Partials/LandingVisitsModal.vue';
 
 const props = defineProps({
     editions: { type: Object, required: true, default: () => ({}) },
@@ -64,6 +65,10 @@ const accionPeligroClase = () => [
 const searchId = 'editions-search';
 const submitSearch = () => buscar();
 const landingSlug = (edition) => (edition.public_slug || '').trim() || String(edition.id);
+const visitsEdition = ref(null);
+const openVisits = (edition) => { visitsEdition.value = edition; };
+const closeVisits = () => { visitsEdition.value = null; };
+const visitas = (edition) => Number(edition?.landing_views || 0).toLocaleString('es-PE');
 
 const copyLandingUrl = async (edition) => {
     try {
@@ -180,6 +185,9 @@ const finishEdition = async (editionId, event) => {
                         <div class="relative mt-4 flex flex-wrap items-center gap-2">
                             <span class="rounded-full border px-3 py-1 text-xs font-bold" :class="estadoClase(edition.status, sportsMode)">{{ estado(edition.status) }}</span>
                             <span v-if="edition.landing_published" class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold">Landing pública</span>
+                            <span v-if="edition.landing_published" class="inline-flex items-center gap-1.5 rounded-full border border-sky-200/50 bg-sky-300/15 px-3 py-1 text-xs font-bold text-sky-50" :title="`${visitas(edition)} visitas registradas en la landing`">
+                                <span aria-hidden="true">👁️</span>{{ visitas(edition) }} visitas
+                            </span>
                             <span v-if="edition.mobile_enabled !== false" class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold">App móvil</span>
                         </div>
                     </header>
@@ -195,6 +203,18 @@ const finishEdition = async (editionId, event) => {
                                 <p class="text-[11px] font-bold uppercase tracking-wide" :class="sportsMode ? 'text-slate-400' : 'text-gray-700 dark:text-gray-400'">Equipos</p>
                                 <p class="mt-1 text-2xl font-black" :class="sportsMode ? 'text-lime-300' : 'text-emerald-700 dark:text-emerald-300'">{{ edition.equipos?.length || 0 }}<span class="ml-1 text-xs font-semibold" :class="sportsMode ? 'text-slate-400' : 'text-gray-700 dark:text-gray-400'">inscritos</span></p>
                             </div>
+                        </div>
+                        <div v-if="edition.landing_published" class="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3" :class="sportsMode ? 'border-[#2b4b5d] bg-[#122c3a]' : 'border-sky-100 bg-sky-50/70 dark:border-sky-900 dark:bg-sky-950/30'">
+                            <div class="flex min-w-0 items-center gap-2.5">
+                                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-base" :class="sportsMode ? 'border border-[#2b4b5d] bg-[#17394a]' : 'bg-white text-sky-700 shadow-sm dark:bg-sky-900/60 dark:text-sky-200'" aria-hidden="true">👁️</span>
+                                <div class="min-w-0">
+                                    <p class="text-[11px] font-bold uppercase tracking-wide" :class="sportsMode ? 'text-slate-400' : 'text-sky-800 dark:text-sky-300'">Visitas a la landing</p>
+                                    <p class="text-lg font-black leading-tight" :class="sportsMode ? 'text-white' : 'text-gray-900 dark:text-white'">{{ visitas(edition) }} <span class="text-xs font-semibold" :class="sportsMode ? 'text-slate-400' : 'text-gray-600 dark:text-gray-300'">visualizaciones</span></p>
+                                </div>
+                            </div>
+                            <button type="button" class="inline-flex min-h-10 items-center justify-center rounded-xl px-3 py-2 text-xs font-bold transition focus:outline-none focus:ring-2" :class="sportsMode ? 'border border-[#2b4b5d] bg-[#17394a] text-lime-200 hover:border-lime-300/60 hover:text-lime-100 focus:ring-lime-300/40' : 'border border-sky-200 bg-white text-sky-800 hover:bg-sky-100 focus:ring-sky-400 dark:border-sky-800 dark:bg-sky-900/50 dark:text-sky-100'" @click="openVisits(edition)">
+                                Ver detalle
+                            </button>
                         </div>
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <span class="inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold" :class="sportsMode ? 'bg-[#17394a] text-lime-200' : 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'">
@@ -252,6 +272,13 @@ const finishEdition = async (editionId, event) => {
             <!-- Sin ediciones el paginador solo añade ruido; aparece cuando hay resultados que navegar. -->
             <div v-if="editions?.links?.length && hasEditions" class="overflow-x-auto"><Pagination :data="editions" /></div>
         </main>
+
+        <LandingVisitsModal
+            :open="!!visitsEdition"
+            :edition="visitsEdition"
+            :sports-mode="sportsMode"
+            @close="closeVisits"
+        />
     </AppLayout>
 </template>
 

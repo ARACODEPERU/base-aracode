@@ -10,6 +10,7 @@ use Modules\Socialevents\Http\Controllers\EvenLocalRentalController;
 use Modules\Socialevents\Http\Controllers\EventEditionAccordanceController;
 use Modules\Socialevents\Http\Controllers\EventEditionController;
 use Modules\Socialevents\Http\Controllers\EventEditionGalleryController;
+use Modules\Socialevents\Http\Controllers\EventEditionLandingVisitController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchReportController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchSanctionController;
@@ -105,6 +106,9 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
     Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->post('teams/generate-shield', [EventTeamController::class, 'generateShield'])->name('even_equipos_generate_shield');
     Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->delete('teams/{id}/destroy', [EventTeamController::class, 'destroy'])->name('even_equipos_destroy');
     Route::middleware(['middleware' => 'permission:even_ediciones_listado'])->get('editions', [EventEditionController::class, 'index'])->name('even_ediciones_listado');
+    Route::middleware(['middleware' => 'permission:even_ediciones_listado'])->get('editions/{id}/landing-visits', [EventEditionLandingVisitController::class, 'show'])
+        ->whereNumber('id')
+        ->name('even_ediciones_landing_visits');
     Route::middleware(['middleware' => 'permission:even_ediciones_nuevo'])->get('editions/create', [EventEditionController::class, 'create'])->name('even_ediciones_nuevo');
     Route::middleware(['middleware' => 'permission:even_ediciones_nuevo'])->post('editions/store', [EventEditionController::class, 'store'])->name('even_ediciones_store');
     Route::middleware(['middleware' => 'permission:even_ediciones_editar'])->get('editions/{id}/edit', [EventEditionController::class, 'edit'])->name('even_ediciones_editar');
