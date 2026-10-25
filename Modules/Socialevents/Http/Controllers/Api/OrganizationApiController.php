@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Modules\Socialevents\Services\OrganizationTeamService;
 use Modules\Socialevents\Services\SportsOrganizationService;
 
 /**
@@ -24,7 +25,8 @@ class OrganizationApiController extends Controller
     private const MINIMUM_AMOUNT = 10;
 
     public function __construct(
-        private SportsOrganizationService $sports
+        private SportsOrganizationService $sports,
+        private OrganizationTeamService $team
     ) {}
 
     /**
@@ -45,6 +47,7 @@ class OrganizationApiController extends Controller
                 'access' => $this->sports->accessSummary($request->user()),
                 'balance' => round((float) $organization->prepaid_balance, 2),
                 'match_rate' => round((float) $organization->match_rate, 2),
+                'seats' => $this->seatsPayload((int) $organization->id),
                 'checkout' => $this->checkoutPayload(),
             ],
         ]);
@@ -149,16 +152,50 @@ class OrganizationApiController extends Controller
                     'owners' => $users->where('role', 'owner')->count(),
                     'members' => $users->where('role', '!=', 'owner')->count(),
                 ],
-                // El modelo actual no vende asientos: la app informa cuántas
-                // cuentas tienen acceso y deja las altas en la web.
-                'seats' => [
-                    'used' => $users->count(),
-                    'limit' => null,
-                    'can_invite' => false,
-                    'note' => 'Los usuarios adicionales se crean desde la web con el equipo ARACODE.',
-                ],
+                // La app informa el límite real, pero las altas, bajas y compras
+                // siguen en la web para no duplicar la matriz de permisos.
+                'seats' => $this->seatsPayload((int) $organization->id),
             ],
         ]);
+    }
+
+    /**
+     * Espacios reales de la organización para la app. `can_invite` sigue en
+     * false: invitar y comprar se hacen en la web.
+     *
+     * @return array<string, mixed>
+     */
+    private function seatsPayload(int $organizationId): array
+    {
+        $summary = $this->team->seatSummary($organizationId);
+        // Cuentas anteriores a la tabla de miembros no tienen fila de cupo: la
+        // app sigue mostrando el total de usuarios vinculados a la organización.
+        $hasMemberships = Schema::hasTable('socialevent_organization_users')
+            && DB::table('socialevent_organization_users')->where('organization_id', $organizationId)->exists();
+        if (! $hasMemberships) {
+            $summary['used'] = DB::table('users')
+                ->where('socialevent_organization_id', $organizationId)
+                ->where('status', 1)
+                ->count();
+            $summary['available'] = $summary['limit'] === null
+                ? null
+                : max(0, $summary['limit'] - $summary['used']);
+        }
+        $seatPrice = Schema::hasTable('socialevent_organization_settings')
+            ? (float) (DB::table('socialevent_organization_settings')->value('seat_price') ?? 1)
+            : 1.0;
+
+        return [
+            'used' => $summary['used'],
+            'limit' => $summary['limit'],
+            'available' => $summary['available'],
+            'unlimited' => $summary['unlimited'],
+            'seat_price' => $seatPrice,
+            'can_invite' => false,
+            'note' => $summary['limit'] === null
+                ? 'El equipo se administra desde la web.'
+                : 'Compra espacios y administra al equipo desde la web, en Mi plan.',
+        ];
     }
 
     /**

@@ -21,6 +21,10 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    organizers: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 </script>
 
@@ -37,6 +41,7 @@ const props = defineProps({
                 :sportsMode="sportsMode"
                 :categories="categories"
                 :instructors="instructors"
+                :organizers="organizers"
                 :locales="locales"
             />
         </div>

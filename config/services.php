@@ -37,6 +37,10 @@ return [
         'webhook_secret' => env('MERCADOPAGO_WEBHOOK_SECRET'),
         'max_installments' => (int) env('MERCADOPAGO_MAX_INSTALLMENTS', 12),
     ],
+    'whatsapp' => [
+        'token' => env('WHATSAPP_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+    ],
     'recaptcha' => [
     'site_key' => env('RECAPTCHA_SITE_KEY'),
     'secret_key' => env('RECAPTCHA_SECRET_KEY'),

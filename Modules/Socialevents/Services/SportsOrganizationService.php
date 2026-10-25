@@ -34,18 +34,23 @@ class SportsOrganizationService
      */
     public function organizerHome($user): ?string
     {
-        if (! $this->sportsMode() || ! $user) {
+        if (! $this->sportsMode() || ! $user || $this->isSuperAdmin($user)) {
             return null;
         }
 
-        if (! $user->hasRole('sports_organizer') || ! $this->organizationId($user)) {
+        // Los operadores limitados también entran al módulo. La organización
+        // sale de la sesión; sus permisos directos deciden qué pantallas ven.
+        $organizationId = $this->organizationId($user);
+        if (! $organizationId) {
             return null;
         }
 
-        // Una organización suspendida no puede abrir el panel deportivo, pero
-        // conserva "Mis pagos" para recargar saldo y reactivarse.
+        // Una organización suspendida no puede abrir el panel deportivo. Solo
+        // el propietario conserva "Mi plan" para regularizar el pago.
         if ($this->organizationStatus($user) === 'suspended') {
-            return route('even_organizations.topup.index');
+            return (string) ($user->socialevent_organization_role ?? '') === 'owner'
+                ? route('even_organizations.topup.index')
+                : null;
         }
 
         if (! $this->canRead($user)) {

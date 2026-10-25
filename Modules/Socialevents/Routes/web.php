@@ -21,6 +21,8 @@ use Modules\Socialevents\Http\Controllers\EventTeamController;
 use Modules\Socialevents\Http\Controllers\SocialeventsEditorController;
 use Modules\Socialevents\Http\Controllers\SportsOrganizationAdminController;
 use Modules\Socialevents\Http\Controllers\OrganizationTopUpController;
+use Modules\Socialevents\Http\Controllers\OrganizationTeamController;
+use Modules\Socialevents\Http\Controllers\OrganizationDocumentController;
 use Modules\Socialevents\Http\Controllers\TournamentLandingController;
 
 /*
@@ -45,6 +47,9 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
         Route::delete('/accounts/{organizationId}', [SportsOrganizationAdminController::class, 'destroyOrganization'])->name('destroy');
         Route::post('/accounts/{organizationId}/payments', [SportsOrganizationAdminController::class, 'storeAdminPayment'])->name('payments.store');
         Route::post('/accounts/{organizationId}/users', [SportsOrganizationAdminController::class, 'storeOrganizationUser'])->name('users.store');
+        Route::post('/accounts/{organizationId}/seats', [SportsOrganizationAdminController::class, 'grantSeats'])->name('seats.grant');
+        Route::post('/document-requests/{documentRequest}/issue', [OrganizationDocumentController::class, 'issue'])->name('documents.issue');
+        Route::post('/document-requests/{documentRequest}/reject', [OrganizationDocumentController::class, 'reject'])->name('documents.reject');
         Route::put('/billing-alerts', [SportsOrganizationAdminController::class, 'updateAlertSettings'])->name('alerts.update');
         Route::post('/accounts/{organizationId}/alerts', [SportsOrganizationAdminController::class, 'sendOrganizationAlert'])->name('alerts.send');
         Route::post('/rates', [SportsOrganizationAdminController::class, 'storeRate'])->name('rates.store');
@@ -57,16 +62,16 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
 
     Route::middleware(['middleware' => 'permission:even_categoria_listado'])->get('categories', [EvenCategoryController::class, 'index'])->name('even_categories_list');
     Route::middleware(['middleware' => 'permission:even_categoria_nuevo'])->get('categories/create', [EvenCategoryController::class, 'create'])->name('even_categoriess_create');
-    Route::post('categories/store', [EvenCategoryController::class, 'store'])->name('even_categories_store');
+    Route::middleware(['middleware' => 'permission:even_categoria_nuevo'])->post('categories/store', [EvenCategoryController::class, 'store'])->name('even_categories_store');
     Route::middleware(['middleware' => 'permission:even_categoria_editar'])->get('categories/{id}/edit', [EvenCategoryController::class, 'edit'])->name('even_categories_editar');
-    Route::post('categories/update', [EvenCategoryController::class, 'update'])->name('even_categories_update');
+    Route::middleware(['middleware' => 'permission:even_categoria_editar'])->post('categories/update', [EvenCategoryController::class, 'update'])->name('even_categories_update');
     Route::middleware(['middleware' => 'permission:even_categoria_eliminar'])->delete('categories/destroy/{id}', [EvenCategoryController::class, 'destroy'])->name('even_categories_destroy');
 
     Route::middleware(['middleware' => 'permission:even_local_listado'])->get('locales', [EvenLocalController::class, 'index'])->name('even_local_list');
     Route::middleware(['middleware' => 'permission:even_local_nuevo'])->get('locales/create', [EvenLocalController::class, 'create'])->name('even_local_create');
-    Route::post('locales/store', [EvenLocalController::class, 'store'])->name('even_local_store');
+    Route::middleware(['middleware' => 'permission:even_local_nuevo'])->post('locales/store', [EvenLocalController::class, 'store'])->name('even_local_store');
     Route::middleware(['middleware' => 'permission:even_local_editar'])->get('locales/{id}/edit', [EvenLocalController::class, 'edit'])->name('even_local_editar');
-    Route::post('locales/update', [EvenLocalController::class, 'update'])->name('even_local_update');
+    Route::middleware(['middleware' => 'permission:even_local_editar'])->post('locales/update', [EvenLocalController::class, 'update'])->name('even_local_update');
     Route::middleware(['middleware' => 'permission:even_local_eliminar'])->delete('locales/destroy/{id}', [EvenLocalController::class, 'destroy'])->name('even_local_destroy');
 
     Route::middleware(['middleware' => 'permission:even_alquiler_local_listado'])->get('alquiler-local', [EvenLocalRentalController::class, 'index'])->name('even_alquiler_local_index');
@@ -86,11 +91,11 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
 
     Route::middleware(['middleware' => 'permission:even_evento_listado'])->get('events', [EvenEventController::class, 'index'])->name('even_eventos_list');
     Route::middleware(['middleware' => 'permission:even_evento_nuevo'])->get('events/create', [EvenEventController::class, 'create'])->name('even_eventos_create');
-    Route::post('events/store', [EvenEventController::class, 'store'])->name('even_events_store');
+    Route::middleware(['middleware' => 'permission:even_evento_nuevo'])->post('events/store', [EvenEventController::class, 'store'])->name('even_events_store');
     Route::middleware(['middleware' => 'permission:even_evento_editar'])->get('events/{id}/edit', [EvenEventController::class, 'edit'])->name('even_eventos_editar');
-    Route::post('events/update', [EvenEventController::class, 'update'])->name('even_eventos_update');
+    Route::middleware(['middleware' => 'permission:even_evento_editar'])->post('events/update', [EvenEventController::class, 'update'])->name('even_eventos_update');
     Route::middleware(['middleware' => 'permission:even_evento_eliminar'])->delete('events/destroy/{id}', [EvenEventController::class, 'destroy'])->name('even_eventos_destroy');
-    Route::post('events/prices/tickets/store', [EvenEventTickePriceController::class, 'store'])->name('even_events_preices_ticket_store');
+    Route::middleware(['middleware' => 'permission:even_evento_editar'])->post('events/prices/tickets/store', [EvenEventTickePriceController::class, 'store'])->name('even_events_preices_ticket_store');
     Route::middleware(['middleware' => 'permission:even_ventas_listado'])->get('tickets', [EvenEventTickeClientController::class, 'index'])->name('even_tickets_listado');
     Route::middleware(['middleware' => 'permission:even_equipos_listado'])->get('teams', [EventTeamController::class, 'index'])->name('even_equipos_listado');
     Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->get('teams/create', [EventTeamController::class, 'create'])->name('even_equipos_create');
@@ -168,6 +173,24 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents/organizations/topu
     Route::get('/', [OrganizationTopUpController::class, 'index'])->name('index');
     Route::post('/card', [OrganizationTopUpController::class, 'createCardPayment'])->name('card');
     Route::post('/yape', [OrganizationTopUpController::class, 'createYapePayment'])->name('yape');
+    Route::post('/seats/card', [OrganizationTopUpController::class, 'createSeatCardPayment'])->name('seats.card');
+    Route::post('/seats/yape', [OrganizationTopUpController::class, 'createSeatYapePayment'])->name('seats.yape');
+});
+
+// El equipo y los comprobantes siguen disponibles aunque la organización esté
+// vencida: son tareas de cuenta y no de operación del torneo.
+Route::middleware(['auth', 'verified'])->prefix('socialevents/organizations/team')->name('even_organizations.team.')->group(function () {
+    Route::post('/', [OrganizationTeamController::class, 'store'])->name('store');
+    Route::put('/{userId}', [OrganizationTeamController::class, 'update'])->name('update');
+    Route::delete('/{userId}', [OrganizationTeamController::class, 'destroy'])->name('destroy');
+    Route::post('/{userId}/reactivate', [OrganizationTeamController::class, 'reactivate'])->name('reactivate');
+});
+
+Route::middleware(['auth', 'verified'])->prefix('socialevents/organizations/documents')->name('even_organizations.documents.')->group(function () {
+    Route::post('/request', [OrganizationDocumentController::class, 'request'])->name('request');
+    Route::get('/{documentRequest}/download/{file?}', [OrganizationDocumentController::class, 'download'])
+        ->where('file', 'PDF|XML')
+        ->name('download');
 });
 Route::post('socialevents/organizations/topup/webhook', [OrganizationTopUpController::class, 'webhook'])
     ->name('even_organizations.topup.webhook');

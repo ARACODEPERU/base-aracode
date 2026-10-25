@@ -65,12 +65,16 @@ const createRate = () => rateForm.post(route('even_organizations.rates.store'), 
 
             <section class="panel space-y-4">
                 <h2 class="text-lg font-semibold">Valores predeterminados</h2>
-                <form class="grid gap-4 md:grid-cols-3" @submit.prevent="saveDefaults">
+                <form class="grid gap-4 md:grid-cols-4" @submit.prevent="saveDefaults">
                     <label class="space-y-1 text-sm">Días de prueba
                         <input v-model.number="defaultsForm.trial_days" class="form-input" type="number" min="1" max="3660" required />
                     </label>
                     <label class="space-y-1 text-sm">Tarifa por equipo y partido (S/)
                         <input v-model.number="defaultsForm.default_match_rate" class="form-input" type="number" min="0" step="0.01" required />
+                    </label>
+                    <label class="space-y-1 text-sm">Precio por usuario adicional (S/)
+                        <input v-model.number="defaultsForm.seat_price" class="form-input" type="number" min="0" step="0.01" required />
+                        <span class="block text-xs text-gray-500">Es el precio que paga la organización por cada espacio nuevo.</span>
                     </label>
                     <button class="btn btn-primary self-end" :disabled="defaultsForm.processing">Guardar valores</button>
                 </form>

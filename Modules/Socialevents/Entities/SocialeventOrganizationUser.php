@@ -13,11 +13,18 @@ class SocialeventOrganizationUser extends Model
         'organization_id',
         'user_id',
         'role',
+        'profile_key',
+        'capabilities',
+        'status',
+        'permissions_updated_at',
+        'invited_by',
         'joined_at',
     ];
 
     protected $casts = [
+        'capabilities' => 'array',
         'joined_at' => 'datetime',
+        'permissions_updated_at' => 'datetime',
     ];
 
     public function organization(): BelongsTo

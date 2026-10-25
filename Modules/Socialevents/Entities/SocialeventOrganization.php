@@ -20,6 +20,7 @@ class SocialeventOrganization extends Model
         'read_permissions',
         'match_rate',
         'prepaid_balance',
+        'seat_limit',
         'created_by',
     ];
 
@@ -31,6 +32,7 @@ class SocialeventOrganization extends Model
         'trial_days' => 'integer',
         'match_rate' => 'decimal:2',
         'prepaid_balance' => 'decimal:2',
+        'seat_limit' => 'integer',
     ];
 
     public function users(): HasMany

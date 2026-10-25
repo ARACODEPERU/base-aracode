@@ -32,7 +32,11 @@ const props = defineProps({
     eventExhibitors:{
         type: Array,
         default: () => ({}),
-    }
+    },
+    organizers: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 </script>
 
@@ -49,6 +53,7 @@ const props = defineProps({
                 :sportsMode="sportsMode"
                 :categories="categories"
                 :instructors="instructors"
+                :organizers="organizers"
                 :locales="locales"
                 :socialevent="socialevent"
                 :eventLocales="eventLocales"

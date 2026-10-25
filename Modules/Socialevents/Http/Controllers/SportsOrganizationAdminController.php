@@ -21,9 +21,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Modules\Socialevents\Services\OrganizationTeamService;
 use Modules\Socialevents\Services\SportsOrganizationService;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use Modules\Socialevents\Support\OrganizationCapabilities;
 
 class SportsOrganizationAdminController extends Controller
 {
@@ -40,6 +40,7 @@ class SportsOrganizationAdminController extends Controller
             'defaults' => [
                 'trial_days' => (int) ($settings->trial_days ?? 30),
                 'default_match_rate' => (float) ($settings->default_match_rate ?? 5),
+                'seat_price' => (float) ($settings->seat_price ?? 1),
             ],
             'rates' => DB::table('socialevent_match_rates')->orderBy('name')->get(),
         ]);
@@ -57,6 +58,10 @@ class SportsOrganizationAdminController extends Controller
             ->select(
                 'socialevent_organization_users.organization_id',
                 'socialevent_organization_users.role',
+                'socialevent_organization_users.profile_key',
+                'socialevent_organization_users.capabilities',
+                'socialevent_organization_users.status',
+                'socialevent_organization_users.permissions_updated_at',
                 'users.name',
                 'users.apellido_paterno',
                 'users.apellido_materno',
@@ -74,7 +79,37 @@ class SportsOrganizationAdminController extends Controller
         $ledger = DB::table('socialevent_organization_ledger')
             ->where('entry_type', 'balance_topup')
             ->orderByDesc('id')
-            ->get(['organization_id', 'amount', 'payment_method', 'reference', 'description', 'created_at'])
+            ->get(['id', 'organization_id', 'amount', 'payment_method', 'reference', 'description', 'created_at'])
+            ->groupBy('organization_id');
+
+        // Compras de espacios y solicitudes de comprobante de todas las
+        // organizaciones: se agrupan para no consultar dentro del map.
+        $seatPurchases = DB::table('socialevent_organization_seat_purchases')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy('organization_id');
+        $documentRequests = DB::table('socialevent_organization_document_requests as requests')
+            ->leftJoin('sale_documents as documents', 'documents.id', '=', 'requests.sale_document_id')
+            ->leftJoin('sale_document_types as types', 'types.id', '=', 'requests.document_type_id')
+            ->orderByDesc('requests.created_at')
+            ->orderByDesc('requests.id')
+            ->get([
+                'requests.id',
+                'requests.organization_id',
+                'requests.purchase_type',
+                'requests.purchase_id',
+                'requests.status',
+                'requests.billing_data',
+                'requests.delivery_channels',
+                'requests.rejection_reason',
+                'requests.sale_document_id',
+                'requests.created_at',
+                'types.description as document_type',
+                'types.sunat_id',
+                'documents.invoice_serie',
+                'documents.invoice_correlative',
+            ])
             ->groupBy('organization_id');
 
         $organizations = DB::table('socialevent_organizations')
@@ -82,7 +117,7 @@ class SportsOrganizationAdminController extends Controller
             ->whereNull('deleted_at')
             ->orderByDesc('id')
             ->get()
-            ->map(function ($organization) use ($members, $ledger) {
+            ->map(function ($organization) use ($members, $ledger, $seatPurchases, $documentRequests) {
                 $organizationMembers = $members->get($organization->id, collect());
                 $owner = $organizationMembers->firstWhere('role', 'owner');
                 $organization->owner_name = $owner ? trim(implode(' ', array_filter([$owner->name, $owner->apellido_paterno, $owner->apellido_materno]))) : null;
@@ -91,6 +126,46 @@ class SportsOrganizationAdminController extends Controller
                 $organization->owner_document = $owner->numero_identidad ?? null;
                 $organization->members = $organizationMembers->values();
                 $organization->payments = $ledger->get($organization->id, collect())->take(8)->values();
+
+                $activeMembers = $organizationMembers->where('status', 'active')->count();
+                $organization->seats_used = $activeMembers;
+                $organization->seats_available = $organization->seat_limit === null
+                    ? null
+                    : max(0, (int) $organization->seat_limit - $activeMembers);
+
+                $organization->seat_purchases = $seatPurchases->get($organization->id, collect())
+                    ->take(10)
+                    ->map(fn ($purchase) => [
+                        'id' => (int) $purchase->id,
+                        'quantity' => (int) $purchase->quantity,
+                        'unit_price' => (float) $purchase->unit_price,
+                        'total' => (float) $purchase->total,
+                        'status' => (string) $purchase->status,
+                        'payment_method' => (string) $purchase->payment_method,
+                        'reference' => $purchase->provider_payment_id ?: $purchase->external_reference,
+                        'created_at' => $purchase->created_at,
+                    ])
+                    ->values();
+
+                $organization->document_requests = $documentRequests->get($organization->id, collect())
+                    ->take(10)
+                    ->map(fn ($document) => [
+                        'id' => (int) $document->id,
+                        'purchase_type' => (string) $document->purchase_type,
+                        'purchase_id' => (int) $document->purchase_id,
+                        'status' => (string) $document->status,
+                        'document_type' => $document->document_type,
+                        'sunat_id' => $document->sunat_id,
+                        'billing_data' => json_decode((string) $document->billing_data, true) ?: [],
+                        'delivery_channels' => json_decode((string) $document->delivery_channels, true) ?: [],
+                        'rejection_reason' => $document->rejection_reason,
+                        'created_at' => $document->created_at,
+                        'number' => $document->invoice_serie
+                            ? $document->invoice_serie . '-' . str_pad((string) $document->invoice_correlative, 9, '0', STR_PAD_LEFT)
+                            : null,
+                        'can_download' => (bool) $document->sale_document_id,
+                    ])
+                    ->values();
 
                 return $organization;
             });
@@ -119,6 +194,8 @@ class SportsOrganizationAdminController extends Controller
             'identityTypes' => DB::table('identity_document_type')->get(['id', 'description']),
             'districts' => DB::table('districts')->orderBy('name')->get(['id', 'name']),
             'alerts' => $this->alertSettings(),
+            'capabilities' => OrganizationCapabilities::describe(),
+            'seatPrice' => (float) (DB::table('socialevent_organization_settings')->value('seat_price') ?? 1),
         ]);
     }
 
@@ -392,56 +469,21 @@ class SportsOrganizationAdminController extends Controller
             'telefono' => 'nullable|string|max:20',
             'tipo_identidad' => 'nullable|in:0,1,6',
             'numero_identidad' => 'required|string|max:20|unique:users,numero_identidad',
+            'capabilities' => 'nullable|array',
+            'capabilities.*' => 'string',
         ], [], [
             'name' => 'nombre',
             'email' => 'correo de acceso',
             'password' => 'contraseña inicial',
             'numero_identidad' => 'documento de identidad',
+            'capabilities' => 'tareas',
         ]);
 
-        DB::transaction(function () use ($validated, $organization, $request) {
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'telefono' => $validated['telefono'] ?? null,
-                'tipo_identidad' => $validated['tipo_identidad'] ?? null,
-                'numero_identidad' => $validated['numero_identidad'],
-                'password' => Hash::make($validated['password']),
-                'status' => 1,
-            ]);
-            $user->forceFill([
-                'socialevent_organization_id' => $organization->id,
-                'socialevent_organization_role' => 'member',
-            ])->save();
-            DB::table('socialevent_organization_users')->insert([
-                'organization_id' => $organization->id,
-                'user_id' => $user->id,
-                'role' => 'member',
-                'joined_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            $role = Role::firstOrCreate(['name' => 'sports_organizer', 'guard_name' => 'web']);
-            foreach ([
-                'even_dashboard', 'even_evento_listado', 'even_evento_nuevo', 'even_evento_editar', 'even_evento_eliminar',
-                'even_equipos_listado', 'even_equipos_nuevo', 'even_equipos_editar', 'even_equipos_eliminar',
-                'even_ediciones_listado', 'even_ediciones_nuevo', 'even_ediciones_editar', 'even_ediciones_eliminar',
-                'even_ediciones_equipos', 'even_ediciones_fixtures', 'even_ediciones_fixtures_nuevo',
-                'even_ediciones_partido_resultado', 'even_ediciones_actas', 'even_ediciones_actas_nuevo',
-                'even_ediciones_acta_editar', 'even_ediciones_partido_acta', 'even_ediciones_partido_acta_editar',
-                'even_ediciones_sanciones', 'even_ediciones_galeria', 'even_ediciones_galeria_nuevo',
-                'even_ediciones_galeria_eliminar', 'even_ediciones_exclusiones', 'even_ediciones_suspensiones',
-                'even_ediciones_equipo_jugadores', 'even_local_listado', 'even_local_nuevo', 'even_local_editar', 'even_local_eliminar',
-            ] as $permissionName) {
-                $role->givePermissionTo(Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']));
-            }
-            $user->assignRole($role);
-            $this->audit((int) $organization->id, $request->user()->id, 'organization_user_created', 'Alta manual de usuario organizador.', [
-                'new_user_id' => $user->id,
-                'email' => $user->email,
-                'role' => 'member',
-            ]);
-        });
+        // El alta manual reutiliza el mismo servicio que el propietario: así
+        // respeta los espacios disponibles y aplica solo los permisos de las
+        // tareas elegidas, sin entregar todo el módulo por defecto.
+        $validated['capabilities'] = $validated['capabilities'] ?? ['full'];
+        app(OrganizationTeamService::class)->createMember($request->user(), (int) $organization->id, $validated);
 
         return back()->with('success', 'Usuario agregado a la organización.');
     }
@@ -875,6 +917,7 @@ class SportsOrganizationAdminController extends Controller
         $validated = $request->validate([
             'trial_days' => 'required|integer|min:1|max:3660',
             'default_match_rate' => 'required|numeric|min:0|max:999999.99',
+            'seat_price' => 'required|numeric|min:0|max:999999.99',
         ]);
 
         DB::table('socialevent_organization_settings')->updateOrInsert(
@@ -887,6 +930,50 @@ class SportsOrganizationAdminController extends Controller
         }
 
         return back()->with('success', 'Configuración comercial guardada.');
+    }
+
+    /**
+     * El superadministrador regala espacios sin cobro. Queda registrado en el
+     * historial con método "admin" para distinguirlo de una compra pagada.
+     */
+    public function grantSeats(Request $request, int $organizationId)
+    {
+        $this->authorizeAdmin($request);
+        $validated = $request->validate([
+            'quantity' => 'required|integer|min:1|max:100',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        DB::transaction(function () use ($organizationId, $validated, $request) {
+            $organization = $this->lockOrganization($organizationId);
+            abort_if($organization->seat_limit === null, 422, 'Esta organización no administra espacios.');
+
+            $quantity = (int) $validated['quantity'];
+            DB::table('socialevent_organizations')->where('id', $organization->id)->update([
+                'seat_limit' => (int) $organization->seat_limit + $quantity,
+                'updated_at' => now(),
+            ]);
+            DB::table('socialevent_organization_seat_purchases')->insert([
+                'organization_id' => $organization->id,
+                'purchased_by' => $request->user()->id,
+                'external_reference' => (string) \Illuminate\Support\Str::uuid(),
+                'idempotency_key' => (string) \Illuminate\Support\Str::uuid(),
+                'payment_method' => 'admin',
+                'status' => 'granted',
+                'quantity' => $quantity,
+                'unit_price' => 0,
+                'total' => 0,
+                'credited_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $this->audit((int) $organization->id, $request->user()->id, 'seats_granted', 'Espacios otorgados por el superadministrador.', [
+                'quantity' => $quantity,
+                'reason' => $validated['reason'] ?? null,
+            ]);
+        });
+
+        return back()->with('success', 'Espacios agregados a la organización.');
     }
 
     public function storeRate(Request $request)

@@ -13,6 +13,9 @@ const props = defineProps({
     identityTypes: { type: Array, default: () => [] },
     alerts: { type: Object, default: () => ({}) },
     recentAlerts: { type: Array, default: () => [] },
+    // Catálogo de tareas que el administrador puede asignar a un usuario.
+    capabilities: { type: Array, default: () => [] },
+    seatPrice: { type: Number, default: 1 },
 });
 
 const statusLabels = {
@@ -30,6 +33,22 @@ const statusClasses = {
 };
 
 const documentLabels = { 80: 'Nota de venta', '01': 'Factura electrónica', '03': 'Boleta electrónica' };
+const documentStatusLabels = { requested: 'Solicitado', issued: 'Emitido', rejected: 'Rechazado' };
+const documentStatusClasses = {
+    requested: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+    issued: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+    rejected: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
+};
+
+const capabilityLabel = (key) => props.capabilities.find((item) => item.key === key)?.label || key;
+const memberCapabilities = (member) => {
+    const raw = member?.capabilities;
+    const values = Array.isArray(raw) ? raw : (() => {
+        try { return JSON.parse(raw || '[]'); } catch { return []; }
+    })();
+
+    return values.length ? values.map(capabilityLabel) : ['Sin tareas asignadas'];
+};
 
 const fullName = (person) => [person.name, person.apellido_paterno, person.apellido_materno].filter(Boolean).join(' ');
 const money = (value) => Number(value || 0).toFixed(2);
@@ -70,6 +89,66 @@ const filteredOrganizations = computed(() => {
         .toLowerCase()
         .includes(term));
 });
+
+// Listado global de compras: junta las compras de espacios y las recargas de
+// cada organización para que el superadministrador las revise sin entrar una
+// por una.
+const purchaseSearch = ref('');
+const allPurchases = computed(() => {
+    const rows = props.organizations.flatMap((organization) => {
+        const seats = (organization.seat_purchases || []).map((purchase) => ({
+            key: `seat-${organization.id}-${purchase.id}`,
+            organization_id: organization.id,
+            organization: organization.name,
+            type: 'Compra de espacios',
+            date: purchase.created_at,
+            amount: Number(purchase.total || 0),
+            method: purchase.payment_method === 'admin' ? 'Cortesía' : purchase.payment_method,
+            status: purchase.status,
+            reference: purchase.reference,
+            purchase_type: 'seat_purchase',
+            purchase_id: purchase.id,
+        }));
+        const topups = (organization.payments || []).map((payment) => ({
+            key: `topup-${organization.id}-${payment.id ?? payment.created_at}`,
+            organization_id: organization.id,
+            organization: organization.name,
+            type: 'Recarga de saldo',
+            date: payment.created_at,
+            amount: Number(payment.amount || 0),
+            method: methodLabel(payment.payment_method),
+            status: 'credited',
+            reference: payment.reference,
+            purchase_type: 'topup',
+            purchase_id: payment.id,
+        }));
+
+        return [...seats, ...topups];
+    });
+
+    return rows.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+});
+const filteredPurchases = computed(() => {
+    const term = purchaseSearch.value.trim().toLowerCase();
+    if (!term) return allPurchases.value;
+
+    return allPurchases.value.filter((purchase) => [purchase.organization, purchase.type, purchase.method, purchase.reference]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(term));
+});
+
+const purchaseDocument = (purchase) => {
+    const organization = props.organizations.find((item) => Number(item.id) === Number(purchase.organization_id));
+
+    return (organization?.document_requests || []).find((request) => request.purchase_type === purchase.purchase_type
+        && Number(request.purchase_id) === Number(purchase.purchase_id));
+};
+const openOrganizationDocuments = (organizationId) => {
+    const organization = props.organizations.find((item) => Number(item.id) === Number(organizationId));
+    if (organization) openEdit(organization, 'comprobantes');
+};
 
 const stats = computed(() => ({
     total: props.organizations.length,
@@ -216,7 +295,11 @@ const buildOrganizationForms = (organization) => ({
         ubigeo: organization.ubigeo || '',
     }),
     alert: useForm({ type: 'custom', message: '', send_email: true, send_system: true }),
-    user: useForm({ name: '', email: '', password: '', telefono: '', tipo_identidad: '1', numero_identidad: '' }),
+    user: useForm({
+        name: '', email: '', password: '', telefono: '', tipo_identidad: '1', numero_identidad: '',
+        capabilities: ['full'],
+    }),
+    seats: useForm({ quantity: 1, reason: '' }),
 });
 
 const buildSettingsForms = (organization) => ({
@@ -290,8 +373,31 @@ const sendAlert = (id) => organizationForms[id].alert.post(route('even_organizat
 });
 const addOrganizationUser = (id) => organizationForms[id].user.post(route('even_organizations.users.store', id), {
     preserveScroll: true,
-    onSuccess: () => organizationForms[id].user.reset(),
+    onSuccess: () => {
+        organizationForms[id].user.reset();
+        organizationForms[id].user.capabilities = ['full'];
+    },
 });
+const grantSeats = (id) => organizationForms[id].seats.post(route('even_organizations.seats.grant', id), {
+    preserveScroll: true,
+    onSuccess: () => organizationForms[id].seats.reset('quantity', 'reason'),
+});
+
+// Acciones sobre las solicitudes de comprobante que llegan del organizador.
+const documentForms = reactive({});
+const buildDocumentForm = (request) => useForm({
+    channels: request.delivery_channels?.length ? [...request.delivery_channels] : ['email'],
+    email: request.billing_data?.email || '',
+    phone: request.billing_data?.phone || '',
+    reason: '',
+});
+const documentFormFor = (request) => {
+    if (!documentForms[request.id]) documentForms[request.id] = buildDocumentForm(request);
+
+    return documentForms[request.id];
+};
+const issueDocument = (id) => documentFormFor(id).post(route('even_organizations.documents.issue', id), { preserveScroll: true });
+const rejectDocument = (id) => documentFormFor(id).post(route('even_organizations.documents.reject', id), { preserveScroll: true });
 const markAlertRead = (id) => useForm({}).post(route('even_organizations.alerts.read', id), { preserveScroll: true });
 
 const saveSettings = (id) => forms[id].settings.put(route('even_organizations.update', id), { preserveScroll: true });
@@ -361,6 +467,56 @@ const deleteOrganization = async (organization) => {
                     <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Saldo acumulado</p>
                     <p class="mt-1 text-2xl font-bold text-primary">S/ {{ money(stats.balance) }}</p>
                 </article>
+            </section>
+
+            <!-- Compras globales de todas las organizaciones -->
+            <section class="panel space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-base font-semibold">Compras de organizaciones</h2>
+                        <p class="text-xs text-gray-500">Compras de espacios y recargas de saldo, con su comprobante.</p>
+                    </div>
+                    <input v-model="purchaseSearch" type="search" class="form-input w-full sm:w-72" placeholder="Buscar organización, tipo o referencia" />
+                </div>
+                <div class="overflow-x-auto rounded-lg border">
+                    <table class="table-hover w-full text-sm">
+                        <thead>
+                            <tr>
+                                <th class="text-left">Organización</th>
+                                <th class="text-left">Concepto</th>
+                                <th class="text-left">Fecha</th>
+                                <th class="text-right">Monto</th>
+                                <th class="text-left">Medio / estado</th>
+                                <th class="text-left">Comprobante</th>
+                                <th class="text-right"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="purchase in filteredPurchases.slice(0, 20)" :key="purchase.key">
+                                <td class="font-semibold">{{ purchase.organization }}</td>
+                                <td>{{ purchase.type }}</td>
+                                <td class="whitespace-nowrap">{{ prettyDate(purchase.date) }}</td>
+                                <td class="text-right font-semibold">S/ {{ money(purchase.amount) }}</td>
+                                <td>
+                                    <p>{{ purchase.method || '—' }}</p>
+                                    <p class="text-xs text-gray-500">{{ purchase.status }}</p>
+                                </td>
+                                <td class="text-xs">
+                                    <span v-if="purchaseDocument(purchase)" class="rounded-full px-2 py-0.5 font-bold" :class="documentStatusClasses[purchaseDocument(purchase).status] || 'bg-gray-100 text-gray-600'">
+                                        {{ documentStatusLabels[purchaseDocument(purchase).status] || purchaseDocument(purchase).status }}
+                                    </span>
+                                    <span v-else class="text-gray-500">Sin solicitud</span>
+                                </td>
+                                <td class="text-right">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" @click="openOrganizationDocuments(purchase.organization_id)">Revisar</button>
+                                </td>
+                            </tr>
+                            <tr v-if="!filteredPurchases.length">
+                                <td colspan="7" class="py-6 text-center text-gray-500">Todavía no hay compras registradas.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <!-- Listado -->
@@ -570,7 +726,7 @@ const deleteOrganization = async (organization) => {
                 </div>
 
                 <div class="flex flex-wrap gap-1 border-b border-gray-200 px-5 pt-3 dark:border-gray-700">
-                    <button v-for="tab in [{ key: 'datos', label: 'Datos' }, { key: 'acceso', label: 'Acceso y bloqueo' }, { key: 'usuarios', label: 'Usuarios' }, { key: 'avisos', label: 'Avisos' }]"
+                    <button v-for="tab in [{ key: 'datos', label: 'Datos' }, { key: 'acceso', label: 'Acceso y bloqueo' }, { key: 'usuarios', label: 'Usuarios' }, { key: 'comprobantes', label: 'Comprobantes' }, { key: 'avisos', label: 'Avisos' }]"
                         :key="tab.key" type="button"
                         class="rounded-t-lg px-4 py-2 text-sm font-medium"
                         :class="editTab === tab.key ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'"
@@ -664,20 +820,47 @@ const deleteOrganization = async (organization) => {
 
                     <!-- Usuarios -->
                     <div v-else-if="editTab === 'usuarios'" class="space-y-5">
+                        <section class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                            <div>
+                                <p class="text-sm font-semibold">Espacios de usuario</p>
+                                <p class="text-xs text-gray-500">
+                                    {{ selectedOrganization.seats_used || 0 }} en uso de
+                                    {{ selectedOrganization.seat_limit === null ? 'espacios ilimitados' : selectedOrganization.seat_limit }}
+                                    <span v-if="selectedOrganization.seats_available !== null"> · {{ selectedOrganization.seats_available }} disponible(s)</span>
+                                </p>
+                            </div>
+                            <form class="flex flex-wrap items-end gap-2" @submit.prevent="grantSeats(selectedOrganization.id)">
+                                <label class="space-y-1 text-xs">Espacios a regalar
+                                    <input v-model.number="organizationForms[selectedOrganization.id].seats.quantity" class="form-input w-24" type="number" min="1" max="100" required />
+                                </label>
+                                <label class="space-y-1 text-xs">Motivo (opcional)
+                                    <input v-model="organizationForms[selectedOrganization.id].seats.reason" class="form-input w-56" maxlength="255" placeholder="Cortesía, compensación..." />
+                                </label>
+                                <button class="btn btn-outline-primary" :disabled="organizationForms[selectedOrganization.id].seats.processing">Agregar espacios</button>
+                            </form>
+                            <p v-if="Object.keys(organizationForms[selectedOrganization.id].seats.errors).length" class="w-full text-sm text-red-600">{{ Object.values(organizationForms[selectedOrganization.id].seats.errors).join(' ') }}</p>
+                        </section>
+
                         <div class="overflow-x-auto rounded-lg border">
                             <table class="table-hover w-full text-sm">
                                 <thead>
                                     <tr>
                                         <th class="text-left">Usuario</th>
-                                        <th class="text-left">Rol</th>
+                                        <th class="text-left">Rol / tareas</th>
                                         <th class="text-left">Correo</th>
                                         <th class="text-left">Teléfono</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr v-for="(member, index) in selectedOrganization.members" :key="index">
-                                        <td class="font-semibold">{{ fullName(member) }}</td>
-                                        <td>{{ member.role }}</td>
+                                        <td class="font-semibold">
+                                            {{ fullName(member) }}
+                                            <span v-if="member.status !== 'active'" class="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase text-gray-500 dark:bg-gray-700 dark:text-gray-300">Inactivo</span>
+                                        </td>
+                                        <td>
+                                            <p class="font-medium">{{ member.role === 'owner' ? 'Propietario' : 'Usuario' }}</p>
+                                            <p class="text-xs text-gray-500">{{ memberCapabilities(member).join(' · ') }}</p>
+                                        </td>
                                         <td>{{ member.email }}</td>
                                         <td>
                                             {{ member.telefono || '—' }}
@@ -707,11 +890,106 @@ const deleteOrganization = async (organization) => {
                                 </label>
                                 <label class="space-y-1 text-sm">N.º documento *<input v-model="organizationForms[selectedOrganization.id].user.numero_identidad" class="form-input" required /></label>
                                 <label class="space-y-1 text-sm">Teléfono<input v-model="organizationForms[selectedOrganization.id].user.telefono" class="form-input" /></label>
+                                <div class="space-y-2 md:col-span-3">
+                                    <p class="text-sm font-medium">Tareas permitidas</p>
+                                    <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                        <label v-for="capability in capabilities" :key="capability.key" class="flex items-start gap-2 rounded-lg border p-2 text-xs">
+                                            <input v-model="organizationForms[selectedOrganization.id].user.capabilities" type="checkbox" :value="capability.key" class="mt-0.5" />
+                                            <span><strong class="block">{{ capability.label }}</strong>{{ capability.description }}</span>
+                                        </label>
+                                    </div>
+                                    <p class="text-xs text-gray-500">Solo se otorgan los permisos de las tareas marcadas; nunca el panel de administración.</p>
+                                </div>
                                 <div class="flex items-end md:col-span-3">
                                     <button class="btn btn-outline-primary" :disabled="organizationForms[selectedOrganization.id].user.processing">Agregar usuario</button>
                                 </div>
                                 <p v-if="Object.keys(organizationForms[selectedOrganization.id].user.errors).length" class="text-sm text-red-600 md:col-span-3">{{ Object.values(organizationForms[selectedOrganization.id].user.errors).join(' ') }}</p>
                             </form>
+                        </section>
+                    </div>
+
+                    <!-- Comprobantes -->
+                    <div v-else-if="editTab === 'comprobantes'" class="space-y-5">
+                        <section class="space-y-2">
+                            <h3 class="font-semibold">Compras de espacios</h3>
+                            <div class="overflow-x-auto rounded-lg border">
+                                <table class="table-hover w-full text-sm">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-left">Fecha</th>
+                                            <th class="text-right">Espacios</th>
+                                            <th class="text-right">Total</th>
+                                            <th class="text-left">Medio</th>
+                                            <th class="text-left">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="purchase in selectedOrganization.seat_purchases || []" :key="purchase.id">
+                                            <td>{{ prettyDate(purchase.created_at) }}</td>
+                                            <td class="text-right">{{ purchase.quantity }}</td>
+                                            <td class="text-right font-semibold">S/ {{ money(purchase.total) }}</td>
+                                            <td>{{ purchase.payment_method === 'admin' ? 'Cortesía' : purchase.payment_method }}</td>
+                                            <td>{{ purchase.status }}</td>
+                                        </tr>
+                                        <tr v-if="!selectedOrganization.seat_purchases?.length">
+                                            <td colspan="5" class="text-center text-gray-500">Sin compras de espacios registradas.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <section class="space-y-2">
+                            <h3 class="font-semibold">Solicitudes de boleta, factura o nota de venta</h3>
+                            <div v-for="request in selectedOrganization.document_requests || []" :key="request.id" class="rounded-lg border p-4">
+                                <div class="flex flex-wrap items-start justify-between gap-3">
+                                    <div>
+                                        <p class="font-semibold">
+                                            {{ documentLabels[request.sunat_id] || request.document_type || 'Comprobante' }}
+                                            <span class="ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase" :class="documentStatusClasses[request.status] || 'bg-gray-100 text-gray-600'">
+                                                {{ documentStatusLabels[request.status] || request.status }}
+                                            </span>
+                                        </p>
+                                        <p class="text-xs text-gray-500">
+                                            {{ request.purchase_type === 'seat_purchase' ? 'Compra de espacios' : 'Recarga de saldo' }} #{{ request.purchase_id }}
+                                            · solicitado {{ prettyDate(request.created_at) }}
+                                            <span v-if="request.number"> · {{ request.number }}</span>
+                                        </p>
+                                        <p v-if="request.billing_data?.business_name" class="text-xs text-gray-500">
+                                            {{ request.billing_data.business_name }}
+                                            <span v-if="request.billing_data.ruc"> · RUC {{ request.billing_data.ruc }}</span>
+                                            <span v-if="request.billing_data.document_number"> · Doc. {{ request.billing_data.document_number }}</span>
+                                        </p>
+                                    </div>
+                                    <a v-if="request.can_download" :href="route('even_organizations.documents.download', request.id)" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener">Ver comprobante</a>
+                                </div>
+
+                                <form v-if="request.status === 'requested'" class="mt-3 grid gap-3 md:grid-cols-4" @submit.prevent="issueDocument(request.id)">
+                                    <label class="space-y-1 text-xs">Correo
+                                        <input v-model="documentFormFor(request).email" class="form-input" type="email" placeholder="Correo de envío" />
+                                    </label>
+                                    <label class="space-y-1 text-xs">WhatsApp
+                                        <input v-model="documentFormFor(request).phone" class="form-input" placeholder="Número con 9 dígitos" />
+                                    </label>
+                                    <div class="flex flex-col justify-end gap-1 text-xs">
+                                        <label><input v-model="documentFormFor(request).channels" type="checkbox" value="email" /> Enviar por correo</label>
+                                        <label><input v-model="documentFormFor(request).channels" type="checkbox" value="whatsapp" /> Enviar por WhatsApp</label>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button class="btn btn-success w-full" :disabled="documentFormFor(request).processing">Emitir y enviar</button>
+                                    </div>
+                                    <p v-if="Object.keys(documentFormFor(request).errors).length" class="text-sm text-red-600 md:col-span-4">{{ Object.values(documentFormFor(request).errors).join(' ') }}</p>
+                                </form>
+
+                                <form v-if="request.status === 'requested'" class="mt-2 flex flex-wrap items-end gap-2" @submit.prevent="rejectDocument(request.id)">
+                                    <label class="space-y-1 text-xs">Motivo de rechazo
+                                        <input v-model="documentFormFor(request).reason" class="form-input w-72" maxlength="1000" required />
+                                    </label>
+                                    <button class="btn btn-outline-danger" :disabled="documentFormFor(request).processing">Rechazar solicitud</button>
+                                </form>
+                                <p v-if="request.rejection_reason" class="mt-2 text-xs text-red-600">Motivo: {{ request.rejection_reason }}</p>
+                            </div>
+                            <p v-if="!selectedOrganization.document_requests?.length" class="text-sm text-gray-500">Todavía no hay solicitudes de comprobante.</p>
                         </section>
                     </div>
 

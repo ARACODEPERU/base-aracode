@@ -17,5 +17,6 @@ export function puedeVerMisPagos(sportsOrganization = {}, roles = []) {
 
     return Boolean(sportsOrganization?.mode)
         && Boolean(sportsOrganization?.organization_id)
+        && Boolean(sportsOrganization?.is_owner)
         && ! esSuperAdmin;
 }

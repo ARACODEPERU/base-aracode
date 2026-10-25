@@ -51,7 +51,7 @@ test('el hero usa el navy y deja el panel original para el modo social', () => {
 test('las tarjetas de recarga e historial alternan entre navy y panel', () => {
     const tarjetas = fuente.match(/: 'panel space-y-4'/g) || [];
 
-    assert.equal(tarjetas.length, 3, 'Se esperaban las tres tarjetas con su rama social (hero, recarga e historial).');
+    assert.equal(tarjetas.length, 5, 'Se esperaban las cinco tarjetas con su rama social (hero, equipo, recarga, comprobantes e historial).');
     assert.match(
         fuente,
         /sportsMode \? 'border-\[#234052\] bg-\[#0b1f2b\] text-slate-100 shadow-\[0_26px_70px_rgba\(0,0,0,0\.38\)\]' : 'panel space-y-4'/,
