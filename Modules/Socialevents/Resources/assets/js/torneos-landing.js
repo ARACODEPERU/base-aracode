@@ -379,6 +379,7 @@ function initPlayerModal() {
     }
 
     const urlTemplate = modal.dataset.playerUrl || '';
+    const pageUrlTemplate = modal.dataset.playerPageUrl || '';
     const bodyEl = modal.querySelector('[data-se-modal-body]');
     const nameEl = modal.querySelector('[data-se-modal-name]');
     const metaEl = modal.querySelector('[data-se-modal-meta]');
@@ -423,6 +424,22 @@ function initPlayerModal() {
         }
 
         return items;
+    };
+
+    // Enlace a la ficha completa: el modal resume el detalle, la página muestra
+    // logros, puesto en goleadores e historial con su propio diseño.
+    const renderProfileLink = (playerId) => {
+        if (!pageUrlTemplate || !playerId) {
+            return '';
+        }
+
+        const href = pageUrlTemplate.replace('__PLAYER__', encodeURIComponent(playerId));
+
+        return `
+            <a class="se-modal__profile-link" href="${escapeHtml(href)}">
+                Ver ficha completa del jugador
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            </a>`;
     };
 
     const renderSummary = (category, summary) => `
@@ -618,6 +635,7 @@ function initPlayerModal() {
             : `<span class="se-modal__avatar-initials">${escapeHtml(playerInitials(info.name))}</span>`;
 
         bodyEl.innerHTML = [
+            renderProfileLink(info.id || player.id),
             renderSummary(resolvedCategory, summary),
             renderReasons(resolvedCategory, data.reasons || [], summary),
             renderHighlights(resolvedCategory, data.highlights || {}),

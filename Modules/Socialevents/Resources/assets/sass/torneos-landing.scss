@@ -1775,6 +1775,27 @@ body.se-landing ::selection {
     color: var(--se-muted);
 }
 
+.se-modal__profile-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 1rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(184, 243, 74, 0.35);
+    background: rgba(184, 243, 74, 0.1);
+    color: var(--se-accent);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.se-modal__profile-link:hover,
+.se-modal__profile-link:focus-visible {
+    background: rgba(184, 243, 74, 0.2);
+}
+
 .se-modal__close {
     flex-shrink: 0;
     width: 2.4rem;
@@ -3675,4 +3696,30 @@ body.se-landing.se-motion-off .se-ambient__orb {
     .se-match__details-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* ── Enlaces a la ficha pública del equipo ─────────────────────────────── */
+
+/* La tarjeta se vuelve un enlace completo, sin heredar el subrayado. */
+a.se-team-card {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+a.se-team-card:focus-visible {
+    outline: 2px solid var(--se-accent);
+    outline-offset: 3px;
+}
+
+.se-table__team-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.se-table__team-link:hover,
+.se-table__team-link:focus-visible {
+    color: var(--se-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }

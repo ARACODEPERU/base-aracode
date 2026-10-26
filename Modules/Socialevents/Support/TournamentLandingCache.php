@@ -63,6 +63,42 @@ final class TournamentLandingCache
     }
 
     /**
+     * Clave de la ficha pública de un equipo en una edición.
+     */
+    public static function teamKey(int $editionId, int $teamId): string
+    {
+        return "tournament_landing_team_{$editionId}_v".self::version($editionId)."_{$teamId}_profile";
+    }
+
+    /**
+     * Devuelve null cuando el equipo no participa de la edición.
+     *
+     * @param  callable(): (array<string, mixed>|null)  $resolver
+     * @return array<string, mixed>|null
+     */
+    public static function rememberTeamDetail(int $editionId, int $teamId, callable $resolver): ?array
+    {
+        if (! config('socialevents.landing_cache_enabled', true)) {
+            return $resolver();
+        }
+
+        // Igual que en la ficha del jugador: un equipo inexistente no se cachea.
+        $cached = Cache::get(self::teamKey($editionId, $teamId));
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $payload = $resolver();
+
+        if (is_array($payload)) {
+            Cache::put(self::teamKey($editionId, $teamId), $payload, self::ttl());
+        }
+
+        return $payload;
+    }
+
+    /**
      * Devuelve null cuando el jugador no tiene estadísticas en la edición.
      *
      * @param  callable(): (array<string, mixed>|null)  $resolver

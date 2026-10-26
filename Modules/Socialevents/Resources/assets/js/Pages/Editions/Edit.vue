@@ -34,6 +34,7 @@
                         { route: route('even_ediciones_exclusiones', edicion.id), title: 'Exclusiones', permissions: 'even_ediciones_exclusiones'},
                         { route: route('even_ediciones_suspensiones', edicion.id), title: 'Suspensiones', permissions: 'even_ediciones_suspensiones'},
                         { route: route('even_ediciones_actas_listado', edicion.id), title: 'Actas', permissions: 'even_ediciones_actas'},
+                        { route: route('even_ediciones_diplomas', edicion.id), title: 'Diplomas', permissions: 'even_ediciones_diplomas'},
                     ]
                 },
                 {title: 'Editar'}

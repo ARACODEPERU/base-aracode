@@ -3,12 +3,16 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Socialevents\Http\Controllers\EvenCategoryController;
 use Modules\Socialevents\Http\Controllers\EvenEventController;
+use Modules\Socialevents\Http\Controllers\EvenEventDiplomaController;
 use Modules\Socialevents\Http\Controllers\EvenEventTickeClientController;
 use Modules\Socialevents\Http\Controllers\EvenEventTickePriceController;
 use Modules\Socialevents\Http\Controllers\EvenLocalController;
 use Modules\Socialevents\Http\Controllers\EvenLocalRentalController;
 use Modules\Socialevents\Http\Controllers\EventEditionAccordanceController;
+use Modules\Socialevents\Http\Controllers\EventEditionAwardController;
 use Modules\Socialevents\Http\Controllers\EventEditionController;
+use Modules\Socialevents\Http\Controllers\EventEditionDiplomaController;
+use Modules\Socialevents\Http\Controllers\EventEditionDiplomaIssueController;
 use Modules\Socialevents\Http\Controllers\EventEditionGalleryController;
 use Modules\Socialevents\Http\Controllers\EventEditionLandingVisitController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchController;
@@ -118,6 +122,42 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
     Route::middleware(['middleware' => 'permission:even_ediciones_galeria'])->get('editions/{id}/gallery', [EventEditionGalleryController::class, 'index'])->name('even_ediciones_galeria');
     Route::middleware(['middleware' => 'permission:even_ediciones_galeria_nuevo'])->post('editions/{id}/gallery/store', [EventEditionGalleryController::class, 'store'])->name('even_ediciones_galeria_store');
     Route::middleware(['middleware' => 'permission:even_ediciones_galeria_eliminar'])->delete('editions/{id}/gallery/{mediaId}/destroy', [EventEditionGalleryController::class, 'destroy'])->name('even_ediciones_galeria_destroy');
+
+    // ── Diplomas y premiados de la edición ──────────────────────────────────
+    // El diseño del diploma está acotado a la organización dueña de la edición
+    // (SportsOrganizationService::assertOwnedEdition en cada acción).
+    // ── Modelos de diploma reutilizables del torneo ─────────────────────────
+    // Se abren desde el listado de torneos. El modelo pertenece al evento, no a
+    // una edición, y se puede usar en todas sus ediciones.
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->get('events/{id}/diplomas', [EvenEventDiplomaController::class, 'index'])->whereNumber('id')->name('even_eventos_diplomas');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->get('events/{id}/diplomas/templates/{templateId}', [EvenEventDiplomaController::class, 'editor'])->whereNumber('id')->name('even_eventos_diplomas_editar');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('events/{id}/diplomas/templates', [EvenEventDiplomaController::class, 'store'])->whereNumber('id')->name('even_eventos_diplomas_store');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->put('events/{id}/diplomas/templates/{templateId}', [EvenEventDiplomaController::class, 'update'])->whereNumber('id')->name('even_eventos_diplomas_update');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('events/{id}/diplomas/templates/{templateId}/activate', [EvenEventDiplomaController::class, 'activate'])->whereNumber('id')->name('even_eventos_diplomas_activar');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('events/{id}/diplomas/templates/{templateId}/background', [EvenEventDiplomaController::class, 'background'])->whereNumber('id')->name('even_eventos_diplomas_fondo');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('events/{id}/diplomas/templates/{templateId}/asset', [EvenEventDiplomaController::class, 'asset'])->whereNumber('id')->name('even_eventos_diplomas_asset');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->delete('events/{id}/diplomas/templates/{templateId}', [EvenEventDiplomaController::class, 'destroy'])->whereNumber('id')->name('even_eventos_diplomas_destroy');
+
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->get('editions/{id}/diplomas', [EventEditionDiplomaController::class, 'index'])->name('even_ediciones_diplomas');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->get('editions/{id}/diplomas/templates/{templateId}', [EventEditionDiplomaController::class, 'editor'])->name('even_ediciones_diplomas_editar');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->get('editions/{id}/diplomas/awards/{awardId}/payload', [EventEditionDiplomaIssueController::class, 'payload'])->name('even_ediciones_diploma_payload');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->post('editions/{id}/diplomas/awards/{awardId}/issue', [EventEditionDiplomaIssueController::class, 'issue'])->name('even_ediciones_diploma_emitir');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->post('editions/{id}/diplomas/issue-all', [EventEditionDiplomaIssueController::class, 'issueAll'])->name('even_ediciones_diploma_emitir_todos');
+
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('editions/{id}/diplomas/templates', [EventEditionDiplomaController::class, 'store'])->name('even_ediciones_diplomas_store');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->put('editions/{id}/diplomas/templates/{templateId}', [EventEditionDiplomaController::class, 'update'])->name('even_ediciones_diplomas_update');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('editions/{id}/diplomas/templates/{templateId}/activate', [EventEditionDiplomaController::class, 'activate'])->name('even_ediciones_diplomas_activar');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('editions/{id}/diplomas/templates/{templateId}/background', [EventEditionDiplomaController::class, 'background'])->name('even_ediciones_diplomas_fondo');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('editions/{id}/diplomas/templates/{templateId}/asset', [EventEditionDiplomaController::class, 'asset'])->name('even_ediciones_diplomas_asset');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->delete('editions/{id}/diplomas/templates/{templateId}', [EventEditionDiplomaController::class, 'destroy'])->name('even_ediciones_diplomas_destroy');
+
+    Route::middleware(['middleware' => 'permission:even_ediciones_premiados'])->get('editions/{id}/diplomas/awards/suggestions', [EventEditionAwardController::class, 'suggestions'])->name('even_ediciones_premiados_sugerencias');
+    Route::middleware(['middleware' => 'permission:even_ediciones_premiados'])->post('editions/{id}/diplomas/awards', [EventEditionAwardController::class, 'store'])->name('even_ediciones_premiados_store');
+    Route::middleware(['middleware' => 'permission:even_ediciones_premiados'])->put('editions/{id}/diplomas/awards/order', [EventEditionAwardController::class, 'order'])->name('even_ediciones_premiados_orden');
+    Route::middleware(['middleware' => 'permission:even_ediciones_premiados'])->put('editions/{id}/diplomas/awards/{awardId}', [EventEditionAwardController::class, 'update'])->name('even_ediciones_premiados_update');
+    // Selección explícita del modelo que se usará al emitir este premio.
+    Route::middleware(['middleware' => 'permission:even_ediciones_premiados'])->put('editions/{id}/diplomas/awards/{awardId}/template', [EventEditionDiplomaController::class, 'assignTemplate'])->name('even_ediciones_premiados_template');
+    Route::middleware(['middleware' => 'permission:even_ediciones_premiados'])->delete('editions/{id}/diplomas/awards/{awardId}', [EventEditionAwardController::class, 'destroy'])->name('even_ediciones_premiados_destroy');
     Route::middleware(['middleware' => 'permission:even_ediciones_equipos'])->get('editions/{id}/teams', [EventEditionTeamController::class, 'index'])->name('even_ediciones_equipos');
     Route::middleware(['middleware' => 'permission:even_ediciones_equipos'])->get('editions/{id}/teams/bonus', [EventEditionTeamController::class, 'bonusPointsIndex'])->name('even_ediciones_equipos_bonus');
     Route::middleware(['middleware' => 'permission:even_ediciones_equipos'])->post('editions/{id}/teams/bonus/store', [EventEditionTeamController::class, 'bonusPointsStore'])->name('even_ediciones_equipos_bonus_store');
@@ -214,3 +254,19 @@ Route::get('torneos/{slug}/jugador/{playerId}', [TournamentLandingController::cl
     ->whereNumber('playerId')
     ->middleware('throttle:60,1')
     ->name('socialevents_torneos_player_detail');
+
+// Ficha pública del jugador (página completa, no el modal): identidad, logros
+// y partido a partido. Solo existe para ediciones con la landing publicada.
+Route::get('torneos/{slug}/jugadores/{playerId}', [TournamentLandingController::class, 'playerProfile'])
+    ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*|\d+')
+    ->whereNumber('playerId')
+    ->middleware('throttle:60,1')
+    ->name('socialevents_torneos_player_profile');
+
+// Ficha pública del equipo (promoción): puesto, plantilla, logros, sanciones,
+// historial y cronología de su participación en la edición.
+Route::get('torneos/{slug}/equipos/{teamId}', [TournamentLandingController::class, 'teamProfile'])
+    ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*|\d+')
+    ->whereNumber('teamId')
+    ->middleware('throttle:60,1')
+    ->name('socialevents_torneos_team_profile');

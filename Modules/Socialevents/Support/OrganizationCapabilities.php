@@ -69,6 +69,9 @@ class OrganizationCapabilities
         'even_ediciones_galeria_eliminar',
         'even_ediciones_exclusiones',
         'even_ediciones_suspensiones',
+        'even_ediciones_diplomas',
+        'even_ediciones_diplomas_disenar',
+        'even_ediciones_premiados',
         'even_local_listado',
         'even_local_nuevo',
         'even_local_editar',
@@ -137,6 +140,15 @@ class OrganizationCapabilities
                     'even_ediciones_equipos_bonus_store',
                     'even_ediciones_equipos_bonus_destroy',
                     'even_ediciones_equipos_recalculate',
+                ],
+            ],
+            'awards' => [
+                'label' => 'Entregar diplomas y premiados',
+                'description' => 'Registrar premiados, diseñar diplomas y emitir los certificados del torneo.',
+                'permissions' => [
+                    'even_ediciones_diplomas',
+                    'even_ediciones_diplomas_disenar',
+                    'even_ediciones_premiados',
                 ],
             ],
             'reports' => [

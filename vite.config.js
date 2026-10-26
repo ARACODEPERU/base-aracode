@@ -78,6 +78,8 @@ export default defineConfig(({ command }) => {
                 input: [
                     "resources/js/app.js",
                     "Modules/Socialevents/Resources/assets/js/torneos-landing.js",
+                    "Modules/Socialevents/Resources/assets/js/torneos-player.js",
+                    "Modules/Socialevents/Resources/assets/js/torneos-team.js",
                 ],
                 ssr: "resources/js/ssr.js",
                 refresh: true,
@@ -122,6 +124,11 @@ export default defineConfig(({ command }) => {
         },
         optimizeDeps: {
             exclude: ["@elmerrodriguez/editor-aracode"],
+            // El editor de diplomas se carga de forma diferida: si estas
+            // librerías no se pre-empaquetan al arrancar, la primera visita a
+            // la vista obliga a Vite a transformarlas (decenas de segundos) y
+            // el navegador muestra el aviso de página no responde.
+            include: ["jspdf", "qrcode"],
         },
         build: {
             sourcemap: false,

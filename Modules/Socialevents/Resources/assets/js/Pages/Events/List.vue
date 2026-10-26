@@ -255,6 +255,11 @@
                                                             Editar
                                                         </Link>
                                                         </MenuItem>
+                                                        <MenuItem v-if="sportsMode">
+                                                            <Link v-can="'even_ediciones_diplomas'" :href="route('even_eventos_diplomas', socialevent.id)" type="Link">
+                                                                Diplomas
+                                                            </Link>
+                                                        </MenuItem>
                                                         <MenuItem v-if="!sportsMode">
                                                             <button v-can="'even_evento_precios'" @click="openModalPrices(socialevent)" type="Link">
                                                                 Precios

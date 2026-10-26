@@ -148,4 +148,22 @@ class EventEdition extends Model
     {
         return $this->hasMany(EventEditionLandingView::class, 'edition_id', 'id');
     }
+
+    /** Premiados de la edición (campeón, goleador, mejor arquero, premios libres). */
+    public function awards(): HasMany
+    {
+        return $this->hasMany(EventEditionAward::class, 'edition_id');
+    }
+
+    /** Diseños de diploma disponibles para esta edición. */
+    public function diplomaTemplates(): HasMany
+    {
+        return $this->hasMany(EventEditionDiplomaTemplate::class, 'edition_id');
+    }
+
+    /** Diplomas efectivamente emitidos en esta edición. */
+    public function diplomas(): HasMany
+    {
+        return $this->hasMany(EventEditionDiploma::class, 'edition_id');
+    }
 }

@@ -476,6 +476,7 @@ class SportsOrganizationService
             'even_ediciones_partido_acta', 'even_ediciones_actas', 'even_ediciones_acta_editar',
             'even_ediciones_partido_acta_editar', 'even_ediciones_galeria', 'even_ediciones_galeria_nuevo',
             'even_ediciones_galeria_eliminar', 'even_ediciones_exclusiones', 'even_ediciones_suspensiones',
+            'even_ediciones_diplomas', 'even_ediciones_diplomas_disenar', 'even_ediciones_premiados',
             // Locales (complejos deportivos): cada organizador crea los suyos y solo edita o elimina los que creó.
             'even_local_listado', 'even_local_nuevo', 'even_local_editar', 'even_local_eliminar',
         ];

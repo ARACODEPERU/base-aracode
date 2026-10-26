@@ -208,7 +208,12 @@
 
                 <div class="se-teams-grid" style="--grid-cols: {{ min($teamCount, 6) }}">
                     @foreach ($edition->equipos as $equipo)
-                        <article class="se-team-card" data-se-reveal>
+                        {{-- Cada equipo abre su ficha pública con su historia en la edición. --}}
+                        <a
+                            class="se-team-card"
+                            href="{{ route('socialevents_torneos_team_profile', ['slug' => $edition->landingSlug(), 'teamId' => $equipo->team_id]) }}"
+                            data-se-reveal
+                        >
                             <div class="se-team-card__logo">
                                 @if ($equipo->equipo->logo_path)
                                     <img src="{{ asset('storage/' . $equipo->equipo->logo_path) }}" alt="{{ $equipo->equipo->name }}" loading="lazy">
@@ -217,7 +222,7 @@
                                 @endif
                             </div>
                             <div class="se-team-card__name">{{ $equipo->equipo->name }}</div>
-                        </article>
+                        </a>
                     @endforeach
                 </div>
             </div>
@@ -422,7 +427,10 @@
                                                 @else
                                                     <i class="fas fa-shield-alt" aria-hidden="true"></i>
                                                 @endif
-                                                {{ $team->equipo->name }}
+                                                <a
+                                                    class="se-table__team-link"
+                                                    href="{{ route('socialevents_torneos_team_profile', ['slug' => $edition->landingSlug(), 'teamId' => $team->team_id]) }}"
+                                                >{{ $team->equipo->name }}</a>
                                             </div>
                                         </td>
                                         <td class="pts">{{ (int) $team->points + (int) $team->bonus_points }}@if (($pointAdjustments[$team->team_id] ?? 0) !== 0) <span class="se-sanction-star" title="Incluye sanción administrativa">*</span>@endif</td>
@@ -741,6 +749,7 @@
         data-se-player-modal
         aria-hidden="true"
         data-player-url="{{ $playerDetailUrlTemplate }}"
+        data-player-page-url="{{ route('socialevents_torneos_player_profile', ['slug' => $edition->landingSlug(), 'playerId' => '__PLAYER__']) }}"
     >
         <div class="se-modal__backdrop" data-se-player-close></div>
         <div
