@@ -10,11 +10,15 @@ return new class extends Migration
     {
         Schema::create('socialevent_organization_seat_purchases', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('organization_id')->constrained('socialevent_organizations')->cascadeOnDelete();
+            // Los nombres de claves e índices se indican explícitamente porque los
+            // generados automáticamente superan el límite de 64 caracteres de MySQL.
+            $table->foreignId('organization_id')
+                ->constrained('socialevent_organizations')
+                ->cascadeOnDelete();
             $table->foreignId('purchased_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->uuid('external_reference')->unique();
-            $table->uuid('idempotency_key')->unique();
-            $table->string('provider_payment_id', 80)->nullable()->unique();
+            $table->uuid('external_reference')->unique('se_org_seat_purchases_ref_unique');
+            $table->uuid('idempotency_key')->unique('se_org_seat_purchases_idem_unique');
+            $table->string('provider_payment_id', 80)->nullable()->unique('se_org_seat_purchases_payid_unique');
             $table->string('payment_method', 30);
             $table->string('status', 30)->default('processing');
             $table->unsignedSmallInteger('quantity');
@@ -23,7 +27,7 @@ return new class extends Migration
             $table->timestamp('credited_at')->nullable();
             $table->timestamps();
 
-            $table->index(['organization_id', 'created_at']);
+            $table->index(['organization_id', 'created_at'], 'se_org_seat_purchases_org_created_idx');
         });
     }
 
