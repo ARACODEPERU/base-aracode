@@ -3,6 +3,7 @@
 namespace Modules\Academic\Services;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -138,6 +139,101 @@ class GateScanService
             ->orderByDesc('updated_at')
             ->when($limit, fn ($query, $limit) => $query->limit($limit))
             ->get();
+    }
+
+    /**
+     * Consulta del historial de portería con los filtros del listado.
+     *
+     * El listado es la vista de consulta (todas las filas, no solo las del
+     * día), así que aquí viven los filtros compartidos con el resumen para no
+     * duplicar condiciones entre las filas y los contadores.
+     *
+     * @param  array<string, mixed> $filters
+     * @return Builder<AcaSchoolGateAttendance>
+     */
+    public function recordsQuery(int $schoolId, array $filters = []): Builder
+    {
+        $query = AcaSchoolGateAttendance::query()
+            ->where('aca_school_gate_attendances.school_id', $schoolId)
+            ->with(['student.person', 'section.grade.level']);
+
+        $this->applyRecordFilters($query, $filters);
+
+        return $query
+            ->orderByDesc('aca_school_gate_attendances.attendance_date')
+            ->orderByDesc('aca_school_gate_attendances.entry_at')
+            ->orderByDesc('aca_school_gate_attendances.id');
+    }
+
+    /**
+     * Totales del mismo conjunto filtrado del historial, en una sola consulta.
+     *
+     * @param  array<string, mixed> $filters
+     * @return array{total: int, entries: int, exits: int, inside: int, late: int}
+     */
+    public function recordsSummary(int $schoolId, array $filters = []): array
+    {
+        $query = AcaSchoolGateAttendance::query()
+            ->where('aca_school_gate_attendances.school_id', $schoolId);
+
+        $this->applyRecordFilters($query, $filters);
+
+        $row = $query
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('COUNT(entry_at) as entries')
+            ->selectRaw('COUNT(exit_at) as exits')
+            ->selectRaw('SUM(CASE WHEN entry_at IS NOT NULL AND exit_at IS NULL THEN 1 ELSE 0 END) as inside')
+            ->selectRaw('SUM(CASE WHEN entry_status = ? THEN 1 ELSE 0 END) as late', [AcaSchoolGateAttendance::ENTRY_TARDANZA])
+            ->first();
+
+        return [
+            'total' => (int) ($row->total ?? 0),
+            'entries' => (int) ($row->entries ?? 0),
+            'exits' => (int) ($row->exits ?? 0),
+            'inside' => (int) ($row->inside ?? 0),
+            'late' => (int) ($row->late ?? 0),
+        ];
+    }
+
+    /**
+     * Filtros compartidos por el listado y su resumen: fecha, movimiento
+     * (entrada o salida), estructura académica y búsqueda del alumno.
+     *
+     * @param  Builder<AcaSchoolGateAttendance> $query
+     * @param  array<string, mixed>             $filters
+     */
+    private function applyRecordFilters(Builder $query, array $filters): void
+    {
+        $query
+            ->when(filled($filters['date_from'] ?? null), fn (Builder $q) => $q
+                ->whereDate('aca_school_gate_attendances.attendance_date', '>=', $filters['date_from']))
+            ->when(filled($filters['date_to'] ?? null), fn (Builder $q) => $q
+                ->whereDate('aca_school_gate_attendances.attendance_date', '<=', $filters['date_to']))
+            ->when(
+                ($filters['event'] ?? null) === AcaSchoolGateAttendance::EVENT_ENTRADA,
+                fn (Builder $q) => $q->whereNotNull('aca_school_gate_attendances.entry_at')
+            )
+            ->when(
+                ($filters['event'] ?? null) === AcaSchoolGateAttendance::EVENT_SALIDA,
+                fn (Builder $q) => $q->whereNotNull('aca_school_gate_attendances.exit_at')
+            )
+            ->when(filled($filters['section_id'] ?? null), fn (Builder $q) => $q
+                ->where('aca_school_gate_attendances.section_id', $filters['section_id']))
+            ->when(filled($filters['grade_id'] ?? null), fn (Builder $q) => $q
+                ->whereHas('section', fn (Builder $s) => $s->where('grade_id', $filters['grade_id'])))
+            ->when(filled($filters['level_id'] ?? null), fn (Builder $q) => $q
+                ->whereHas('section.grade', fn (Builder $g) => $g->where('level_id', $filters['level_id'])))
+            ->when(filled($filters['search'] ?? null), function (Builder $q) use ($filters) {
+                $search = trim((string) $filters['search']);
+
+                $q->whereHas('student', function (Builder $student) use ($search) {
+                    $student->where('student_code', 'like', '%'.$search.'%')
+                        ->orWhereHas('person', function (Builder $person) use ($search) {
+                            $person->where('full_name', 'like', '%'.$search.'%')
+                                ->orWhere('number', 'like', '%'.$search.'%');
+                        });
+                });
+            });
     }
 
     /**

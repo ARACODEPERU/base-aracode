@@ -1040,6 +1040,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->get('school/gate/day', [AcaSchoolGateController::class, 'day'])->name('aca_school_gate_day');
     Route::middleware(['middleware' => 'permission:aca_school_porteria_reporte'])
         ->get('school/gate/report', [AcaSchoolGateController::class, 'report'])->name('aca_school_gate_report');
+    // Listado histórico y consultable de la asistencia institucional.
+    Route::middleware(['middleware' => 'permission:aca_school_porteria_reporte'])
+        ->get('school/gate/records', [AcaSchoolGateController::class, 'records'])->name('aca_school_gate_records');
 
     /*
      * Parametros / SMS del colegio: canal propio de los avisos de asistencia
