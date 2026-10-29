@@ -1110,6 +1110,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])
         ->get('school/teacher/competencies/section/{sectionId}/export', [AcaSchoolTeacherCompetencyController::class, 'export'])->name('aca_school_teacher_competencies_export');
 
+    // Listado de compromisos de pago (cargos + cuotas por pagar) del colegio.
+    Route::middleware(['middleware' => 'permission:aca_school_cobro_listado'])
+        ->get('school/charges', [AcaSchoolChargeController::class, 'index'])->name('aca_school_charges_list');
     Route::middleware(['middleware' => 'permission:aca_school_cobro_listado'])
         ->get('school/charges/{enrollmentId}', [AcaSchoolChargeController::class, 'show'])->name('aca_school_charges_show');
     Route::middleware(['middleware' => 'permission:aca_school_cobro_listado'])

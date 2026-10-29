@@ -670,7 +670,7 @@ const colegioGroup = {
             },
         },
         {
-            route: route('aca_school_enrollments_list'),
+            route: route('aca_school_charges_list'),
             status: false,
             text: 'Cobros',
             icom: faMoneyBillWave,
