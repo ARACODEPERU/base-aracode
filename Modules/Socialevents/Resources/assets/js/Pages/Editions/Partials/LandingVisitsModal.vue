@@ -785,29 +785,45 @@ onBeforeUnmount(() => {
     font-size: 0.75rem;
 }
 
+/* El tema global de tablas pinta fondos blancos sobre cualquier <table>; aquí
+   se neutralizan para que esta tabla respete el tema oscuro del torneo. */
+.lv-table,
+.lv-table tbody,
+.lv-table tbody tr,
+.lv-table tbody tr td {
+    background-color: transparent !important;
+}
+
+.lv-table thead tr,
+.lv-table thead th {
+    background-color: var(--lv-surface-2) !important;
+}
+
 .lv-table th {
     position: sticky;
     top: 0;
     z-index: 1;
-    background: var(--lv-surface-2);
     padding: 0.55rem 0.7rem;
     text-align: left;
     font-size: 0.64rem;
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--lv-muted);
+    color: var(--lv-muted) !important;
+    border-bottom: 1px solid var(--lv-border) !important;
 }
 
 .lv-table td {
     border-top: 1px solid var(--lv-border);
+    border-bottom: 0;
     padding: 0.55rem 0.7rem;
     vertical-align: top;
     color: var(--lv-text);
 }
 
-.lv-table tbody tr:hover {
-    background: color-mix(in srgb, var(--lv-surface-2) 70%, transparent);
+.lv-table tbody tr:hover,
+.lv-table tbody tr:hover td {
+    background-color: color-mix(in srgb, var(--lv-surface-2) 70%, transparent) !important;
 }
 
 .lv-table td small {
