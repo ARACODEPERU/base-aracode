@@ -12,6 +12,8 @@ use App\Models\Industry;
 use App\Models\Parameter;
 use App\Models\PaymentMethod;
 use App\Models\Person;
+use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
@@ -320,6 +322,29 @@ class CommercialNegotiationPublicController extends Controller
                         'provincia' => $data['invoice_provincia'] ?? null,
                         'departamento' => $data['invoice_departamento'] ?? null,
                     ]
+                );
+            }
+
+            $user = User::query()->where('person_id', $person->id)->first();
+            if (! $user && $person->email) {
+                $user = User::query()->whereRaw('LOWER(email) = ?', [strtolower(trim($person->email))])->first();
+            }
+            if ($user) {
+                $userData = [
+                    'name' => $person->names ?: $person->full_name,
+                    'email' => $person->email ?: $user->email,
+                    'person_id' => $person->id,
+                ];
+                $user->update($userData);
+
+                PersonUserPersistenceVerifier::verify(
+                    $person,
+                    $user,
+                    array_merge(
+                        array_filter($personPayload, fn ($value) => $value !== null && $value !== ''),
+                        $locationPayload
+                    ),
+                    $userData
                 );
             }
 

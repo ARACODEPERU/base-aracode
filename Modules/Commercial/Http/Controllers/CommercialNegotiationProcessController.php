@@ -10,6 +10,7 @@ use App\Models\SaleDocument;
 use App\Models\SaleDocumentItem;
 use App\Models\SaleProduct;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -312,6 +313,37 @@ class CommercialNegotiationProcessController extends Controller
         // Se aplica completa (incluye nulls) para poder pasar de extranjero a Peru y viceversa.
         $person->update($locationPayload);
 
+        $person = Person::query()->findOrFail($person->id);
+        $user = User::where('person_id', $person->id)->first();
+
+        if (! $user && $person->email) {
+            $user = User::query()
+                ->whereRaw('LOWER(email) = ?', [strtolower(trim($person->email))])
+                ->first();
+            if ($user) {
+                $user->update(['person_id' => $person->id]);
+            }
+        }
+
+        if ($user) {
+            $userData = [
+                'name' => $person->full_name ?: $person->short_name,
+                'email' => $person->email ?: $user->email,
+                'person_id' => $person->id,
+            ];
+            $user->update($userData);
+
+            PersonUserPersistenceVerifier::verify(
+                $person,
+                $user,
+                array_merge(
+                    array_filter($personPayload, fn ($value) => $value !== null && $value !== ''),
+                    $locationPayload
+                ),
+                $userData
+            );
+        }
+
         $this->markStepDone($negotiation, 'person');
 
         return response()->json([
@@ -319,8 +351,11 @@ class CommercialNegotiationProcessController extends Controller
             'message' => 'Actualizar los datos del cliente en la tabla people: cliente ya existente.',
             'person_id' => $person->id,
         ]);
-    }    public function processUser(Request $request, $id)
-    {        $negotiation = $this->negotiation($id);
+    }
+
+    public function processUser(Request $request, $id)
+    {
+        $negotiation = $this->negotiation($id);
         $person = $this->person($negotiation);
 
         $user = User::where('person_id', $person->id)->first();
@@ -350,7 +385,28 @@ class CommercialNegotiationProcessController extends Controller
             ]);
         }
 
+        $personData = [
+            'document_type_id' => $person->document_type_id,
+            'number' => $person->number,
+            'full_name' => $person->full_name,
+            'email' => $person->email,
+        ];
+        $userData = [
+            'person_id' => $person->id,
+            'name' => $person->full_name ?: $person->short_name,
+            'email' => $person->email ?: $user->email,
+            'status' => true,
+        ];
+        $user->update($userData);
         $user->assignRole('Alumno');
+
+        $person->refresh();
+        PersonUserPersistenceVerifier::verify(
+            $person,
+            $user,
+            $personData,
+            $userData
+        );
 
         $this->markStepDone($negotiation, 'user');
 

@@ -7,6 +7,7 @@ use App\Models\IdentityDocumentType;
 use App\Models\Parameter;
 use App\Models\Person;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -312,20 +313,24 @@ class PersonController extends Controller
             $updateData['foreign_city'] = null;
         }
 
-        Person::find($person_id)->update($updateData);
+        $person = Person::findOrFail($person_id);
+        $person->update($updateData);
 
-        $user->update([
-            'name'          => $request->get('names'),
-            'email'         => $request->get('email'),
-            //'password'      => Hash::make($request->get('number')),
-            'information'   => $request->get('description'),
-            'avatar'        => $path,
-            'updated_information' => true
-        ]);
+        $userData = [
+            'name' => $request->get('names'),
+            'email' => $request->get('email'),
+            'information' => $request->get('description'),
+            'avatar' => $path,
+            'updated_information' => true,
+            'person_id' => $person->id,
+        ];
+        $user->update($userData);
 
         DB::table('aca_students')->where('id', $student_id)->update([
             'student_code'  => $request->get('number'),
         ]);
+
+        PersonUserPersistenceVerifier::verify($person, $user, $updateData, $userData);
 
         // Primera vez que la persona completa su perfil obligatorio: se envian todos
         // sus datos y sus cursos a n8n. En las ediciones posteriores
@@ -453,9 +458,11 @@ class PersonController extends Controller
                 'foreign_city' => $foreignCity,
             ]);
 
-            User::find(Auth::id())->update([
+            $user = User::find(Auth::id());
+            $user->update([
                 'email' => $email,
                 'name' => trim($request->input('names')),
+                'person_id' => $person->id,
                 'updated_information' => true
             ]);
 
@@ -491,12 +498,54 @@ class PersonController extends Controller
                 ]
             );
 
-            User::find(Auth::id())->update([
+            $user = User::find(Auth::id());
+            $user->update([
                 'person_id' => $person->id,
+                'name' => trim($request->input('names')),
+                'email' => $email,
                 'updated_information' => true
             ]);
 
             $webhookPersonId = $person->id;
+        }
+
+        if (isset($person) && isset($user) && $person->exists && $user->exists) {
+            PersonUserPersistenceVerifier::verify(
+                $person,
+                $user,
+                [
+                    'document_type_id' => $request->get('document_type_id'),
+                    'number' => trim($request->input('number')),
+                    'short_name' => trim($request->input('names')),
+                    'full_name' => trim($request->get('father_lastname').' '.$request->get('mother_lastname').' '.$request->get('names')),
+                    'description' => trim($request->input('description')),
+                    'telephone' => $request->input('telephone'),
+                    'email' => $email,
+                    'address' => trim($request->input('address')),
+                    'ubigeo' => $ubigeoValue,
+                    'birthdate' => $request->input('birthdate'),
+                    'names' => trim($request->input('names')),
+                    'father_lastname' => trim($request->input('father_lastname')),
+                    'mother_lastname' => trim($request->input('mother_lastname')),
+                    'ocupacion' => $request->input('ocupacion'),
+                    'presentacion' => $request->input('presentacion'),
+                    'gender' => $request->input('gender'),
+                    'is_provider' => false,
+                    'is_client' => true,
+                    'status' => true,
+                    'social_networks' => json_encode($request->input('social_networks')),
+                    'ubigeo_description' => $ubigeoDescription,
+                    'foreign_country_id' => $foreignCountryId,
+                    'foreign_state' => $foreignState,
+                    'foreign_city' => $foreignCity,
+                ],
+                [
+                    'person_id' => $person->id,
+                    'email' => $email,
+                    'name' => trim($request->input('names')),
+                    'updated_information' => true,
+                ]
+            );
         }
 
         // Primera vez que la persona completa sus datos: mismo aviso a n8n que el
@@ -690,7 +739,22 @@ class PersonController extends Controller
 
             $user->name = $request->get('names');
             $user->email = $request->get('email');
+            $user->person_id = $person->id;
             $user->save();
+
+            PersonUserPersistenceVerifier::verify(
+                $person,
+                $user,
+                array_merge($data, [
+                    'short_name' => $request->get('names'),
+                    'full_name' => trim($request->get('father_lastname').' '.$request->get('mother_lastname').' '.$request->get('names')),
+                ]),
+                [
+                    'name' => $request->get('names'),
+                    'email' => $request->get('email'),
+                    'person_id' => $person->id,
+                ]
+            );
         });
 
         return response()->json(['message' => 'Datos actualizados correctamente']);

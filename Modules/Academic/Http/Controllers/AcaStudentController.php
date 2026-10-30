@@ -10,6 +10,7 @@ use App\Models\PaymentMethod;
 use App\Models\Person;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
@@ -272,6 +273,27 @@ class AcaStudentController extends Controller
 
         $user->assignRole('Alumno');
 
+        $expectedPersonData = [
+            'document_type_id' => $request->get('document_type_id'),
+            'number' => $request->get('number'),
+            'names' => trim($request->get('names')),
+            'father_lastname' => trim($request->get('father_lastname')),
+            'mother_lastname' => trim($request->get('mother_lastname')),
+            'full_name' => trim($request->get('father_lastname') . ' ' . $request->get('mother_lastname') . ' ' . $request->get('names')),
+            'telephone' => $request->get('telephone'),
+            'email' => $request->get('email'),
+            'address' => $request->get('address'),
+            'ubigeo' => $request->get('ubigeo'),
+            'ubigeo_description' => $request->get('ubigeo_description'),
+        ];
+        $expectedUserData = [
+            'name' => trim($request->get('names')),
+            'email' => trim($request->get('email')),
+            'information' => $request->get('description'),
+            'avatar' => $path,
+            'person_id' => $per->id,
+        ];
+
         AcaStudent::updateOrCreate(
             [
                 'person_id'     => $per->id
@@ -280,6 +302,8 @@ class AcaStudentController extends Controller
                 'student_code'  => $request->get('number'),
             ]
         );
+
+        PersonUserPersistenceVerifier::verify($per, $user, $expectedPersonData, $expectedUserData);
 
         return redirect()->route('aca_students_list')
             ->with('message', __('Estudiante creado con éxito'));
@@ -1284,18 +1308,37 @@ class AcaStudentController extends Controller
                     'is_client' => true
                 ]);
 
-                User::updateOrCreate(
-                    [
-                        'email' => trim($row[4])
-                    ],
-                    [
-                        'name' => trim($row[0]),
-                        'password' => Hash::make(trim($row[1])),
-                        'local_id' => 1,
-                        'person_id' => $person->id,
-                        'status' => true
-                    ]
-                );
+                $userData = [
+                    'name' => trim($row[0]),
+                    'password' => Hash::make(trim($row[1])),
+                    'local_id' => 1,
+                    'person_id' => $person->id,
+                    'status' => true,
+                ];
+                $user = User::updateOrCreate(['email' => trim($row[4])], $userData);
+
+                $expectedPersonData = [
+                    'document_type_id' => 1,
+                    'number' => trim($row[1]),
+                    'full_name' => trim($row[0]),
+                    'birthdate' => $fechaMysql,
+                    'telephone' => $row[3],
+                    'email' => trim($row[4]),
+                    'company' => $row[5],
+                    'industry' => $row[6],
+                    'ocupacion' => $row[7],
+                    'profession' => $row[8],
+                    'gender' => $row[9],
+                    'is_provider' => false,
+                    'is_client' => true,
+                ];
+                $expectedUserData = [
+                    'name' => trim($row[0]),
+                    'email' => trim($row[4]),
+                    'local_id' => 1,
+                    'status' => true,
+                    'person_id' => $person->id,
+                ];
 
                 $student = AcaStudent::firstOrCreate(
                     [
@@ -1306,6 +1349,8 @@ class AcaStudentController extends Controller
                         'new_student' => true
                     ]
                 );
+
+                PersonUserPersistenceVerifier::verify($person, $user, $expectedPersonData, $expectedUserData);
 
                 // Actualizar el progreso en la caché
                 $currentProgress = (($index + 1) / $totalRows) * 100;
@@ -1408,12 +1453,9 @@ class AcaStudentController extends Controller
 
 
             // Crear registro en la base de datos
-            $person = Person::firstOrCreate(
-                [
-                    'number' => trim($student[1]),
-                ],
-                [
+            $personData = [
                     'document_type_id' => 1,
+                    'number' => trim($student[1]),
                     'full_name' => trim($student[0]),
                     'birthdate' => $fechaMysql,
                     'telephone' => $student[3],
@@ -1425,21 +1467,24 @@ class AcaStudentController extends Controller
                     'gender' => $student[9] == "-" ? null : $student[9],
                     'is_provider' => false,
                     'is_client' => true
-                ]
+                ];
+            $person = Person::updateOrCreate(
+                [
+                    'document_type_id' => 1,
+                    'number' => trim($student[1]),
+                ],
+                $personData
             );
 
-            User::firstOrCreate(
-                [
-                    'email' => trim($student[4])
-                ],
-                [
-                    'name' => trim($student[0]),
-                    'password' => Hash::make(trim($student[1])),
-                    'local_id' => 1,
-                    'person_id' => $person->id,
-                    'status' => true
-                ]
-            );
+            $userData = [
+                'name' => trim($student[0]),
+                'email' => trim($student[4]),
+                'password' => Hash::make(trim($student[1])),
+                'local_id' => 1,
+                'person_id' => $person->id,
+                'status' => true,
+            ];
+            $user = User::updateOrCreate(['email' => trim($student[4])], $userData);
 
             $student = AcaStudent::firstOrCreate(
                 [
@@ -1458,6 +1503,19 @@ class AcaStudentController extends Controller
                 'status' => true,
                 'modality_id' => $modality_id
             ]);
+
+            PersonUserPersistenceVerifier::verify(
+                $person,
+                $user,
+                $personData,
+                [
+                    'name' => $userData['name'],
+                    'email' => $userData['email'],
+                    'local_id' => 1,
+                    'person_id' => $person->id,
+                    'status' => true,
+                ]
+            );
 
             return response()->json([
                 'success' => true,

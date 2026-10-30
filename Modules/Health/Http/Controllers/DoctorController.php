@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\District;
 use App\Models\Person;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -169,6 +170,36 @@ class DoctorController extends Controller
                 'specialty' => $request->get('specialty'),
                 'attention_service_type' => $this->normalizeServiceType($request->get('attention_service_type', 'general')),
             ]);
+
+            if ($user) {
+                PersonUserPersistenceVerifier::verify(
+                    $per,
+                    $user,
+                    [
+                        'document_type_id' => $request->get('document_type_id'),
+                        'number' => $request->get('number'),
+                        'short_name' => $request->get('names'),
+                        'full_name' => $request->get('father_lastname').' '.$request->get('mother_lastname').' '.$request->get('names'),
+                        'description' => 'Doctor',
+                        'telephone' => $request->get('telephone'),
+                        'email' => $request->get('email'),
+                        'image' => $path,
+                        'address' => $request->get('address'),
+                        'ubigeo' => $request->get('ubigeo'),
+                        'birthdate' => $request->get('birthdate'),
+                        'names' => $request->get('names'),
+                        'father_lastname' => $request->get('father_lastname'),
+                        'mother_lastname' => $request->get('mother_lastname'),
+                        'gender' => $request->get('gender'),
+                    ],
+                    [
+                        'name' => trim($per->full_name),
+                        'email' => trim($request->get('user_email')),
+                        'person_id' => $per->id,
+                        'status' => true,
+                    ]
+                );
+            }
         });
 
         return redirect()->route('heal_doctors_create')
@@ -283,24 +314,63 @@ class DoctorController extends Controller
             $person->image = $path;
         }
 
-        DB::transaction(function () use ($request, $person, $update_id) {
+        $personData = [
+            'document_type_id' => $request->get('document_type_id'),
+            'number' => $request->get('number'),
+            'short_name' => $request->get('names'),
+            'full_name' => $request->get('father_lastname').' '.$request->get('mother_lastname').' '.$request->get('names'),
+            'telephone' => $request->get('telephone'),
+            'email' => $request->get('email'),
+            'address' => $request->get('address'),
+            'image' => $path ?: $person->image,
+            'ubigeo' => $request->get('ubigeo'),
+            'birthdate' => $request->get('birthdate'),
+            'names' => $request->get('names'),
+            'father_lastname' => $request->get('father_lastname'),
+            'mother_lastname' => $request->get('mother_lastname'),
+            'gender' => $request->get('gender'),
+        ];
+        $person->fill($personData);
+
+        DB::transaction(function () use ($request, $person, $update_id, $personData) {
             $person->save();
 
             $doctor = HealDoctor::where('person_id', $update_id)->firstOrFail();
-            $userId = $doctor->user_id;
+            $user = $doctor->user_id ? User::find($doctor->user_id) : null;
+            $createdUser = false;
 
-            if (!$userId && $request->boolean('generate_user')) {
-                $userId = $this->createDoctorUser($person, $request)->id;
+            if (!$user && $request->boolean('generate_user')) {
+                $user = $this->createDoctorUser($person, $request);
+                $createdUser = true;
             }
 
             $doctor->update([
-                'user_id' => $userId,
+                'user_id' => $user?->id,
                 'doctor_code'  => $request->get('number'),
                 'colegiatura' => $request->get('colegiatura'),
                 'profession' => $request->get('profession'),
                 'specialty' => $request->get('specialty'),
                 'attention_service_type' => $this->normalizeServiceType($request->get('attention_service_type', 'general')),
             ]);
+
+            if ($user) {
+                $userData = [
+                    'name' => trim($person->full_name),
+                    'email' => $createdUser
+                        ? trim($request->get('user_email'))
+                        : $request->get('email'),
+                    'person_id' => $person->id,
+                    'status' => true,
+                ];
+                $user->update($userData);
+
+                PersonUserPersistenceVerifier::verify(
+                    $person,
+                    $user,
+                    $personData,
+                    $userData
+                );
+            }
         });
 
         return redirect()->route('heal_doctors_edit', $update_id)

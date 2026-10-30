@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Parameter;
 use App\Models\Person;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -508,15 +509,13 @@ class EvenEventController extends Controller
      */
     private function personForUser(User $user): ?int
     {
-        if ($user->person_id && Person::query()->whereKey($user->person_id)->exists()) {
-            return (int) $user->person_id;
-        }
-
+        $person = $user->person_id
+            ? Person::query()->find($user->person_id)
+            : null;
         $identity = trim((string) $user->numero_identidad);
         $email = strtolower(trim((string) $user->email));
-        $person = null;
 
-        if ($identity !== '') {
+        if (! $person && $identity !== '') {
             $person = Person::query()->where('number', $identity)->first();
         }
         if (! $person && $email !== '') {
@@ -535,7 +534,25 @@ class EvenEventController extends Controller
             ]);
         }
 
+        $personData = [
+            'document_type_id' => $user->tipo_identidad
+                ? $this->documentTypeId($user->tipo_identidad)
+                : $person->document_type_id,
+            'number' => $identity !== '' ? $identity : $person->number,
+            'full_name' => $this->userDisplayName($user),
+            'short_name' => $this->userDisplayName($user),
+            'email' => $email !== '' ? $email : $person->email,
+            'telephone' => $user->telefono ?: $person->telephone,
+        ];
+        $person->forceFill($personData)->save();
         $user->forceFill(['person_id' => $person->id])->save();
+
+        PersonUserPersistenceVerifier::verify(
+            $person,
+            $user,
+            $personData,
+            ['person_id' => $person->id]
+        );
 
         return (int) $person->id;
     }
