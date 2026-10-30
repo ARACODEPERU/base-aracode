@@ -67,7 +67,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
                 'roles' => $request->user() ? $request->user()->roles->pluck('name') : [],
-                'permissions' => $request->user() ? $request->user()->getPermissionsViaRoles()->pluck('name') : [],
+                // Incluye los permisos directos de los operadores de una
+                // organización, además de los que vienen por rol.
+                'permissions' => $request->user() ? $request->user()->getAllPermissions()->pluck('name') : [],
             ],
             'sportsOrganization' => fn () => [
                 'mode' => app(\Modules\Socialevents\Services\SportsOrganizationService::class)->sportsMode(),
@@ -75,6 +77,10 @@ class HandleInertiaRequests extends Middleware
                 'status' => $request->user() ? app(\Modules\Socialevents\Services\SportsOrganizationService::class)->organizationStatus($request->user()) : null,
                 'can_read' => $request->user() ? app(\Modules\Socialevents\Services\SportsOrganizationService::class)->canRead($request->user()) : false,
                 'can_write' => $request->user() ? app(\Modules\Socialevents\Services\SportsOrganizationService::class)->canWrite($request->user()) : false,
+                'role' => $request->user()?->socialevent_organization_role,
+                'is_owner' => $request->user()
+                    ? app(\Modules\Socialevents\Services\OrganizationTeamService::class)->isOwner($request->user())
+                    : false,
             ],
             'organizationBillingAlerts' => fn () => $request->user()
                 && ! app(\Modules\Socialevents\Services\SportsOrganizationService::class)->isSuperAdmin($request->user())

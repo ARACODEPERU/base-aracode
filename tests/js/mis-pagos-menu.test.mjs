@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { puedeVerMisPagos } from '../../Modules/Socialevents/Resources/assets/js/utils/organizationPaymentsAccess.js';
 
 /**
- * Entrada "Mis pagos" del menú de Gestión Deportiva.
+ * Entrada "Mi plan" del menú de Gestión Deportiva.
  *
  * El caso que fija esta prueba: el organizador quiere pagar por adelantado, pero
  * el aviso de pago solo aparecía al crear un partido con el acceso vencido o sin
@@ -33,33 +33,34 @@ const loadMenu = async () => {
     return import(url);
 };
 
-const entradaMisPagos = (menu) => (menu.items || []).find((item) => item.text === 'Mis pagos');
+const entradaMisPagos = (menu) => (menu.items || []).find((item) => item.text === 'Mi plan');
 
-test('el menú deportivo ofrece "Mis pagos" apuntando a la vista de pagos', async () => {
+test('el menú deportivo ofrece "Mi plan" apuntando a la vista de pagos', async () => {
     const menu = (await loadMenu()).default;
     const item = entradaMisPagos(menu);
 
-    assert.ok(item, 'La entrada "Mis pagos" desapareció del menú de Socialevents.');
+    assert.ok(item, 'La entrada "Mi plan" desapareció del menú de Socialevents.');
     assert.equal(item.route, '/r/even_organizations.topup.index', 'Debe abrir la misma vista de pagos que usa el aviso al crear un partido.');
     assert.equal(item.organizationOnly, true, 'La fila debe quedar restringida al organizador con cuenta propia.');
     assert.equal(item.permissions, 'even_dashboard', 'El organizador entra al módulo con even_dashboard.');
 });
 
-test('el modo deportivo conserva la entrada "Mis pagos"', async () => {
+test('el modo deportivo conserva la entrada "Mi plan"', async () => {
     const menu = (await loadMenu()).configureSocialeventsMenu(true);
 
     assert.equal(menu.text, 'GESTIÓN DEPORTIVA');
     assert.ok(entradaMisPagos(menu), 'El filtro del modo deportivo no debe quitar la fila.');
 });
 
-test('solo el organizador con cuenta propia en modo deportivo ve "Mis pagos"', () => {
-    assert.equal(puedeVerMisPagos({ mode: true, organization_id: 7 }, ['sports_organizer']), true);
-    assert.equal(puedeVerMisPagos({ mode: true, organization_id: '7' }, []), true);
+test('solo el organizador con cuenta propia en modo deportivo ve "Mi plan"', () => {
+    assert.equal(puedeVerMisPagos({ mode: true, organization_id: 7, is_owner: true }, ['sports_organizer']), true);
+    assert.equal(puedeVerMisPagos({ mode: true, organization_id: '7', is_owner: true }, []), true);
 
     assert.equal(puedeVerMisPagos({ mode: false, organization_id: 7 }, []), false, 'En el modo clásico de Eventos la vista no corresponde.');
     assert.equal(puedeVerMisPagos({ mode: true, organization_id: null }, []), false, 'Sin organización la vista responde 404.');
-    assert.equal(puedeVerMisPagos({ mode: true, organization_id: 7 }, ['admin']), false, 'El superadministrador administra desde Cuentas de organizaciones.');
-    assert.equal(puedeVerMisPagos({ mode: true, organization_id: 7 }, ['Administrador']), false);
+    assert.equal(puedeVerMisPagos({ mode: true, organization_id: 7, is_owner: true }, ['admin']), false, 'El superadministrador administra desde Cuentas de organizaciones.');
+    assert.equal(puedeVerMisPagos({ mode: true, organization_id: 7, is_owner: true }, ['Administrador']), false);
+    assert.equal(puedeVerMisPagos({ mode: true, organization_id: 7, is_owner: false }, []), false, 'Un operador no administra los pagos.');
     assert.equal(puedeVerMisPagos(), false, 'Sin datos compartidos la fila no se muestra.');
 });
 

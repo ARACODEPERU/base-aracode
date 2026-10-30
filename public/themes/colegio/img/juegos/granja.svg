@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 120" role="img" aria-label="Granja con establo, árbol y gallina">
+    <defs>
+        <linearGradient id="granjaCielo" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#BCE7FF"/>
+            <stop offset="1" stop-color="#EAF8FF"/>
+        </linearGradient>
+    </defs>
+
+    <rect width="180" height="120" fill="url(#granjaCielo)"/>
+
+    <!-- Sol -->
+    <g stroke="#FFC94A" stroke-width="4" stroke-linecap="round">
+        <path d="M152 6v7M152 31v7M133 22h7M164 22h7M139 9l5 5M160 30l5 5M165 9l-5 5M144 30l-5 5"/>
+    </g>
+    <circle cx="152" cy="22" r="11" fill="#FFD15C"/>
+
+    <!-- Nubes -->
+    <g fill="#FFFFFF" opacity=".92">
+        <ellipse cx="38" cy="20" rx="16" ry="9"/>
+        <ellipse cx="52" cy="18" rx="10" ry="6"/>
+        <ellipse cx="100" cy="30" rx="13" ry="7"/>
+    </g>
+
+    <!-- Colinas -->
+    <path d="M0 78c16-11 32-12 48-5 16 7 32 6 48-2 16-8 32-8 48 0 12 6 24 6 36 2v47H0z" fill="#A9DD95"/>
+    <path d="M0 94c20-8 38-8 56-1 18 6 38 6 56-1 22-8 46-7 68 0v28H0z" fill="#84CD72"/>
+
+    <!-- Árbol -->
+    <rect x="136" y="62" width="9" height="36" rx="4" fill="#A9713F"/>
+    <circle cx="140" cy="55" r="17" fill="#63B85A"/>
+    <circle cx="127" cy="62" r="11" fill="#79C86A"/>
+    <circle cx="153" cy="63" r="11" fill="#79C86A"/>
+
+    <!-- Establo -->
+    <rect x="44" y="52" width="54" height="44" rx="3" fill="#E8735A"/>
+    <path d="M38 53 71 28l33 25z" fill="#C9503C"/>
+    <rect x="63" y="40" width="16" height="13" rx="2" fill="#FFE6B8"/>
+    <rect x="60" y="70" width="22" height="26" rx="2" fill="#FFF4E2"/>
+    <path d="M71 70v26" stroke="#E8CBA4" stroke-width="2"/>
+    <rect x="47" y="58" width="10" height="9" rx="2" fill="#FFF4E2"/>
+    <rect x="85" y="58" width="10" height="9" rx="2" fill="#FFF4E2"/>
+
+    <!-- Cerca -->
+    <g stroke="#F2DCC0" stroke-width="3" stroke-linecap="round">
+        <path d="M4 106v-14M14 106v-14M24 106v-14M34 106v-14"/>
+        <path d="M2 96h36M2 102h36"/>
+    </g>
+
+    <!-- Gallina -->
+    <ellipse cx="16" cy="88" rx="10" ry="8" fill="#FFFFFF"/>
+    <circle cx="23" cy="80" r="6" fill="#FFFFFF"/>
+    <path d="M28 80l5 2-5 2z" fill="#F5A23B"/>
+    <circle cx="24.5" cy="79" r="1.2" fill="#3A3A3A"/>
+    <path d="M21 74c1-3 4-3 4 0M24 74c1-3 4-3 4 0" fill="none" stroke="#E96B5A" stroke-width="2" stroke-linecap="round"/>
+    <path d="M12 95v5M19 95v5M12 100h4M19 100h4" stroke="#F5A23B" stroke-width="1.8" stroke-linecap="round"/>
+
+    <!-- Flores -->
+    <g fill="#FFFFFF">
+        <circle cx="106" cy="104" r="3"/>
+        <circle cx="118" cy="112" r="2.6"/>
+        <circle cx="58" cy="114" r="2.6"/>
+    </g>
+    <g fill="#FFC94A">
+        <circle cx="106" cy="104" r="1.3"/>
+        <circle cx="118" cy="112" r="1.1"/>
+        <circle cx="58" cy="114" r="1.1"/>
+    </g>
+</svg>

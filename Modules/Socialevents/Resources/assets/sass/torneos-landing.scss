@@ -1775,6 +1775,27 @@ body.se-landing ::selection {
     color: var(--se-muted);
 }
 
+.se-modal__profile-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 1rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(184, 243, 74, 0.35);
+    background: rgba(184, 243, 74, 0.1);
+    color: var(--se-accent);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.se-modal__profile-link:hover,
+.se-modal__profile-link:focus-visible {
+    background: rgba(184, 243, 74, 0.2);
+}
+
 .se-modal__close {
     flex-shrink: 0;
     width: 2.4rem;
@@ -3535,4 +3556,170 @@ body.se-landing.se-motion-off .se-ambient__orb {
 
 .se-ambient__orb--3 {
     background: radial-gradient(circle, rgba(8, 116, 67, 0.22), transparent 70%);
+}
+
+/* --- Detalle de resultado: reglamentario, alargue y penales ---
+   Solo aparece cuando el partido tiene prórroga o tanda; conserva el marcador
+   principal y agrega una zona secundaria separada visualmente. */
+.se-match__shootout {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 196, 0, 0.45);
+    background: rgba(255, 196, 0, 0.12);
+    color: #ffe08a;
+    font-family: var(--se-display);
+    font-size: 0.64rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.se-match__details {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-top: 0.15rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.se-match__details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.75rem, 1fr));
+    gap: 0.55rem;
+    width: 100%;
+}
+
+.se-match__detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+    min-width: 0;
+    padding: 0.55rem 0.7rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.035);
+    text-align: left;
+}
+
+.se-match__detail-label {
+    color: var(--se-muted);
+    font-family: var(--se-font);
+    font-size: 0.56rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    line-height: 1.25;
+    text-transform: uppercase;
+}
+
+.se-match__detail-value {
+    color: #fff;
+    font-family: var(--se-display);
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+}
+
+.se-match__detail--penalties {
+    border-color: rgba(255, 196, 0, 0.35);
+    background: rgba(255, 196, 0, 0.08);
+}
+
+.se-match__detail--penalties .se-match__detail-value {
+    color: #ffe08a;
+}
+
+.se-match__detail--final {
+    border-color: rgba(184, 243, 74, 0.35);
+    background: rgba(184, 243, 74, 0.09);
+}
+
+.se-match__detail--final .se-match__detail-value {
+    color: var(--se-accent);
+}
+
+.se-match__shootout-winner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    margin: 0;
+    color: #ffe08a;
+    font-family: var(--se-font);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    line-height: 1.3;
+    text-align: center;
+}
+
+.se-match__shootout-winner i {
+    color: #ffd447;
+}
+
+/* El ganador de la tanda se distingue también en su lado de la tarjeta. */
+.se-match__side--winner .se-match__name {
+    color: var(--se-accent);
+}
+
+.se-match__side--winner .se-match__crest {
+    box-shadow:
+        0 0 0 1px rgba(184, 243, 74, 0.45),
+        0 0 18px rgba(184, 243, 74, 0.12);
+}
+
+@media (max-width: 639px) {
+    .se-match__details-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .se-match__detail--final {
+        grid-column: 1 / -1;
+    }
+
+    .se-match__detail-label {
+        font-size: 0.55rem;
+    }
+
+    .se-match__detail-value {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 399px) {
+    .se-match__details-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Enlaces a la ficha pública del equipo ─────────────────────────────── */
+
+/* La tarjeta se vuelve un enlace completo, sin heredar el subrayado. */
+a.se-team-card {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+a.se-team-card:focus-visible {
+    outline: 2px solid var(--se-accent);
+    outline-offset: 3px;
+}
+
+.se-table__team-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.se-table__team-link:hover,
+.se-table__team-link:focus-visible {
+    color: var(--se-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }

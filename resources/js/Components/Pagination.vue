@@ -24,52 +24,52 @@
         router.visit(url.toString(), { preserveState: true });
     };
 
-    // Clases compartidas del paginador. La variante de Torneos pinta botones
-    // esmeralda oscuros con iconos claros y deja la página activa en verde
-    // lima; la variante original se conserva intacta para PW00001 != 2.
+    // Clases compartidas del paginador. La variante de Torneos usa el mismo
+    // azul noche del prototipo, con bordes acero y la página activa en lima;
+    // la variante original se conserva intacta para PW00001 != 2.
     const clasesNavegacion = computed(() => esTemaTorneos.value
-        ? 'flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 px-4 py-4 rounded-xl border border-lime-300/20 bg-emerald-950/70 backdrop-blur-sm'
+        ? 'flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 px-4 py-4 rounded-xl border border-[#234052] bg-[#0b1f2b]/90 backdrop-blur-sm'
         : 'flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 px-4 py-4');
 
     const clasesEtiquetaMostrar = computed(() => esTemaTorneos.value
-        ? 'text-sm font-bold text-emerald-50'
+        ? 'text-sm font-bold text-slate-200'
         : 'text-sm font-bold text-gray-700 dark:text-gray-300');
 
     const clasesTextoRegistros = computed(() => esTemaTorneos.value
-        ? 'text-sm text-emerald-100'
+        ? 'text-sm text-slate-300'
         : 'text-sm text-gray-600 dark:text-gray-400');
 
     const clasesBotonMovil = computed(() => esTemaTorneos.value
-        ? 'inline-flex items-center px-4 py-3 text-sm font-bold rounded-lg border border-lime-300/30 bg-emerald-900/85 text-emerald-50 transition-all duration-200 hover:bg-emerald-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-950'
+        ? 'inline-flex items-center px-4 py-3 text-sm font-bold rounded-lg border border-[#2b4b5d] bg-[#122c3a] text-slate-100 transition-all duration-200 hover:border-lime-300/60 hover:bg-[#17394a] hover:text-lime-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b1f2b]'
         : 'inline-flex items-center px-4 py-3 text-sm font-bold text-blue-700 bg-white rounded-lg hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all duration-200 dark:bg-gray-700 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white');
 
     const clasesBotonMovilDeshabilitado = computed(() => esTemaTorneos.value
-        ? 'inline-flex items-center px-4 py-3 text-sm font-bold rounded-lg border border-emerald-300/15 bg-emerald-950/55 text-emerald-100/45 cursor-not-allowed'
+        ? 'inline-flex items-center px-4 py-3 text-sm font-bold rounded-lg border border-white/10 bg-[#0b1f2b]/60 text-slate-500 cursor-not-allowed'
         : 'inline-flex items-center px-4 py-3 text-sm font-bold text-gray-400 bg-gray-200 rounded-lg cursor-not-allowed dark:bg-gray-700 dark:text-gray-500');
 
     const clasesBotonIcono = computed(() => esTemaTorneos.value
-        ? 'flex items-center justify-center w-9 h-9 rounded-full border border-lime-300/30 bg-emerald-900/85 text-emerald-50 text-sm font-medium transition-colors hover:bg-emerald-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-950'
+        ? 'flex items-center justify-center w-9 h-9 rounded-full border border-[#2b4b5d] bg-[#122c3a] text-slate-100 text-sm font-medium transition-colors hover:border-lime-300/60 hover:bg-[#17394a] hover:text-lime-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b1f2b]'
         : 'flex items-center justify-center w-9 h-9 rounded-full bg-[#E8EBF3] text-[#4A5E8D] text-sm font-medium transition-colors hover:bg-blue-600 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-blue-600');
 
     const clasesBotonIconoDeshabilitado = computed(() => esTemaTorneos.value
-        ? 'flex items-center justify-center w-9 h-9 rounded-full border border-emerald-300/15 bg-emerald-950/55 text-emerald-100/40 text-sm cursor-not-allowed'
+        ? 'flex items-center justify-center w-9 h-9 rounded-full border border-white/10 bg-[#0b1f2b]/60 text-slate-500 text-sm cursor-not-allowed'
         : 'flex items-center justify-center w-9 h-9 rounded-full bg-[#F3F5F9] text-[#BDC5D8] text-sm cursor-not-allowed dark:bg-gray-800/50 dark:text-gray-600');
 
     // Números y flechas deshabilitados: conservan su propio matiz original.
     const clasesNumeroDeshabilitado = computed(() => esTemaTorneos.value
-        ? 'flex items-center justify-center w-9 h-9 rounded-full border border-emerald-300/15 bg-emerald-950/55 text-emerald-100/40 text-sm font-medium cursor-not-allowed'
+        ? 'flex items-center justify-center w-9 h-9 rounded-full border border-white/10 bg-[#0b1f2b]/60 text-slate-500 text-sm font-medium cursor-not-allowed'
         : 'flex items-center justify-center w-9 h-9 rounded-full bg-[#E8EBF3] text-[#4A5E8D] text-sm font-medium cursor-not-allowed dark:bg-gray-800 dark:text-gray-300');
 
     const clasesPaginaActiva = computed(() => esTemaTorneos.value
-        ? 'flex items-center justify-center w-9 h-9 rounded-full border border-lime-200 bg-lime-400 text-emerald-950 text-sm font-bold shadow-lg shadow-emerald-950/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-200 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-950'
+        ? 'flex items-center justify-center w-9 h-9 rounded-full border border-lime-200 bg-lime-400 text-emerald-950 text-sm font-bold shadow-lg shadow-black/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b1f2b]'
         : 'flex items-center justify-center w-9 h-9 rounded-full bg-[#4466F2] text-white text-sm font-bold shadow-lg shadow-blue-200 dark:shadow-none');
 
     const clasesPuntos = computed(() => esTemaTorneos.value
-        ? 'flex items-center justify-center w-9 h-9 text-sm text-emerald-100/70'
+        ? 'flex items-center justify-center w-9 h-9 text-sm text-slate-400'
         : 'flex items-center justify-center w-9 h-9 text-sm text-gray-400 dark:text-gray-500');
 
     const clasesResumen = computed(() => esTemaTorneos.value
-        ? 'text-sm text-emerald-100 font-sans'
+        ? 'text-sm text-slate-300 font-sans'
         : 'text-sm text-gray-700 dark:text-gray-300 font-sans');
 
     const clasesResumenNumero = computed(() => esTemaTorneos.value

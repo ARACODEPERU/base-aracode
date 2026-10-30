@@ -3,13 +3,18 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Socialevents\Http\Controllers\EvenCategoryController;
 use Modules\Socialevents\Http\Controllers\EvenEventController;
+use Modules\Socialevents\Http\Controllers\EvenEventDiplomaController;
 use Modules\Socialevents\Http\Controllers\EvenEventTickeClientController;
 use Modules\Socialevents\Http\Controllers\EvenEventTickePriceController;
 use Modules\Socialevents\Http\Controllers\EvenLocalController;
 use Modules\Socialevents\Http\Controllers\EvenLocalRentalController;
 use Modules\Socialevents\Http\Controllers\EventEditionAccordanceController;
+use Modules\Socialevents\Http\Controllers\EventEditionAwardController;
 use Modules\Socialevents\Http\Controllers\EventEditionController;
+use Modules\Socialevents\Http\Controllers\EventEditionDiplomaController;
+use Modules\Socialevents\Http\Controllers\EventEditionDiplomaIssueController;
 use Modules\Socialevents\Http\Controllers\EventEditionGalleryController;
+use Modules\Socialevents\Http\Controllers\EventEditionLandingVisitController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchReportController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchSanctionController;
@@ -21,6 +26,8 @@ use Modules\Socialevents\Http\Controllers\EventTeamController;
 use Modules\Socialevents\Http\Controllers\SocialeventsEditorController;
 use Modules\Socialevents\Http\Controllers\SportsOrganizationAdminController;
 use Modules\Socialevents\Http\Controllers\OrganizationTopUpController;
+use Modules\Socialevents\Http\Controllers\OrganizationTeamController;
+use Modules\Socialevents\Http\Controllers\OrganizationDocumentController;
 use Modules\Socialevents\Http\Controllers\TournamentLandingController;
 
 /*
@@ -45,6 +52,9 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
         Route::delete('/accounts/{organizationId}', [SportsOrganizationAdminController::class, 'destroyOrganization'])->name('destroy');
         Route::post('/accounts/{organizationId}/payments', [SportsOrganizationAdminController::class, 'storeAdminPayment'])->name('payments.store');
         Route::post('/accounts/{organizationId}/users', [SportsOrganizationAdminController::class, 'storeOrganizationUser'])->name('users.store');
+        Route::post('/accounts/{organizationId}/seats', [SportsOrganizationAdminController::class, 'grantSeats'])->name('seats.grant');
+        Route::post('/document-requests/{documentRequest}/issue', [OrganizationDocumentController::class, 'issue'])->name('documents.issue');
+        Route::post('/document-requests/{documentRequest}/reject', [OrganizationDocumentController::class, 'reject'])->name('documents.reject');
         Route::put('/billing-alerts', [SportsOrganizationAdminController::class, 'updateAlertSettings'])->name('alerts.update');
         Route::post('/accounts/{organizationId}/alerts', [SportsOrganizationAdminController::class, 'sendOrganizationAlert'])->name('alerts.send');
         Route::post('/rates', [SportsOrganizationAdminController::class, 'storeRate'])->name('rates.store');
@@ -57,16 +67,16 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
 
     Route::middleware(['middleware' => 'permission:even_categoria_listado'])->get('categories', [EvenCategoryController::class, 'index'])->name('even_categories_list');
     Route::middleware(['middleware' => 'permission:even_categoria_nuevo'])->get('categories/create', [EvenCategoryController::class, 'create'])->name('even_categoriess_create');
-    Route::post('categories/store', [EvenCategoryController::class, 'store'])->name('even_categories_store');
+    Route::middleware(['middleware' => 'permission:even_categoria_nuevo'])->post('categories/store', [EvenCategoryController::class, 'store'])->name('even_categories_store');
     Route::middleware(['middleware' => 'permission:even_categoria_editar'])->get('categories/{id}/edit', [EvenCategoryController::class, 'edit'])->name('even_categories_editar');
-    Route::post('categories/update', [EvenCategoryController::class, 'update'])->name('even_categories_update');
+    Route::middleware(['middleware' => 'permission:even_categoria_editar'])->post('categories/update', [EvenCategoryController::class, 'update'])->name('even_categories_update');
     Route::middleware(['middleware' => 'permission:even_categoria_eliminar'])->delete('categories/destroy/{id}', [EvenCategoryController::class, 'destroy'])->name('even_categories_destroy');
 
     Route::middleware(['middleware' => 'permission:even_local_listado'])->get('locales', [EvenLocalController::class, 'index'])->name('even_local_list');
     Route::middleware(['middleware' => 'permission:even_local_nuevo'])->get('locales/create', [EvenLocalController::class, 'create'])->name('even_local_create');
-    Route::post('locales/store', [EvenLocalController::class, 'store'])->name('even_local_store');
+    Route::middleware(['middleware' => 'permission:even_local_nuevo'])->post('locales/store', [EvenLocalController::class, 'store'])->name('even_local_store');
     Route::middleware(['middleware' => 'permission:even_local_editar'])->get('locales/{id}/edit', [EvenLocalController::class, 'edit'])->name('even_local_editar');
-    Route::post('locales/update', [EvenLocalController::class, 'update'])->name('even_local_update');
+    Route::middleware(['middleware' => 'permission:even_local_editar'])->post('locales/update', [EvenLocalController::class, 'update'])->name('even_local_update');
     Route::middleware(['middleware' => 'permission:even_local_eliminar'])->delete('locales/destroy/{id}', [EvenLocalController::class, 'destroy'])->name('even_local_destroy');
 
     Route::middleware(['middleware' => 'permission:even_alquiler_local_listado'])->get('alquiler-local', [EvenLocalRentalController::class, 'index'])->name('even_alquiler_local_index');
@@ -86,11 +96,11 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
 
     Route::middleware(['middleware' => 'permission:even_evento_listado'])->get('events', [EvenEventController::class, 'index'])->name('even_eventos_list');
     Route::middleware(['middleware' => 'permission:even_evento_nuevo'])->get('events/create', [EvenEventController::class, 'create'])->name('even_eventos_create');
-    Route::post('events/store', [EvenEventController::class, 'store'])->name('even_events_store');
+    Route::middleware(['middleware' => 'permission:even_evento_nuevo'])->post('events/store', [EvenEventController::class, 'store'])->name('even_events_store');
     Route::middleware(['middleware' => 'permission:even_evento_editar'])->get('events/{id}/edit', [EvenEventController::class, 'edit'])->name('even_eventos_editar');
-    Route::post('events/update', [EvenEventController::class, 'update'])->name('even_eventos_update');
+    Route::middleware(['middleware' => 'permission:even_evento_editar'])->post('events/update', [EvenEventController::class, 'update'])->name('even_eventos_update');
     Route::middleware(['middleware' => 'permission:even_evento_eliminar'])->delete('events/destroy/{id}', [EvenEventController::class, 'destroy'])->name('even_eventos_destroy');
-    Route::post('events/prices/tickets/store', [EvenEventTickePriceController::class, 'store'])->name('even_events_preices_ticket_store');
+    Route::middleware(['middleware' => 'permission:even_evento_editar'])->post('events/prices/tickets/store', [EvenEventTickePriceController::class, 'store'])->name('even_events_preices_ticket_store');
     Route::middleware(['middleware' => 'permission:even_ventas_listado'])->get('tickets', [EvenEventTickeClientController::class, 'index'])->name('even_tickets_listado');
     Route::middleware(['middleware' => 'permission:even_equipos_listado'])->get('teams', [EventTeamController::class, 'index'])->name('even_equipos_listado');
     Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->get('teams/create', [EventTeamController::class, 'create'])->name('even_equipos_create');
@@ -100,6 +110,9 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
     Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->post('teams/generate-shield', [EventTeamController::class, 'generateShield'])->name('even_equipos_generate_shield');
     Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->delete('teams/{id}/destroy', [EventTeamController::class, 'destroy'])->name('even_equipos_destroy');
     Route::middleware(['middleware' => 'permission:even_ediciones_listado'])->get('editions', [EventEditionController::class, 'index'])->name('even_ediciones_listado');
+    Route::middleware(['middleware' => 'permission:even_ediciones_listado'])->get('editions/{id}/landing-visits', [EventEditionLandingVisitController::class, 'show'])
+        ->whereNumber('id')
+        ->name('even_ediciones_landing_visits');
     Route::middleware(['middleware' => 'permission:even_ediciones_nuevo'])->get('editions/create', [EventEditionController::class, 'create'])->name('even_ediciones_nuevo');
     Route::middleware(['middleware' => 'permission:even_ediciones_nuevo'])->post('editions/store', [EventEditionController::class, 'store'])->name('even_ediciones_store');
     Route::middleware(['middleware' => 'permission:even_ediciones_editar'])->get('editions/{id}/edit', [EventEditionController::class, 'edit'])->name('even_ediciones_editar');
@@ -109,6 +122,42 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
     Route::middleware(['middleware' => 'permission:even_ediciones_galeria'])->get('editions/{id}/gallery', [EventEditionGalleryController::class, 'index'])->name('even_ediciones_galeria');
     Route::middleware(['middleware' => 'permission:even_ediciones_galeria_nuevo'])->post('editions/{id}/gallery/store', [EventEditionGalleryController::class, 'store'])->name('even_ediciones_galeria_store');
     Route::middleware(['middleware' => 'permission:even_ediciones_galeria_eliminar'])->delete('editions/{id}/gallery/{mediaId}/destroy', [EventEditionGalleryController::class, 'destroy'])->name('even_ediciones_galeria_destroy');
+
+    // ── Diplomas y premiados de la edición ──────────────────────────────────
+    // El diseño del diploma está acotado a la organización dueña de la edición
+    // (SportsOrganizationService::assertOwnedEdition en cada acción).
+    // ── Modelos de diploma reutilizables del torneo ─────────────────────────
+    // Se abren desde el listado de torneos. El modelo pertenece al evento, no a
+    // una edición, y se puede usar en todas sus ediciones.
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->get('events/{id}/diplomas', [EvenEventDiplomaController::class, 'index'])->whereNumber('id')->name('even_eventos_diplomas');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->get('events/{id}/diplomas/templates/{templateId}', [EvenEventDiplomaController::class, 'editor'])->whereNumber('id')->name('even_eventos_diplomas_editar');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('events/{id}/diplomas/templates', [EvenEventDiplomaController::class, 'store'])->whereNumber('id')->name('even_eventos_diplomas_store');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->put('events/{id}/diplomas/templates/{templateId}', [EvenEventDiplomaController::class, 'update'])->whereNumber('id')->name('even_eventos_diplomas_update');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('events/{id}/diplomas/templates/{templateId}/activate', [EvenEventDiplomaController::class, 'activate'])->whereNumber('id')->name('even_eventos_diplomas_activar');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('events/{id}/diplomas/templates/{templateId}/background', [EvenEventDiplomaController::class, 'background'])->whereNumber('id')->name('even_eventos_diplomas_fondo');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('events/{id}/diplomas/templates/{templateId}/asset', [EvenEventDiplomaController::class, 'asset'])->whereNumber('id')->name('even_eventos_diplomas_asset');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->delete('events/{id}/diplomas/templates/{templateId}', [EvenEventDiplomaController::class, 'destroy'])->whereNumber('id')->name('even_eventos_diplomas_destroy');
+
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->get('editions/{id}/diplomas', [EventEditionDiplomaController::class, 'index'])->name('even_ediciones_diplomas');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->get('editions/{id}/diplomas/templates/{templateId}', [EventEditionDiplomaController::class, 'editor'])->name('even_ediciones_diplomas_editar');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->get('editions/{id}/diplomas/awards/{awardId}/payload', [EventEditionDiplomaIssueController::class, 'payload'])->name('even_ediciones_diploma_payload');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->post('editions/{id}/diplomas/awards/{awardId}/issue', [EventEditionDiplomaIssueController::class, 'issue'])->name('even_ediciones_diploma_emitir');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas'])->post('editions/{id}/diplomas/issue-all', [EventEditionDiplomaIssueController::class, 'issueAll'])->name('even_ediciones_diploma_emitir_todos');
+
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('editions/{id}/diplomas/templates', [EventEditionDiplomaController::class, 'store'])->name('even_ediciones_diplomas_store');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->put('editions/{id}/diplomas/templates/{templateId}', [EventEditionDiplomaController::class, 'update'])->name('even_ediciones_diplomas_update');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('editions/{id}/diplomas/templates/{templateId}/activate', [EventEditionDiplomaController::class, 'activate'])->name('even_ediciones_diplomas_activar');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('editions/{id}/diplomas/templates/{templateId}/background', [EventEditionDiplomaController::class, 'background'])->name('even_ediciones_diplomas_fondo');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->post('editions/{id}/diplomas/templates/{templateId}/asset', [EventEditionDiplomaController::class, 'asset'])->name('even_ediciones_diplomas_asset');
+    Route::middleware(['middleware' => 'permission:even_ediciones_diplomas_disenar'])->delete('editions/{id}/diplomas/templates/{templateId}', [EventEditionDiplomaController::class, 'destroy'])->name('even_ediciones_diplomas_destroy');
+
+    Route::middleware(['middleware' => 'permission:even_ediciones_premiados'])->get('editions/{id}/diplomas/awards/suggestions', [EventEditionAwardController::class, 'suggestions'])->name('even_ediciones_premiados_sugerencias');
+    Route::middleware(['middleware' => 'permission:even_ediciones_premiados'])->post('editions/{id}/diplomas/awards', [EventEditionAwardController::class, 'store'])->name('even_ediciones_premiados_store');
+    Route::middleware(['middleware' => 'permission:even_ediciones_premiados'])->put('editions/{id}/diplomas/awards/order', [EventEditionAwardController::class, 'order'])->name('even_ediciones_premiados_orden');
+    Route::middleware(['middleware' => 'permission:even_ediciones_premiados'])->put('editions/{id}/diplomas/awards/{awardId}', [EventEditionAwardController::class, 'update'])->name('even_ediciones_premiados_update');
+    // Selección explícita del modelo que se usará al emitir este premio.
+    Route::middleware(['middleware' => 'permission:even_ediciones_premiados'])->put('editions/{id}/diplomas/awards/{awardId}/template', [EventEditionDiplomaController::class, 'assignTemplate'])->name('even_ediciones_premiados_template');
+    Route::middleware(['middleware' => 'permission:even_ediciones_premiados'])->delete('editions/{id}/diplomas/awards/{awardId}', [EventEditionAwardController::class, 'destroy'])->name('even_ediciones_premiados_destroy');
     Route::middleware(['middleware' => 'permission:even_ediciones_equipos'])->get('editions/{id}/teams', [EventEditionTeamController::class, 'index'])->name('even_ediciones_equipos');
     Route::middleware(['middleware' => 'permission:even_ediciones_equipos'])->get('editions/{id}/teams/bonus', [EventEditionTeamController::class, 'bonusPointsIndex'])->name('even_ediciones_equipos_bonus');
     Route::middleware(['middleware' => 'permission:even_ediciones_equipos'])->post('editions/{id}/teams/bonus/store', [EventEditionTeamController::class, 'bonusPointsStore'])->name('even_ediciones_equipos_bonus_store');
@@ -168,6 +217,24 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents/organizations/topu
     Route::get('/', [OrganizationTopUpController::class, 'index'])->name('index');
     Route::post('/card', [OrganizationTopUpController::class, 'createCardPayment'])->name('card');
     Route::post('/yape', [OrganizationTopUpController::class, 'createYapePayment'])->name('yape');
+    Route::post('/seats/card', [OrganizationTopUpController::class, 'createSeatCardPayment'])->name('seats.card');
+    Route::post('/seats/yape', [OrganizationTopUpController::class, 'createSeatYapePayment'])->name('seats.yape');
+});
+
+// El equipo y los comprobantes siguen disponibles aunque la organización esté
+// vencida: son tareas de cuenta y no de operación del torneo.
+Route::middleware(['auth', 'verified'])->prefix('socialevents/organizations/team')->name('even_organizations.team.')->group(function () {
+    Route::post('/', [OrganizationTeamController::class, 'store'])->name('store');
+    Route::put('/{userId}', [OrganizationTeamController::class, 'update'])->name('update');
+    Route::delete('/{userId}', [OrganizationTeamController::class, 'destroy'])->name('destroy');
+    Route::post('/{userId}/reactivate', [OrganizationTeamController::class, 'reactivate'])->name('reactivate');
+});
+
+Route::middleware(['auth', 'verified'])->prefix('socialevents/organizations/documents')->name('even_organizations.documents.')->group(function () {
+    Route::post('/request', [OrganizationDocumentController::class, 'request'])->name('request');
+    Route::get('/{documentRequest}/download/{file?}', [OrganizationDocumentController::class, 'download'])
+        ->where('file', 'PDF|XML')
+        ->name('download');
 });
 Route::post('socialevents/organizations/topup/webhook', [OrganizationTopUpController::class, 'webhook'])
     ->name('even_organizations.topup.webhook');
@@ -187,3 +254,19 @@ Route::get('torneos/{slug}/jugador/{playerId}', [TournamentLandingController::cl
     ->whereNumber('playerId')
     ->middleware('throttle:60,1')
     ->name('socialevents_torneos_player_detail');
+
+// Ficha pública del jugador (página completa, no el modal): identidad, logros
+// y partido a partido. Solo existe para ediciones con la landing publicada.
+Route::get('torneos/{slug}/jugadores/{playerId}', [TournamentLandingController::class, 'playerProfile'])
+    ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*|\d+')
+    ->whereNumber('playerId')
+    ->middleware('throttle:60,1')
+    ->name('socialevents_torneos_player_profile');
+
+// Ficha pública del equipo (promoción): puesto, plantilla, logros, sanciones,
+// historial y cronología de su participación en la edición.
+Route::get('torneos/{slug}/equipos/{teamId}', [TournamentLandingController::class, 'teamProfile'])
+    ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*|\d+')
+    ->whereNumber('teamId')
+    ->middleware('throttle:60,1')
+    ->name('socialevents_torneos_team_profile');

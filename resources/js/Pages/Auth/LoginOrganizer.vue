@@ -18,6 +18,10 @@ defineProps({
 
 const page = usePage();
 
+// Foto de cancha del acceso anterior, optimizada para la pantalla de login.
+const baseUrl = assetUrl;
+const fondoCancha = `${baseUrl}img/torneos/login-cancha.jpg`;
+
 // Alerta enviada por el servidor (por ejemplo: correo ya registrado al crear la cuenta).
 const flashError = computed(() => page.props.flash?.error || '');
 
@@ -52,6 +56,10 @@ const submit = () => {
         kicker="Acceso seguro"
         card-title="Iniciar sesión"
         card-subtitle="Ingresa con la cuenta del organizador de tu torneo."
+        :background-image="fondoCancha"
+        background-position="center 58%"
+        field-lines
+        pitch-tone
     >
         <form class="space-y-5" novalidate @submit.prevent="submit">
             <div v-if="status" class="pgr-alert">

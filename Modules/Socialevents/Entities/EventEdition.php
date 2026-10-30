@@ -55,6 +55,7 @@ class EventEdition extends Model
         'public_slug',
         'mobile_enabled',
         'app_downloads',
+        'landing_views',
         'branding',
     ];
 
@@ -69,6 +70,7 @@ class EventEdition extends Model
         'max_substitutions' => 'integer',
         'extra_substitution_enabled' => 'boolean',
         'app_downloads' => 'integer',
+        'landing_views' => 'integer',
         'branding' => 'array',
         'inscription_fee' => 'decimal:2',
         'match_rate' => 'decimal:2',
@@ -140,5 +142,28 @@ class EventEdition extends Model
     public function matches(): HasMany
     {
         return $this->hasMany(\Modules\Socialevents\Entities\EventEditionMatch::class, 'edition_id', 'id');
+    }
+
+    public function landingViews(): HasMany
+    {
+        return $this->hasMany(EventEditionLandingView::class, 'edition_id', 'id');
+    }
+
+    /** Premiados de la edición (campeón, goleador, mejor arquero, premios libres). */
+    public function awards(): HasMany
+    {
+        return $this->hasMany(EventEditionAward::class, 'edition_id');
+    }
+
+    /** Diseños de diploma disponibles para esta edición. */
+    public function diplomaTemplates(): HasMany
+    {
+        return $this->hasMany(EventEditionDiplomaTemplate::class, 'edition_id');
+    }
+
+    /** Diplomas efectivamente emitidos en esta edición. */
+    public function diplomas(): HasMany
+    {
+        return $this->hasMany(EventEditionDiploma::class, 'edition_id');
     }
 }

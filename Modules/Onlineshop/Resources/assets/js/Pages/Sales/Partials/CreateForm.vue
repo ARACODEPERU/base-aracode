@@ -5,8 +5,7 @@
     import iconChevronLeft from '@/Components/vristo/icon/icon-chevron-left.vue';
     import { useForm } from '@inertiajs/vue3';
     import { Select, SelectOption } from 'ant-design-vue';
-    import Multiselect from '@suadelabs/vue3-multiselect';
-    import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
+    import SelectCities from '@/Components/SelectCities.vue';
     import TextInput from '@/Components/TextInput.vue';
     import InputError from '@/Components/InputError.vue';
     import iconSearch from '@/Components/vristo/icon/icon-search.vue';
@@ -167,19 +166,6 @@
         formSale.country_id = val;
     };
 
-    const ubigeoSelected = ref(null);
-    const saleUbigeoSelected = ref(null);
-
-    const selectCity = () => {
-        formSale.ubigeo_description = ubigeoSelected.value.ubigeo_description;
-        formSale.ubigeo = ubigeoSelected.value.district_id;
-    }
-
-    const selectCitySale = () => {
-        formSale.sale_ubigeo_description = saleUbigeoSelected.value.ubigeo_description;
-        formSale.sale_ubigeo = saleUbigeoSelected.value.district_id;
-    }
-
     const apiesLoading = ref(false);
 
     const searchApispe = () => {
@@ -192,11 +178,6 @@
                     //formSale.email = null;
                     formSale.sale_address = res.data.person['direccion'] == '-' ? null : res.data.person['direccion'];
                     formSale.sale_ubigeo = res.data.person['ubigeo'];
-                    saleUbigeoSelected.value = {
-                        district_id: res.data.person['ubigeo'],
-                        city_name: res.data.person['departamento'] + '-' + res.data.person['provincia'] + '-'+ res.data.person['distrito']
-                    };
-                    //console.log(saleUbigeoSelected.value)
                     formSale.sale_ubigeo_description = res.data.person['departamento'] + '-' + res.data.person['provincia'] + '-'+ res.data.person['distrito'];
                     formSale.estado = res.data.person['estado'];
                     formSale.condicion = res.data.person['condicion'];
@@ -768,22 +749,13 @@
                         <div class="md:col-span-2">
                             <label for="ubigeo_id">Ciudad</label>
                             <template v-if="formSale.country_id == 1">
-                                <multiselect
-                                    id="ubigeo_id"
-                                    :model-value="ubigeoSelected"
-                                    v-model="ubigeoSelected"
+                                <SelectCities
+                                    v-model="formSale.ubigeo"
+                                    v-model:description="formSale.ubigeo_description"
                                     :options="ubigeo"
-                                    class="custom-multiselect"
-                                    :searchable="true"
-                                    placeholder="Buscar"
-                                    selected-label="seleccionado"
-                                    select-label="Elegir"
-                                    deselect-label="Quitar"
-                                    label="ubigeo_description"
-                                    track-by="district_id"
-                                    @update:model-value="selectCity"
-                                ></multiselect>
-                                <InputError :message="formSale.errors.ubigeo" class="mt-2" />
+                                    label=""
+                                    :error="formSale.errors.ubigeo"
+                                />
                             </template>
                             <template v-else>
                                 <TextInput
@@ -864,22 +836,13 @@
                         </div>
                         <div class="md:col-span-2">
                             <label for="sale_ubigeo_id">Ciudad</label>
-                            <multiselect
-                                id="sale_ubigeo_id"
-                                :model-value="saleUbigeoSelected"
-                                v-model="saleUbigeoSelected"
+                            <SelectCities
+                                v-model="formSale.sale_ubigeo"
+                                v-model:description="formSale.sale_ubigeo_description"
                                 :options="ubigeo"
-                                class="custom-multiselect"
-                                :searchable="true"
-                                placeholder="Buscar"
-                                selected-label="seleccionado"
-                                select-label="Elegir"
-                                deselect-label="Quitar"
-                                label="ubigeo_description"
-                                track-by="district_id"
-                                @update:model-value="selectCitySale"
-                            ></multiselect>
-                            <InputError :message="formSale.errors.sale_ubigeo" class="mt-2" />
+                                label=""
+                                :error="formSale.errors.sale_ubigeo"
+                            />
                         </div>
                         <div v-if="formSale.condicion && formSale.estado" class="col-span-4">
                             <div class="flex items-center gap-6">

@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
 import Swal2 from 'sweetalert2';
 import { ref, watch, onMounted } from 'vue';
+import SelectCities from '@/Components/SelectCities.vue';
 import Multiselect from '@suadelabs/vue3-multiselect';
 import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
 import { Select, SelectOption } from 'ant-design-vue';
@@ -83,13 +84,6 @@ const createPatient = () => {
             form.reset()
         },
     });
-}
-
-const ubigeoSelected = ref(null);
-
-const selectCity = () => {
-    form.ubigeo_description = ubigeoSelected.value.ubigeo_description;
-    form.ubigeo = ubigeoSelected.value.district_id;
 }
 
 const createFormSearch = () => {
@@ -411,22 +405,13 @@ const handleChange = (val) => {
             <div class="col-span-6 sm:col-span-2">
                 <InputLabel for="ubigeo" value="Ciudad *" />
                 <template v-if="form.country_id == 1">
-                    <multiselect
-                        id="industry_id"
-                        :model-value="ubigeoSelected"
-                        v-model="ubigeoSelected"
+                    <SelectCities
+                        v-model="form.ubigeo"
+                        v-model:description="form.ubigeo_description"
                         :options="ubigeo"
-                        class="custom-multiselect"
-                        :searchable="true"
-                        placeholder="Buscar"
-                        selected-label="seleccionado"
-                        select-label="Elegir"
-                        deselect-label="Quitar"
-                        label="ubigeo_description"
-                        track-by="district_id"
-                        @update:model-value="selectCity"
-                    ></multiselect>
-                    <InputError :message="form.errors.ubigeo" class="mt-2" />
+                        label=""
+                        :error="form.errors.ubigeo"
+                    />
                 </template>
                 <template v-else>
                     <TextInput

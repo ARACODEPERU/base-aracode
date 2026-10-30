@@ -22,5 +22,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Mismos datos pero con roles: lo usa la app móvil para saber si el usuario es administrador.
 Route::middleware('auth:sanctum')->get('/user/roles', [AuthController::class, 'user']);
 
+// Sesión completa de la app móvil: usuario, roles, organización y vigencia.
+Route::middleware('auth:sanctum')->get('/me', [AuthController::class, 'me']);
+
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');

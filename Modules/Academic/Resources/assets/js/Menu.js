@@ -20,6 +20,7 @@ import {
     faCalendarWeek,
     faSitemap,
     faFileSignature,
+    faChalkboard,
     faChalkboardUser,
     faLayerGroup,
     faBell,
@@ -27,7 +28,8 @@ import {
     faMoneyBillWave,
     faSliders,
     faPaperPlane,
-    faFlask
+    faFlask,
+    faTableList
 
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -317,28 +319,6 @@ const colegioGroup = {
             },
         },
         {
-            route: route('aca_virtual_classroom_index'),
-            status: false,
-            text: 'Aula Virtual',
-            icom: faBook,
-            permissions: 'aca_virtual_listado',
-            info: {
-                title: 'Aula Virtual',
-                content: `
-                    <p class="text-sm text-gray-500 mb-3">
-                        Gestión de contenidos por año escolar, alineados al CNEB:
-                    </p>
-                    <ul class="space-y-2 text-sm text-gray-700">
-                        <li>📚 <span>Unidades didácticas y sesiones de aprendizaje.</span></li>
-                        <li>📁 <span>Recursos y actividades por curso (sección + área).</span></li>
-                        <li>👩‍🏫 <span>Los cursos se generan automáticamente para el docente.</span></li>
-                        <li>🗓️ <span>Por año escolar, con modo historial solo lectura.</span></li>
-                    </ul>
-                `,
-                placement: 'right'
-            },
-        },
-        {
             route: route('aca_school_fees_list'),
             status: false,
             text: 'Tarifas',
@@ -515,6 +495,28 @@ const colegioGroup = {
             },
         },
         {
+            route: route('aca_virtual_classroom_index'),
+            status: false,
+            text: 'Aula Virtual',
+            icom: faChalkboard,
+            permissions: 'aca_virtual_listado',
+            info: {
+                title: 'Aula Virtual',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Gestión de contenidos por año escolar, alineados al CNEB:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>📚 <span>Unidades didácticas y sesiones de aprendizaje.</span></li>
+                        <li>📁 <span>Recursos y actividades por curso (sección + área).</span></li>
+                        <li>👩‍🏫 <span>Los cursos se generan automáticamente para el docente.</span></li>
+                        <li>🗓️ <span>Por año escolar, con modo historial solo lectura.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
+        },
+        {
             route: route('aca_school_teacher_grades'),
             status: false,
             text: 'Registro de Notas',
@@ -575,6 +577,28 @@ const colegioGroup = {
                         <li>⏱️ <span>La entrada se marca como asistencia o tardanza según la jornada.</span></li>
                         <li>🚪 <span>La salida se registra aparte y es opcional.</span></li>
                         <li>📄 <span>No confundir con la asistencia de aula que registra el docente.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
+        },
+        {
+            route: route('aca_school_gate_records'),
+            status: false,
+            text: 'Registros de portería',
+            icom: faTableList,
+            permissions: 'aca_school_porteria_reporte',
+            info: {
+                title: 'Registros de portería',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Historial de la asistencia institucional, alumno por alumno y día por día:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>🚪 <span>Filtrar por entradas, salidas o todo el historial.</span></li>
+                        <li>🏫 <span>Acotar por nivel, grado y sección.</span></li>
+                        <li>🔎 <span>Buscar por nombre completo, DNI o código de alumno.</span></li>
+                        <li>📅 <span>Elegir un rango de fechas; sin fechas se ve todo.</span></li>
                     </ul>
                 `,
                 placement: 'right'
@@ -646,7 +670,7 @@ const colegioGroup = {
             },
         },
         {
-            route: route('aca_school_enrollments_list'),
+            route: route('aca_school_charges_list'),
             status: false,
             text: 'Cobros',
             icom: faMoneyBillWave,

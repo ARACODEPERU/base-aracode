@@ -1,8 +1,12 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue';
-import AracodeEditor from '@elmerrodriguez/editor-aracode';
+import AracodeEditor, * as editorAracodeModulo from '@elmerrodriguez/editor-aracode';
 import '@editor-aracode-styles';
 import { getCsrfToken } from '@/utils/csrf';
+
+// El sustituto de vite.config.js exporta false cuando el paquete local del
+// editor no está instalado; el paquete real no exporta esta bandera.
+const editorHabilitado = editorAracodeModulo.editorAracodeDisponible !== false;
 
 const props = defineProps({
     modelValue: { type: String, default: '' },
@@ -53,6 +57,8 @@ function buildOptions() {
 }
 
 onMounted(() => {
+    if (!editorHabilitado) return;
+
     editor = new AracodeEditor(containerRef.value, buildOptions());
 
     editor.on('change', (html) => {
@@ -79,7 +85,20 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div ref="containerRef" class="editor-aracode-wrapper"></div>
+    <div v-if="editorHabilitado" ref="containerRef" class="editor-aracode-wrapper"></div>
+    <div v-else class="editor-aracode-fallback">
+        <textarea
+            :value="modelValue"
+            :placeholder="placeholder"
+            :readonly="readonly"
+            :style="{ minHeight }"
+            class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            @input="emit('update:modelValue', $event.target.value)"
+        ></textarea>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Editor simplificado: el editor enriquecido no está instalado en este entorno.
+        </p>
+    </div>
 </template>
 
 <style scoped>

@@ -1,0 +1,699 @@
+/*
+ * Ficha pública del equipo (landing de torneos).
+ *
+ * Reutiliza la identidad y los componentes base de la ficha del jugador para
+ * que ambas páginas se sientan del mismo campeonato. Aquí solo se agregan las
+ * piezas propias del equipo: escudo, logros, plantilla, disciplina, calendario
+ * y cronología.
+ */
+@import 'torneos-player';
+
+/* ── Cabecera: escudo del equipo ────────────────────────────────────────── */
+
+.se-tf-crest {
+    position: relative;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 8.25rem;
+    height: 8.25rem;
+    border-radius: 1.35rem;
+    overflow: hidden;
+    border: 3px solid rgba(255, 255, 255, 0.16);
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.1), rgba(7, 21, 37, 0.6));
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.4);
+}
+
+.se-tf-crest img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 0.55rem;
+}
+
+.se-tf-crest__initials {
+    font-family: var(--pf-display);
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #fff;
+}
+
+.se-tf-crest--champion {
+    border-color: var(--pf-gold);
+    box-shadow:
+        0 0 0 6px rgba(245, 196, 81, 0.14),
+        0 18px 34px rgba(0, 0, 0, 0.45);
+    background: linear-gradient(150deg, rgba(245, 196, 81, 0.35), rgba(23, 107, 67, 0.55));
+}
+
+.se-tf-hero__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.85rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(245, 196, 81, 0.5);
+    background: linear-gradient(135deg, rgba(245, 196, 81, 0.24), rgba(245, 196, 81, 0.06));
+    color: var(--pf-gold);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.se-tf-hero__badge--silver {
+    border-color: rgba(203, 213, 225, 0.45);
+    background: linear-gradient(135deg, rgba(203, 213, 225, 0.2), rgba(203, 213, 225, 0.04));
+    color: #dbe4ee;
+}
+
+.se-tf-hero__badge--bronze {
+    border-color: rgba(217, 154, 91, 0.45);
+    background: linear-gradient(135deg, rgba(217, 154, 91, 0.2), rgba(217, 154, 91, 0.04));
+    color: #e5b98a;
+}
+
+/* ── Totales del equipo ─────────────────────────────────────────────────── */
+
+.se-tf-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.2rem, 1fr));
+    gap: 0.75rem;
+    margin-top: -1.6rem;
+    position: relative;
+    z-index: 2;
+}
+
+.se-tf-stats .se-pf-stat {
+    padding: 0.95rem 0.9rem;
+}
+
+.se-tf-stats .se-pf-stat__value {
+    font-size: 1.7rem;
+}
+
+/* ── Logros ─────────────────────────────────────────────────────────────── */
+
+.se-tf-honours {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.se-tf-honour {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.8rem;
+    border: 1px solid var(--pf-line);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.se-tf-honour__icon {
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 0.65rem;
+    background: rgba(46, 213, 115, 0.12);
+    color: var(--pf-green);
+    font-size: 0.95rem;
+}
+
+.se-tf-honour--gold {
+    border-color: rgba(245, 196, 81, 0.35);
+    background: linear-gradient(150deg, rgba(245, 196, 81, 0.12), rgba(245, 196, 81, 0.02));
+}
+
+.se-tf-honour--gold .se-tf-honour__icon {
+    background: rgba(245, 196, 81, 0.16);
+    color: var(--pf-gold);
+}
+
+.se-tf-honour--silver .se-tf-honour__icon {
+    background: rgba(203, 213, 225, 0.14);
+    color: #dbe4ee;
+}
+
+.se-tf-honour--bronze .se-tf-honour__icon {
+    background: rgba(217, 154, 91, 0.16);
+    color: #e5b98a;
+}
+
+.se-tf-honour__body {
+    min-width: 0;
+}
+
+.se-tf-honour__label {
+    display: block;
+    font-family: var(--pf-display);
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.se-tf-honour__note {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.76rem;
+    color: var(--pf-muted);
+}
+
+/* ── Jugadores destacados ───────────────────────────────────────────────── */
+
+.se-tf-leaders {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.se-tf-leader {
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.8rem;
+    border: 1px solid var(--pf-line);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.se-tf-leader__head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--pf-muted);
+}
+
+.se-tf-leader__head i {
+    color: var(--pf-green);
+}
+
+.se-tf-leader--teal .se-tf-leader__head i { color: var(--pf-teal); }
+.se-tf-leader--gold .se-tf-leader__head i { color: var(--pf-gold); }
+
+.se-tf-leader__players {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0.55rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.se-tf-leader__player {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.se-tf-leader__avatar {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.se-tf-leader__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.se-tf-leader__name {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.86rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.se-tf-leader__name:hover,
+.se-tf-leader__name:focus-visible {
+    color: var(--pf-green);
+}
+
+.se-tf-leader__value {
+    flex: 0 0 auto;
+    min-width: 1.9rem;
+    padding: 0.14rem 0.45rem;
+    border-radius: 0.4rem;
+    background: rgba(0, 0, 0, 0.32);
+    font-family: var(--pf-display);
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+/* ── Plantilla ──────────────────────────────────────────────────────────── */
+
+.se-tf-squad {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: 0.7rem;
+}
+
+.se-tf-player {
+    position: relative;
+    display: flex;
+    gap: 0.7rem;
+    padding: 0.8rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--pf-line);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01));
+    transition: border-color 0.16s ease, transform 0.16s ease;
+}
+
+.se-tf-player:hover {
+    border-color: rgba(46, 213, 115, 0.35);
+    transform: translateY(-1px);
+}
+
+.se-tf-player__avatar {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.7rem;
+    overflow: hidden;
+    background: linear-gradient(145deg, var(--pf-pitch), #0d3b29);
+    font-family: var(--pf-display);
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.se-tf-player__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.se-tf-player__body {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.se-tf-player__number {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.65rem;
+    font-family: var(--pf-display);
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.22);
+}
+
+.se-tf-player__name {
+    display: block;
+    padding-right: 1.6rem;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.se-tf-player__name:hover,
+.se-tf-player__name:focus-visible {
+    color: var(--pf-green);
+}
+
+.se-tf-player__position {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.7rem;
+    color: var(--pf-muted);
+}
+
+.se-tf-player__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.55rem;
+    margin-top: 0.45rem;
+    font-size: 0.68rem;
+    color: var(--pf-muted);
+}
+
+.se-tf-player__stats strong {
+    color: var(--pf-text);
+    font-weight: 700;
+}
+
+.se-tf-player__stats .is-card {
+    color: var(--pf-red);
+}
+
+/* ── Disciplina ─────────────────────────────────────────────────────────── */
+
+.se-tf-disc__summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+}
+
+.se-tf-disc__stat {
+    padding: 0.7rem 0.8rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--pf-line);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.se-tf-disc__value {
+    display: block;
+    font-family: var(--pf-display);
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--pf-red);
+}
+
+.se-tf-disc__label {
+    display: block;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--pf-muted);
+}
+
+.se-tf-disc__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding: 0.65rem 0.8rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--pf-line);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.se-tf-disc__row + .se-tf-disc__row {
+    margin-top: 0.45rem;
+}
+
+.se-tf-disc__player {
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.se-tf-disc__meta {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.72rem;
+    color: var(--pf-muted);
+    overflow-wrap: anywhere;
+}
+
+.se-tf-suspension {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.7rem;
+    margin-top: 0.45rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 0.7rem;
+    border: 1px dashed rgba(255, 90, 95, 0.32);
+    background: rgba(255, 90, 95, 0.06);
+    font-size: 0.76rem;
+}
+
+/* ── Historial de partidos ──────────────────────────────────────────────── */
+
+.se-tf-phase-title {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 1.25rem 0 0.6rem;
+    font-family: var(--pf-display);
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--pf-muted);
+}
+
+.se-tf-phase-title::after {
+    content: '';
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--pf-line);
+}
+
+.se-tf-phase-title:first-child {
+    margin-top: 0;
+}
+
+.se-tf-fixture {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--pf-line);
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid rgba(169, 184, 201, 0.35);
+}
+
+.se-tf-fixture + .se-tf-fixture {
+    margin-top: 0.5rem;
+}
+
+.se-tf-fixture--win { border-left-color: var(--pf-green); }
+.se-tf-fixture--draw { border-left-color: var(--pf-gold); }
+.se-tf-fixture--loss { border-left-color: var(--pf-red); }
+.se-tf-fixture--pending { border-left-color: rgba(169, 184, 201, 0.3); }
+
+.se-tf-fixture__when {
+    min-width: 0;
+    font-size: 0.7rem;
+    color: var(--pf-muted);
+    line-height: 1.35;
+}
+
+.se-tf-fixture__when strong {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #dbe4ee;
+}
+
+.se-tf-fixture__main {
+    min-width: 0;
+}
+
+.se-tf-fixture__rival {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.se-tf-fixture__rival img {
+    flex: 0 0 auto;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.se-tf-fixture__rival span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.se-tf-fixture__rival a:hover,
+.se-tf-fixture__rival a:focus-visible {
+    color: var(--pf-green);
+}
+
+.se-tf-fixture__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.6rem;
+    margin-top: 0.12rem;
+    font-size: 0.68rem;
+    color: var(--pf-muted);
+}
+
+.se-tf-fixture__score {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
+    text-align: right;
+}
+
+.se-tf-fixture__numbers {
+    font-family: var(--pf-display);
+    font-size: 1.15rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.se-tf-fixture__result {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--pf-muted);
+}
+
+.se-tf-fixture--win .se-tf-fixture__result { color: var(--pf-green); }
+.se-tf-fixture--draw .se-tf-fixture__result { color: var(--pf-gold); }
+.se-tf-fixture--loss .se-tf-fixture__result { color: var(--pf-red); }
+
+/* ── Cronología ─────────────────────────────────────────────────────────── */
+
+.se-tf-timeline {
+    position: relative;
+    margin: 0;
+    padding: 0 0 0 1.5rem;
+    list-style: none;
+}
+
+.se-tf-timeline::before {
+    content: '';
+    position: absolute;
+    top: 0.4rem;
+    bottom: 0.4rem;
+    left: 0.45rem;
+    width: 2px;
+    background: linear-gradient(180deg, rgba(46, 213, 115, 0.45), rgba(245, 196, 81, 0.45));
+}
+
+.se-tf-milestone {
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+.se-tf-milestone:last-child {
+    padding-bottom: 0;
+}
+
+.se-tf-milestone__dot {
+    position: absolute;
+    left: -1.5rem;
+    top: 0.1rem;
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--pf-line);
+    background: var(--pf-card-2);
+    color: var(--pf-green);
+    font-size: 0.62rem;
+}
+
+.se-tf-milestone--gold .se-tf-milestone__dot {
+    border-color: rgba(245, 196, 81, 0.5);
+    background: rgba(245, 196, 81, 0.14);
+    color: var(--pf-gold);
+}
+
+.se-tf-milestone--teal .se-tf-milestone__dot { color: var(--pf-teal); }
+.se-tf-milestone--blue .se-tf-milestone__dot { color: var(--pf-blue); }
+
+.se-tf-milestone__title {
+    margin: 0;
+    font-family: var(--pf-display);
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.se-tf-milestone__desc {
+    margin: 0.12rem 0 0;
+    font-size: 0.82rem;
+    color: #cfdae6;
+}
+
+.se-tf-milestone__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.6rem;
+    margin: 0.2rem 0 0;
+    font-size: 0.68rem;
+    color: var(--pf-muted);
+}
+
+/* ── Adaptación a tablet y móvil ────────────────────────────────────────── */
+
+@media (max-width: 980px) {
+    .se-tf-stats {
+        grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .se-tf-crest {
+        width: 6.25rem;
+        height: 6.25rem;
+        border-radius: 1.1rem;
+    }
+
+    .se-tf-crest__initials {
+        font-size: 1.9rem;
+    }
+
+    .se-tf-stats {
+        gap: 0.55rem;
+    }
+
+    .se-tf-squad {
+        grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    }
+
+    .se-tf-fixture {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.35rem 0.6rem;
+    }
+
+    .se-tf-fixture__when {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        align-items: baseline;
+    }
+
+    .se-tf-fixture__when strong {
+        display: inline;
+    }
+
+    .se-tf-fixture__score {
+        align-self: center;
+    }
+
+    .se-tf-timeline {
+        padding-left: 1.35rem;
+    }
+
+    .se-tf-milestone__dot {
+        left: -1.35rem;
+        width: 1.35rem;
+        height: 1.35rem;
+        font-size: 0.55rem;
+    }
+}
+
+@media (max-width: 420px) {
+    .se-tf-squad {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

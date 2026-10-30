@@ -377,8 +377,14 @@ class EventEditionMatchController extends Controller
         }
 
         // 2. Validación de duplicados en la misma FASE
-        // Verificamos si ya existe un partido entre estos dos equipos en esta edición y fase
-        $exists = EventEditionMatch::where('edition_id', $validated['edition_id'])
+        // Verificamos si ya existe un partido entre estos dos equipos en esta edición y fase.
+        // En las fases de eliminación el sorteo de cada fecha puede volver a cruzar a
+        // dos equipos que ya se enfrentaron en una jornada anterior de la misma fase,
+        // así que allí solo se bloquea el duplicado dentro de la MISMA jornada.
+        // En liga o grupos el cruce repetido sigue siendo un error de registro.
+        $isKnockout = TournamentPhaseLabels::isKnockout($phase);
+
+        $duplicado = EventEditionMatch::where('edition_id', $validated['edition_id'])
             ->where('phase', $validated['phase'])
             ->where(function ($query) use ($validated) {
                 $query->where(function ($q) use ($validated) {
@@ -388,12 +394,17 @@ class EventEditionMatchController extends Controller
                     $q->where('team_h_id', $validated['team_a'])
                     ->where('team_a_id', $validated['team_h']);
                 });
-            })
-            ->exists();
+            });
 
-        if ($exists) {
+        if ($isKnockout) {
+            $duplicado->where('round_number', $idaRound);
+        }
+
+        if ($duplicado->exists()) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'team_h' => "Estos equipos ya tienen un partido registrado en la fase: {$validated['phase']}."
+                'team_h' => $isKnockout
+                    ? "Estos equipos ya tienen un partido registrado en la jornada {$idaRound} de la fase: {$validated['phase']}."
+                    : "Estos equipos ya tienen un partido registrado en la fase: {$validated['phase']}."
             ]);
         }
 

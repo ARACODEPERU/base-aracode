@@ -7,7 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
 import Swal2 from 'sweetalert2';
-import { ref, watch, onMounted } from 'vue';
+import { computed, ref, watch } from 'vue';
 import EditorAracode from '@/Components/EditorAracode.vue'
 
 const editorImageUploadUrl = route('even_editor_upload_image')
@@ -54,11 +54,37 @@ const props = defineProps({
         type: Array,
         default: [],
     },
+    organizers: {
+        type: Object,
+        default: () => ({}),
+    },
     sportsMode: {
         type: Boolean,
         default: false,
     },
 });
+
+// El organizador con una sola cuenta no puede cambiar el responsable: se
+// muestra su nombre y se guarda automáticamente. El superadministrador y las
+// organizaciones con varios usuarios conservan la selección.
+const organizerConfig = computed(() => props.organizers ?? {});
+const organizersLocked = computed(() => Boolean(props.sportsMode && organizerConfig.value.locked));
+const organizerName = computed(() => organizerConfig.value.label ?? '');
+const organizerDefault = computed(() => (
+    Array.isArray(organizerConfig.value.default) ? organizerConfig.value.default : []
+));
+const organizerInitials = computed(() => String(organizerName.value)
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join('')
+    .toUpperCase());
+const organizerOptions = computed(() => (Array.isArray(props.instructors) ? props.instructors : []));
+const initialExhibitors = organizersLocked.value
+    ? [...organizerDefault.value]
+    : [...(Array.isArray(props.eventExhibitors) ? props.eventExhibitors : [])];
+
 const dateFormat = 'YYYY-MM-DD';
 const value4 = ref([
   dayjs(props.socialevent.date_start, dateFormat),
@@ -82,7 +108,7 @@ const form = useForm({
     tickets_quantity: props.socialevent.tickets_quantity,
     broadcast: props.socialevent.broadcast == 1 ? true : false,
     locales: props.eventLocales,
-    exhibitors: props.eventExhibitors
+    exhibitors: initialExhibitors
 });
 
 const showFormErrors = (errors) => {
@@ -183,7 +209,7 @@ const cropImageAndSave = (res) => {
                     <InputError :message="form.errors.description" class="mt-2" />
                 </div>
                 <div class="col-span-6">
-                    <InputLabel for="advertising_video" :value="sportsMode ? 'Información / enlace del torneo' : 'Spot publicitario*'" class="mb-1" />
+                    <InputLabel for="advertising_video" :value="sportsMode ? 'Información / enlace del torneo (opcional)' : 'Spot publicitario*'" class="mb-1" />
                     <Textarea
                         id="advertising_video"
                         v-model:value="form.advertising_video"
@@ -214,13 +240,42 @@ const cropImageAndSave = (res) => {
                 </div>
                 <div class="col-span-6 sm:col-span-3">
                     <InputLabel for="exhibitors" :value="sportsMode ? 'Organizadores / responsables' : 'Expositores *'" class="mb-1" />
+
+                    <div
+                        v-if="organizersLocked"
+                        class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60"
+                    >
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200/80 text-sm font-bold text-slate-700 dark:bg-slate-700 dark:text-slate-100">
+                            {{ organizerInitials }}
+                        </span>
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                {{ organizerName }}
+                            </p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                Se asigna automáticamente a la cuenta que creó la organización.
+                            </p>
+                        </div>
+                        <svg class="ml-auto h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                            <rect x="5" y="11" width="14" height="9" rx="2" />
+                            <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                        </svg>
+                    </div>
+
                     <Select
+                        v-else
                         id="exhibitors"
                         v-model:value="form.exhibitors"
-                        :options="instructors.map((obj) => ({value: obj.id,label:obj.full_name}))"
+                        :options="organizerOptions"
                         style="width: 100%;"
                         mode="multiple"
+                        show-search
+                        option-filter-prop="label"
+                        :placeholder="sportsMode ? 'Busca a un responsable de tu organización' : 'Busca una persona'"
                     />
+                    <p v-if="!organizersLocked && sportsMode && organizerName" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        Solo puedes asignar a usuarios de tu organización.
+                    </p>
                     <InputError :message="form.errors.exhibitors" class="mt-2" />
                 </div>
                 <div class="col-span-6 sm:col-span-3">

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Parque con árbol, tobogán y flores">
+    <defs>
+        <linearGradient id="parqueCielo" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#BCE7FF"/>
+            <stop offset="1" stop-color="#EDF9FF"/>
+        </linearGradient>
+    </defs>
+
+    <rect width="120" height="120" fill="url(#parqueCielo)"/>
+
+    <!-- Sol -->
+    <g stroke="#FFC94A" stroke-width="3.4" stroke-linecap="round">
+        <path d="M21 4v6M21 28v6M7 19h6M29 19h6M11 9l4 4M27 25l4 4M31 9l-4 4M15 25l-4 4"/>
+    </g>
+    <circle cx="21" cy="19" r="9" fill="#FFD15C"/>
+
+    <!-- Nubes -->
+    <g fill="#FFFFFF" opacity=".92">
+        <ellipse cx="60" cy="18" rx="15" ry="8"/>
+        <ellipse cx="74" cy="16" rx="9" ry="5.5"/>
+        <ellipse cx="98" cy="34" rx="12" ry="6.5"/>
+    </g>
+
+    <!-- Pasto -->
+    <path d="M0 90c14-8 26-8 40-3 14 5 28 4 42-2 14-6 26-6 38-1v36H0z" fill="#9BD98B"/>
+    <path d="M0 102c18-6 34-6 52 0 18 6 38 6 56-1 4-1 8-2 12-2v21H0z" fill="#7CCB6A"/>
+
+    <!-- Árbol -->
+    <rect x="38" y="62" width="11" height="42" rx="5" fill="#A9713F"/>
+    <path d="M43 78l-12 8M44 70l-10 5" stroke="#8E5A2F" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="43" cy="47" r="24" fill="#6AC25E"/>
+    <circle cx="24" cy="58" r="14" fill="#7CCE6E"/>
+    <circle cx="62" cy="57" r="15" fill="#7CCE6E"/>
+    <circle cx="43" cy="36" r="13" fill="#86D978"/>
+    <g fill="#F26B6B">
+        <circle cx="33" cy="44" r="3.2"/>
+        <circle cx="52" cy="52" r="3"/>
+        <circle cx="46" cy="33" r="2.6"/>
+    </g>
+
+    <!-- Tobogán -->
+    <path d="M86 66h24v6H86z" fill="#F2A93B"/>
+    <path d="M88 72v34M108 72v34" stroke="#E08A45" stroke-width="4" stroke-linecap="round"/>
+    <path d="M92 78h12M92 88h12" stroke="#E08A45" stroke-width="3" stroke-linecap="round"/>
+    <path d="M104 72c10 6 6 18-2 22-6 3-14 4-18 12" fill="none" stroke="#6CC4F5" stroke-width="9" stroke-linecap="round"/>
+    <path d="M104 72c10 6 6 18-2 22-6 3-14 4-18 12" fill="none" stroke="#A6DCFF" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Flores -->
+    <g>
+        <circle cx="12" cy="106" r="4" fill="#FFFFFF"/>
+        <circle cx="12" cy="106" r="1.6" fill="#F7C45C"/>
+        <circle cx="66" cy="112" r="4" fill="#FFC0D2"/>
+        <circle cx="66" cy="112" r="1.6" fill="#F7C45C"/>
+        <circle cx="26" cy="114" r="3.4" fill="#FFFFFF"/>
+        <circle cx="26" cy="114" r="1.4" fill="#F7C45C"/>
+    </g>
+
+    <!-- Mariposa -->
+    <g transform="translate(78 40)">
+        <path d="M0 0c-6-8-12-3-9 2 2 4 6 4 9 1 3 3 7 3 9-1 3-5-3-10-9-2z" fill="#FFC0D2"/>
+        <path d="M0 0v7" stroke="#7A5A3A" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+</svg>

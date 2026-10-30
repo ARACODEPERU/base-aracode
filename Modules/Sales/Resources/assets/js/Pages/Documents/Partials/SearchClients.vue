@@ -10,8 +10,7 @@
     import TextInput from '@/Components/TextInput.vue';
     import { faShareFromSquare } from "@fortawesome/free-solid-svg-icons";
     import Swal2 from 'sweetalert2';
-    import Multiselect from "@suadelabs/vue3-multiselect";
-    import "@suadelabs/vue3-multiselect/dist/vue3-multiselect.css";
+    import SelectCities from '@/Components/SelectCities.vue';
     import iconDatabaseSearch from '@/Components/vristo/icon/icon-database-search.vue';
     import iconCompany from '@/Components/vristo/icon/icon-company.vue';
     import iconLoader from '@/Components/vristo/icon/icon-loader.vue';
@@ -116,11 +115,7 @@
         form.email = person.email;
         form.address = person.address;
         form.ubigeo_description = person.ubigeo_description;
-        //form.ubigeo = ubigeo;
-        form.ubigeo = {
-            district_id: person.ubigeo,
-            city_name: person.ubigeo_description
-        };
+        form.ubigeo = person.ubigeo;
         persona.value = person;
         disabledBtnSelect.value = false;
         searchResults.value = []; // cerrar dropdown
@@ -347,23 +342,13 @@
                     </div>
 
                     <div class="col-span-6 sm:col-span-2">
-                        <InputLabel for="city" value="Ciudad" />
-                        <multiselect
-                            id="city"
+                        <SelectCities
                             v-model="form.ubigeo"
+                            v-model:description="form.ubigeo_description"
                             :options="ubigeo"
-                            class="custom-multiselect"
-                            :searchable="true"
-                            placeholder="Buscar ciudad"
-                            selected-label="seleccionado"
-                            select-label="Elegir"
-                            deselect-label="Quitar"
-                            label="city_name"
-                            track-by="district_id"
-                        ></multiselect>
-                        <div>
-                            <InputError :message="form.errors.ubigeo" class="mt-2" />
-                        </div>
+                            label="Ciudad"
+                            :error="form.errors.ubigeo"
+                        />
                     </div>
                     <div class="col-span-6 sm:col-span-2">
                         <InputLabel for="address" value="Dirección" />

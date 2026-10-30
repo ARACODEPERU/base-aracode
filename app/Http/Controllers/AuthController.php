@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class AuthController extends Controller
 {
@@ -38,6 +39,30 @@ class AuthController extends Controller
             'message' => 'Usuario obtenido correctamente',
             'user' => $user,
             'roles' => $user->getRoleNames()->values()->all(),
+        ]);
+    }
+
+    /**
+     * Sesión completa para la app móvil: usuario, roles, organización y vigencia.
+     *
+     * La organización se deriva del token; la app nunca la envía. `access` es la
+     * única fuente de verdad para habilitar o bloquear escrituras en el cliente.
+     */
+    public function me(Request $request)
+    {
+        $user = $request->user();
+        $organizations = app(SportsOrganizationService::class);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sesión obtenida correctamente',
+            'user' => $user,
+            'roles' => $user->getRoleNames()->values()->all(),
+            'organization' => $organizations->organizationSummary($user),
+            'access' => $organizations->accessSummary($user),
+            'features' => [
+                'sports_mode' => $organizations->sportsMode(),
+            ],
         ]);
     }
 }

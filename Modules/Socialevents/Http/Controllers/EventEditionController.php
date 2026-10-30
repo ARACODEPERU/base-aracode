@@ -37,21 +37,33 @@ class EventEditionController extends Controller
         $this->positionService = new PositionTableService();
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $sports = app(SportsOrganizationService::class);
-        $sports->assertCanRead(request()->user());
+        $sports->assertCanRead($request->user());
+
+        $search = trim((string) $request->query('search', ''));
+
         $editions = EventEdition::with([
             'evento',
             'equipos'
         ])
-            ->when($sports->sportsMode() && ! $sports->isSuperAdmin(request()->user()), fn ($query) => $query->whereHas('evento', fn ($eventQuery) => $eventQuery->where('organization_id', $sports->organizationId(request()->user()))))
+            ->when($sports->sportsMode() && ! $sports->isSuperAdmin($request->user()), fn ($query) => $query->whereHas('evento', fn ($eventQuery) => $eventQuery->where('organization_id', $sports->organizationId($request->user()))))
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('name', 'like', "%{$search}%")
+                        ->orWhere('year', 'like', "%{$search}%")
+                        ->orWhereHas('evento', fn ($eventQuery) => $eventQuery->where('title', 'like', "%{$search}%"));
+                });
+            })
             ->orderBy('start_date', 'DESC')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         return Inertia::render('Socialevents::Editions/List',[
             'sportsMode' => $sports->sportsMode(),
-            'editions' => $editions
+            'editions' => $editions,
+            'filters' => ['search' => $search],
         ]);
     }
     /**

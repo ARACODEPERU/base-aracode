@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Modules\Socialevents\Database\factories\EventEditionMatchFactory;
 
 class EventEditionMatch extends Model
@@ -70,6 +71,12 @@ class EventEditionMatch extends Model
     public function substitutions(): HasMany
     {
         return $this->hasMany(EventEditionMatchSubstitution::class, 'match_id', 'id');
+    }
+
+    /** Acta cerrada del partido, si ya se registró. */
+    public function report(): HasOne
+    {
+        return $this->hasOne(EventEditionMatchReport::class, 'match_id', 'id');
     }
 
     public function goals(): HasMany

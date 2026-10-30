@@ -8,6 +8,7 @@
     import GreenButton from '@/Components/GreenButton.vue';
     import RedButton from '@/Components/RedButton.vue';
     import TextInput from '@/Components/TextInput.vue';
+    import SelectCities from '@/Components/SelectCities.vue';
     import { faShareFromSquare } from "@fortawesome/free-solid-svg-icons";
     import Swal2 from 'sweetalert2';
 
@@ -100,23 +101,6 @@
     const displayResultUbigeo = ref(false);
     
 
-    const searchUbigeos = ref([]); // Inicializa searchUbigeos como una matriz vacía en lugar de null
-
-    const filterCities = () => {
-        if (form.ubigeo_description.trim() === '') {
-            searchUbigeos.value = [];
-            return;
-        }
-
-        searchUbigeos.value = props.ubigeo.filter(row =>
-            row.district_name.toLowerCase().includes(form.ubigeo_description.toLowerCase())
-        );
-    }
-    const selectCity = (item) => {
-        form.ubigeo_description = item.department_name+'-'+item.province_name+'-'+item.district_name;
-        form.ubigeo = item.district_id;
-        searchUbigeos.value = []; // Limpiar la lista de búsqueda después de seleccionar una ciudad
-    }
 </script>
 
 <template>
@@ -173,24 +157,13 @@
                         <InputError :message="form.errors.address" class="mt-2" />
                     </div>
                     <div class="col-span-6 sm:col-span-3">
-                        <InputLabel for="address" value="Ciudad" />
-                        
-                        <div class="relative">
-                            <TextInput 
-                            v-model="form.ubigeo_description" 
-                            @input="filterCities"
-                            placeholder="Buscar Distrito"
-                            type="text" 
-                            class="block w-full mt-1" />
-                            <ul v-if="searchUbigeos && searchUbigeos.length > 0" class="list-disc list-inside absolute z-50 w-full bg-white border border-gray-300 rounded-md mt-1">
-                                <li v-for="item in searchUbigeos" :key="item.id" class="px-4 cursor-pointer hover:bg-gray-100" @click="selectCity(item)">
-                                    {{ item.department_name+'-'+item.province_name+'-'+item.district_name }}
-                                </li>
-                            </ul>
-                        </div>
-                        <div>
-                            <InputError :message="form.errors.ubigeo" class="mt-2" />
-                        </div>
+                        <SelectCities
+                            v-model="form.ubigeo"
+                            v-model:description="form.ubigeo_description"
+                            :options="ubigeo"
+                            label="Ciudad"
+                            :error="form.errors.ubigeo"
+                        />
                     </div>
                 </div>
             </template>

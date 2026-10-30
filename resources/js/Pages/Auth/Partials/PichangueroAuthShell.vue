@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 
 /*
@@ -11,7 +12,7 @@ import { Head } from '@inertiajs/vue3';
  * Las pantallas solo pasan sus textos y meten su formulario en el slot.
  */
 
-defineProps({
+const props = defineProps({
     pageTitle: { type: String, required: true },
     eyebrow: { type: String, required: true },
     line1: { type: String, required: true },
@@ -22,11 +23,17 @@ defineProps({
     kicker: { type: String, required: true },
     cardTitle: { type: String, required: true },
     cardSubtitle: { type: String, required: true },
+    // Permiten que el login use la foto de cancha y el tono deportivo del
+    // acceso anterior sin cambiar la portada del registro.
+    backgroundImage: { type: String, default: '' },
+    backgroundPosition: { type: String, default: 'center 40%' },
+    fieldLines: { type: Boolean, default: false },
+    pitchTone: { type: Boolean, default: false },
 });
 
 const baseUrl = assetUrl;
 const logo = `${baseUrl}themes/pichanguero/images/Logo-vertical.png`;
-const fondo = `${baseUrl}themes/pichanguero/images/hero-bg.jpg`;
+const fondo = computed(() => props.backgroundImage || `${baseUrl}themes/pichanguero/images/hero-bg.jpg`);
 </script>
 
 <template>
@@ -40,9 +47,16 @@ const fondo = `${baseUrl}themes/pichanguero/images/hero-bg.jpg`;
         />
     </Head>
 
-    <div class="pgr-page">
-        <div class="pgr-bg" aria-hidden="true">
-            <img :src="fondo" alt="" width="1920" height="950" />
+    <div class="pgr-page" :class="{ 'pgr-page--pitch': pitchTone }">
+        <div class="pgr-bg" :class="{ 'pgr-bg--pitch': pitchTone }" aria-hidden="true">
+            <img
+                :src="fondo"
+                alt=""
+                width="1920"
+                height="950"
+                :style="{ objectPosition: backgroundPosition }"
+            />
+            <span v-if="fieldLines" class="pgr-field-circle"></span>
         </div>
         <span class="pgr-slash" aria-hidden="true"></span>
         <span class="pgr-slash is-thin" aria-hidden="true"></span>
@@ -116,8 +130,10 @@ const fondo = `${baseUrl}themes/pichanguero/images/hero-bg.jpg`;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    overflow-x: hidden;
-    overflow-x: clip;
+    min-height: 100dvh;
+    /* Recorta las franjas decorativas: antes sobresalían por debajo del fondo
+       y dejaban una banda del color del body al final de la página. */
+    overflow: hidden;
     background-color: var(--pgr-navy);
     color: #ffffff;
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -147,6 +163,42 @@ const fondo = `${baseUrl}themes/pichanguero/images/hero-bg.jpg`;
     background:
         linear-gradient(105deg, rgba(16, 29, 45, 0.97) 0%, rgba(16, 29, 45, 0.9) 42%, rgba(16, 29, 45, 0.68) 100%),
         linear-gradient(to top, var(--pgr-navy) 0%, transparent 58%);
+}
+
+/* Variante del login: la foto de cancha se mezcla con el verde del tema. */
+.pgr-bg--pitch > img {
+    opacity: 0.8;
+    filter: saturate(1.05);
+}
+
+.pgr-bg--pitch::after {
+    background:
+        linear-gradient(105deg, rgba(16, 29, 45, 0.95) 0%, rgba(9, 44, 36, 0.85) 42%, rgba(6, 58, 40, 0.52) 100%),
+        linear-gradient(to top, var(--pgr-navy) 0%, transparent 64%);
+}
+
+/* Líneas de cancha del acceso anterior: centro y círculo, muy tenues. */
+.pgr-bg--pitch::before {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: rgba(255, 255, 255, 0.16);
+}
+
+.pgr-field-circle {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    left: 50%;
+    width: min(46vmin, 420px);
+    height: min(46vmin, 420px);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .pgr-slash {
@@ -345,6 +397,43 @@ const fondo = `${baseUrl}themes/pichanguero/images/hero-bg.jpg`;
     box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.8);
 }
 
+/* El login usa un borde parejo: sin franja superior, la tarjeta se ve
+   integrada y no aparece la línea suelta sobre la esquina redondeada. */
+.pgr-page--pitch .pgr-card {
+    border-top-width: 1px;
+    border-top-color: rgba(220, 230, 238, 0.9);
+}
+
+/* Punto lima del encabezado: reemplaza la franja sin añadir otra línea. */
+.pgr-page--pitch .pgr-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.pgr-page--pitch .pgr-kicker::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background-color: var(--pgr-lime);
+    box-shadow: 0 0 0 3px rgba(184, 243, 74, 0.18);
+}
+
+/* Campos apenas tintados para que se distingan del blanco de la tarjeta.
+   Se repite la clase del contenedor para ganarle a la regla base de los
+   controles, que aparece más abajo en la hoja. */
+.pgr-page.pgr-page--pitch .pgr-form :deep(.form-input),
+.pgr-page.pgr-page--pitch .pgr-form :deep(.form-select) {
+    border-color: #d7e3ec;
+    background-color: #f8fafc;
+}
+
+.pgr-page.pgr-page--pitch .pgr-form :deep(.form-input:focus),
+.pgr-page.pgr-page--pitch .pgr-form :deep(.form-select:focus) {
+    background-color: #ffffff;
+}
+
 .pgr-kicker {
     color: var(--pgr-forest);
     font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
@@ -490,6 +579,11 @@ const fondo = `${baseUrl}themes/pichanguero/images/hero-bg.jpg`;
     transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
 }
 
+.pgr-page--pitch .pgr-form :deep(button[type='submit']) {
+    background-image: linear-gradient(120deg, var(--pgr-lime) 0%, #4ade80 52%, var(--pgr-green) 100%);
+    box-shadow: 0 18px 40px -18px rgba(27, 148, 71, 0.6);
+}
+
 .pgr-page .pgr-form :deep(button[type='submit']:hover:not(:disabled)) {
     filter: brightness(1.06);
     transform: translateY(-2px);
@@ -613,6 +707,19 @@ const fondo = `${baseUrl}themes/pichanguero/images/hero-bg.jpg`;
 
     .pgr-card {
         padding: 1.25rem;
+    }
+}
+
+/* En móvil el login muestra solo la cabecera y el formulario. */
+@media (max-width: 767px) {
+    .pgr-page--pitch .pgr-hero {
+        display: none;
+    }
+
+    .pgr-page--pitch .pgr-main {
+        gap: 0;
+        padding-top: 1.25rem;
+        padding-bottom: 1.5rem;
     }
 }
 

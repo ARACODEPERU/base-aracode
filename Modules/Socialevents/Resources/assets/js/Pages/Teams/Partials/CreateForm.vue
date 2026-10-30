@@ -11,8 +11,7 @@
     import { Select, TreeSelect } from 'ant-design-vue';
     import 'cropperjs/dist/cropper.css';
     import CropperImage from '@/Components/CropperImage.vue';
-    import Multiselect from '@suadelabs/vue3-multiselect';
-    import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
+    import SelectCities from '@/Components/SelectCities.vue';
     import SearchClients from './SearchClients.vue';
     import iconLoader from '@/Components/vristo/icon/icon-loader.vue';
     import { faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
@@ -59,13 +58,6 @@
 
     const cropImageAndSave = (res) => {
         form.logo_path = res;
-    }
-
-    const ubigeoSelected = ref(null);
-
-    const selectCity = () => {
-        form.ubigeo_description = ubigeoSelected.value.ubigeo_description;
-        form.ubigeo = ubigeoSelected.value.district_id;
     }
 
     const displayModalClientSearch = ref(false);
@@ -164,23 +156,14 @@
                         <InputError :message="form.errors.short_name" class="mt-2" />
                     </div>
                     <div class="col-span-2">
-                        <InputLabel for="short_name" value="Ciudad*" class="mb-1" />
-                        <multiselect
-                            id="industry_id"
-                            :model-value="ubigeoSelected"
-                            v-model="ubigeoSelected"
+                        <SelectCities
+                            v-model="form.ubigeo"
+                            v-model:description="form.ubigeo_description"
                             :options="ubigeo"
-                            class="custom-multiselect"
-                            :searchable="true"
-                            placeholder="Buscar"
-                            selected-label="seleccionado"
-                            select-label="Elegir"
-                            deselect-label="Quitar"
-                            label="ubigeo_description"
-                            track-by="district_id"
-                            @update:model-value="selectCity"
-                        ></multiselect>
-                        <InputError :message="form.errors.ubigeo_description" class="mt-2" />
+                            label="Ciudad"
+                            required
+                            :error="form.errors.ubigeo_description"
+                        />
                     </div>
                     <div class="col-span-2">
                         <InputLabel for="short_name" value="Delegado / Representante*" class="mb-1" />

@@ -217,6 +217,17 @@ class TournamentRankingsService
     {
         $limit = $limit ?? (int) config('socialevents.rankings.top_limit', 5);
 
+        return $this->scorersTable($editionId)->take($limit)->values();
+    }
+
+    /**
+     * Tabla completa de goleadores, sin recortar.
+     *
+     * La ficha pública del jugador necesita saber su puesto real, no solo si
+     * aparece en el top de la landing. El orden es el mismo que usa el ranking.
+     */
+    public function scorersTable(int $editionId): Collection
+    {
         $excludedPlayers = $this->getExcludedPlayerIds($editionId);
 
         $playerStats = EventEditionMatchPlayerStat::with(['player.person'])
@@ -271,7 +282,6 @@ class TournamentRankingsService
 
                 return $b['assists'] <=> $a['assists'];
             })
-            ->take($limit)
             ->values();
     }
 

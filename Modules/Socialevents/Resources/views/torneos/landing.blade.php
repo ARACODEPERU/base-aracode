@@ -208,7 +208,12 @@
 
                 <div class="se-teams-grid" style="--grid-cols: {{ min($teamCount, 6) }}">
                     @foreach ($edition->equipos as $equipo)
-                        <article class="se-team-card" data-se-reveal>
+                        {{-- Cada equipo abre su ficha pública con su historia en la edición. --}}
+                        <a
+                            class="se-team-card"
+                            href="{{ route('socialevents_torneos_team_profile', ['slug' => $edition->landingSlug(), 'teamId' => $equipo->team_id]) }}"
+                            data-se-reveal
+                        >
                             <div class="se-team-card__logo">
                                 @if ($equipo->equipo->logo_path)
                                     <img src="{{ asset('storage/' . $equipo->equipo->logo_path) }}" alt="{{ $equipo->equipo->name }}" loading="lazy">
@@ -217,7 +222,7 @@
                                 @endif
                             </div>
                             <div class="se-team-card__name">{{ $equipo->equipo->name }}</div>
-                        </article>
+                        </a>
                     @endforeach
                 </div>
             </div>
@@ -287,9 +292,14 @@
                                             $tieHow = $tieSummary && $tieSummary['is_tie']
                                                 ? (['aggregate' => 'global', 'penalties' => 'penales', 'pending' => 'pendiente'][$tieSummary['decided_by']] ?? '')
                                                 : '';
+                                            // Reglamentario, alargue y penales leídos de los campos reales.
+                                            $matchResult = in_array($match->status, ['finished', 'closed'], true)
+                                                ? \Modules\Socialevents\Support\TournamentMatchResultPresenter::forMatch($match)
+                                                : null;
+                                            $winnerSide = $matchResult['winner_side'] ?? null;
                                         @endphp
-                                        <article class="se-match {{ $match->status === 'cancelled' ? 'se-match--cancelled' : '' }}">
-                                            <div class="se-match__side">
+                                        <article class="se-match {{ $match->status === 'cancelled' ? 'se-match--cancelled' : '' }} {{ !empty($matchResult['has_details']) ? 'se-match--details' : '' }}">
+                                            <div class="se-match__side {{ $winnerSide === 'home' ? 'se-match__side--winner' : '' }}">
                                                 <div class="se-match__crest">
                                                     @if ($match->equipolocal && $match->equipolocal->logo_path)
                                                         <img src="{{ asset('storage/' . $match->equipolocal->logo_path) }}" alt="{{ $match->equipolocal->name }}">
@@ -304,7 +314,11 @@
 
                                             <div class="se-match__center">
                                                 @if (in_array($match->status, ['finished', 'closed']))
-                                                    <div class="se-match__score">{{ $match->score_h ?? 0 }}<span class="se-match__score-sep">-</span>{{ $match->score_a ?? 0 }}</div>
+                                                    <div class="se-match__score">{{ $matchResult['final_h'] }}<span class="se-match__score-sep">-</span>{{ $matchResult['final_a'] }}</div>
+                                                    @if ($matchResult['shootout'])
+                                                        {{-- Los penales se ven en el marcador principal y en el detalle. --}}
+                                                        <div class="se-match__shootout">({{ $matchResult['shootout']['h'] }} - {{ $matchResult['shootout']['a'] }} PEN.)</div>
+                                                    @endif
                                                     <div class="se-match__meta se-match__meta--done">Finalizado</div>
                                                     @if ($tieSummary && $tieSummary['is_tie'] && $tieSummary['complete'])
                                                         <div class="se-match__note">Global {{ $tieSummary['aggregate_h'] }} - {{ $tieSummary['aggregate_a'] }}{{ $tieHow ? ' (' . $tieHow . ')' : '' }}</div>
@@ -332,7 +346,7 @@
                                                 @endif
                                             </div>
 
-                                            <div class="se-match__side se-match__side--away">
+                                            <div class="se-match__side se-match__side--away {{ $winnerSide === 'away' ? 'se-match__side--winner' : '' }}">
                                                 <span class="se-match__name">{{ $match->equipovisitante?->name ?? 'Por definir' }}</span>
                                                 <div class="se-match__crest">
                                                     @if ($match->equipovisitante && $match->equipovisitante->logo_path)
@@ -344,6 +358,25 @@
                                                     @endif
                                                 </div>
                                             </div>
+
+                                            @if (!empty($matchResult['has_details']))
+                                                <div class="se-match__details" role="group" aria-label="Detalle del resultado">
+                                                    <div class="se-match__details-grid">
+                                                        @foreach ($matchResult['details'] as $detail)
+                                                            <div class="se-match__detail se-match__detail--{{ $detail['key'] }}">
+                                                                <span class="se-match__detail-label">{{ $detail['label'] }}</span>
+                                                                <span class="se-match__detail-value">{{ $detail['value'] }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                    @if (!empty($matchResult['shootout']['winner_name']))
+                                                        <p class="se-match__shootout-winner">
+                                                            <i class="fas fa-trophy" aria-hidden="true"></i>
+                                                            {{ $matchResult['shootout']['winner_name'] }} ganó por penales
+                                                        </p>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         </article>
                                     @endforeach
                                 </div>
@@ -394,7 +427,10 @@
                                                 @else
                                                     <i class="fas fa-shield-alt" aria-hidden="true"></i>
                                                 @endif
-                                                {{ $team->equipo->name }}
+                                                <a
+                                                    class="se-table__team-link"
+                                                    href="{{ route('socialevents_torneos_team_profile', ['slug' => $edition->landingSlug(), 'teamId' => $team->team_id]) }}"
+                                                >{{ $team->equipo->name }}</a>
                                             </div>
                                         </td>
                                         <td class="pts">{{ (int) $team->points + (int) $team->bonus_points }}@if (($pointAdjustments[$team->team_id] ?? 0) !== 0) <span class="se-sanction-star" title="Incluye sanción administrativa">*</span>@endif</td>
@@ -713,6 +749,7 @@
         data-se-player-modal
         aria-hidden="true"
         data-player-url="{{ $playerDetailUrlTemplate }}"
+        data-player-page-url="{{ route('socialevents_torneos_player_profile', ['slug' => $edition->landingSlug(), 'playerId' => '__PLAYER__']) }}"
     >
         <div class="se-modal__backdrop" data-se-player-close></div>
         <div

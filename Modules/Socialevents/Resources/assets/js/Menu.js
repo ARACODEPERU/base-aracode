@@ -73,12 +73,12 @@ const menuSocialevents = {
             icom: faBoltLightning,
         },
         {
-            // Pagos del organizador: entra antes de que venza el acceso, para
-            // recargar saldo sin esperar el aviso de vencimiento. Misma vista
-            // que abre el aviso al crear un partido (even_organizations.topup.index).
+            // Plan del organizador: espacios, usuarios, comprobantes y saldo.
+            // Entra antes de que venza el acceso y es la misma vista que abre el
+            // aviso al crear un partido (even_organizations.topup.index).
             route: route("even_organizations.topup.index"),
             status: false,
-            text: "Mis pagos",
+            text: "Mi plan",
             permissions: "even_dashboard",
             organizationOnly: true,
             icom: faCreditCard,

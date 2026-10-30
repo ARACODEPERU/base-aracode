@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" role="img" aria-label="Sol sonriente con nubes">
+    <defs>
+        <linearGradient id="solCielo" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#BCE7FF"/>
+            <stop offset="1" stop-color="#EAF8FF"/>
+        </linearGradient>
+    </defs>
+
+    <rect width="240" height="120" fill="url(#solCielo)"/>
+
+    <g fill="#FFFFFF" opacity=".92">
+        <ellipse cx="30" cy="28" rx="19" ry="10"/>
+        <ellipse cx="47" cy="25" rx="12" ry="8"/>
+        <ellipse cx="208" cy="94" rx="20" ry="10"/>
+        <ellipse cx="190" cy="97" rx="12" ry="7"/>
+    </g>
+
+    <g stroke="#FFC94A" stroke-width="7" stroke-linecap="round">
+        <path d="M120 7v13"/>
+        <path d="M120 100v13"/>
+        <path d="M70 60h13"/>
+        <path d="M157 60h13"/>
+        <path d="M85 25l9 9"/>
+        <path d="M146 86l9 9"/>
+        <path d="M155 25l-9 9"/>
+        <path d="M94 86l-9 9"/>
+    </g>
+
+    <circle cx="120" cy="60" r="30" fill="#FFC94A"/>
+    <circle cx="120" cy="60" r="30" fill="none" stroke="#F0A63A" stroke-width="2" opacity=".55"/>
+
+    <circle cx="110" cy="55" r="3.8" fill="#7A4A12"/>
+    <circle cx="130" cy="55" r="3.8" fill="#7A4A12"/>
+    <path d="M112 67c4 5.5 12 5.5 16 0" fill="none" stroke="#7A4A12" stroke-width="3" stroke-linecap="round"/>
+
+    <ellipse cx="102" cy="65" rx="5.5" ry="3.4" fill="#FF9E8A" opacity=".7"/>
+    <ellipse cx="138" cy="65" rx="5.5" ry="3.4" fill="#FF9E8A" opacity=".7"/>
+</svg>

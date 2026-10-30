@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import axios from 'axios';
 import Swal2 from 'sweetalert2';
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
@@ -7,7 +8,7 @@ import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import QrCamera from './Partials/QrCamera.vue';
 import GateScanFeed from './Partials/GateScanFeed.vue';
 import { useHidScanner } from './composables/useHidScanner';
-import { faRightToBracket, faRightFromBracket, faVolumeHigh, faVolumeXmark, faKeyboard, faFileArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { faRightToBracket, faRightFromBracket, faVolumeHigh, faVolumeXmark, faKeyboard, faFileArrowDown, faTableList } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Portería: registra la asistencia institucional escaneando el QR del carné.
@@ -354,11 +355,20 @@ onBeforeUnmount(() => {
                             Sonido
                         </label>
 
+                        <Link
+                            v-if="canReport"
+                            :href="route('aca_school_gate_records')"
+                            class="btn btn-outline-primary ml-auto"
+                        >
+                            <font-awesome-icon :icon="faTableList" class="mr-1" />
+                            Ver registros
+                        </Link>
+
                         <a
                             v-if="canReport"
                             :href="route('aca_school_gate_report')"
                             target="_blank"
-                            class="btn btn-outline-secondary ml-auto"
+                            class="btn btn-outline-secondary"
                         >
                             <font-awesome-icon :icon="faFileArrowDown" class="mr-1" />
                             Reporte del día

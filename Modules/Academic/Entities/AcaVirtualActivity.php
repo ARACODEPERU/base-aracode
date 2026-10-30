@@ -20,6 +20,9 @@ class AcaVirtualActivity extends Model
         'open_at',
         'close_at',
         'allow_late',
+        'attempts_allowed',
+        'allow_result_download',
+        'duration_minutes',
         'max_score',
         'grading_scale',
         'sort_order',
@@ -30,6 +33,9 @@ class AcaVirtualActivity extends Model
         'open_at' => 'datetime',
         'close_at' => 'datetime',
         'allow_late' => 'boolean',
+        'attempts_allowed' => 'integer',
+        'allow_result_download' => 'boolean',
+        'duration_minutes' => 'integer',
         'max_score' => 'decimal:2',
         'sort_order' => 'integer',
         'status' => 'boolean',
@@ -53,5 +59,26 @@ class AcaVirtualActivity extends Model
     public function submissions(): HasMany
     {
         return $this->hasMany(AcaVirtualSubmission::class, 'activity_id');
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(AcaVirtualActivityFile::class, 'activity_id');
+    }
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(AcaVirtualActivityQuestion::class, 'activity_id')->orderBy('sort_order');
+    }
+
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(AcaVirtualQuizAttempt::class, 'activity_id');
+    }
+
+    /** Indica si la actividad es una evaluación configurable en linea. */
+    public function isOnlineQuiz(): bool
+    {
+        return $this->type === 'quiz' && $this->questions->isNotEmpty();
     }
 }

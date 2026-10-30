@@ -70,6 +70,9 @@ class PermissionsModuleSeeder extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_galeria_eliminar']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_exclusiones']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_suspensiones']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_diplomas']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_diplomas_disenar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_premiados']));
 
         foreach ($permissions as $permission) {
             $admin->givePermissionTo($permission->name);

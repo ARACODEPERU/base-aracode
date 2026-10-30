@@ -461,8 +461,8 @@ const methodLabel = (value) => props.paymentMethods[value] ?? value;
     <AppLayout title="Cobros del Alumno">
         <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
             :data="[
-                { route: route('aca_school_enrollments_list'), title: 'Matrículas' },
-                { title: 'Cobros' },
+                { route: route('aca_school_charges_list'), title: 'Cobros' },
+                { title: 'Ficha de cobranza' },
             ]"
         />
         <div class="pt-5">
@@ -483,7 +483,7 @@ const methodLabel = (value) => props.paymentMethods[value] ?? value;
                             <font-awesome-icon :icon="faFileInvoiceDollar" class="mr-1" />
                             Crear cobro / Comprobante
                         </button>
-                        <Link :href="route('aca_school_enrollments_list')" class="btn btn-outline-secondary">Ir al listado</Link>
+                        <Link :href="route('aca_school_charges_list')" class="btn btn-outline-secondary">Ir al listado</Link>
                     </div>
                 </div>
                 <p v-if="! isPrivate" class="text-sm text-warning mt-3 flex items-center gap-2">

@@ -1,0 +1,1043 @@
+/*
+ * Ficha pública del jugador (landing de torneos).
+ *
+ * Identidad futbolera: azul noche, verde cancha y dorado para los logros.
+ * Las variables van con prefijo --pf- para no chocar con la landing del
+ * torneo, que se compila en su propio bundle.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:ital,wght@0,600;0,700;0,800;1,800&display=swap');
+
+:root {
+    --pf-bg: #071525;
+    --pf-bg-soft: #0b1c2e;
+    --pf-card: #0c1e30;
+    --pf-card-2: #10243a;
+    --pf-pitch: #176b43;
+    --pf-green: #2ed573;
+    --pf-gold: #f5c451;
+    --pf-teal: #38d9f5;
+    --pf-red: #ff5a5f;
+    --pf-blue: #5b9dff;
+    --pf-text: #ffffff;
+    --pf-muted: #a9b8c9;
+    --pf-line: rgba(255, 255, 255, 0.09);
+    --pf-radius: 1.125rem;
+    --pf-radius-lg: 1.5rem;
+    --pf-font: 'Inter', system-ui, -apple-system, sans-serif;
+    --pf-display: 'Montserrat', 'Inter', system-ui, sans-serif;
+    --pf-max: 70rem;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body.se-pf {
+    margin: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(1100px 520px at 82% -8%, rgba(46, 213, 115, 0.14), transparent 62%),
+        radial-gradient(900px 460px at 5% 0%, rgba(91, 157, 255, 0.12), transparent 60%),
+        var(--pf-bg);
+    color: var(--pf-text);
+    font-family: var(--pf-font);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+body.se-pf ::selection {
+    background: var(--pf-green);
+    color: var(--pf-bg);
+}
+
+body.se-pf a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.se-pf-shell {
+    width: 100%;
+    max-width: var(--pf-max);
+    margin: 0 auto;
+    padding: 0 1.25rem;
+}
+
+.se-pf-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ── Barra superior ─────────────────────────────────────────────────────── */
+
+.se-pf-top {
+    border-bottom: 1px solid var(--pf-line);
+    background: rgba(7, 21, 37, 0.82);
+    backdrop-filter: blur(10px);
+}
+
+.se-pf-top__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 4.25rem;
+}
+
+.se-pf-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--pf-muted);
+    transition: color 0.18s ease;
+}
+
+.se-pf-back:hover,
+.se-pf-back:focus-visible {
+    color: var(--pf-green);
+}
+
+.se-pf-top__edition {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--pf-muted);
+    text-align: right;
+}
+
+/* ── Cabecera del jugador ───────────────────────────────────────────────── */
+
+.se-pf-hero {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--pf-line);
+    background:
+        linear-gradient(135deg, rgba(23, 107, 67, 0.55) 0%, rgba(7, 21, 37, 0.2) 45%, rgba(16, 36, 58, 0.85) 100%),
+        #0a1d31;
+}
+
+.se-pf-hero__pitch {
+    position: absolute;
+    inset: 0;
+    opacity: 0.32;
+    pointer-events: none;
+    background-image:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 68px 68px;
+}
+
+.se-pf-hero__circle,
+.se-pf-hero__box {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 50%;
+}
+
+.se-pf-hero__circle {
+    top: 50%;
+    left: 50%;
+    width: 15rem;
+    height: 15rem;
+    transform: translate(-50%, -50%);
+}
+
+.se-pf-hero__box {
+    top: 50%;
+    width: 6.5rem;
+    height: 11rem;
+    border-radius: 0.5rem;
+    transform: translateY(-50%);
+}
+
+.se-pf-hero__box--left {
+    left: -3.25rem;
+}
+
+.se-pf-hero__box--right {
+    right: -3.25rem;
+}
+
+.se-pf-hero__inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+}
+
+.se-pf-avatar {
+    flex: 0 0 auto;
+    width: 8.25rem;
+    height: 8.25rem;
+    border-radius: 50%;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(140deg, var(--pf-pitch), #0d3b29);
+    border: 3px solid var(--pf-gold);
+    box-shadow: 0 0 0 6px rgba(245, 196, 81, 0.12), 0 18px 34px rgba(0, 0, 0, 0.4);
+}
+
+.se-pf-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.se-pf-avatar__initials {
+    font-family: var(--pf-display);
+    font-size: 2.6rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #fff;
+}
+
+.se-pf-identity {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.se-pf-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--pf-gold);
+}
+
+.se-pf-name {
+    margin: 0;
+    font-family: var(--pf-display);
+    font-size: clamp(1.9rem, 4.6vw, 3rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    overflow-wrap: anywhere;
+}
+
+.se-pf-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.9rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.se-pf-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.32rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid var(--pf-line);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #e8eff7;
+}
+
+.se-pf-chip img {
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.se-pf-chip--team {
+    border-color: rgba(46, 213, 115, 0.35);
+    background: rgba(46, 213, 115, 0.12);
+}
+
+.se-pf-awards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin: 0.85rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.se-pf-award {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 0.55rem;
+    border: 1px solid rgba(245, 196, 81, 0.4);
+    background: rgba(245, 196, 81, 0.12);
+    color: var(--pf-gold);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.se-pf-rank {
+    flex: 0 0 auto;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.9rem 1.3rem;
+    border-radius: var(--pf-radius);
+    border: 1px solid rgba(245, 196, 81, 0.45);
+    background: linear-gradient(160deg, rgba(245, 196, 81, 0.2), rgba(245, 196, 81, 0.04));
+    text-align: center;
+}
+
+.se-pf-rank__value {
+    font-family: var(--pf-display);
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--pf-gold);
+}
+
+.se-pf-rank__label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f7e5bd;
+}
+
+/* ── Tarjetas de totales ───────────────────────────────────────────────── */
+
+.se-pf-stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin-top: -1.6rem;
+    position: relative;
+    z-index: 2;
+}
+
+.se-pf-stat {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 1.05rem 1rem 1rem;
+    border-radius: var(--pf-radius);
+    border: 1px solid var(--pf-line);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)), var(--pf-card);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+.se-pf-stat::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: currentColor;
+    opacity: 0.85;
+}
+
+.se-pf-stat__icon {
+    font-size: 0.85rem;
+    color: currentColor;
+    margin-bottom: 0.25rem;
+}
+
+.se-pf-stat__value {
+    font-family: var(--pf-display);
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1.05;
+}
+
+.se-pf-stat__label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pf-muted);
+}
+
+.se-pf-stat--blue { color: var(--pf-blue); }
+.se-pf-stat--green { color: var(--pf-green); }
+.se-pf-stat--teal { color: var(--pf-teal); }
+.se-pf-stat--gold { color: var(--pf-gold); }
+.se-pf-stat--red { color: var(--pf-red); }
+
+.se-pf-stat__value,
+.se-pf-stat__label {
+    color: inherit;
+}
+
+.se-pf-stat__value {
+    color: var(--pf-text);
+}
+
+/* ── Tarjetas de sección ───────────────────────────────────────────────── */
+
+.se-pf-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.se-pf-card {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    border-radius: var(--pf-radius-lg);
+    border: 1px solid var(--pf-line);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 40%), var(--pf-card);
+}
+
+.se-pf-grid .se-pf-card {
+    margin-top: 0;
+}
+
+.se-pf-card__head {
+    margin-bottom: 1.1rem;
+}
+
+.se-pf-card__head h2 {
+    margin: 0 0 0.3rem;
+    font-family: var(--pf-display);
+    font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.se-pf-card__head p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--pf-muted);
+}
+
+.se-pf-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin: 0 0 1rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 0.7rem;
+    border: 1px solid rgba(169, 184, 201, 0.25);
+    background: rgba(169, 184, 201, 0.08);
+    font-size: 0.82rem;
+    color: #cfdae6;
+}
+
+.se-pf-note i {
+    margin-top: 0.2rem;
+    color: var(--pf-gold);
+}
+
+.se-pf-rankline {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    font-size: 0.82rem;
+    color: var(--pf-muted);
+}
+
+.se-pf-rankpill {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2.4rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.55rem;
+    background: linear-gradient(150deg, var(--pf-gold), #dca83a);
+    color: #241a06;
+    font-family: var(--pf-display);
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.se-pf-criteria {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.se-pf-criteria li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: 0.2rem 0.75rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid var(--pf-line);
+}
+
+.se-pf-criteria__concept {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.se-pf-criteria__value {
+    font-family: var(--pf-display);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--pf-green);
+}
+
+.se-pf-criteria__note {
+    grid-column: 1 / -1;
+    font-size: 0.72rem;
+    color: var(--pf-muted);
+}
+
+/* ── MVP del partido ───────────────────────────────────────────────────── */
+
+.se-pf-mvp {
+    padding: 0.9rem 0.95rem;
+    border-radius: 0.85rem;
+    border: 1px solid rgba(245, 196, 81, 0.28);
+    background: linear-gradient(160deg, rgba(245, 196, 81, 0.1), rgba(245, 196, 81, 0.02));
+}
+
+.se-pf-mvp + .se-pf-mvp {
+    margin-top: 0.6rem;
+}
+
+.se-pf-mvp__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(245, 196, 81, 0.16);
+    color: var(--pf-gold);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.se-pf-mvp__match {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 0.45rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.se-pf-mvp__match span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.se-pf-mvp__match strong {
+    flex: 0 0 auto;
+    padding: 0.08rem 0.45rem;
+    border-radius: 0.4rem;
+    background: rgba(0, 0, 0, 0.35);
+    font-family: var(--pf-display);
+    font-size: 0.9rem;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.se-pf-mvp__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    margin: 0.35rem 0 0;
+    font-size: 0.72rem;
+    color: var(--pf-muted);
+}
+
+/* ── Partidos con gol ─────────────────────────────────────────────────── */
+
+.se-pf-goal {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--pf-line);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.se-pf-goal + .se-pf-goal {
+    margin-top: 0.5rem;
+}
+
+.se-pf-goal__badge {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.55rem;
+    background: rgba(46, 213, 115, 0.14);
+    border: 1px solid rgba(46, 213, 115, 0.32);
+    color: var(--pf-green);
+    font-size: 0.74rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.se-pf-goal__match {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    font-size: 0.86rem;
+}
+
+.se-pf-goal__match span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.se-pf-goal__match strong {
+    flex: 0 0 auto;
+    font-family: var(--pf-display);
+    font-size: 0.9rem;
+}
+
+.se-pf-goal__date {
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    color: var(--pf-muted);
+}
+
+/* ── Tabla partido a partido ──────────────────────────────────────────── */
+
+.se-pf-table-wrap {
+    overflow-x: auto;
+}
+
+.se-pf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.se-pf-table thead th {
+    padding: 0 0.6rem 0.55rem;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--pf-muted);
+    border-bottom: 1px solid var(--pf-line);
+    white-space: nowrap;
+}
+
+.se-pf-table tbody td {
+    padding: 0.7rem 0.6rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    vertical-align: middle;
+}
+
+.se-pf-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.se-pf-table tbody tr.is-mvp {
+    background: linear-gradient(90deg, rgba(245, 196, 81, 0.08), transparent 70%);
+}
+
+.se-pf-table__num {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.se-pf-table__center {
+    text-align: center;
+}
+
+.se-pf-date {
+    display: block;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.se-pf-time {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--pf-muted);
+    white-space: nowrap;
+}
+
+.se-pf-versus {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 600;
+}
+
+.se-pf-versus span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.se-pf-versus strong {
+    flex: 0 0 auto;
+    padding: 0.06rem 0.4rem;
+    border-radius: 0.35rem;
+    background: rgba(0, 0, 0, 0.35);
+    font-family: var(--pf-display);
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.se-pf-phase {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.7rem;
+    color: var(--pf-muted);
+}
+
+.se-pf-num {
+    font-family: var(--pf-display);
+    font-size: 0.98rem;
+    color: var(--pf-green);
+}
+
+.se-pf-muted {
+    color: rgba(169, 184, 201, 0.55);
+}
+
+.se-pf-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.14rem 0.45rem;
+    border-radius: 0.4rem;
+    border: 1px solid var(--pf-line);
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.se-pf-tag + .se-pf-tag {
+    margin-left: 0.25rem;
+}
+
+.se-pf-tag--mvp {
+    border-color: rgba(245, 196, 81, 0.4);
+    background: rgba(245, 196, 81, 0.14);
+    color: var(--pf-gold);
+}
+
+.se-pf-tag--yellow {
+    border-color: rgba(245, 196, 81, 0.45);
+    background: #f5c451;
+    color: #2a2004;
+}
+
+.se-pf-tag--red {
+    border-color: rgba(255, 90, 95, 0.5);
+    background: var(--pf-red);
+    color: #fff;
+}
+
+.se-pf-tag--double {
+    border-color: rgba(255, 90, 95, 0.45);
+    background: linear-gradient(90deg, #f5c451 50%, var(--pf-red) 50%);
+    color: #241a06;
+}
+
+.se-pf-empty {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.9rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px dashed var(--pf-line);
+    background: rgba(255, 255, 255, 0.02);
+    font-size: 0.84rem;
+    color: var(--pf-muted);
+}
+
+.se-pf-empty i {
+    color: rgba(169, 184, 201, 0.7);
+}
+
+/* ── Jugador no encontrado ────────────────────────────────────────────── */
+
+.se-pf-notfound {
+    display: grid;
+    place-items: center;
+    min-height: calc(100vh - 4.25rem);
+    padding: 3rem 0;
+    text-align: center;
+}
+
+.se-pf-notfound__icon {
+    display: inline-grid;
+    place-items: center;
+    width: 5rem;
+    height: 5rem;
+    margin-bottom: 1.25rem;
+    border-radius: 50%;
+    border: 1px solid rgba(245, 196, 81, 0.35);
+    background: rgba(245, 196, 81, 0.08);
+    color: var(--pf-gold);
+    font-size: 1.8rem;
+}
+
+.se-pf-notfound h1 {
+    margin: 0 0 0.5rem;
+    font-family: var(--pf-display);
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-weight: 800;
+}
+
+.se-pf-notfound p {
+    max-width: 34rem;
+    margin: 0 auto 1.5rem;
+    font-size: 0.9rem;
+    color: var(--pf-muted);
+}
+
+.se-pf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.2rem;
+    border-radius: 0.7rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.se-pf-btn--primary {
+    background: linear-gradient(135deg, var(--pf-green), var(--pf-pitch));
+    color: #05130c;
+    box-shadow: 0 10px 24px rgba(46, 213, 115, 0.22);
+}
+
+.se-pf-btn--primary:hover,
+.se-pf-btn--primary:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(46, 213, 115, 0.3);
+}
+
+/* ── Pie ──────────────────────────────────────────────────────────────── */
+
+.se-pf-foot {
+    margin-top: 2.5rem;
+    border-top: 1px solid var(--pf-line);
+    background: rgba(7, 21, 37, 0.6);
+}
+
+.se-pf-foot__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-top: 1.35rem;
+    padding-bottom: 1.35rem;
+    font-size: 0.78rem;
+    color: var(--pf-muted);
+}
+
+.se-pf-foot__inner p {
+    margin: 0;
+}
+
+.se-pf-foot__inner a {
+    font-weight: 600;
+    color: var(--pf-green);
+}
+
+/* ── Adaptación a tablet y móvil ──────────────────────────────────────── */
+
+@media (max-width: 980px) {
+    .se-pf-stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .se-pf-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 760px) {
+    .se-pf-top__edition {
+        display: none;
+    }
+
+    .se-pf-hero__inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.1rem;
+        padding-top: 1.75rem;
+        padding-bottom: 2.2rem;
+    }
+
+    .se-pf-avatar {
+        width: 6.25rem;
+        height: 6.25rem;
+    }
+
+    .se-pf-avatar__initials {
+        font-size: 2rem;
+    }
+
+    .se-pf-rank {
+        align-self: flex-start;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.5rem 0.9rem;
+    }
+
+    .se-pf-rank__value {
+        font-size: 1.4rem;
+    }
+
+    .se-pf-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.6rem;
+        margin-top: -1.1rem;
+    }
+
+    .se-pf-stat {
+        padding: 0.85rem 0.8rem;
+    }
+
+    .se-pf-stat__value {
+        font-size: 1.5rem;
+    }
+
+    .se-pf-card {
+        padding: 1.15rem;
+        border-radius: var(--pf-radius);
+    }
+
+    .se-pf-goal {
+        flex-wrap: wrap;
+    }
+
+    .se-pf-goal__match {
+        order: 3;
+        flex-basis: 100%;
+    }
+
+    /* La tabla se convierte en tarjetas por partido: sin scroll horizontal. */
+    .se-pf-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+
+    .se-pf-table,
+    .se-pf-table tbody,
+    .se-pf-table tr,
+    .se-pf-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .se-pf-table tr {
+        margin-bottom: 0.7rem;
+        padding: 0.85rem 0.9rem;
+        border-radius: 0.85rem;
+        border: 1px solid var(--pf-line);
+        background: rgba(255, 255, 255, 0.035);
+    }
+
+    .se-pf-table tbody tr:last-child {
+        margin-bottom: 0;
+    }
+
+    .se-pf-table tbody td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.32rem 0;
+        border-bottom: 0;
+        text-align: left;
+    }
+
+    .se-pf-table tbody td::before {
+        content: attr(data-label);
+        flex: 0 0 auto;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--pf-muted);
+    }
+
+    .se-pf-table td[data-label='Partido'] {
+        display: block;
+        padding-bottom: 0.45rem;
+    }
+
+    .se-pf-table td[data-label='Partido']::before {
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .se-pf-table td[data-label='Fecha'] {
+        justify-content: flex-start;
+        gap: 0.4rem;
+        padding-bottom: 0.55rem;
+    }
+
+    .se-pf-table td[data-label='Fecha']::before {
+        display: none;
+    }
+
+    .se-pf-date {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--pf-muted);
+    }
+
+    .se-pf-time {
+        font-size: 0.72rem;
+    }
+
+    .se-pf-table__num,
+    .se-pf-table__center {
+        text-align: left;
+    }
+}
+
+@media (max-width: 420px) {
+    .se-pf-shell {
+        padding: 0 1rem;
+    }
+
+    .se-pf-chips {
+        gap: 0.35rem;
+    }
+
+    .se-pf-stat__label {
+        font-size: 0.65rem;
+    }
+}

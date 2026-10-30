@@ -9,9 +9,14 @@ use Modules\Socialevents\Http\Controllers\Api\PlayerStatsApiController;
 use Modules\Socialevents\Http\Controllers\Api\TeamApiController;
 use Modules\Socialevents\Http\Controllers\Api\PlayerApiController;
 use Modules\Socialevents\Http\Controllers\Api\MatchAdminController;
+use Modules\Socialevents\Http\Controllers\Api\MyTournamentApiController;
+use Modules\Socialevents\Http\Controllers\Api\OrganizationApiController;
 use Modules\Socialevents\Http\Controllers\Api\EditionGalleryAdminController;
 use Modules\Socialevents\Http\Controllers\Api\EditionPublicController;
 use Modules\Socialevents\Http\Controllers\Api\TeamAdminController;
+use Modules\Socialevents\Http\Controllers\Api\TournamentAdminApiController;
+use Modules\Socialevents\Http\Controllers\Api\EditionDisciplineApiController;
+use Modules\Socialevents\Http\Controllers\Api\EditionReportsApiController;
 use Modules\Socialevents\Http\Middleware\EnsureSocialeventsAdmin;
 
 /*
@@ -66,11 +71,38 @@ Route::prefix('socialevents')->name('api.')->group(function () {
 		// Estadísticas de jugadores
 		Route::get('edition/{editionId}/stats/players/{filter}', [PlayerStatsApiController::class, 'getAllStats'])
 			->name('stats.players');
+
+		// PDF de la edición: la URL la emite el organizador y caduca en 30 minutos.
+		Route::get('reports/pdf/{editionId}/{type}', [EditionReportsApiController::class, 'download'])
+			->middleware('signed')
+			->whereNumber('editionId')
+			->name('reports.pdf');
 	});
 
 	// Rutas protegidas - requieren autenticación
 	Route::middleware(['auth:sanctum'])->prefix('v1')->name('api.')->group(function () {
 		Route::get('socialevents', fn (Request $request) => $request->user())->name('socialevents');
+
+		// Torneos propios de la organización (incluye ediciones sin publicar).
+		Route::get('my/events', [MyTournamentApiController::class, 'events'])
+			->name('my.events');
+
+		Route::get('my/editions/{editionId}', [MyTournamentApiController::class, 'edition'])
+			->name('my.editions.show');
+
+		// Estado de cuenta de la organización: plan, vigencia, saldo y recargas.
+		Route::get('organizations/current', [OrganizationApiController::class, 'show'])
+			->name('organizations.current');
+
+		Route::get('organizations/current/users', [OrganizationApiController::class, 'users'])
+			->name('organizations.current.users');
+
+		Route::get('organizations/current/payments', [OrganizationApiController::class, 'payments'])
+			->name('organizations.current.payments');
+
+		// Recarga desde la app: devuelve la URL del checkout web, no cobra.
+		Route::post('organizations/current/topup-intent', [OrganizationApiController::class, 'topUpIntent'])
+			->name('organizations.current.topup');
 
 		// Equipo del usuario (delegado)
 		Route::get('team/my-team', [TeamApiController::class, 'getMyTeam'])
@@ -143,6 +175,80 @@ Route::prefix('socialevents')->name('api.')->group(function () {
 
 			Route::get('editions/{editionId}/teams', [TeamAdminController::class, 'editionTeams'])
 				->name('admin.editions.teams');
+
+			// Alta y edición de torneos y ediciones desde la app (Fase 5A).
+			Route::post('events', [TournamentAdminApiController::class, 'storeEvent'])
+				->name('admin.events.store');
+
+			Route::put('events/{eventId}', [TournamentAdminApiController::class, 'updateEvent'])
+				->whereNumber('eventId')
+				->name('admin.events.update');
+
+			Route::post('editions', [TournamentAdminApiController::class, 'storeEdition'])
+				->name('admin.editions.store');
+
+			Route::put('editions/{editionId}', [TournamentAdminApiController::class, 'updateEdition'])
+				->whereNumber('editionId')
+				->name('admin.editions.update');            Route::post('editions/{editionId}/fixtures/generate', [TournamentAdminApiController::class, 'generateFixture'])
+				->whereNumber('editionId')
+				->name('admin.editions.fixtures.generate');
+
+			Route::put('editions/{editionId}/prizes', [TournamentAdminApiController::class, 'updatePrizes'])
+				->whereNumber('editionId')
+				->name('admin.editions.prizes.update');
+
+			// Reportes y documentos PDF de la edición (Fase 5C).
+			Route::get('editions/{editionId}/reports', [EditionReportsApiController::class, 'index'])
+				->whereNumber('editionId')
+				->name('admin.editions.reports');
+
+			Route::post('editions/{editionId}/reports/pdf', [EditionReportsApiController::class, 'pdf'])
+				->whereNumber('editionId')
+				->name('admin.editions.reports.pdf');
+
+			// Publicación de la landing y visibilidad en la app.
+			Route::get('editions/{editionId}/publication', [TournamentAdminApiController::class, 'publication'])
+				->whereNumber('editionId')
+				->name('admin.editions.publication');
+
+			Route::put('editions/{editionId}/publication', [TournamentAdminApiController::class, 'updatePublication'])
+				->whereNumber('editionId')
+				->name('admin.editions.publication.update');
+
+			// Disciplina: tarjetas pendientes, suspensiones y exclusiones.
+			Route::get('editions/{editionId}/sanctions', [EditionDisciplineApiController::class, 'sanctions'])
+				->whereNumber('editionId')
+				->name('admin.editions.sanctions');
+
+			Route::post('editions/{editionId}/sanctions', [EditionDisciplineApiController::class, 'storeSanction'])
+				->whereNumber('editionId')
+				->name('admin.editions.sanctions.store');
+
+			Route::get('editions/{editionId}/suspensions', [EditionDisciplineApiController::class, 'suspensions'])
+				->whereNumber('editionId')
+				->name('admin.editions.suspensions');
+
+			Route::post('editions/{editionId}/suspensions', [EditionDisciplineApiController::class, 'storeSuspension'])
+				->whereNumber('editionId')
+				->name('admin.editions.suspensions.store');
+
+			Route::delete('editions/{editionId}/suspensions/{suspensionId}', [EditionDisciplineApiController::class, 'liftSuspension'])
+				->whereNumber('editionId')
+				->whereNumber('suspensionId')
+				->name('admin.editions.suspensions.destroy');
+
+			Route::get('editions/{editionId}/exclusions', [EditionDisciplineApiController::class, 'exclusions'])
+				->whereNumber('editionId')
+				->name('admin.editions.exclusions');
+
+			Route::post('editions/{editionId}/exclusions', [EditionDisciplineApiController::class, 'storeExclusion'])
+				->whereNumber('editionId')
+				->name('admin.editions.exclusions.store');
+
+			Route::delete('editions/{editionId}/exclusions/{exclusionId}', [EditionDisciplineApiController::class, 'destroyExclusion'])
+				->whereNumber('editionId')
+				->whereNumber('exclusionId')
+				->name('admin.editions.exclusions.destroy');
 
 			Route::post('editions/{editionId}/teams', [TeamAdminController::class, 'assignTeam'])
 				->name('admin.editions.teams.assign');

@@ -21,6 +21,8 @@
         .badge-in_progress { background: linear-gradient(135deg, #22c55e, #16a34a); }
         .badge-finished { background: linear-gradient(135deg, #6b7280, #4b5563); }
     </style>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2128776301009629"
+     crossorigin="anonymous"></script>
 </head>
 <body>
 

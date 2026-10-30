@@ -38,21 +38,21 @@ html.theme-torneos {
     --torneos-panel-muted-text: #435e50;
     --torneos-panel-error: #b91c1c;
     --torneos-pitch-image: url('/img/torneos/chaos-soccer-gear-Cjfl8r_eYxY-unsplash.jpg');
-    /* Superficie propia de FormSection: panel esmeralda, textos claros y
-       campos luminosos para que el formulario se lea sobre el estadio. */
-    --torneos-form-surface-start: rgb(6 78 59 / 96%);
-    --torneos-form-surface-end: rgb(2 44 34 / 94%);
-    --torneos-form-border: rgb(167 243 208 / 26%);
-    --torneos-form-text: #ecfdf5;
-    --torneos-form-muted: #a7f3d0;
-    --torneos-form-field: rgb(240 253 244 / 97%);
-    --torneos-form-field-border: rgb(52 211 153 / 55%);
-    --torneos-form-field-text: #0f2e25;
-    --torneos-form-field-placeholder: #4b6b5d;
-    --torneos-form-field-focus: #34d399;
-    --torneos-form-error: #fecaca;
-    --torneos-form-actions-start: rgb(6 78 59 / 92%);
-    --torneos-form-actions-end: rgb(2 44 34 / 96%);
+    /* Superficie propia de FormSection: el panel azul noche de las tarjetas
+       del prototipo, con campos algo más claros y acentos lima. */
+    --torneos-form-surface-start: rgb(11 31 43 / 97%);
+    --torneos-form-surface-end: rgb(8 22 32 / 98%);
+    --torneos-form-border: rgb(94 138 160 / 30%);
+    --torneos-form-text: #f1f7f6;
+    --torneos-form-muted: #9fb8c0;
+    --torneos-form-field: #122c3a;
+    --torneos-form-field-border: #2b4b5d;
+    --torneos-form-field-text: #e9f4f2;
+    --torneos-form-field-placeholder: #7d9ba4;
+    --torneos-form-field-focus: #b8f34a;
+    --torneos-form-error: #ffb4a8;
+    --torneos-form-actions-start: rgb(6 18 26 / 97%);
+    --torneos-form-actions-end: rgb(10 28 38 / 98%);
     /* Tokens centralizados para controles de entrada, selectores, fechas y paginadores */
     --torneos-control-bg: rgb(240 253 244 / 97%);
     --torneos-control-border: rgb(16 185 129 / 45%);
@@ -68,6 +68,11 @@ html.theme-torneos {
     --torneos-dropdown-bg: #f0fdf4;
     --torneos-dropdown-border: #6ee7b7;
     --torneos-dropdown-shadow: 0 12px 32px rgb(2 44 34 / 22%);
+    /* Texto propio de las listas desplegables. No reutiliza el token de los
+       controles porque dentro de FormSection ese token cambia a claro para
+       los campos del panel deportivo y dejaría el texto ilegible sobre el
+       fondo claro de esta lista. */
+    --torneos-dropdown-text: #0f2e25;
     --torneos-dropdown-option-hover: #dcfce7;
     --torneos-dropdown-option-selected: #d1fae5;
     --torneos-dropdown-option-selected-text: #064e3b;
@@ -90,17 +95,17 @@ html.theme-torneos {
     /* Paginador compartido (Pagination.vue): barra esmeralda oscura, botones
        con borde lima tenue e iconos claros. La página activa usa el verde
        lima del tema para destacar sobre el fondo futbolero. */
-    --torneos-pager-bar-bg: rgb(2 44 34 / 72%);
-    --torneos-pager-button-bg: rgb(6 78 59 / 88%);
-    --torneos-pager-button-border: rgb(163 230 53 / 30%);
-    --torneos-pager-button-text: #ecfdf5;
-    --torneos-pager-button-hover-bg: #047857;
-    --torneos-pager-button-hover-text: #ffffff;
-    --torneos-pager-active-bg: #a3e635;
-    --torneos-pager-active-border: #bef264;
-    --torneos-pager-active-text: #052e16;
-    --torneos-pager-disabled-bg: rgb(2 44 34 / 55%);
-    --torneos-pager-disabled-text: rgb(209 250 229 / 45%);
+    --torneos-pager-bar-bg: rgb(11 31 43 / 92%);
+    --torneos-pager-button-bg: #122c3a;
+    --torneos-pager-button-border: #2b4b5d;
+    --torneos-pager-button-text: #e2ecec;
+    --torneos-pager-button-hover-bg: #17394a;
+    --torneos-pager-button-hover-text: #d9f99d;
+    --torneos-pager-active-bg: #c8f169;
+    --torneos-pager-active-border: #d9fb8d;
+    --torneos-pager-active-text: #08251a;
+    --torneos-pager-disabled-bg: rgb(11 31 43 / 60%);
+    --torneos-pager-disabled-text: #647f8b;
 }
 
 html.theme-torneos body.dark {
@@ -111,19 +116,19 @@ html.theme-torneos body.dark {
     --torneos-panel-text: #ecfdf5;
     --torneos-panel-muted-text: #a7f3d0;
     --torneos-panel-error: #fca5a5;
-    --torneos-form-surface-start: rgb(2 44 34 / 96%);
-    --torneos-form-surface-end: rgb(1 28 23 / 96%);
-    --torneos-form-border: rgb(52 211 153 / 24%);
-    --torneos-form-text: #ecfdf5;
-    --torneos-form-muted: #a7f3d0;
-    --torneos-form-field: rgb(5 46 36 / 92%);
-    --torneos-form-field-border: rgb(52 211 153 / 32%);
-    --torneos-form-field-text: #ecfdf5;
-    --torneos-form-field-placeholder: #6ee7b7;
-    --torneos-form-field-focus: #34d399;
-    --torneos-form-error: #fca5a5;
-    --torneos-form-actions-start: rgb(1 28 23 / 92%);
-    --torneos-form-actions-end: rgb(5 46 36 / 96%);
+    --torneos-form-surface-start: rgb(11 31 43 / 97%);
+    --torneos-form-surface-end: rgb(8 22 32 / 98%);
+    --torneos-form-border: rgb(94 138 160 / 30%);
+    --torneos-form-text: #f1f7f6;
+    --torneos-form-muted: #9fb8c0;
+    --torneos-form-field: #122c3a;
+    --torneos-form-field-border: #2b4b5d;
+    --torneos-form-field-text: #e9f4f2;
+    --torneos-form-field-placeholder: #7d9ba4;
+    --torneos-form-field-focus: #b8f34a;
+    --torneos-form-error: #ffb4a8;
+    --torneos-form-actions-start: rgb(6 18 26 / 97%);
+    --torneos-form-actions-end: rgb(10 28 38 / 98%);
     --torneos-control-bg: rgb(5 46 36 / 92%);
     --torneos-control-border: rgb(52 211 153 / 34%);
     --torneos-control-hover-border: #34d399;
@@ -138,6 +143,7 @@ html.theme-torneos body.dark {
     --torneos-dropdown-bg: #052e24;
     --torneos-dropdown-border: #047857;
     --torneos-dropdown-shadow: 0 14px 36px rgb(0 0 0 / 48%);
+    --torneos-dropdown-text: #ecfdf5;
     --torneos-dropdown-option-hover: #064e3b;
     --torneos-dropdown-option-selected: #047857;
     --torneos-dropdown-option-selected-text: #ecfccb;
@@ -157,17 +163,17 @@ html.theme-torneos body.dark {
     --torneos-pagination-active-text: #ffffff;
     --torneos-pagination-disabled-bg: rgb(2 44 34 / 52%);
     --torneos-pagination-disabled-text: #4b7561;
-    --torneos-pager-bar-bg: rgb(1 28 23 / 82%);
-    --torneos-pager-button-bg: rgb(6 78 59 / 90%);
-    --torneos-pager-button-border: rgb(163 230 53 / 24%);
-    --torneos-pager-button-text: #ecfdf5;
-    --torneos-pager-button-hover-bg: #059669;
-    --torneos-pager-button-hover-text: #ffffff;
-    --torneos-pager-active-bg: #a3e635;
-    --torneos-pager-active-border: #bef264;
-    --torneos-pager-active-text: #052e16;
-    --torneos-pager-disabled-bg: rgb(1 28 23 / 65%);
-    --torneos-pager-disabled-text: rgb(167 243 208 / 40%);
+    --torneos-pager-bar-bg: rgb(11 31 43 / 92%);
+    --torneos-pager-button-bg: #122c3a;
+    --torneos-pager-button-border: #2b4b5d;
+    --torneos-pager-button-text: #e2ecec;
+    --torneos-pager-button-hover-bg: #17394a;
+    --torneos-pager-button-hover-text: #d9f99d;
+    --torneos-pager-active-bg: #c8f169;
+    --torneos-pager-active-border: #d9fb8d;
+    --torneos-pager-active-text: #08251a;
+    --torneos-pager-disabled-bg: rgb(11 31 43 / 60%);
+    --torneos-pager-disabled-text: #647f8b;
 }
 
 /* Reproduce el estadio del login como fondo de todo el sistema deportivo. */
@@ -1031,24 +1037,51 @@ html.theme-torneos .main-content > .app-footer {
    html.theme-torneos, que solo existe con PW00001 = 2; el tema original no
    recibe ninguna de estas reglas. */
 html.theme-torneos .form-section .form-section__card.panel {
-    background: linear-gradient(145deg, var(--torneos-form-surface-start), var(--torneos-form-surface-end));
+    /* Mismo vocabulario visual que las tarjetas del prototipo: azul noche,
+       borde acero y radio amplio. */
+    background: linear-gradient(150deg, var(--torneos-form-surface-start), var(--torneos-form-surface-end));
     border: 1px solid var(--torneos-form-border);
-    box-shadow: inset 0 0 0 1px rgb(167 243 208 / 8%), 0 24px 60px rgb(1 28 23 / 45%);
+    border-radius: 1.15rem;
+    box-shadow: inset 0 0 0 1px rgb(184 243 74 / 5%), 0 26px 70px rgb(0 0 0 / 42%);
     color: var(--torneos-form-text);
+    /* Los controles nativos y los de Ant Design Vue heredan estos tokens
+       dentro del panel y dejan de usar la paleta clara global. */
+    --torneos-control-bg: var(--torneos-form-field);
+    --torneos-control-border: var(--torneos-form-field-border);
+    --torneos-control-hover-border: #3f6678;
+    --torneos-control-focus-border: var(--torneos-form-field-focus);
+    --torneos-control-focus-ring: rgb(184 243 74 / 22%);
+    --torneos-control-text: var(--torneos-form-field-text);
+    --torneos-control-placeholder: var(--torneos-form-field-placeholder);
+    --torneos-control-icon: #b8f34a;
+    --torneos-control-disabled-bg: #0b2230;
+    --torneos-control-disabled-border: #22404f;
+    --torneos-control-disabled-text: #5f7f8b;
+    --torneos-tag-bg: #17402f;
+    --torneos-tag-border: #3f7a5f;
+    --torneos-tag-text: #d9f99d;
 }
 
 html.theme-torneos .form-section .form-section-header :is(h1, h2, h3, h4, h5, h6) {
-    color: #f0fdf4;
-    text-shadow: 0 1px 3px rgb(1 28 23 / 55%);
+    color: #f4faf8;
+    font-size: clamp(1.55rem, 2.2vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
 }
 
 html.theme-torneos .form-section .form-section-header p {
     color: var(--torneos-form-muted);
-    text-shadow: 0 1px 2px rgb(1 28 23 / 45%);
+    font-size: 0.95rem;
 }
 
+/* Etiquetas de campo con el tratamiento de los paneles del prototipo. */
 html.theme-torneos .form-section__card label {
-    color: var(--torneos-form-text);
+    color: var(--torneos-form-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
 }
 
 html.theme-torneos .form-section__card :is(.text-gray-500, .text-gray-600, .text-gray-700) {
@@ -1076,6 +1109,56 @@ html.theme-torneos .form-section__card :is(.text-red-600, .text-red-500) {
 html.theme-torneos .form-section .form-section__actions {
     background: linear-gradient(110deg, var(--torneos-form-actions-start), var(--torneos-form-actions-end));
     border-color: var(--torneos-form-border);
+}
+
+/* CTA principal lima con texto oscuro y secundarios de contorno, como en el
+   prototipo. Solo aplica al pie del formulario para no alterar el resto. */
+html.theme-torneos .form-section__actions .btn-primary {
+    background-image: none;
+    background-color: #c8f169;
+    border: 1px solid #c8f169;
+    border-radius: 0.65rem;
+    color: #08251a;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    box-shadow: 0 10px 24px rgb(0 0 0 / 30%);
+}
+
+html.theme-torneos .form-section__actions .btn-primary:hover,
+html.theme-torneos .form-section__actions .btn-primary:focus-visible {
+    background-color: #d9fb8d;
+    border-color: #d9fb8d;
+    color: #08251a;
+}
+
+html.theme-torneos .form-section__actions .btn-primary:disabled {
+    background-color: rgb(200 241 105 / 45%);
+    border-color: transparent;
+    color: #08251a;
+}
+
+html.theme-torneos .form-section__actions .btn-info,
+html.theme-torneos .form-section__actions a.bg-green-500 {
+    background-color: transparent;
+    background-image: none;
+    border: 1px solid rgb(148 178 190 / 34%);
+    border-radius: 0.65rem;
+    color: #cfe2e4;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    box-shadow: none;
+}
+
+html.theme-torneos .form-section__actions .btn-info:hover,
+html.theme-torneos .form-section__actions a.bg-green-500:hover {
+    background-color: rgb(184 243 74 / 10%);
+    border-color: rgb(184 243 74 / 45%);
+    color: #d9f99d;
+}
+
+/* La nota del editor de reserva también adopta el gris azulado del panel. */
+html.theme-torneos .form-section__card .editor-aracode-fallback p {
+    color: var(--torneos-form-muted);
 }
 
 /* Un .panel anidado dentro del formulario (p. ej. bloques de renta o de
@@ -1558,8 +1641,15 @@ html.theme-torneos ul.absolute.z-50.bg-white,
 html.theme-torneos .max-h-48.overflow-y-auto.rounded-lg.border.bg-white {
     background-color: var(--torneos-dropdown-bg) !important;
     border-color: var(--torneos-dropdown-border) !important;
-    color: var(--torneos-control-text) !important;
+    color: var(--torneos-dropdown-text) !important;
     box-shadow: var(--torneos-dropdown-shadow);
+}
+
+/* Las opciones no heredan el texto claro de los campos del FormSection:
+   en modo claro la lista tiene fondo claro y necesita texto oscuro. */
+html.theme-torneos ul.absolute.z-50.bg-white > li,
+html.theme-torneos .max-h-48.overflow-y-auto.rounded-lg.border.bg-white > button {
+    color: var(--torneos-dropdown-text) !important;
 }
 
 html.theme-torneos ul.absolute.z-50.bg-white > li:hover,
@@ -1991,8 +2081,8 @@ html.theme-torneos .ql-snow .ql-editor {
    ============================================================================ */
 
 /* 1. Componente compartido Pagination.vue (nav[aria-label="Navegación de Paginación"])
-   La barra y los botones usan la paleta oscura del pager: esmeralda profundo,
-   bordes lima tenues e iconos claros. */
+   La barra y los botones usan la paleta oscura del pager: azul noche, bordes
+   acero e iconos claros. */
 html.theme-torneos [aria-label="Navegación de Paginación"] {
     border-top: 1px solid var(--torneos-pager-button-border);
     background-color: var(--torneos-pager-bar-bg);
@@ -2005,12 +2095,12 @@ html.theme-torneos :not(.panel) > div > [aria-label="Navegación de Paginación"
 html.theme-torneos :not(.panel) > [aria-label="Navegación de Paginación"] {
     border: 1px solid var(--torneos-pager-button-border);
     border-radius: 0.85rem;
-    box-shadow: 0 8px 22px rgb(2 44 34 / 30%);
+    box-shadow: 0 18px 40px rgb(0 0 0 / 32%);
 }
 
 /* Indicador de cantidad de resultados ("Mostrando X a Y de Z resultados") */
 html.theme-torneos [aria-label="Navegación de Paginación"] p {
-    color: #d1fae5;
+    color: #dbe7e8;
 }
 
 html.theme-torneos [aria-label="Navegación de Paginación"] p span.font-bold {
@@ -2019,7 +2109,7 @@ html.theme-torneos [aria-label="Navegación de Paginación"] p span.font-bold {
 
 /* Puntos suspensivos (...) */
 html.theme-torneos [aria-label="Navegación de Paginación"] ul li > span {
-    color: rgb(209 250 229 / 70%);
+    color: rgb(148 178 190 / 70%);
 }
 
 /* Enlaces y botones activos/navegables (Primera, Anterior, Números, Siguiente, Última y versión móvil) */
@@ -2035,7 +2125,7 @@ html.theme-torneos [aria-label="Navegación de Paginación"] a:focus-visible {
     background-color: var(--torneos-pager-button-hover-bg);
     border-color: var(--torneos-pager-active-border);
     color: var(--torneos-pager-button-hover-text);
-    box-shadow: 0 4px 12px rgb(2 44 34 / 30%);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 30%);
 }
 
 html.theme-torneos [aria-label="Navegación de Paginación"] a:focus-visible {
@@ -2049,7 +2139,7 @@ html.theme-torneos [aria-label="Navegación de Paginación"] [aria-current="page
     background-color: var(--torneos-pager-active-bg);
     border: 1px solid var(--torneos-pager-active-border);
     color: var(--torneos-pager-active-text);
-    box-shadow: 0 4px 14px rgb(163 230 53 / 25%);
+    box-shadow: 0 4px 14px rgb(200 241 105 / 25%);
 }
 
 /* Estados deshabilitados (Primera, Anterior, Siguiente, Última no disponibles) */
@@ -2186,5 +2276,207 @@ html.theme-torneos .form-section__card :is(.text-red-600, .text-red-500, .text-d
 
 html.theme-torneos .form-section__card .panel :is(.text-red-600, .text-red-500, .text-danger) {
     color: var(--torneos-panel-error);
+}
+
+/* ============================================================================
+   ACTA DEL PARTIDO: TARJETAS SÓLIDAS SOBRE LA FOTO DEL ESTADIO
+   ----------------------------------------------------------------------------
+   La pantalla del acta no usa .panel, así que sus bloques quedaban
+   transparentes sobre el césped y los textos grises se perdían. Estas reglas
+   solo se activan con el tema Torneos: el modo clásico de Eventos conserva su
+   diseño original.
+   ============================================================================ */
+
+/* Cabecera del acta: mismo vidrio oscuro del breadcrumb, para que el título y
+   la fecha se lean sobre la cancha sin tapar la foto. */
+html.theme-torneos .sports-match-score-page .se-acta-header {
+    padding: 1rem 1.25rem;
+    border: 1px solid rgb(167 243 208 / 32%);
+    border-radius: 1rem;
+    background-color: rgb(2 44 34 / 78%);
+    box-shadow: 0 12px 32px rgb(2 44 34 / 24%);
+    backdrop-filter: blur(12px);
+    color: #f0fdf4;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-header :is(h1, h2) {
+    color: #f7fee7;
+    text-shadow: 0 2px 8px rgb(2 44 34 / 55%);
+}
+
+/* El "vs" del marcador conserva su tono tenue, pero sobre vidrio oscuro. */
+html.theme-torneos .sports-match-score-page .se-acta-header h1 span {
+    color: #a7f3d0;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-header p {
+    color: #bbf7d0;
+    text-shadow: 0 1px 4px rgb(2 44 34 / 45%);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-header p :is(span, a) {
+    color: inherit;
+}
+
+/* Superficie de cada bloque: los mismos tokens que .panel, aplicados a mano
+   porque el acta no envuelve su contenido en un panel. */
+html.theme-torneos .sports-match-score-page .se-acta-card {
+    background-color: var(--torneos-panel-surface);
+    border: 1px solid var(--torneos-panel-border);
+    border-radius: 1rem;
+    box-shadow: var(--torneos-panel-shadow);
+    color: var(--torneos-panel-text);
+}
+
+/* La tarjeta de alineaciones no lleva relleno: se recorta para que la tabla
+   respete las esquinas redondeadas. */
+html.theme-torneos .sports-match-score-page .se-acta-card--flush {
+    overflow: hidden;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-subcard {
+    background-color: var(--torneos-panel-header-surface);
+    border-color: var(--torneos-panel-border);
+    color: var(--torneos-panel-text);
+}
+
+/* Títulos, rótulos y ayudas: el texto oscuro genérico del sistema no se veía
+   sobre el verde; aquí se usan los tonos del panel y su versión atenuada. */
+html.theme-torneos .sports-match-score-page .se-acta-card :is(h1, h2, h3, h4, h5, h6) {
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-card :is(.text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700, .text-body) {
+    color: var(--torneos-panel-muted-text);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-card :is(.text-blue-600, .text-indigo-600) {
+    color: #065f46;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-card :is(.text-amber-600, .text-amber-700) {
+    color: #92400e;
+}
+
+/* Campos editables del acta: fondo luminoso y texto oscuro, como los
+   formularios del tema, para que los marcadores no parezcan ajenos. */
+/* La casilla de penales vive fuera de las tarjetas: se apoya en una pastilla
+   oscura para no quedar como texto suelto sobre la cancha. */
+html.theme-torneos .sports-match-score-page .se-acta-toggle {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgb(167 243 208 / 26%);
+    border-radius: 0.75rem;
+    background-color: rgb(2 44 34 / 62%);
+    color: #f0fdf4;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-toggle .text-gray-700 {
+    color: #f0fdf4;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-card :is(.form-input, .form-select) {
+    background-color: var(--torneos-form-field);
+    border-color: var(--torneos-form-field-border);
+    color: var(--torneos-form-field-text);
+}
+
+/* Tanda de penales: se conserva el acento ámbar, pero sobre una superficie
+   propia en lugar de un amarillo translúcido sobre la cancha. */
+html.theme-torneos .sports-match-score-page .se-acta-card--penales {
+    background-color: rgb(254 250 236 / 96%);
+    border-color: #fcd34d;
+    box-shadow: inset 0 0 0 1px rgb(245 158 11 / 22%), 0 8px 24px rgb(2 44 34 / 12%);
+    color: #3f2d0b;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-card--penales :is(h1, h2, h3, h4) {
+    color: #78350f;
+}
+
+/* Sobre el crema, el gris atenuado del panel se queda corto: se usa un tono
+   cálido más oscuro para los rótulos de la tanda. */
+html.theme-torneos .sports-match-score-page .se-acta-card--penales :is(.text-gray-400, .text-gray-500, .text-gray-600) {
+    color: #57534e;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-row {
+    background-color: rgb(255 255 255 / 72%);
+    border-color: var(--torneos-panel-border);
+    color: #17392e;
+}
+
+/* Alineaciones: cabecera y filas siguen la paleta del panel en vez del gris
+   y del azul fijos que traían las clases de Tailwind. */
+html.theme-torneos .sports-match-score-page .se-acta-card__head {
+    background-color: var(--torneos-panel-header-surface);
+    border-color: var(--torneos-panel-border);
+    border-radius: 1rem 1rem 0 0;
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-table {
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-table :is(th, td) {
+    border-color: var(--torneos-panel-border);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-table thead th {
+    background-color: var(--torneos-panel-header-surface);
+    color: #315b48;
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-table tbody td {
+    background-color: rgb(255 255 255 / 72%);
+    color: var(--torneos-panel-text);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-table tbody tr:hover td {
+    background-color: rgb(16 185 129 / 12%);
+}
+
+html.theme-torneos .sports-match-score-page .se-acta-table :is(.text-heading, .text-body) {
+    color: inherit;
+}
+
+/* Modo oscuro: los tokens cambian solos; solo los acentos y las filas claras
+   necesitan su propia versión. */
+html.theme-torneos body.dark .sports-match-score-page .se-acta-card :is(.text-blue-600, .text-indigo-600) {
+    color: #86efac;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-card :is(.text-amber-600, .text-amber-700) {
+    color: #fcd34d;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-card--penales {
+    background-color: rgb(69 40 6 / 92%);
+    border-color: #b45309;
+    color: #fef3c7;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-card--penales :is(h1, h2, h3, h4) {
+    color: #fde68a;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-card--penales :is(.text-gray-400, .text-gray-500, .text-gray-600) {
+    color: #fde68a;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-row {
+    background-color: rgb(5 46 36 / 72%);
+    border-color: var(--torneos-panel-border);
+    color: #ecfdf5;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-table thead th {
+    background-color: #0b3b30;
+    color: #d1fae5;
+}
+
+html.theme-torneos body.dark .sports-match-score-page .se-acta-table tbody td {
+    background-color: rgb(5 46 36 / 72%);
+    color: #ecfdf5;
 }
 

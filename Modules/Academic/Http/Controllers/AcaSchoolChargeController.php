@@ -8,15 +8,19 @@ use App\Models\Parameter;
 use App\Models\PaymentMethod;
 use App\Models\Person;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaSchoolCharge;
 use Modules\Academic\Entities\AcaSchoolEnrollment;
 use Modules\Academic\Entities\AcaSchoolFee;
 use Modules\Academic\Entities\AcaSchoolFeeType;
+use Modules\Academic\Entities\AcaSchoolLevel;
 use Modules\Academic\Entities\AcaSchoolPaymentSchedule;
 use Modules\Academic\Entities\AcaSchoolStudentGuardian;
+use Modules\Academic\Entities\AcaSchoolYear;
 use Modules\Academic\Services\SchoolChargeDocumentService;
+use Modules\Academic\Services\SchoolChargeListService;
 use Modules\Academic\Services\SchoolCommitmentsService;
 use Modules\Academic\Services\SchoolContextService;
 
@@ -24,6 +28,78 @@ class AcaSchoolChargeController extends Controller
 {
     public function __construct(private SchoolContextService $context)
     {
+    }
+
+    /**
+     * Listado de compromisos de pago del colegio: cargos pendientes
+     * (matricula y conceptos) y cuotas del cronograma por pagar, con los
+     * pagos ya registrados para consultar su comprobante. Sustituye al
+     * listado de matriculas como entrada del menu Cobros.
+     */
+    public function index(Request $request)
+    {
+        $school = $this->context->currentSchool();
+
+        $filters = [
+            'search' => $request->query('search', ''),
+            'estado' => $request->query('estado', SchoolChargeListService::ESTADO_POR_COBRAR),
+            'anio_id' => $request->query('anio_id'),
+            'nivel_id' => $request->query('nivel_id'),
+            'grado_id' => $request->query('grado_id'),
+            'seccion_id' => $request->query('seccion_id'),
+            'fee_type_id' => $request->query('fee_type_id'),
+        ];
+
+        $movimientos = new LengthAwarePaginator([], 0, 20, 1, [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]);
+        $totals = [
+            'pendiente_cantidad' => 0,
+            'pendiente_monto' => 0.0,
+            'vencido_cantidad' => 0,
+            'vencido_monto' => 0.0,
+            'pagado_cantidad' => 0,
+            'pagado_monto' => 0.0,
+        ];
+        $years = collect();
+        $filterOptions = collect();
+
+        if ($school) {
+            $service = app(SchoolChargeListService::class);
+
+            $movimientos = $service->paginate($filters, $school->id, (int) $request->query('per_page', 20));
+            $totals = $service->totals($filters, $school->id);
+
+            $years = AcaSchoolYear::where('school_id', $school->id)
+                ->orderByDesc('year')
+                ->get(['id', 'year', 'status']);
+
+            // Estructura del año consultado (o del año activo) para los
+            // filtros en cascada Nivel -> Grado -> Sección.
+            $yearId = $filters['anio_id']
+                ?: AcaSchoolYear::where('school_id', $school->id)
+                    ->where('status', AcaSchoolYear::STATUS_ACTIVE)
+                    ->value('id');
+
+            $filterOptions = AcaSchoolLevel::query()
+                ->where('school_id', $school->id)
+                ->when($yearId, fn ($q) => $q->where('year_id', $yearId))
+                ->where('status', true)
+                ->orderBy('sort_order')
+                ->with(['grades' => fn ($q) => $q->orderBy('sort_order'), 'grades.sections' => fn ($q) => $q->orderBy('id')])
+                ->get(['id', 'name']);
+        }
+
+        return Inertia::render('Academic::School/Charges/List', [
+            'movimientos' => $movimientos,
+            'totals' => $totals,
+            'filters' => $filters,
+            'filterOptions' => $filterOptions,
+            'years' => $years,
+            'concepts' => AcaSchoolFeeType::where('status', true)->orderBy('id')->get(['id', 'name']),
+            'statusLabels' => SchoolChargeListService::estadoLabels(),
+        ]);
     }
 
     /**

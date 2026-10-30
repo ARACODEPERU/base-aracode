@@ -24,6 +24,9 @@ return [
 
     'landing_cache_enabled' => env('SOCIALEVENTS_LANDING_CACHE', true),
     'landing_cache_ttl' => (int) env('SOCIALEVENTS_LANDING_CACHE_TTL', 120),
+    // Completa ciudad y país de las visitas con una consulta de geolocalización
+    // después de responder. Se puede desactivar en instalaciones sin salida a internet.
+    'landing_geo_lookup' => env('SOCIALEVENTS_LANDING_GEO_LOOKUP', true),
 
     /*
     | Splash publicitario de la landing (patrocinio ARACODE).

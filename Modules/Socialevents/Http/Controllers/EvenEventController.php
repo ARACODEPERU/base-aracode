@@ -5,6 +5,7 @@ namespace Modules\Socialevents\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Parameter;
 use App\Models\Person;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -72,15 +73,19 @@ class EvenEventController extends Controller
         $categories = $sports->sportsMode()
             ? collect()
             : EvenCategory::with('subcategories.subcategories')->where('status', true)->whereNull('main_category_id')->get();
-        //$instructors = AcaTeacher::with('person')->get();
-        $instructors = Person::all();
+        $organizers = $this->organizerContext($sports, request()->user());
 
         $locales = EvenLocal::where('status', true)->get();
 
         return Inertia::render('Socialevents::Events/Create', [
             'sportsMode' => $sports->sportsMode(),
             'categories' => $categories,
-            'instructors'   => $instructors,
+            'instructors'   => $organizers['options'],
+            'organizers' => [
+                'locked' => $organizers['locked'],
+                'label' => $organizers['label'],
+                'default' => $organizers['default'],
+            ],
             'locales' => $locales
         ]);
     }
@@ -98,7 +103,9 @@ class EvenEventController extends Controller
                 'category_id' => $sports->sportsMode() ? 'nullable' : 'required',
                 'title' => 'required',
                 'description' => 'required',
-                'advertising_video' => 'required',
+                // El enlace al sitio del torneo solo aplica si la organización
+                // tiene página web propia: nunca es obligatorio.
+                'advertising_video' => $sports->sportsMode() ? 'nullable' : 'required',
                 'tickets_quantity' => 'required',
                 'date' => 'required'
             ]
@@ -107,6 +114,7 @@ class EvenEventController extends Controller
         $ds = $request->get('date')[0]['$d'];
         $de = $request->get('date')[1]['$d'];
         $days = Carbon::parse($ds)->diffInDays(Carbon::parse($de));
+        $exhibitors = $this->organizerExhibitorsForSave($sports, $request);
 
         $event = EvenEvent::create([
             'organization_id' => $sports->sportsMode() ? ($sports->isSuperAdmin($request->user()) ? $sports->legacyOrganizationId() : $sports->organizationId($request->user())) : null,
@@ -126,7 +134,6 @@ class EvenEventController extends Controller
 
 
         $locales = $request->get('locales') ?? [];
-        $exhibitors = $request->get('exhibitors') ?? [];
 
         if (count($locales) > 0) {
             foreach ($locales as $local) {
@@ -203,16 +210,26 @@ class EvenEventController extends Controller
         $sports->assertOwnedEvent(request()->user(), (int) $id);
         $event = EvenEvent::query()->findOrFail($id);
         $categories = $sports->sportsMode() ? collect() : EvenCategory::where('status', true)->get();
-        //$instructors = AcaTeacher::with('person')->get();
-        $instructors = Person::all();
+        $organizers = $this->organizerContext($sports, request()->user());
         $locales = EvenLocal::where('status', true)->get();
         $eventLocales = EvenEventLocal::where('event_id', $id)->pluck('local_id');
         $eventExhibitors = EvenEventExhibitor::where('event_id', $id)->pluck('exhibitor_id');
 
+        if ($sports->sportsMode() && ! $sports->isSuperAdmin(request()->user())) {
+            // El formulario del organizador trabaja con usuarios de su
+            // organización, no con personas sueltas del sistema.
+            $eventExhibitors = $this->organizerValuesForPersons($sports, request()->user(), $eventExhibitors->all());
+        }
+
         return Inertia::render('Socialevents::Events/Edit', [
             'sportsMode' => $sports->sportsMode(),
             'categories' => $categories,
-            'instructors'   => $instructors,
+            'instructors'   => $organizers['options'],
+            'organizers' => [
+                'locked' => $organizers['locked'],
+                'label' => $organizers['label'],
+                'default' => $organizers['default'],
+            ],
             'locales' => $locales,
             'socialevent' => $event,
             'eventLocales' => $eventLocales,
@@ -233,7 +250,7 @@ class EvenEventController extends Controller
                 'category_id' => $sports->sportsMode() ? 'nullable' : 'required',
                 'title' => 'required',
                 'description' => 'required',
-                'advertising_video' => 'required',
+                'advertising_video' => $sports->sportsMode() ? 'nullable' : 'required',
                 'tickets_quantity' => 'required',
                 'date' => 'required'
             ]
@@ -243,6 +260,7 @@ class EvenEventController extends Controller
         $event = EvenEvent::query()->findOrFail($request->get('id'));
         [$ds, $de] = $this->parseEventDateRange($request);
         $days = Carbon::parse($ds)->diffInDays(Carbon::parse($de));
+        $exhibitors = $this->organizerExhibitorsForSave($sports, $request);
 
         $event->update([
             'category_id' => $sports->sportsMode() ? $sports->sportsCategoryId() : $request->get('category_id'),
@@ -262,7 +280,6 @@ class EvenEventController extends Controller
         EvenEventExhibitor::where('event_id', $event->id)->delete();
 
         $locales = $request->get('locales') ?? [];
-        $exhibitors = $request->get('exhibitors') ?? [];
 
         if (count($locales) > 0) {
             foreach ($locales as $local) {
@@ -318,6 +335,233 @@ class EvenEventController extends Controller
         }
 
         return to_route('even_eventos_list');
+    }
+
+    /**
+     * Organizadores disponibles en el formulario del torneo.
+     *
+     * El superadministrador elige entre todas las personas registradas. Un
+     * organizador solo ve a los usuarios de su propia organización: mientras
+     * sea el único, el campo queda fijo a su nombre; cuando la organización
+     * suma usuarios (plan con usuarios adicionales), esos usuarios pasan a ser
+     * las únicas opciones seleccionables.
+     *
+     * @return array{locked: bool, label: ?string, default: array<int, string>, options: array<int, array{value: int|string, label: string}>}
+     */
+    private function organizerContext(SportsOrganizationService $sports, ?User $user): array
+    {
+        if (! $user || ! $sports->sportsMode() || $sports->isSuperAdmin($user)) {
+            return [
+                'locked' => false,
+                'label' => null,
+                'default' => [],
+                'options' => Person::query()
+                    ->orderBy('full_name')
+                    ->get(['id', 'full_name', 'short_name'])
+                    ->map(fn (Person $person) => [
+                        'value' => (int) $person->id,
+                        'label' => $person->full_name ?: ($person->short_name ?: 'Persona #' . $person->id),
+                    ])
+                    ->values()
+                    ->all(),
+            ];
+        }
+
+        $organizationId = $sports->organizationId($user);
+        $memberIds = $this->allowedOrganizerUserIds($sports, $user);
+        $users = User::query()
+            ->whereIn('id', $memberIds)
+            ->get(['id', 'name', 'apellido_paterno', 'apellido_materno', 'email', 'person_id', 'socialevent_organization_role']);
+        $usersById = $users->keyBy('id');
+        $orderedUsers = collect($memberIds)
+            ->map(fn ($id) => $usersById->get($id))
+            ->filter()
+            ->values();
+
+        $creatorId = $organizationId
+            ? (int) DB::table('socialevent_organizations')->where('id', $organizationId)->value('created_by')
+            : 0;
+        $creator = $orderedUsers->firstWhere('id', $creatorId) ?? $orderedUsers->first() ?? $user;
+
+        return [
+            'locked' => $orderedUsers->count() <= 1,
+            'label' => $this->userDisplayName($creator),
+            'default' => ['u:' . $creator->id],
+            'options' => $orderedUsers->map(fn (User $member) => [
+                'value' => 'u:' . $member->id,
+                'label' => $this->userDisplayName($member),
+            ])->values()->all(),
+        ];
+    }
+
+    /**
+     * Usuarios que pertenecen a la organización y pueden figurar como responsables.
+     *
+     * @return array<int, int>
+     */
+    private function allowedOrganizerUserIds(SportsOrganizationService $sports, User $user): array
+    {
+        $organizationId = $sports->organizationId($user);
+        $ids = $organizationId
+            ? DB::table('socialevent_organization_users')
+                ->where('organization_id', $organizationId)
+                ->orderByRaw("CASE WHEN role = 'owner' THEN 0 ELSE 1 END")
+                ->orderBy('id')
+                ->pluck('user_id')
+                ->all()
+            : [];
+
+        $ids[] = (int) $user->id;
+
+        return array_values(array_unique(array_map('intval', $ids)));
+    }
+
+    /**
+     * Convierte lo enviado por el formulario en ids de personas para el evento.
+     *
+     * El organizador nunca puede asignar personas ajenas: si su campo está
+     * fijo se usa el responsable por defecto y, si tiene varias cuentas, solo
+     * se aceptan las que pertenecen a su organización.
+     *
+     * @return array<int, int>
+     */
+    private function organizerExhibitorsForSave(SportsOrganizationService $sports, Request $request): array
+    {
+        $submitted = $request->input('exhibitors', []);
+        $submitted = is_array($submitted)
+            ? array_values(array_filter($submitted, fn ($value) => is_string($value) || is_numeric($value)))
+            : [];
+        $user = $request->user();
+
+        if (! $sports->sportsMode() || $sports->isSuperAdmin($user)) {
+            return Person::query()
+                ->whereIn('id', array_map('intval', $submitted))
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        }
+
+        $context = $this->organizerContext($sports, $user);
+        $selected = $context['locked']
+            ? $context['default']
+            : array_values(array_intersect($submitted, array_column($context['options'], 'value')));
+
+        if ($selected === []) {
+            $selected = $context['default'];
+        }
+
+        $memberIds = $this->allowedOrganizerUserIds($sports, $user);
+        $persons = [];
+
+        foreach ($selected as $value) {
+            if (! is_string($value) || ! str_starts_with($value, 'u:')) {
+                continue;
+            }
+
+            $memberId = (int) substr($value, 2);
+            if (! in_array($memberId, $memberIds, true)) {
+                continue;
+            }
+
+            $member = User::query()->find($memberId);
+            if ($member) {
+                $persons[] = $this->personForUser($member);
+            }
+        }
+
+        return array_values(array_unique(array_filter($persons)));
+    }
+
+    /**
+     * Traduce las personas guardadas en el evento a los usuarios de la
+     * organización para que el formulario pueda mostrar la selección actual.
+     *
+     * @param array<int, int|string> $personIds
+     * @return array<int, string>
+     */
+    private function organizerValuesForPersons(SportsOrganizationService $sports, User $user, array $personIds): array
+    {
+        if ($personIds === []) {
+            return [];
+        }
+
+        $usersByPerson = User::query()
+            ->whereIn('id', $this->allowedOrganizerUserIds($sports, $user))
+            ->whereIn('person_id', array_map('intval', $personIds))
+            ->pluck('id', 'person_id');
+
+        return collect($personIds)
+            ->map(function ($personId) use ($usersByPerson) {
+                $userId = $usersByPerson->get((int) $personId);
+
+                return $userId ? 'u:' . $userId : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Persona asociada a la cuenta. Los organizadores registrados desde la web
+     * no siempre tienen una persona creada; al asignarlos como responsables se
+     * reutiliza la existente o se crea con sus datos de registro.
+     */
+    private function personForUser(User $user): ?int
+    {
+        if ($user->person_id && Person::query()->whereKey($user->person_id)->exists()) {
+            return (int) $user->person_id;
+        }
+
+        $identity = trim((string) $user->numero_identidad);
+        $email = strtolower(trim((string) $user->email));
+        $person = null;
+
+        if ($identity !== '') {
+            $person = Person::query()->where('number', $identity)->first();
+        }
+        if (! $person && $email !== '') {
+            $person = Person::query()->whereRaw('LOWER(email) = ?', [$email])->first();
+        }
+        if (! $person) {
+            $name = $this->userDisplayName($user);
+            $person = Person::create([
+                'document_type_id' => $this->documentTypeId($user->tipo_identidad),
+                'number' => $identity !== '' ? $identity : null,
+                'full_name' => $name,
+                'short_name' => $name,
+                'email' => $user->email ?: null,
+                'telephone' => $user->telefono ?: null,
+                'is_client' => false,
+            ]);
+        }
+
+        $user->forceFill(['person_id' => $person->id])->save();
+
+        return (int) $person->id;
+    }
+
+    /**
+     * El registro web guarda el tipo de identidad como texto (DNI, CE,
+     * PASAPORTE); las personas usan el id de identity_document_type.
+     */
+    private function documentTypeId(?string $tipoIdentidad): string
+    {
+        return match (strtoupper(trim((string) $tipoIdentidad))) {
+            'DNI', '1' => '1',
+            'RUC', '6' => '6',
+            default => '0',
+        };
+    }
+
+    private function userDisplayName(User $user): string
+    {
+        $name = trim(implode(' ', array_filter([
+            $user->name,
+            $user->apellido_paterno,
+            $user->apellido_materno,
+        ])));
+
+        return $name !== '' ? $name : (string) ($user->email ?: 'Organizador');
     }
 
     /**

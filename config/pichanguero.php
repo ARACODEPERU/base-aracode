@@ -33,7 +33,7 @@
 return [
 
     // El `?:` evita que una variable vacía en el .env deje los botones sin destino.
-    'registro_url' => env('PICHANGUERO_REGISTRO_URL') ?: 'https://avc.pichanguero.com/register',
+    'registro_url' => env('PICHANGUERO_REGISTRO_URL') ?: 'https://base-aracode.test/register',
 
     'app_disponible' => (bool) env('PICHANGUERO_APP_DISPONIBLE', false),
 

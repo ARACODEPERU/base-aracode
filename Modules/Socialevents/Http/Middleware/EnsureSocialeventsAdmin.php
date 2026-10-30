@@ -16,6 +16,9 @@ class EnsureSocialeventsAdmin
     private const RUTAS_DE_LECTURA = [
         'api.api.admin.matches',
         'api.api.admin.persons.search',
+        // Preparar la URL de un PDF no modifica datos: con el acceso vencido el
+        // organizador debe poder descargar sus actas y planillas.
+        'api.api.admin.editions.reports.pdf',
     ];
 
     public function handle(Request $request, Closure $next): Response
@@ -30,9 +33,10 @@ class EnsureSocialeventsAdmin
         }
 
         $roles = $user->getRoleNames()->map(fn ($role) => strtolower($role));
+        $sports = app(SportsOrganizationService::class);
 
         $isGlobalAdmin = $roles->contains('admin') || $roles->contains('administrador');
-        $isSportsOrganizer = app(SportsOrganizationService::class)->sportsMode()
+        $isSportsOrganizer = $sports->sportsMode()
             && $user->hasRole('sports_organizer')
             && (int) $user->socialevent_organization_id > 0;
 
@@ -49,10 +53,14 @@ class EnsureSocialeventsAdmin
         // aplica aquí para que la app móvil respete el mismo estado.
         if (! $isGlobalAdmin
             && $this->intentaEscribir($request)
-            && ! app(SportsOrganizationService::class)->canWrite($user)) {
+            && ! $sports->canWrite($user)) {
             return response()->json([
                 'success' => false,
+                'code' => 'ORG_READ_ONLY',
                 'message' => 'El acceso de la organización está vencido: la cuenta quedó en solo lectura y no admite nuevos registros ni cambios.',
+                // La app actualiza su estado con esta misma estructura, sin
+                // esperar a otra petición para saber que debe bloquear la UI.
+                'access' => $sports->accessSummary($user),
             ], 403);
         }
 

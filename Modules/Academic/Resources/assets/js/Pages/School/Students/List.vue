@@ -4,7 +4,7 @@ import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import { useForm, Link, router } from '@inertiajs/vue3';
 import Swal2 from 'sweetalert2';
 import { computed, ref } from 'vue';
-import { faPencil, faTrash, faUserPlus, faUsers, faMoneyBillWave, faIdCard, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faPencil, faTrash, faUserPlus, faUsers, faMoneyBillWave, faIdCard, faPrint, faKey } from '@fortawesome/free-solid-svg-icons';
 import { usePage } from '@inertiajs/vue3';
 
 const page = usePage();
@@ -146,6 +146,46 @@ const printBulk = () => {
         return;
     }
     window.open(route('aca_school_students_cards_bulk', { ids: selectedIds.value.join(',') }), '_blank');
+};
+
+// Devuelve la contraseña del aula virtual al número de DNI del alumno.
+const resetPassword = (item) => {
+    const swalConfirm = Swal2.mixin({
+        customClass: {
+            popup: 'sweet-alerts',
+            confirmButton: 'btn btn-secondary',
+            cancelButton: 'btn btn-dark ltr:mr-3 rtl:ml-3',
+        },
+        buttonsStyling: false,
+    });
+    swalConfirm.fire({
+        title: '¿Reponer la contraseña?',
+        html:
+            'La contraseña del aula virtual de <b>' +
+            (item.person?.full_name || item.student_code) +
+            '</b> volverá a ser su número de DNI.<br><br>El alumno podrá cambiarla desde «Mi perfil».',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, reponer',
+        cancelButtonText: 'Cancelar',
+        showLoaderOnConfirm: true,
+        reverseButtons: true,
+        padding: '2em',
+        customClass: 'sweet-alerts',
+        preConfirm: () => {
+            return axios.post(route('aca_school_students_password_reset', item.id)).then((res) => {
+                if (!res.data.success) {
+                    Swal2.showValidationMessage(res.data.message);
+                }
+                return res;
+            });
+        },
+        allowOutsideClick: () => !Swal2.isLoading(),
+    }).then((result) => {
+        if (result.isConfirmed) {
+            showMessage(result.value?.data?.message ?? 'Contraseña repuesta al DNI.');
+        }
+    });
 };
 
 const destroyStudent = (id) => {
@@ -320,6 +360,10 @@ const destroyStudent = (id) => {
                                             <font-awesome-icon :icon="faIdCard" class="m-0" />
                                         </a>
                                         <tippy target="bottom" placement="bottom">Imprimir carné del alumno</tippy>
+                                        <button v-if="hasPermission('aca_school_alumno_editar')" v-tippy:bottom type="button" class="btn btn-sm btn-outline-warning" @click="resetPassword(item)">
+                                            <font-awesome-icon :icon="faKey" />
+                                        </button>
+                                        <tippy target="bottom" placement="bottom">Reponer contraseña al DNI</tippy>
                                         <button v-tippy:bottom type="button" class="btn btn-sm btn-outline-danger" @click="destroyStudent(item.id)">
                                             <font-awesome-icon :icon="faTrash" />
                                         </button>
