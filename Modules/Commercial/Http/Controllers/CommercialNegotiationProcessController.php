@@ -496,29 +496,47 @@ class CommercialNegotiationProcessController extends Controller
 
             $amount = $isFree ? 0.0 : (float) ($item->price ?? 0);
 
-            if (! $amount && ! $isFree && $subscription->prices) {
-                foreach (json_decode($subscription->prices, true) ?: [] as $price) {
-                    if (($price['currency'] ?? null) === 'PEN') {
+            // `prices` ya viene decodificado por el cast 'array' del modelo: pasarlo por
+            // json_decode() lanzaba un TypeError cuando el item no traia precio propio.
+            if (! $amount && ! $isFree && is_array($subscription->prices) && $subscription->prices) {
+                foreach ($subscription->prices as $price) {
+                    if (is_array($price) && ($price['currency'] ?? null) === 'PEN') {
                         $amount = (float) ($price['amount'] ?? 0);
                     }
                 }
             }
 
-            AcaStudentSubscription::updateOrCreate(
-                [
+            $datosSuscripcion = [
+                'date_start' => $dateStart->format('Y-m-d'),
+                'date_end' => $dateEnd ? $dateEnd->format('Y-m-d') : null,
+                'status' => true,
+                'notes' => null,
+                'renewals' => false,
+                'registration_user_id' => Auth::id(),
+                'amount_paid' => $amount,
+            ];
+
+            // AcaStudentSubscription usa clave primaria compuesta (student_id +
+            // subscription_id), que Eloquent no soporta: updateOrCreate() al guardar el
+            // modelo ejecuta $this->original[$this->getKeyName()] con un array y PHP lanza
+            // "Cannot access offset of type array on array". Solo pasaba cuando la
+            // suscripcion ya existia (cliente que ya tenia el plan), es decir en la rama de
+            // actualizacion. Se actualiza o crea desde el query builder, como en el resto
+            // del modulo (AcaCapRegistrationController / StudentSubscription).
+            $suscripcionExistente = AcaStudentSubscription::where('student_id', $student->id)
+                ->where('subscription_id', $item->item_id)
+                ->exists();
+
+            if ($suscripcionExistente) {
+                AcaStudentSubscription::where('student_id', $student->id)
+                    ->where('subscription_id', $item->item_id)
+                    ->update($datosSuscripcion);
+            } else {
+                AcaStudentSubscription::create(array_merge([
                     'student_id' => $student->id,
                     'subscription_id' => $item->item_id,
-                ],
-                [
-                    'date_start' => $dateStart->format('Y-m-d'),
-                    'date_end' => $dateEnd ? $dateEnd->format('Y-m-d') : null,
-                    'status' => true,
-                    'notes' => null,
-                    'renewals' => false,
-                    'registration_user_id' => Auth::id(),
-                    'amount_paid' => $amount,
-                ]
-            );
+                ], $datosSuscripcion));
+            }
         }
 
         $this->markStepDone($negotiation, 'subscriptions');
