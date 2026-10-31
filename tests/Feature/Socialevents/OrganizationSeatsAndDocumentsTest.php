@@ -3,6 +3,7 @@
 namespace Tests\Feature\Socialevents;
 
 use App\Models\LocalSale;
+use App\Models\Person;
 use App\Models\Serie;
 use App\Models\SaleDocumentType;
 use App\Models\User;
@@ -126,6 +127,14 @@ class OrganizationSeatsAndDocumentsTest extends TestCase
         ]);
 
         $this->assertTrue($operator->hasRole('sports_operator'));
+        $this->assertNotNull($operator->person_id);
+        $this->assertDatabaseHas('people', [
+            'id' => $operator->person_id,
+            'number' => '70000001',
+            'full_name' => 'Operador de resultados',
+            'email' => 'resultados@example.com',
+        ]);
+        $this->assertSame((int) $operator->person_id, (int) Person::where('number', '70000001')->value('id'));
         $this->assertTrue($operator->hasPermissionTo('even_ediciones_partido_resultado'));
         $this->assertFalse($operator->hasPermissionTo('even_evento_nuevo'), 'Las tareas no elegidas no deben concederse.');
 

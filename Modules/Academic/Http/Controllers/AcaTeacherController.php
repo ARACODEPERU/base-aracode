@@ -6,6 +6,7 @@ use App\Models\Country;
 use App\Models\District;
 use App\Models\Person;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -247,6 +248,23 @@ class AcaTeacherController extends Controller
             ]
         );
 
+        PersonUserPersistenceVerifier::verify(
+            $per,
+            $user,
+            array_merge($personData, [
+                'document_type_id' => $request->get('document_type_id'),
+                'number' => $request->get('number'),
+                'image' => $path,
+            ]),
+            [
+                'name' => $request->get('names'),
+                'email' => $request->get('email'),
+                'information' => $request->get('description'),
+                'avatar' => $path,
+                'person_id' => $per->id,
+            ]
+        );
+
         return redirect()->route($this->routeName('list'))
             ->with('message', __('Docente creado con éxito'));
     }
@@ -411,17 +429,26 @@ class AcaTeacherController extends Controller
 
         $person->update($updateData);
 
-        $user->update([
-            'name'          => $request->get('names'),
-            'email'         => $request->get('email'),
-            'password'      => Hash::make($request->get('number')),
-            'information'   => $request->get('description'),
-            'avatar'        => $path
-        ]);
-        //dd($request->get('presentacion'));
+        $userData = [
+            'name' => trim($request->get('names')),
+            'email' => trim($request->get('email')),
+            'password' => Hash::make($request->get('number')),
+            'information' => $request->get('description'),
+            'avatar' => $path,
+            'person_id' => $person->id,
+        ];
+        $user->update($userData);
+
         AcaTeacher::where('person_id', $person_id)->update([
-            'teacher_code'  => $request->get('number'),
+            'teacher_code' => $request->get('number'),
         ]);
+
+        PersonUserPersistenceVerifier::verify(
+            $person,
+            $user,
+            $updateData,
+            $userData
+        );
 
         return redirect()->route($this->routeName('edit'), $teacher_id)
             ->with('message', __('Docente creado con éxito'));

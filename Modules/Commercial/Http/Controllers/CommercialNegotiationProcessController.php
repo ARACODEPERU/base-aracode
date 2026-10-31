@@ -10,6 +10,7 @@ use App\Models\SaleDocument;
 use App\Models\SaleDocumentItem;
 use App\Models\SaleProduct;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -312,6 +313,37 @@ class CommercialNegotiationProcessController extends Controller
         // Se aplica completa (incluye nulls) para poder pasar de extranjero a Peru y viceversa.
         $person->update($locationPayload);
 
+        $person = Person::query()->findOrFail($person->id);
+        $user = User::where('person_id', $person->id)->first();
+
+        if (! $user && $person->email) {
+            $user = User::query()
+                ->whereRaw('LOWER(email) = ?', [strtolower(trim($person->email))])
+                ->first();
+            if ($user) {
+                $user->update(['person_id' => $person->id]);
+            }
+        }
+
+        if ($user) {
+            $userData = [
+                'name' => $person->full_name ?: $person->short_name,
+                'email' => $person->email ?: $user->email,
+                'person_id' => $person->id,
+            ];
+            $user->update($userData);
+
+            PersonUserPersistenceVerifier::verify(
+                $person,
+                $user,
+                array_merge(
+                    array_filter($personPayload, fn ($value) => $value !== null && $value !== ''),
+                    $locationPayload
+                ),
+                $userData
+            );
+        }
+
         $this->markStepDone($negotiation, 'person');
 
         return response()->json([
@@ -319,8 +351,11 @@ class CommercialNegotiationProcessController extends Controller
             'message' => 'Actualizar los datos del cliente en la tabla people: cliente ya existente.',
             'person_id' => $person->id,
         ]);
-    }    public function processUser(Request $request, $id)
-    {        $negotiation = $this->negotiation($id);
+    }
+
+    public function processUser(Request $request, $id)
+    {
+        $negotiation = $this->negotiation($id);
         $person = $this->person($negotiation);
 
         $user = User::where('person_id', $person->id)->first();
@@ -350,7 +385,28 @@ class CommercialNegotiationProcessController extends Controller
             ]);
         }
 
+        $personData = [
+            'document_type_id' => $person->document_type_id,
+            'number' => $person->number,
+            'full_name' => $person->full_name,
+            'email' => $person->email,
+        ];
+        $userData = [
+            'person_id' => $person->id,
+            'name' => $person->full_name ?: $person->short_name,
+            'email' => $person->email ?: $user->email,
+            'status' => true,
+        ];
+        $user->update($userData);
         $user->assignRole('Alumno');
+
+        $person->refresh();
+        PersonUserPersistenceVerifier::verify(
+            $person,
+            $user,
+            $personData,
+            $userData
+        );
 
         $this->markStepDone($negotiation, 'user');
 
@@ -496,29 +552,47 @@ class CommercialNegotiationProcessController extends Controller
 
             $amount = $isFree ? 0.0 : (float) ($item->price ?? 0);
 
-            if (! $amount && ! $isFree && $subscription->prices) {
-                foreach (json_decode($subscription->prices, true) ?: [] as $price) {
-                    if (($price['currency'] ?? null) === 'PEN') {
+            // `prices` ya viene decodificado por el cast 'array' del modelo: pasarlo por
+            // json_decode() lanzaba un TypeError cuando el item no traia precio propio.
+            if (! $amount && ! $isFree && is_array($subscription->prices) && $subscription->prices) {
+                foreach ($subscription->prices as $price) {
+                    if (is_array($price) && ($price['currency'] ?? null) === 'PEN') {
                         $amount = (float) ($price['amount'] ?? 0);
                     }
                 }
             }
 
-            AcaStudentSubscription::updateOrCreate(
-                [
+            $datosSuscripcion = [
+                'date_start' => $dateStart->format('Y-m-d'),
+                'date_end' => $dateEnd ? $dateEnd->format('Y-m-d') : null,
+                'status' => true,
+                'notes' => null,
+                'renewals' => false,
+                'registration_user_id' => Auth::id(),
+                'amount_paid' => $amount,
+            ];
+
+            // AcaStudentSubscription usa clave primaria compuesta (student_id +
+            // subscription_id), que Eloquent no soporta: updateOrCreate() al guardar el
+            // modelo ejecuta $this->original[$this->getKeyName()] con un array y PHP lanza
+            // "Cannot access offset of type array on array". Solo pasaba cuando la
+            // suscripcion ya existia (cliente que ya tenia el plan), es decir en la rama de
+            // actualizacion. Se actualiza o crea desde el query builder, como en el resto
+            // del modulo (AcaCapRegistrationController / StudentSubscription).
+            $suscripcionExistente = AcaStudentSubscription::where('student_id', $student->id)
+                ->where('subscription_id', $item->item_id)
+                ->exists();
+
+            if ($suscripcionExistente) {
+                AcaStudentSubscription::where('student_id', $student->id)
+                    ->where('subscription_id', $item->item_id)
+                    ->update($datosSuscripcion);
+            } else {
+                AcaStudentSubscription::create(array_merge([
                     'student_id' => $student->id,
                     'subscription_id' => $item->item_id,
-                ],
-                [
-                    'date_start' => $dateStart->format('Y-m-d'),
-                    'date_end' => $dateEnd ? $dateEnd->format('Y-m-d') : null,
-                    'status' => true,
-                    'notes' => null,
-                    'renewals' => false,
-                    'registration_user_id' => Auth::id(),
-                    'amount_paid' => $amount,
-                ]
-            );
+                ], $datosSuscripcion));
+            }
         }
 
         $this->markStepDone($negotiation, 'subscriptions');

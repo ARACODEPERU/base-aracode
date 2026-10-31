@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Modules\Academic\Entities\AcaCapRegistration;
+use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Commercial\Emails\CommercialNegotiationDocumentMail;
 use Modules\Commercial\Entities\CommercialNegotiation;
@@ -380,6 +381,83 @@ class NegotiationFreeTest extends TestCase
         // 9) Finalizar: la negociacion queda completada.
         $this->assertTrue((bool) $controller->complete(Request::create('/'), $negotiation->id)->getData(true)['success']);
         $this->assertSame('completada', $negotiation->fresh()->status);
+    }
+
+    /**
+     * Cliente existente que ya tenia el plan: el alumno ya tiene fila en
+     * aca_student_subscriptions y el paso tiene que actualizarla, no duplicarla.
+     *
+     * AcaStudentSubscription usa clave primaria compuesta (student_id + subscription_id),
+     * que Eloquent no soporta, por eso el paso no puede guardar el modelo con
+     * updateOrCreate(): en la rama de actualizacion PHP lanzaba
+     * "Cannot access offset of type array on array" y el paso 5 quedaba en error.
+     */
+    public function test_el_paso_de_suscripciones_actualiza_la_suscripcion_que_el_alumno_ya_tiene(): void
+    {
+        $advisor = $this->advisor();
+        $negotiation = $this->negotiationWithClient(1200, 'transferencia');
+
+        $controller = app(CommercialNegotiationProcessController::class);
+
+        $this->actingAs($advisor);
+
+        $controller->processStudent(Request::create('/'), $negotiation->id);
+
+        $studentId = (int) AcaStudent::where('person_id', $negotiation->client_id)->value('id');
+
+        // Suscripcion que el alumno ya tenia de una compra anterior y que hoy esta vencida.
+        AcaStudentSubscription::create([
+            'student_id' => $studentId,
+            'subscription_id' => 1,
+            'date_start' => '2026-01-01',
+            'date_end' => '2026-01-31',
+            'status' => false,
+            'amount_paid' => 150,
+        ]);
+
+        $response = $controller->processSubscriptions(Request::create('/'), $negotiation->id);
+
+        $this->assertTrue((bool) $response->getData(true)['success']);
+        // Se actualiza la fila existente en lugar de duplicarla.
+        $this->assertDatabaseCount('aca_student_subscriptions', 1);
+
+        $suscripcion = AcaStudentSubscription::where('student_id', $studentId)
+            ->where('subscription_id', 1)
+            ->firstOrFail();
+
+        $this->assertTrue((bool) $suscripcion->status, 'La suscripcion vencida queda reactivada.');
+        $this->assertSame(300.0, (float) $suscripcion->amount_paid);
+        $this->assertSame(now()->toDateString(), substr((string) $suscripcion->date_start, 0, 10));
+    }
+
+    /**
+     * Cuando el item de la negociacion no trae precio propio, el monto sale del precio
+     * de catalogo en soles de la suscripcion. prices ya viene decodificado por el cast
+     * 'array' del modelo, asi que el paso no puede pasarlo por json_decode().
+     */
+    public function test_el_paso_de_suscripciones_toma_el_precio_de_catalogo_cuando_el_item_no_trae_precio(): void
+    {
+        $advisor = $this->advisor();
+        $negotiation = $this->negotiationWithClient(1200, 'transferencia');
+
+        CommercialNegotiationItem::where('negotiation_id', $negotiation->id)
+            ->where('item_type', 'subscription')
+            ->update(['price' => 0]);
+
+        DB::table('aca_subscription_types')->where('id', 1)->update([
+            'prices' => json_encode([['currency' => 'PEN', 'amount' => 450]]),
+        ]);
+
+        $controller = app(CommercialNegotiationProcessController::class);
+
+        $this->actingAs($advisor);
+
+        $controller->processStudent(Request::create('/'), $negotiation->id);
+
+        $response = $controller->processSubscriptions(Request::create('/'), $negotiation->id);
+
+        $this->assertTrue((bool) $response->getData(true)['success']);
+        $this->assertSame(450.0, (float) AcaStudentSubscription::firstOrFail()->amount_paid);
     }
 
     public function test_el_correo_de_una_inscripcion_gratuita_se_renderiza_sin_comprobante(): void
