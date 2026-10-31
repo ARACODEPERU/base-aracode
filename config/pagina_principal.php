@@ -84,6 +84,14 @@ return [
             'producto' => null,
         ],
 
+        // Portada del módulo Dental: clínicas y consultorios odontológicos.
+        // También es una página de este mismo sitio.
+        '7' => [
+            'nombre' => 'Dental',
+            'vista' => 'dental.pages.home',
+            'producto' => null,
+        ],
+
     ],
 
 ];
