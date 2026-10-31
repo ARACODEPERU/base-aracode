@@ -75,6 +75,15 @@ return [
             'producto' => 'pichanguero',
         ],
 
+        // Portada del módulo Salud: agenda de pacientes e historia clínica.
+        // Es una página de este mismo sitio (no tiene web de producto aparte),
+        // así que no declara 'producto' y su URL de vista previa es la raíz.
+        '6' => [
+            'nombre' => 'SALUD',
+            'vista' => 'salud.pages.home',
+            'producto' => null,
+        ],
+
     ],
 
 ];
