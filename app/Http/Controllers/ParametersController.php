@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Parameter;
 use App\Support\OrdenDeParametros;
+use App\Support\PaginaPrincipal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -43,7 +44,15 @@ class ParametersController extends Controller
 
         foreach ($parameters as $parameter) {
             $json_query_data = [];
-            if ($parameter->control_type == 'sq') {
+
+            // El catálogo de portadas de «Pagina web principal» vive en
+            // config/pagina_principal.php. Se lee de ahí y no de la base para
+            // que el desplegable nunca dependa de que la migración haya corrido
+            // con el config al día (o de que se haya editado la fila correcta):
+            // la lista guardada en el parámetro solo respalda el valor elegido.
+            if ($parameter->parameter_code === PaginaPrincipal::PARAMETRO) {
+                $json_query_data = PaginaPrincipal::opcionesJson();
+            } elseif ($parameter->control_type == 'sq') {
                 $json_query_data = $this->getSubQuery($parameter->json_query_data);
             } else {
                 $data = json_decode($parameter->json_query_data);

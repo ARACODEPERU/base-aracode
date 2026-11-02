@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Person;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
+use App\Support\PersonUserPersistenceVerifier;
 use App\Support\RegistroVariantes;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -86,7 +88,33 @@ class RegisteredUserController extends Controller
         }
 
         $user = DB::transaction(function () use ($validated, $email, $identity, $organizationService) {
-            $user = User::create([
+            $documentTypeId = match ($validated['tipo_identidad']) {
+                'DNI' => '1',
+                'CE' => '4',
+                'PASAPORTE' => '7',
+            };
+            $fullName = trim(implode(' ', [
+                $validated['apellido_paterno'],
+                $validated['apellido_materno'],
+                $validated['first_name'],
+            ]));
+            $personData = [
+                'document_type_id' => $documentTypeId,
+                'number' => $identity,
+                'names' => $validated['first_name'],
+                'father_lastname' => $validated['apellido_paterno'],
+                'mother_lastname' => $validated['apellido_materno'],
+                'short_name' => $validated['first_name'],
+                'full_name' => $fullName,
+                'email' => $email,
+                'telephone' => $validated['telefono'],
+                'address' => $validated['direccion'] ?? null,
+                'gender' => $validated['sexo'] ?? null,
+                'is_client' => false,
+                'is_provider' => false,
+            ];
+            $person = Person::updateOrCreate(['number' => $identity], $personData);
+            $userData = [
                 'name' => $validated['first_name'],
                 'apellido_paterno' => $validated['apellido_paterno'],
                 'apellido_materno' => $validated['apellido_materno'],
@@ -97,13 +125,35 @@ class RegisteredUserController extends Controller
                 'direccion' => $validated['direccion'] ?? null,
                 'email' => $email,
                 'password' => Hash::make($validated['password']),
-            ]);
+                'person_id' => $person->id,
+                'status' => true,
+            ];
+            $user = User::create($userData);
 
             $organizationService->createOrganizationForUser($user, [
                 'nombre' => $validated['organization_name'],
                 'tipo' => $validated['organization_type'],
                 'ruc' => $validated['ruc'] ?? null,
             ]);
+
+            PersonUserPersistenceVerifier::verify(
+                $person,
+                $user,
+                $personData,
+                [
+                    'name' => $validated['first_name'],
+                    'apellido_paterno' => $validated['apellido_paterno'],
+                    'apellido_materno' => $validated['apellido_materno'],
+                    'telefono' => $validated['telefono'],
+                    'tipo_identidad' => $validated['tipo_identidad'],
+                    'numero_identidad' => $identity,
+                    'sexo' => $validated['sexo'] ?? null,
+                    'direccion' => $validated['direccion'] ?? null,
+                    'email' => $email,
+                    'person_id' => $person->id,
+                    'status' => true,
+                ]
+            );
 
             return $user;
         });

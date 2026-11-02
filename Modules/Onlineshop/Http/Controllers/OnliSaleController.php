@@ -11,6 +11,7 @@ use App\Models\PettyCash;
 use App\Models\Sale;
 use App\Models\SaleProduct;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\RedirectResponse;
@@ -233,12 +234,7 @@ class OnliSaleController extends Controller
                 ->withErrors($validator);
         }
 
-        $person = Person::firstOrCreate(
-            [
-                'document_type_id' => $request->get('document_type'),
-                'number' => $request->get('number')
-            ],
-            [
+        $personData = [
                 'description'           => 'Estudiante',
                 'email'                 => $request->get('email'),
                 'short_name'            => $request->get('names'),
@@ -248,8 +244,13 @@ class OnliSaleController extends Controller
                 'names'                 => $request->get('names'),
                 'father_lastname'       => $request->get('app'),
                 'mother_lastname'       => $request->get('apm')
-
-            ]
+        ];
+        $person = Person::updateOrCreate(
+            [
+                'document_type_id' => $request->get('document_type'),
+                'number' => $request->get('number')
+            ],
+            $personData
         );
 
         $student = AcaStudent::create([
@@ -257,17 +258,13 @@ class OnliSaleController extends Controller
             'person_id'     => $person->id
         ]);
 
-        $user = User::firstOrCreate(
-            [
-                'email' => $request->get('email')
-            ],
-            [
-                'name'          => $request->get('names'),
-                'password'      => Hash::make($request->get('number')),
-                'local_id'      => 1,
-                'person_id'     => $person->id
-            ]
-        );
+        $userData = [
+            'name' => $request->get('names'),
+            'password' => Hash::make($request->get('number')),
+            'local_id' => 1,
+            'person_id' => $person->id,
+        ];
+        $user = User::updateOrCreate(['email' => $request->get('email')], $userData);
 
         $user->assignRole('Alumno');
 
@@ -311,6 +308,22 @@ class OnliSaleController extends Controller
                 'status'            => false
             ]);
         }
+
+        PersonUserPersistenceVerifier::verify(
+            $person,
+            $user,
+            [
+                'document_type_id' => $request->get('document_type'),
+                'number' => $request->get('number'),
+                ...$personData,
+            ],
+            [
+                'name' => $request->get('names'),
+                'email' => $request->get('email'),
+                'person_id' => $person->id,
+                'local_id' => 1,
+            ]
+        );
 
         return to_route('web_pagar', [
             'sale'     => $sale->id
@@ -437,7 +450,7 @@ class OnliSaleController extends Controller
         try {
             $res = DB::transaction(function () use ($request) {
 
-                $person = Person::create([
+                $personData = [
                     'document_type_id' => $request->get('alu_document_type'),
                     'short_name' => $request->get('names'),
                     'full_name' => $request->get('apather') . ' ' . $request->get('amother') . ' ' . $request->get('names'),
@@ -455,24 +468,22 @@ class OnliSaleController extends Controller
                     'ubigeo' => $request->get('ubigeo'),
                     'ubigeo_description' => $request->get('ubigeo_description'),
                     'country_id' => $request->get('country_id')
-                ]);
+                ];
+                $person = Person::create($personData);
 
                 $student = AcaStudent::create([
                     'student_code'  => $request->get('alu_number'),
                     'person_id'     => $person->id
                 ]);
 
-                $user = User::firstOrCreate(
-                    [
-                        'email' => $request->get('email')
-                    ],
-                    [
-                        'name'          => $request->get('names'),
-                        'password'      => Hash::make($request->get('alu_number')),
-                        'local_id'      => 1,
-                        'person_id'     => $person->id
-                    ]
-                );
+                $userData = [
+                    'name' => $request->get('names'),
+                    'email' => $request->get('email'),
+                    'password' => Hash::make($request->get('alu_number')),
+                    'local_id' => 1,
+                    'person_id' => $person->id,
+                ];
+                $user = User::updateOrCreate(['email' => $request->get('email')], $userData);
 
                 $user->assignRole('Alumno');
 
@@ -648,6 +659,13 @@ class OnliSaleController extends Controller
 
                     }
                 }
+
+                PersonUserPersistenceVerifier::verify(
+                    $person,
+                    $user,
+                    $personData,
+                    $userData
+                );
             });
 
             // Enviar datos de la compra a N8N via Integrationhub (async)

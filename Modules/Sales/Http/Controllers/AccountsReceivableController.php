@@ -18,6 +18,7 @@ use App\Models\SaleDocumentType;
 use App\Models\SaleProduct;
 use App\Models\Serie;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Database\Eloquent\Builder;
@@ -269,11 +270,9 @@ class AccountsReceivableController extends Controller
                 if ($person_id) {
                     $person = Person::find($person_id);
 
-                    $person->update([
-                        // 'document_type_id' => $request->get('alu_document_type'),
+                    $personData = [
                         'short_name' => $request->get('names'),
                         'full_name' => $request->get('afather').' '.$request->get('amother').' '.$request->get('names'),
-                        // 'number' => $request->get('alu_number'),
                         'telephone' => $request->get('telephone'),
                         'email' => $request->get('email'),
                         'address' => $request->get('address'),
@@ -286,10 +285,10 @@ class AccountsReceivableController extends Controller
                         'ubigeo' => $request->get('ubigeo'),
                         'ubigeo_description' => $request->get('ubigeo_description'),
                         'country_id' => $request->get('country_id'),
-                    ]);
-
+                    ];
+                    $person->update($personData);
                 } else {
-                    $person = Person::create([
+                    $personData = [
                         'document_type_id' => $request->get('alu_document_type'),
                         'short_name' => $request->get('names'),
                         'full_name' => $request->get('afather').' '.$request->get('amother').' '.$request->get('names'),
@@ -308,7 +307,8 @@ class AccountsReceivableController extends Controller
                         'ubigeo' => $request->get('ubigeo'),
                         'ubigeo_description' => $request->get('ubigeo_description'),
                         'country_id' => $request->get('country_id'),
-                    ]);
+                    ];
+                    $person = Person::create($personData);
                 }
 
                 $student = AcaStudent::firstOrCreate(
@@ -316,17 +316,14 @@ class AccountsReceivableController extends Controller
                     ['student_code' => $request->get('alu_number')]
                 );
 
-                $user = User::firstOrCreate(
-                    [
-                        'email' => $request->get('email'),
-                    ],
-                    [
-                        'name' => $request->get('names'),
-                        'password' => Hash::make($request->get('alu_number')),
-                        'local_id' => 1,
-                        'person_id' => $person->id,
-                    ]
-                );
+                $userData = [
+                    'name' => $request->get('names'),
+                    'email' => $request->get('email'),
+                    'password' => Hash::make($request->get('alu_number')),
+                    'local_id' => 1,
+                    'person_id' => $person->id,
+                ];
+                $user = User::updateOrCreate(['email' => $request->get('email')], $userData);
 
                 $user->assignRole('Alumno');
 
@@ -519,6 +516,19 @@ class AccountsReceivableController extends Controller
                 //  ->first();
                 $name = Person::where('id', $sale_note->client_id)->first()->short_name;
                 $cronograma = SalePaymentSchedule::where('sale_id', $sale_note->id)->get();
+
+                PersonUserPersistenceVerifier::verify(
+                    $person,
+                    $user,
+                    array_merge(
+                        $personData,
+                        $person_id ? [] : [
+                            'document_type_id' => $request->get('alu_document_type'),
+                            'number' => $request->get('alu_number'),
+                        ]
+                    ),
+                    array_merge($userData, ['person_id' => $person->id])
+                );
 
                 // Mail::to($request->get('email'))->send(new CuotasMail($sale_note, $name, $cronograma));
 

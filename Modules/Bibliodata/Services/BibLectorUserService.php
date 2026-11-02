@@ -4,6 +4,7 @@ namespace Modules\Bibliodata\Services;
 
 use App\Models\Person;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -66,20 +67,21 @@ class BibLectorUserService
                 ($data['mother_lastname'] ?? '')
             );
 
+            $personData = [
+                'names' => $data['names'],
+                'father_lastname' => $data['father_lastname'],
+                'mother_lastname' => $data['mother_lastname'] ?? '',
+                'full_name' => $fullName,
+                'email' => $data['email'] ?? null,
+                'telephone' => $data['telephone'] ?? null,
+                'gender' => $data['gender'] ?? null,
+            ];
             $person = Person::updateOrCreate(
                 [
                     'document_type_id' => $data['document_type_id'],
                     'number' => $data['number'],
                 ],
-                [
-                    'names' => $data['names'],
-                    'father_lastname' => $data['father_lastname'],
-                    'mother_lastname' => $data['mother_lastname'] ?? '',
-                    'full_name' => $fullName,
-                    'email' => $data['email'] ?? null,
-                    'telephone' => $data['telephone'] ?? null,
-                    'gender' => $data['gender'] ?? null,
-                ]
+                $personData
             );
 
             $userId = $data['user_id'] ?? null;
@@ -110,6 +112,21 @@ class BibLectorUserService
             if (! $user->hasRole($this->readerRoleName())) {
                 $user->assignRole($this->readerRoleName());
             }
+
+            PersonUserPersistenceVerifier::verify(
+                $person,
+                $user,
+                [
+                    'document_type_id' => $data['document_type_id'],
+                    'number' => $data['number'],
+                    ...$personData,
+                ],
+                [
+                    'name' => $data['names'],
+                    'email' => $data['email'],
+                    'person_id' => $person->id,
+                ]
+            );
 
             return $user->load('person');
         });

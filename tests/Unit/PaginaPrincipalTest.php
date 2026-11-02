@@ -108,6 +108,19 @@ it('enlaza la portada de un producto a su sitio y no inventa URL para las del co
     expect(PaginaPrincipal::url('2'))->toBeNull();
 });
 
+it('lee el catálogo del archivo aunque la configuración esté cacheada', function () {
+    // Simula bootstrap/cache/config.php congelado con el catálogo anterior a
+    // SALUD y Dental, que es lo que pasa en producción tras desplegar una
+    // portada nueva sin volver a cachear: la configuración cargada no las tiene.
+    config(['pagina_principal.paginas' => [
+        '1' => ['nombre' => 'Aracode Principal', 'vista' => 'aracode.pages.home', 'producto' => null],
+    ]]);
+
+    expect(PaginaPrincipal::nombre('6'))->toBe('SALUD');
+    expect(PaginaPrincipal::nombre('7'))->toBe('Dental');
+    expect(PaginaPrincipal::vista('7'))->toBe('dental.pages.home');
+});
+
 it('responde en la raíz del dominio con la portada elegida', function () {
     elegirPortadaPrincipal('5');
 

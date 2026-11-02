@@ -38,6 +38,7 @@ use Modules\CMS\Entities\CmsLanding;
 use Modules\Socialevents\Entities\EvenEvent;
 use App\Models\Parameter;
 use App\Support\PaginaPrincipal;
+use App\Support\PersonUserPersistenceVerifier;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
@@ -878,34 +879,31 @@ class WebPageController extends Controller
                 $user = Auth::user();
                 $person = Person::findOrFail($user->person_id);
             } else {
-                $person = Person::firstOrCreate(
-                    ['number' => $validated['dni']],
-                    [
-                        'document_type_id' => 1,
-                        'short_name' => $validated['names'],
-                        'full_name' => $validated['names'],
-                        'number' => $validated['dni'],
-                        'telephone' => null,
-                        'email' => $validated['email'],
-                        'is_provider' => false,
-                        'is_client' => true,
-                        'names' => $validated['names'],
-                        'gender' => 'M',
-                        'status' => true
-                    ]
+                $personData = [
+                    'document_type_id' => 1,
+                    'short_name' => $validated['names'],
+                    'full_name' => $validated['names'],
+                    'number' => $validated['dni'],
+                    'telephone' => null,
+                    'email' => $validated['email'],
+                    'is_provider' => false,
+                    'is_client' => true,
+                    'names' => $validated['names'],
+                    'gender' => 'M',
+                    'status' => true,
+                ];
+                $person = Person::updateOrCreate(
+                    ['document_type_id' => 1, 'number' => $validated['dni']],
+                    $personData
                 );
 
-                if (!$person->email) {
-                    $person->email = $validated['email'];
-                    $person->save();
-                }
-
-                $user = User::create([
+                $userData = [
                     'name' => $person->names ?: $person->full_name,
                     'email' => $validated['email'],
                     'password' => Hash::make($validated['password'] ?: $validated['dni']),
-                    'person_id' => $person->id
-                ]);
+                    'person_id' => $person->id,
+                ];
+                $user = User::create($userData);
 
                 Auth::login($user);
 
@@ -966,6 +964,25 @@ class WebPageController extends Controller
                     'entity_name_product' => AcaCourse::class
                 ]);
             }
+
+            PersonUserPersistenceVerifier::verify(
+                $person,
+                $user,
+                $validated['account_mode'] === 'create'
+                    ? $personData
+                    : [
+                        'document_type_id' => $person->document_type_id,
+                        'number' => $person->number,
+                        'full_name' => $person->full_name,
+                        'email' => $person->email,
+                    ],
+                $validated['account_mode'] === 'create'
+                    ? $userData
+                    : [
+                        'person_id' => $person->id,
+                        'email' => $user->email,
+                    ]
+            );
 
             DB::commit();
         } catch (\Throwable $e) {
@@ -1890,7 +1907,7 @@ class WebPageController extends Controller
             $products = [];
             $total = 0;
 
-            $person = Person::create([
+            $personData = [
                 'document_type_id' => $request->get('type'),
                 'short_name' => $comprador_nombre,
                 'full_name' => $comprador_nombre . ' ' . $request->get('app') . ' ' . $request->get('apm'),
@@ -1904,9 +1921,12 @@ class WebPageController extends Controller
                 'mother_lastname' => $request->get('apm'),
                 'gender' => 'M',
                 'status' => true
-            ]);
+            ];
+            $person = Person::create($personData);
 
             $user = User::firstOrNew(['email' => $person->email]);
+            $createdAccount = false;
+            $userData = null;
 
             if ($user->exists) {
                 // El usuario ya existe, redirige al usuario a iniciar sesión
@@ -1915,12 +1935,14 @@ class WebPageController extends Controller
                     return redirect()->route('login')->with('message', 'Este correo electrónico ya está registrado. Por favor, inicia sesión.');
                 }
             } else {
-                $user = User::create([
+                $userData = [
                     'name' => $person->names,
                     'email' => $person->email,
                     'password' => Hash::make($request->get('password')),
                     'person_id' => $person->id
-                ]);
+                ];
+                $user = User::create($userData);
+                $createdAccount = true;
                 Auth::login($user);
                 //asignar el rol de estudiante....
                 if (!$user->hasRole('Alumno')) {
@@ -1993,6 +2015,11 @@ class WebPageController extends Controller
 
             $preference_id =  $preference->id;
             ///dd($preference);
+
+            if ($createdAccount) {
+                PersonUserPersistenceVerifier::verify($person, $user, $personData, $userData);
+            }
+
             DB::commit();
         } catch (\MercadoPago\Exceptions\MPApiException $e) {
             // Manejar la excepción
@@ -2278,7 +2305,7 @@ class WebPageController extends Controller
         DB::beginTransaction();
         try {
             // 🔹 REGISTRO EN TABLA people
-            $person = Person::create([
+            $personData = [
                 'short_name' => $request->nombres,
                 'full_name' => $request->apaterno. ' '.$request->amaterno.' '.$request->nombres,
                 'document_type_id' => $request->tidocumento,
@@ -2294,7 +2321,8 @@ class WebPageController extends Controller
                 'ubigeo_description' => $request->ciudad ?? null,
                 'gender' => $request->genero ?? null,
                 'birthdate' => $request->fecha_nacimiento ?? null
-            ]);
+            ];
+            $person = Person::create($personData);
 
             // 🔹 REGISTRO EN TABLA aca_students
             $student = AcaStudent::create([
@@ -2329,7 +2357,7 @@ class WebPageController extends Controller
 
 
             // 🔹 REGISTRO EN TABLA users
-            User::create([
+            $userData = [
                 'name' => $request->nombres,
                 'email' => $request->email,
                 'email_verified_at' => Carbon::now(),
@@ -2339,7 +2367,8 @@ class WebPageController extends Controller
                 'status' => true,
                 'updated_information' => false,
                 'tour_completed' => true,
-            ]);
+            ];
+            $user = User::create($userData);
 
             $courses = [];
             $item = OnliItem::where('item_id', '=', $request->courseInterest)->first();
@@ -2359,6 +2388,38 @@ class WebPageController extends Controller
                 'user'      => $request->email,
                 'password'  => $request->numero,
             ]));
+
+            PersonUserPersistenceVerifier::verify(
+                $person,
+                $user,
+                $personData,
+                [
+                    'document_type_id' => $request->tidocumento,
+                    'number' => $request->numero,
+                    'short_name' => $request->nombres,
+                    'full_name' => $request->apaterno . ' ' . $request->amaterno . ' ' . $request->nombres,
+                    'names' => $request->nombres,
+                    'father_lastname' => $request->apaterno,
+                    'mother_lastname' => $request->amaterno,
+                    'telephone' => $request->phone,
+                    'email' => $request->email,
+                    'country_id' => $request->pais,
+                    'status' => true,
+                    'ubigeo' => $ubigeo,
+                    'ubigeo_description' => $request->ciudad ?? null,
+                    'gender' => $request->genero ?? null,
+                    'birthdate' => $request->fecha_nacimiento ?? null,
+                ],
+                [
+                    'name' => $request->nombres,
+                    'email' => $request->email,
+                    'person_id' => $person->id,
+                    'status' => true,
+                    'updated_information' => false,
+                    'tour_completed' => true,
+                ]
+            );
+
             // 3. CONFIRMACIÓN (COMMIT)
             DB::commit();
 

@@ -35,8 +35,11 @@
 | Alternar la portada NO despublica el resto del sitio: las demás páginas
 | (corporativas y de producto) siguen respondiendo en sus URLs.
 |
-| Recuerda ejecutar `php artisan config:clear` (o `config:cache` en producción)
-| después de editar este archivo.
+| Este archivo se lee directo del disco (App\Support\PaginaPrincipal), no de
+| la configuración cacheada, así que una portada nueva queda disponible en
+| cuanto el archivo está en el servidor: no hace falta `config:cache` para
+| que aparezca en Parámetros ni para publicarla en /. El despliegue de la
+| vista y de sus archivos de public/ sigue siendo necesario.
 |
 */
 
@@ -52,8 +55,8 @@ return [
 
         '2' => [
             'nombre' => 'Aracode torneos',
-            //'vista' => 'aracode.pages.torneos',
-            'vista' => 'pichanguero.pages.home',
+            'vista' => 'aracode.pages.torneos',
+            //'vista' => 'pichanguero.pages.home',
             'producto' => 'pichanguero',
         ],
 
@@ -73,6 +76,23 @@ return [
             'nombre' => 'Pichanguero',
             'vista' => 'pichanguero.pages.home',
             'producto' => 'pichanguero',
+        ],
+
+        // Portada del módulo Salud: agenda de pacientes e historia clínica.
+        // Es una página de este mismo sitio (no tiene web de producto aparte),
+        // así que no declara 'producto' y su URL de vista previa es la raíz.
+        '6' => [
+            'nombre' => 'SALUD',
+            'vista' => 'salud.pages.home',
+            'producto' => null,
+        ],
+
+        // Portada del módulo Dental: clínicas y consultorios odontológicos.
+        // También es una página de este mismo sitio.
+        '7' => [
+            'nombre' => 'Dental',
+            'vista' => 'dental.pages.home',
+            'producto' => null,
         ],
 
     ],

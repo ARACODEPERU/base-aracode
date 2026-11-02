@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Parameter;
+use App\Models\Person;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Hash;
@@ -66,9 +67,28 @@ it('crea el usuario responsable y su organización con la prueba gratuita', func
     $this->assertAuthenticated();
 
     $usuario = User::where('email', 'ana@example.com')->first();
+    $persona = Person::where('number', '12345678')->first();
     expect($usuario)->not->toBeNull()
+        ->and($persona)->not->toBeNull()
+        ->and((int) $usuario->person_id)->toBe((int) $persona->id)
+        ->and($usuario->name)->toBe('Ana')
+        ->and($usuario->email)->toBe('ana@example.com')
         ->and($usuario->socialevent_organization_id)->not->toBeNull()
         ->and($usuario->hasRole('sports_organizer'))->toBeTrue();
+
+    $this->assertDatabaseHas('people', [
+        'id' => $persona->id,
+        'document_type_id' => '1',
+        'number' => '12345678',
+        'names' => 'Ana',
+        'father_lastname' => 'Pérez',
+        'mother_lastname' => 'Ruiz',
+        'full_name' => 'Pérez Ruiz Ana',
+        'email' => 'ana@example.com',
+        'telephone' => '999888777',
+        'address' => 'Av. Siempre Viva 123',
+        'gender' => 'F',
+    ]);
 
     $this->assertDatabaseHas('socialevent_organizations', [
         'id' => $usuario->socialevent_organization_id,

@@ -2,7 +2,9 @@
 
 namespace Modules\Socialevents\Services;
 
+use App\Models\Person;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -151,15 +153,36 @@ class OrganizationTeamService
             $organization = $this->lockOrganization($organizationId);
             $this->assertSeatAvailable($organization);
 
-            $user = User::create([
+            $personData = null;
+            $person = null;
+            if (filled($data['numero_identidad'] ?? null)) {
+                $personData = [
+                    'document_type_id' => $data['tipo_identidad'] ?? '0',
+                    'number' => trim($data['numero_identidad']),
+                    'full_name' => trim($data['name']),
+                    'short_name' => trim($data['name']),
+                    'email' => strtolower(trim($data['email'])),
+                    'telephone' => $data['telefono'] ?? null,
+                    'is_client' => false,
+                    'is_provider' => false,
+                ];
+                $person = Person::updateOrCreate(
+                    ['number' => trim($data['numero_identidad'])],
+                    $personData
+                );
+            }
+
+            $userData = [
                 'name' => $data['name'],
                 'email' => strtolower(trim($data['email'])),
                 'password' => Hash::make($data['password']),
                 'telefono' => $data['telefono'] ?? null,
                 'tipo_identidad' => $data['tipo_identidad'] ?? null,
                 'numero_identidad' => $data['numero_identidad'] ?? null,
+                'person_id' => $person?->id,
                 'status' => 1,
-            ]);
+            ];
+            $user = User::create($userData);
             $user->forceFill([
                 'socialevent_organization_id' => $organizationId,
                 'socialevent_organization_role' => 'member',
@@ -172,6 +195,23 @@ class OrganizationTeamService
                 'email' => $user->email,
                 'capabilities' => $keys,
             ]);
+
+            if ($person && $personData) {
+                PersonUserPersistenceVerifier::verify(
+                    $person,
+                    $user,
+                    $personData,
+                    [
+                        'name' => $data['name'],
+                        'email' => strtolower(trim($data['email'])),
+                        'telefono' => $data['telefono'] ?? null,
+                        'tipo_identidad' => $data['tipo_identidad'] ?? null,
+                        'numero_identidad' => trim($data['numero_identidad']),
+                        'person_id' => $person->id,
+                        'status' => 1,
+                    ]
+                );
+            }
 
             return $user;
         });

@@ -50,6 +50,22 @@ class PaginaPrincipal
      */
     public static function paginas(): array
     {
+        // El catálogo se lee del archivo y no de config(): `config:cache` lo
+        // congela en bootstrap/cache/config.php, así que una portada nueva
+        // (SALUD, Dental) no aparece en Parámetros ni se puede publicar en /
+        // hasta que alguien vuelva a cachear la configuración. Leyéndolo
+        // directo, la portada está disponible en cuanto el archivo llega al
+        // servidor, igual que ocurre en local.
+        $ruta = config_path('pagina_principal.php');
+
+        if (is_file($ruta)) {
+            $catalogo = require $ruta;
+
+            if (is_array($catalogo) && is_array($catalogo['paginas'] ?? null)) {
+                return $catalogo['paginas'];
+            }
+        }
+
         $paginas = config('pagina_principal.paginas');
 
         return is_array($paginas) ? $paginas : [];

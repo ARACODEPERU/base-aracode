@@ -15,6 +15,7 @@ use App\Models\SaleDocument;
 use App\Models\SaleDocumentType;
 use App\Models\Serie;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -384,6 +385,27 @@ class SportsOrganizationAdminController extends Controller
                 'owner_user_id' => $user->id,
                 'match_rate' => $validated['match_rate'],
             ]);
+
+            PersonUserPersistenceVerifier::verify(
+                $person,
+                $user,
+                [
+                    'document_type_id' => $ownerData['tipo_identidad'] ?? $person->document_type_id,
+                    'number' => $identityNumber,
+                    'full_name' => $ownerData['name'],
+                    'short_name' => $ownerData['name'],
+                    'email' => $email,
+                    'telephone' => $ownerData['telefono'] ?? null,
+                ],
+                [
+                    'name' => $ownerData['name'],
+                    'email' => $email,
+                    'person_id' => $person->id,
+                    'telefono' => $ownerData['telefono'] ?? null,
+                    'numero_identidad' => $identityNumber,
+                    'status' => 1,
+                ]
+            );
 
             return $organizationId;
         });

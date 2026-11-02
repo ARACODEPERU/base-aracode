@@ -2,7 +2,9 @@
 
 namespace Modules\Academic\Services;
 
+use App\Models\Person;
 use App\Models\User;
+use App\Support\PersonUserPersistenceVerifier;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Modules\Academic\Entities\AcaSchoolEnrollment;
@@ -139,6 +141,24 @@ class StudentPortalAuth
 
         if ($user) {
             $user->forceFill(['password' => Hash::make($document)])->save();
+            $student->loadMissing('person');
+            if ($student->person) {
+                PersonUserPersistenceVerifier::verify(
+                    $student->person,
+                    $user,
+                    [
+                        'document_type_id' => $student->person->document_type_id,
+                        'number' => $student->person->number,
+                        'full_name' => $student->person->full_name,
+                        'email' => $student->person->email,
+                    ],
+                    [
+                        'name' => $student->person->full_name ?: $student->student_code,
+                        'person_id' => $student->person_id,
+                        'status' => true,
+                    ]
+                );
+            }
 
             return [];
         }
@@ -185,15 +205,34 @@ class StudentPortalAuth
         }
 
         try {
-            return [
-                'user' => User::create([
-                    'name' => $student->person?->full_name ?: $student->student_code,
-                    'email' => $this->uniqueEmail($student),
-                    'password' => Hash::make($password),
-                    'person_id' => $student->person_id,
-                    'status' => true,
-                ]),
+            $userData = [
+                'name' => $student->person?->full_name ?: $student->student_code,
+                'email' => $this->uniqueEmail($student),
+                'password' => Hash::make($password),
+                'person_id' => $student->person_id,
+                'status' => true,
             ];
+            $user = User::create($userData);
+
+            $person = Person::query()->findOrFail($student->person_id);
+            PersonUserPersistenceVerifier::verify(
+                $person,
+                $user,
+                [
+                    'document_type_id' => $person->document_type_id,
+                    'number' => $person->number,
+                    'full_name' => $person->full_name,
+                    'email' => $person->email,
+                ],
+                [
+                    'name' => $userData['name'],
+                    'email' => $userData['email'],
+                    'person_id' => $person->id,
+                    'status' => true,
+                ]
+            );
+
+            return ['user' => $user];
         } catch (Throwable $e) {
             return ['error' => 'No pudimos crear tu acceso. Pide apoyo en secretaría para revisar tus datos.'];
         }

@@ -25,3 +25,8 @@ yarn-error.log
 public/robots.txt
 public/llms.txt
 public/robots.txt
+
+# Archivos temporales de editores (pueden contener el .env completo)
+*.swp
+*.swo
+*.swx
