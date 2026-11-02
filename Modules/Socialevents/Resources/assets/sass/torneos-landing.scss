@@ -3723,3 +3723,179 @@ a.se-team-card:focus-visible {
     text-decoration: underline;
     text-underline-offset: 2px;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Capa de acabado y movimiento
+ *
+ * Solo presentación: no cambia la estructura, los datos ni los ganchos del
+ * JS. Todo lo que se mueve aquí se apaga con «prefers-reduced-motion».
+ * ────────────────────────────────────────────────────────────────────── */
+
+/* Barra de progreso de lectura (la crea torneos-landing.js) */
+.se-read-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 110;
+    height: 2px;
+    transform: scaleX(var(--se-progress, 0));
+    transform-origin: 0 50%;
+    background: linear-gradient(90deg, var(--se-accent-2), var(--se-accent));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.se-read-progress.is-visible {
+    opacity: 1;
+}
+
+/* Las anclas dejan de esconder el título debajo de la cabecera fija */
+.se-landing section[id] {
+    scroll-margin-top: calc(var(--se-header-h) + 1rem);
+}
+
+/* Cifras alineadas: la tabla y los marcadores se leen como una columna */
+.se-table th,
+.se-table td,
+.se-match__score,
+.se-stat-card__value,
+.se-rank-card__points,
+.se-modal__stat-value {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Evita palabras huérfanas en la última línea de los párrafos */
+.se-hero__desc,
+.se-section__sub {
+    text-wrap: pretty;
+}
+
+/* Respuesta al pulsar: los botones dejan de sentirse planos */
+.se-btn:active {
+    transform: scale(0.98);
+}
+
+.se-team-card:active {
+    transform: translateY(-1px) scale(0.99);
+}
+
+/* Galería: la imagen respira al pasar el cursor */
+.se-gallery__item img,
+.se-gallery__item video {
+    transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.se-gallery__item:hover img,
+.se-gallery__item:focus-visible img {
+    transform: scale(1.04);
+}
+
+/* El fondo del hero acompaña el scroll (lo mueve el JS con transform) */
+.se-hero__bg img {
+    will-change: transform;
+}
+
+/* El fondo del modal entra con el diálogo, no aparece de golpe */
+.se-modal.is-open .se-modal__backdrop {
+    animation: se-backdrop-in 0.24s ease both;
+}
+
+@keyframes se-backdrop-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .se-read-progress {
+        transition: none;
+    }
+
+    .se-gallery__item img,
+    .se-gallery__item video {
+        transition: none;
+    }
+
+    .se-gallery__item:hover img,
+    .se-gallery__item:focus-visible img {
+        transform: none;
+    }
+
+    .se-modal.is-open .se-modal__backdrop {
+        animation: none;
+    }
+
+    .se-btn:active,
+    .se-team-card:active {
+        transform: none;
+    }
+
+    .se-hero__bg img {
+        will-change: auto;
+        transform: none !important;
+    }
+}
+
+/* Skeleton por sección: cada bloque se cubre con su propia silueta mientras
+ * termina de entrar en pantalla. Lo pinta torneos-landing.js. */
+.se-loading {
+    position: relative;
+}
+
+.se-loading > *:not(.se-skeleton) {
+    visibility: hidden;
+}
+
+.se-skeleton {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.se-skeleton__block {
+    position: absolute;
+    border-radius: 14px;
+    background-color: rgba(255, 255, 255, 0.045);
+    background-image: linear-gradient(
+        100deg,
+        rgba(255, 255, 255, 0) 25%,
+        rgba(255, 255, 255, 0.1) 45%,
+        rgba(255, 255, 255, 0) 65%
+    );
+    background-size: 220% 100%;
+    background-repeat: no-repeat;
+    animation: se-skeleton-shimmer 1.15s linear infinite;
+}
+
+@keyframes se-skeleton-shimmer {
+    from {
+        background-position: 140% 0;
+    }
+
+    to {
+        background-position: -60% 0;
+    }
+}
+
+.se-skeleton.is-done {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .se-skeleton {
+        transition: none;
+    }
+
+    .se-skeleton__block {
+        animation: none;
+    }
+}
+

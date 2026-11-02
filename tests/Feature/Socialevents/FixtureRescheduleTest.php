@@ -87,7 +87,7 @@ class FixtureRescheduleTest extends TestCase
         ])->assertOk();
     }
 
-    private function unPartido(int $jornada = null): EventEditionMatch
+    private function unPartido(?int $jornada = null): EventEditionMatch
     {
         return EventEditionMatch::where('edition_id', $this->edition->id)
             ->when($jornada !== null, fn ($q) => $q->where('round_number', $jornada))
