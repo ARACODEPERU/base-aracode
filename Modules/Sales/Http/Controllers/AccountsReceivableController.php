@@ -40,6 +40,7 @@ use Modules\Sales\Emails\CuotasMail;
 use Modules\Sales\Entities\SalePaymentSchedule;
 use Modules\Sales\Entities\SalePaymentScheduleDestination;
 use Modules\Sales\Jobs\PaymentDestinations;
+use Modules\Treasury\Services\TreasuryHooks;
 use Modules\Sales\Rules\ValidationRuleCourseSubscriptions;
 
 class AccountsReceivableController extends Controller
@@ -1073,7 +1074,13 @@ class AccountsReceivableController extends Controller
                 $sale->petty_cash_id = $petty_cash->id;
                 $sale->save();
 
-                $this->paymentDestinationsStore($request->get('payments'), $scheduleId, $document->id, $sale->id);
+                $destinations = $this->paymentDestinationsStore($request->get('payments'), $scheduleId, $document->id, $sale->id);
+
+                // Tesorería: cada cobro del cronograma genera su movimiento,
+                // registrado dentro de la transacción del comprobante.
+                foreach ($destinations as $destination) {
+                    TreasuryHooks::recordScheduleDestination($destination);
+                }
 
                 return $document;
             });
@@ -1222,13 +1229,21 @@ class AccountsReceivableController extends Controller
         return ['needs_registration' => false];
     }
 
+    /**
+     * Registra los cobros del cronograma y devuelve los modelos creados, para
+     * que la capa de tesorería registre cada uno con su propio origen.
+     *
+     * @return array<int, SalePaymentScheduleDestination>
+     */
     public function paymentDestinationsStore($payments, $schedule_id, $document_id, $sale_id)
     {
+        $created = [];
+
         foreach ($payments as $payment) {
-            SalePaymentScheduleDestination::create([
+            $created[] = SalePaymentScheduleDestination::create([
                 'method_id' => $payment['type'],
-                'date_payment' => $payment['date_payment'],
-                'reference' => $payment['reference'],
+                'date_payment' => $payment['date_payment'] ?? null,
+                'reference' => $payment['reference'] ?? null,
                 'amount' => $payment['amount'],
                 'schedule_id' => $schedule_id,
                 'document_id' => $document_id,
@@ -1237,6 +1252,8 @@ class AccountsReceivableController extends Controller
                 'user_id' => Auth::id(),
             ]);
         }
+
+        return $created;
     }
 
     public function paymentDestinationsExportExcel(Request $request)

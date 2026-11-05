@@ -217,6 +217,11 @@ class SaleDocumentController extends Controller
             'items.*.unit_price' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
             'items.*.total' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
             'client_id' => 'required',
+            // Cuota inicial opcional de una venta al crédito: solo dinero recibido
+            'initial_payment' => 'nullable|array',
+            'initial_payment.*.type' => 'required_with:initial_payment|exists:payment_methods,id',
+            'initial_payment.*.amount' => 'required_with:initial_payment|numeric|min:0.01',
+            'initial_payment.*.reference' => 'nullable|string|max:255',
         ];
 
         if ($request->get('forma_pago') == 'Credito') {
@@ -482,12 +487,26 @@ class SaleDocumentController extends Controller
                 $difference = abs($ttotal - $subtotal);
                 $rounding = number_format($difference, 2);
 
-                // Obtener la forma de pago del request ---
-                $status_pay = true;
+                // Obtener la forma de pago del request ---                $status_pay = true;
+                $initialPayments = [];
+
                 if ($forma_pago && $forma_pago === 'Credito') {
                     $quotasData = $request->input('quotas.amounts');
+                    $initialPayments = $this->normalizeInitialPayment($request->input('initial_payment', []));
+                    $initialTotal = round(collect($initialPayments)->sum('amount'), 2);
                     $due_date = null;
+
                     if (! empty($quotasData)) {
+                        // Cuota inicial + cuotas deben cubrir el total: no se
+                        // registra como cobrado un importe que no cuadra.
+                        $quotasTotal = round(collect($quotasData)->sum(fn ($quota) => (float) ($quota['amount'] ?? 0)), 2);
+
+                        if ($initialTotal > 0 && abs($quotasTotal + $initialTotal - (float) $request->get('total')) > 0.01) {
+                            throw \Illuminate\Validation\ValidationException::withMessages([
+                                'initial_payment' => 'La suma de la cuota inicial y las cuotas debe ser igual al total del comprobante.',
+                            ]);
+                        }
+
                         foreach ($quotasData as $index => $quota) {
                             $saleDocumentQuota = new SaleDocumentQuota;
                             $saleDocumentQuota->sale_document_id = $document->id; // Vincular con el documento recién creado
@@ -503,7 +522,7 @@ class SaleDocumentController extends Controller
                         $document->invoice_due_date = $due_date;
                     }
 
-                    $sale->advancement = 0;
+                    $sale->advancement = $initialTotal;
                     $sale->save();
                     $status_pay = false;
                 }
@@ -526,11 +545,17 @@ class SaleDocumentController extends Controller
 
                 $serie->increment('number', 1);
 
+                // Cuota inicial: solo el importe realmente recibido.
+                foreach ($initialPayments as $index => $initialPayment) {
+                    TreasuryHooks::recordDownPayment($document, $initialPayment, $index);
+                }
+
+                // Tesorería: ingresos del cobro al contado (en crédito el JSON
+                // de pagos no representa dinero recibido).
+                $this->recordTreasuryIncomes($sale);
+
                 return $document;
             });
-
-            // Tesorería: registrar los ingresos de la venta según método de pago
-            $this->recordTreasuryIncomes($res->sale);
 
             $healthChargeIds = collect($request->get('items', []))
                 ->pluck('health_charge_id')
@@ -1261,5 +1286,28 @@ class SaleDocumentController extends Controller
     private function recordTreasuryIncomes(Sale $sale): void
     {
         TreasuryHooks::recordSaleIncomes($sale);
+    }
+
+    /**
+     * Normaliza la cuota inicial recibida ({type, amount, reference}).
+     *
+     * @return array<int, array{type: int, amount: float, reference: ?string}>
+     */
+    private function normalizeInitialPayment(mixed $input): array
+    {
+        if (! is_array($input)) {
+            return [];
+        }
+
+        return collect($input)
+            ->filter(fn ($payment) => is_array($payment) && isset($payment['amount'], $payment['type']))
+            ->map(fn ($payment) => [
+                'type' => (int) $payment['type'],
+                'amount' => round((float) $payment['amount'], 2),
+                'reference' => $payment['reference'] ?? null,
+            ])
+            ->filter(fn ($payment) => $payment['amount'] > 0)
+            ->values()
+            ->all();
     }
 }

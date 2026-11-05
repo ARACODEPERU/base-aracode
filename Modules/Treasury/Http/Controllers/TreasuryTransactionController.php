@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasuryCategory;
+use Modules\Treasury\Entities\TreasurySourceMovement;
 use Modules\Treasury\Entities\TreasuryTransaction;
+use Modules\Treasury\Services\TreasuryIntegrationService;
 use Modules\Treasury\Services\TreasuryLedgerService;
 
 class TreasuryTransactionController extends Controller
@@ -150,7 +152,24 @@ class TreasuryTransactionController extends Controller
         $this->authorizePermission('treasury_movimientos_eliminar');
 
         $transaction = TreasuryTransaction::findOrFail($id);
-        $this->ledger->voidTransaction($transaction, auth()->id());
+
+        // Si el movimiento viene de la integración, se revierte también la
+        // operación de origen para que la tabla puente no quede "processed"
+        // sin respaldo en el libro.
+        $bridge = TreasurySourceMovement::query()
+            ->where('treasury_transaction_id', $transaction->id)
+            ->whereNull('reversal_of_id')
+            ->first();
+
+        if ($bridge) {
+            app(TreasuryIntegrationService::class)->reverse(
+                $bridge,
+                'Anulación manual desde tesorería',
+                auth()->id()
+            );
+        } else {
+            $this->ledger->voidTransaction($transaction, auth()->id());
+        }
 
         return back()->with('success', 'Movimiento anulado.');
     }

@@ -4,7 +4,9 @@ namespace Modules\Treasury\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Modules\Treasury\Console\BackfillTreasuryCommand;
+use Modules\Treasury\Console\RetryTreasuryIntegrationCommand;
 use Modules\Treasury\Services\PaymentAccountResolver;
+use Modules\Treasury\Services\TreasuryIntegrationService;
 use Modules\Treasury\Services\TreasuryLedgerService;
 
 class TreasuryServiceProvider extends ServiceProvider
@@ -34,6 +36,7 @@ class TreasuryServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 BackfillTreasuryCommand::class,
+                RetryTreasuryIntegrationCommand::class,
             ]);
         }
     }
@@ -50,6 +53,7 @@ class TreasuryServiceProvider extends ServiceProvider
         // Servicios del módulo como singletons para reutilizarlos desde Sales
         $this->app->singleton(PaymentAccountResolver::class);
         $this->app->singleton(TreasuryLedgerService::class);
+        $this->app->singleton(TreasuryIntegrationService::class);
     }
 
     /**

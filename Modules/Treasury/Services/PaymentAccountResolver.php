@@ -100,21 +100,23 @@ class PaymentAccountResolver
     }
 
     /**
-     * Cache de cuentas wallet con su billetera precargada (por request).
+     * Cache de cuentas wallet con su billetera precargada (por instancia, no
+     * estático: así no sobrevive a la creación de una cuenta nueva ni entre
+     * ejecuciones distintas del mismo proceso).
      */
+    private ?Collection $walletCache = null;
+
     private function walletAccounts(): Collection
     {
-        static $cache = null;
-
-        if ($cache === null) {
-            $cache = TreasuryAccount::query()
+        if ($this->walletCache === null) {
+            $this->walletCache = TreasuryAccount::query()
                 ->active()
                 ->wallets()
                 ->with(['companyBilletera.billetera'])
                 ->get();
         }
 
-        return $cache;
+        return $this->walletCache;
     }
 
     private function normalizeName(?string $value): string

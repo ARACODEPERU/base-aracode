@@ -86,10 +86,11 @@ class SalePaymentQuotaController extends Controller
                 $saleDocument->save();
             }
 
-            DB::commit();
-
-            // Tesorería: registrar el ingreso del abono según método de pago
+            // Tesorería: el ingreso se registra dentro de la misma transacción
+            // del abono, para que el pago y su movimiento no se separen.
             TreasuryHooks::recordQuotaPayment($newPayment, $saleDocument);
+
+            DB::commit();
 
             $quota->load('payments');
 
@@ -128,7 +129,8 @@ class SalePaymentQuotaController extends Controller
             DB::beginTransaction();
 
             $totalPaid = 0;
-            $createdPayments = [];
+            // Dinero realmente recibido en esta operación.
+            $received = round((float) $request->get('amount_applied'), 2);
 
             $pendingQuotas = SaleDocumentQuota::where('sale_document_id', $request->get('document_id'))
                         ->whereIn('status', ['Pendiente', 'Parcialmente Pagada', 'Amortizado', 'Vencido'])
@@ -161,11 +163,9 @@ class SalePaymentQuotaController extends Controller
                     'estado' => false
                 ]);
 
-                // Tesorería: solo los abonos reales (no los de relleno) generan movimiento
-                if ($createdPayment->estado != false) {
-                    $createdPayments[] = $createdPayment;
-                }
-
+                // Las filas de relleno (estado = false) documentan el saldo
+                // cancelado, pero no representan dinero recibido: el ingreso se
+                // registra una sola vez por el importe realmente cobrado.
                 $totalPaid += $quota->balance; // Suma lo que se "pagó" por esta cuota
 
                 // Actualizar la cuota a pagada
@@ -183,12 +183,16 @@ class SalePaymentQuotaController extends Controller
             $sale->payments = $payments;
             $sale->save();
 
-            DB::commit();
+            // Tesorería: un solo ingreso por el dinero recibido ($received).
+            TreasuryHooks::recordFullPayment(
+                $saleDocument,
+                $received,
+                (int) $request->get('payment_method_id'),
+                $request->get('reference'),
+                $request->get('payment_date') ?? now()->toDateString()
+            );
 
-            // Tesorería: registrar los ingresos de los abonos según método de pago
-            foreach ($createdPayments as $createdPayment) {
-                TreasuryHooks::recordQuotaPayment($createdPayment, $saleDocument);
-            }
+            DB::commit();
 
             return to_route('acco_document_list')->with('success', 'Pago registrado y cuota actualizada exitosamente.');
 
@@ -259,10 +263,10 @@ class SalePaymentQuotaController extends Controller
 
             $payment->delete();
 
-            DB::commit();
-
-            // Tesorería: anular el ingreso generado por el abono eliminado
+            // Tesorería: anular el ingreso en la misma transacción del borrado
             TreasuryHooks::voidQuotaPayment($payment);
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,

@@ -16,6 +16,9 @@ use Modules\Treasury\Entities\TreasuryTransaction;
  *
  * El saldo NUNCA se guarda: se calcula como
  * opening_balance + SUM(ingresos activos) - SUM(egresos activos).
+ *
+ * Los movimientos originados por otros módulos entran por
+ * TreasuryIntegrationService; aquí solo queda el registro de bajo nivel.
  */
 class TreasuryLedgerService
 {
@@ -39,6 +42,7 @@ class TreasuryLedgerService
         ?int $paymentMethodId = null,
         string $source = TreasuryTransaction::SOURCE_MANUAL,
         ?int $userId = null,
+        bool $checkSignature = true,
     ): ?TreasuryTransaction {
         return $this->register(
             $account,
@@ -52,7 +56,8 @@ class TreasuryLedgerService
             $description,
             $paymentMethodId,
             $source,
-            $userId
+            $userId,
+            $checkSignature
         );
     }
 
@@ -71,6 +76,7 @@ class TreasuryLedgerService
         ?int $paymentMethodId = null,
         string $source = TreasuryTransaction::SOURCE_MANUAL,
         ?int $userId = null,
+        bool $checkSignature = true,
     ): ?TreasuryTransaction {
         return $this->register(
             $account,
@@ -84,7 +90,8 @@ class TreasuryLedgerService
             $description,
             $paymentMethodId,
             $source,
-            $userId
+            $userId,
+            $checkSignature
         );
     }
 
@@ -92,6 +99,10 @@ class TreasuryLedgerService
      * Registro genérico con guardas: cuenta activa, monto > 0, idempotencia
      * por firma cuando hay origen. Nunca lanza: falla en silencio con log
      * para no romper el flujo de ventas que lo invoca.
+     *
+     * $checkSignature = false lo usa la capa de integración, que garantiza la
+     * idempotencia con su propia clave única (la firma histórica bloqueaba dos
+     * pagos del mismo importe en la misma fecha).
      */
     public function register(
         ?TreasuryAccount $account,
@@ -106,6 +117,7 @@ class TreasuryLedgerService
         ?int $paymentMethodId = null,
         string $source = TreasuryTransaction::SOURCE_MANUAL,
         ?int $userId = null,
+        bool $checkSignature = true,
     ): ?TreasuryTransaction {
         try {
             if (! $account || ! $account->status) {
@@ -121,7 +133,7 @@ class TreasuryLedgerService
             $dateValue = $date instanceof Carbon ? $date->copy() : Carbon::parse($date);
 
             // Idempotencia: si ya existe el mismo movimiento del mismo origen, no duplicar
-            if ($originType && $originId) {
+            if ($checkSignature && $originType && $originId) {
                 if (TreasuryTransaction::signatureExists(
                     $originType,
                     $originId,
@@ -169,79 +181,22 @@ class TreasuryLedgerService
     }
 
     /**
-     * Registra los ingresos de una venta leyendo el JSON `sales.payments`
-     * ({type: payment_method_id, amount, reference}).
-     * Crea un ingreso por cada pago mapeable a una cuenta de tesorería.
+     * @deprecated La entrada es TreasuryHooks / TreasuryIntegrationService.
+     * Se conserva por compatibilidad y delega en la capa de integración.
      */
     public function recordSaleIncomes(Sale $sale): int
     {
-        $payments = $this->normalizeSalePayments($sale->payments);
-
-        if ($payments->isEmpty()) {
-            return 0;
-        }
-
-        $categoryId = $this->systemCategoryId('Cobro de venta');
-
-        // La caja de tesoreria opera en soles: si el comprobante se emitio en
-        // otra moneda (p. ej. USD con PTM0004 activo), cada pago se convierte
-        // con el tipo de cambio guardado en el documento de venta.
-        [$currency, $exchangeRate] = $this->resolveSaleDocumentCurrency($sale);
-
-        $count = 0;
-
-        foreach ($payments as $payment) {
-            $account = $this->resolver->resolveForMethod($payment['payment_method_id']);
-
-            if (! $account) {
-                continue;
-            }
-
-            $amount = (float) $payment['amount'];
-            $reference = $payment['reference'];
-            $description = 'Cobro de venta';
-
-            if ($currency !== 'PEN' && $exchangeRate !== null && $exchangeRate > 0) {
-                $amount = round($amount * $exchangeRate, 2);
-                $reference = trim((string) $reference);
-                $reference = ($reference !== '' ? $reference.' · ' : '').sprintf('TC %s %s', $currency, rtrim(rtrim(number_format($exchangeRate, 4, '.', ''), '0'), '.'));
-            }
-
-            $created = $this->registerIncome(
-                $account,
-                $sale->sale_date ?? now(),
-                $amount,
-                $categoryId,
-                'sale',
-                $sale->id,
-                $reference,
-                $description,
-                $payment['payment_method_id'],
-                TreasuryTransaction::SOURCE_AUTO,
-                $sale->user_id,
-            );
-
-            if ($created) {
-                $count++;
-            }
-        }
-
-        return $count;
+        return TreasuryHooks::recordSaleIncomes($sale);
     }
 
     /**
-     * Moneda y tipo de cambio del documento de venta (el mas reciente asociado
-     * a la venta). Devuelve ['PEN', null] para las ventas en soles.
+     * Moneda y tipo de cambio del documento de venta. Devuelve ['PEN', null]
+     * cuando no hay documento o el comprobante está en soles.
      *
      * @return array{0: string, 1: ?float}
      */
-    private function resolveSaleDocumentCurrency(Sale $sale): array
+    public function resolveDocumentCurrency(?SaleDocument $document): array
     {
-        $document = SaleDocument::query()
-            ->where('sale_id', $sale->id)
-            ->orderByDesc('id')
-            ->first();
-
         if (! $document) {
             return ['PEN', null];
         }
@@ -268,31 +223,12 @@ class TreasuryLedgerService
     }
 
     /**
-     * Registra el ingreso de un abono de cuota (Cuentas por Cobrar).
+     * @deprecated La entrada es TreasuryHooks / TreasuryIntegrationService.
+     * Se conserva por compatibilidad y delega en la capa de integración.
      */
     public function recordQuotaPaymentIncome(SalePaymentQuota $payment, SaleDocument $document): ?TreasuryTransaction
     {
-        $account = $this->resolver->resolveForMethod($payment->payment_method_id);
-
-        if (! $account) {
-            return null;
-        }
-
-        $sale = $document->sale;
-
-        return $this->registerIncome(
-            $account,
-            $payment->payment_date ?? now(),
-            (float) $payment->amount_applied,
-            $this->systemCategoryId('Abono de cuota'),
-            'sale_payment_quota',
-            $payment->id,
-            $payment->reference,
-            'Abono de cuota' . ($sale ? ' - Venta #' . $sale->id : ''),
-            $payment->payment_method_id,
-            TreasuryTransaction::SOURCE_AUTO,
-            auth()->id(),
-        );
+        return TreasuryHooks::recordQuotaPayment($payment, $document);
     }
 
     /**
@@ -412,7 +348,8 @@ class TreasuryLedgerService
                 'amount' => (float) $payment['amount'],
                 'reference' => $payment['reference'] ?? null,
             ])
-            ->filter(fn ($payment) => $payment['amount'] > 0);
+            ->filter(fn ($payment) => $payment['amount'] > 0)
+            ->values();
     }
 
     /**
