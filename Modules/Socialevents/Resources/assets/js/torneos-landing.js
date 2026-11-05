@@ -177,10 +177,17 @@ function initScrollReveal() {
 
     const observer = new IntersectionObserver(
         (entries) => {
-            const visible = entries.filter((e) => e.isIntersecting).map((e) => e.target);
+            // Cada bloque se revela una sola vez: al volver a subir no se repite.
+            const visible = entries
+                .filter((entry) => entry.isIntersecting && !revealed.has(entry.target))
+                .map((entry) => entry.target);
             if (!visible.length) {
                 return;
             }
+            visible.forEach((el) => {
+                revealed.add(el);
+                observer.unobserve(el);
+            });
             track(
                 animate(visible, {
                     opacity: [0, 1],
@@ -190,7 +197,6 @@ function initScrollReveal() {
                     delay: stagger(60, { from: 'first' }),
                 }),
             );
-            visible.forEach((el) => revealed.add(el));
         },
         { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
     );
@@ -198,6 +204,156 @@ function initScrollReveal() {
     items.forEach((el) => observer.observe(el));
 
     return () => observer.disconnect();
+}
+
+/* Barra fina de progreso de lectura, pegada al borde superior. */
+function initScrollProgress() {
+    const bar = document.createElement('div');
+    bar.className = 'se-read-progress';
+    bar.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(bar);
+
+    let frame = 0;
+
+    const update = () => {
+        frame = 0;
+        const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+        const ratio = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0;
+        bar.style.setProperty('--se-progress', ratio.toFixed(4));
+        bar.classList.toggle('is-visible', window.scrollY > 40);
+    };
+
+    const schedule = () => {
+        if (!frame) {
+            frame = window.requestAnimationFrame(update);
+        }
+    };
+
+    update();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule, { passive: true });
+}
+
+/* Parallax muy leve del fondo del hero: solo en pantallas anchas. */
+function initHeroParallax() {
+    const image = document.querySelector('.se-hero__bg img');
+    if (!image || !window.matchMedia('(min-width: 768px)').matches) {
+        return;
+    }
+
+    let frame = 0;
+
+    const update = () => {
+        frame = 0;
+        const offset = Math.min(window.scrollY, window.innerHeight) * 0.12;
+        image.style.transform = `translate3d(0, ${offset.toFixed(1)}px, 0) scale(1.04)`;
+    };
+
+    const schedule = () => {
+        if (!frame) {
+            frame = window.requestAnimationFrame(update);
+        }
+    };
+
+    update();
+    window.addEventListener('scroll', schedule, { passive: true });
+}
+
+/* Skeleton por sección: la silueta real de cada bloque aparece un instante
+ * antes de asomar por pantalla y se disuelve sobre el contenido. */
+const SKELETON_TARGETS = [
+    { container: '#equipos .se-teams-grid' },
+    { container: '#premios .se-prizes-grid' },
+    { container: '#fixture .se-fixture-wrap', blocks: '.se-phase' },
+    { container: '#posiciones .se-table-wrap', blocks: '.se-table tr' },
+    { container: '#posiciones .se-rank-grid' },
+    { container: '#galeria .se-gallery', blocks: '.se-gallery__item' },
+    { container: '#app .se-app-download' },
+    { container: '#contacto .se-contact-grid' },
+];
+
+// Suficiente para leerse como carga, poco para no hacer esperar.
+const SKELETON_HOLD = 480;
+const SKELETON_MAX_BLOCKS = 18;
+
+function paintSkeleton(container, blocksSelector) {
+    const nodes = (
+        blocksSelector
+            ? Array.from(container.querySelectorAll(blocksSelector))
+            : Array.from(container.children)
+    ).slice(0, SKELETON_MAX_BLOCKS);
+
+    if (!nodes.length) {
+        return;
+    }
+
+    // Se mide antes de ocultar: la silueta calcada no mueve nada de sitio.
+    const box = container.getBoundingClientRect();
+    const layer = document.createElement('div');
+    layer.className = 'se-skeleton';
+    layer.setAttribute('aria-hidden', 'true');
+
+    nodes.forEach((node) => {
+        const rect = node.getBoundingClientRect();
+        if (rect.width < 24 || rect.height < 10) {
+            return;
+        }
+        const block = document.createElement('span');
+        block.className = 'se-skeleton__block';
+        block.style.top = `${Math.round(rect.top - box.top)}px`;
+        block.style.left = `${Math.round(rect.left - box.left)}px`;
+        block.style.width = `${Math.round(rect.width)}px`;
+        block.style.height = `${Math.round(rect.height)}px`;
+        layer.appendChild(block);
+    });
+
+    if (!layer.childElementCount) {
+        return;
+    }
+
+    container.classList.add('se-loading');
+    container.appendChild(layer);
+
+    window.setTimeout(() => {
+        container.classList.remove('se-loading');
+        layer.classList.add('is-done');
+        window.setTimeout(() => layer.remove(), 320);
+    }, SKELETON_HOLD);
+}
+
+function initSectionSkeletons() {
+    const targets = [];
+    SKELETON_TARGETS.forEach(({ container, blocks }) => {
+        document.querySelectorAll(container).forEach((element) => {
+            targets.push({ element, blocks });
+        });
+    });
+
+    if (!targets.length) {
+        return;
+    }
+
+    const played = new WeakSet();
+
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting || played.has(entry.target)) {
+                    return;
+                }
+                played.add(entry.target);
+                observer.unobserve(entry.target);
+                const target = targets.find((item) => item.element === entry.target);
+                if (target) {
+                    paintSkeleton(target.element, target.blocks);
+                }
+            });
+        },
+        // Un poco antes de asomar, para que el skeleton ya esté puesto.
+        { rootMargin: '0px 0px 18% 0px' },
+    );
+
+    targets.forEach(({ element }) => observer.observe(element));
 }
 
 function initBrandHover() {
@@ -293,9 +449,23 @@ function initGalleryLightbox() {
  * Splash publicitario (patrocinio de la empresa)
  * ---------------------------------------------------------------------- */
 
-function initSplash() {
+function initSplash(onReveal) {
     const splash = document.querySelector('[data-se-splash]');
+    let revealed = false;
+
+    // El splash hace de cortina: el hero entra justo cuando empieza a retirarse.
+    const revealLanding = () => {
+        if (revealed) {
+            return;
+        }
+        revealed = true;
+        if (typeof onReveal === 'function') {
+            onReveal();
+        }
+    };
+
     if (!splash) {
+        revealLanding();
         return;
     }
 
@@ -312,6 +482,7 @@ function initSplash() {
         finished = true;
         document.body.style.overflow = '';
         splash.classList.add('is-hiding');
+        revealLanding();
         window.setTimeout(() => {
             splash.classList.add('is-hidden');
             splash.remove();
@@ -751,19 +922,29 @@ function boot() {
         initNavHighlight();
         initGalleryLightbox();
         initPlayerModal();
+        initScrollProgress();
         return;
     }
 
-    initSplash();
     initMobileNav();
     initHeaderScroll();
     initNavHighlight();
     initBrandHover();
     initGalleryLightbox();
     initPlayerModal();
-    runAmbientMotion();
-    runHeroEntrance();
+    initScrollProgress();
+    initHeroParallax();
     initScrollReveal();
+    runAmbientMotion();
+
+    // Si la entrada del hero corriera al arrancar, quedaría escondida detrás
+    // del splash y el hero aparecería ya quieto. Se dispara al descubrirlo.
+    // Los skeletons se registran aquí por lo mismo: si corrieran antes, el de
+    // la primera sección se gastaría detrás de la cortina.
+    initSplash(() => {
+        runHeroEntrance();
+        initSectionSkeletons();
+    });
 }
 
 if (document.readyState === 'loading') {
