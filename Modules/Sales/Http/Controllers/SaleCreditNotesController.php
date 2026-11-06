@@ -23,9 +23,13 @@ use Inertia\Inertia;
 use DataTables;
 use Exception;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Modules\Sales\Services\NoteOperationalImpactService;
 
 class SaleCreditNotesController extends Controller
 {
+    /** Catalogo 09: motivos que modifican la operacion completa. */
+    private const FULL_CREDIT_NOTE_MOTIVES = ['01', '02', '03', '06'];
+
     private $ubl;
     private $igv;
     private $top;
@@ -176,42 +180,129 @@ class SaleCreditNotesController extends Controller
             $request,
             [
                 'note_serie' => 'required',
-                'note_reason_cancellation' => 'required|string',
+                'note_reason_cancellation' => 'required|string|min:3',
                 'note_operation_type' => 'required',
-                'document_id' => 'required',
+                'document_id' => 'required|integer',
+                'document_items' => 'required|array|min:1',
             ],
             [
                 'note_serie' => 'Serie es obligatorio',
-                'note_reason_cancellation' => 'Descripción es obligatorio',
+                'note_reason_cancellation' => 'La descripción debe tener al menos 3 caracteres',
                 'note_operation_type' => 'Tipo es obligatorio',
                 'document_id' => 'Documento afectado es obligatorio',
-                ///'items.*.total.required' => 'Ingrese total',
+                'document_items' => 'La nota debe tener al menos un ítem',
             ]
         );
 
         try {
+            // 1) Vinculo con el comprobante afectado + catalogos de SUNAT.
+            $invoice = $this->assertNoteLink($request);
+
+            $noteTotal = round((float) $request->get('note_overall_total'), 2);
+            $invoiceTotal = round((float) $invoice->invoice_mto_imp_sale, 2);
+
             if ($request->get('note_type') == 3) {
                 // Catalogo 09: 01, 02, 03 y 06 modifican la operacion completa
                 // (la nota debe cubrir el total del documento afectado).
-                if (in_array($request->get('note_operation_type'), ['01', '02', '03', '06'])) {
-                    if (round((float) $request->get('note_overall_total'), 2) !== round((float) $request->get('document_mto_total'), 2)) {
+                if (in_array((string) $request->get('note_operation_type'), self::FULL_CREDIT_NOTE_MOTIVES, true)) {
+                    if (abs($noteTotal - $invoiceTotal) > 0.01) {
                         throw new Exception("Para el motivo seleccionado la nota de crédito debe ser por el total del documento afectado.");
                     }
-                } elseif ((float) $request->get('note_overall_total') <= 0) {
+                } elseif ($noteTotal <= 0) {
                     throw new Exception("El monto total de la nota de crédito debe ser mayor a cero.");
                 }
-                $result = $this->store($request);
-                return response()->json($result);
+
+                if ($noteTotal > $invoiceTotal + 0.01) {
+                    throw new Exception("El monto total de la nota de crédito no puede superar el total del documento afectado.");
+                }
+
+                $this->assertRestockQuantities($request);
             } elseif ($request->get('note_type') == 4) {
-                if ($request->get('note_overall_total') > $request->get('document_mto_total')) {
-                    $result = $this->store($request);
-                    return response()->json($result);
-                } else {
+                if ($noteTotal <= $invoiceTotal) {
                     throw new Exception("El monto total de la nota de débito debe ser mayor al de la factura referenciada.");
                 }
+            } else {
+                throw new Exception('Tipo de nota no válido.');
             }
+
+            $result = $this->store($request);
+
+            return response()->json($result);
         } catch (Exception $e) {
             return response()->json(['message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Valida que la nota apunte correctamente al comprobante afectado, que la
+     * serie corresponda al tipo de nota y que el motivo exista en el catalogo
+     * de SUNAT (09 para creditos, 10 para debitos).
+     */
+    private function assertNoteLink(Request $request): SaleDocument
+    {
+        $invoice = SaleDocument::find($request->get('document_id'));
+
+        if (! $invoice) {
+            throw new Exception('El documento afectado no existe.');
+        }
+
+        if (! in_array((string) $invoice->invoice_type_doc, ['01', '03', '07', '08'], true)) {
+            throw new Exception('Solo se pueden emitir notas sobre facturas, boletas u otras notas (tipo 01, 03, 07 u 08).');
+        }
+
+        if (trim((string) $invoice->invoice_serie) === '' || (int) $invoice->invoice_correlative <= 0) {
+            throw new Exception('El documento afectado no tiene serie y correlativo válidos.');
+        }
+
+        if ($invoice->invoice_status === 'Rechazada') {
+            throw new Exception('El documento afectado fue rechazado por SUNAT; no se puede referenciar en una nota.');
+        }
+
+        $catalogTable = $request->get('note_type') == 4 ? 'sunat_note_debit_types' : 'sunat_note_credit_types';
+        $motivo = DB::table($catalogTable)->where('id', $request->get('note_operation_type'))->first();
+
+        if (! $motivo) {
+            throw new Exception('El motivo seleccionado no existe en el catálogo de SUNAT. Recarga la página e inténtalo de nuevo.');
+        }
+
+        if (isset($motivo->active) && ! $motivo->active) {
+            throw new Exception('El motivo seleccionado está inactivo en el catálogo de SUNAT.');
+        }
+
+        $noteSerie = Serie::find($request->get('note_serie'));
+        $expectedType = $request->get('note_type') == 4 ? 4 : 3;
+
+        if (! $noteSerie) {
+            throw new Exception('La serie de la nota no existe.');
+        }
+
+        if ((int) $noteSerie->document_type_id !== $expectedType) {
+            throw new Exception('La serie '.$noteSerie->description.' no corresponde al tipo de nota seleccionado.');
+        }
+
+        return $invoice;
+    }
+
+    /**
+     * Las cantidades a reingresar deben ser positivas y no superar lo vendido.
+     */
+    private function assertRestockQuantities(Request $request): void
+    {
+        $restock = $request->boolean('restock_inventory');
+
+        foreach ((array) $request->get('document_items') as $item) {
+            $quantity = (float) ($item['quantity'] ?? 0);
+            $restockQuantity = $restock
+                ? (float) (($item['restock_quantity'] ?? '') === '' ? $quantity : $item['restock_quantity'])
+                : 0.0;
+
+            if ($restockQuantity < 0) {
+                throw new Exception('La cantidad a reingresar al almacén no puede ser negativa.');
+            }
+
+            if ($restockQuantity > $quantity + 0.0001) {
+                throw new Exception('La cantidad a reingresar no puede superar la cantidad vendida en la línea.');
+            }
         }
     }
 
@@ -261,6 +352,8 @@ class SaleCreditNotesController extends Controller
                     'reason_cancellation'           => $request->get('note_reason_cancellation'),
                     'overall_total'                 => $request->get('document_overall_total'),
                     'document_id'                   => $request->get('document_id'),
+                    // Solo las notas de credito pueden reingresar mercaderia.
+                    'restock_inventory'             => $request->get('note_type') == 3 && $request->boolean('restock_inventory'),
                 ]);
 
                 foreach ($request->get('document_items') as $item) {
@@ -313,6 +406,19 @@ class SaleCreditNotesController extends Controller
                         );
                     }
 
+                    // Cantidad a devolver al almacen por esta linea (opcional).
+                    $restockQuantity = null;
+                    if ($request->get('note_type') == 3 && $request->boolean('restock_inventory')) {
+                        $lineRestock = $item['restock_quantity'] ?? null;
+                        $restockQuantity = ($lineRestock === null || $lineRestock === '')
+                            ? (float) $quantity
+                            : (float) $lineRestock;
+
+                        if (array_key_exists('reintegrar', $item) && ! $item['reintegrar']) {
+                            $restockQuantity = 0;
+                        }
+                    }
+
                     SaleDocumentItem::create([
                         'document_id'           => $document->id,
                         'product_id'            => $item['product_id'],
@@ -334,7 +440,8 @@ class SaleCreditNotesController extends Controller
                         'mto_total'             => $mto_total,
                         'mto_discount'          => round($mto_discount, 2),
                         'json_discounts'        => json_encode($array_discounts),
-                        'entity_name_product'   => $item['entity_name_product']
+                        'entity_name_product'   => $item['entity_name_product'],
+                        'restock_quantity'      => $restockQuantity,
                     ]);
 
                     $mto_igv = $mto_igv + $igv;
@@ -363,6 +470,16 @@ class SaleCreditNotesController extends Controller
                     'invoice_sunat_points'      => null,
                     'invoice_status'            => 'Pendiente',
                 ]);
+
+                // Ajuste de caja: parte de la nota pagada en efectivo, calculada
+                // en el servidor con los pagos reales de la venta afectada.
+                if ($document->invoice_type_doc === '07') {
+                    $impact = app(NoteOperationalImpactService::class);
+
+                    $document->update([
+                        'cash_adjustment_amount' => $impact->cashAdjustmentFor($document, $invoice),
+                    ]);
+                }
 
                 $serie->increment('number', 1);
                 return $document;

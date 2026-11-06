@@ -97,9 +97,11 @@ class SaleLowCommunicationController extends Controller
 
 
 
-        if ($result['success']) {
+        // 'sent' incluye el envío con ticket pendiente de CDR: los documentos
+        // quedan como "Enviada Por Anular" hasta que SUNAT acepte la baja.
+        if (! empty($result['sent'])) {
             foreach ($documents as $document) {
-                if ($document['edit_low']) {
+                if (! empty($document['edit_low'])) {
                     SaleLowcoDetail::create([
                         'document_id'  => $document['id'],
                         'lowco_id' => $lowco->id,
@@ -124,12 +126,8 @@ class SaleLowCommunicationController extends Controller
             }
         }
 
-        return response()->json([
-            'success' => $result['success'],
-            'code'  => $result['code'],
-            'message'   => $result['message'],
-            'notes'   => $result['notes']
-        ]);
+        // El servicio devuelve la alerta ya traducida (alert.title/message/action).
+        return response()->json($result);
     }
 
     public function check($id, $ticket)
@@ -137,18 +135,62 @@ class SaleLowCommunicationController extends Controller
         $voided = new LowCommunication();
         $result = $voided->checkLowCommunication($id, $ticket);
 
-        return response()->json([
-            'success' => $result['success'],
-            'code'  => $result['code'],
-            'message'   => $result['message'],
-            'notes'   => $result['notes'],
-            'is_processing' => $result['is_processing'] ?? false,
-        ]);
+        return response()->json($result);
     }
+
+    /**
+     * Descarga el XML enviado a SUNAT o el ZIP del CDR devuelto por SUNAT.
+     */
+    public function downloadFile($id, $type)
+    {
+        $low = SaleLowCommunication::find($id);
+
+        if (! $low) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró la comunicación de baja.',
+            ], 404);
+        }
+
+        if (strtoupper((string) $type) === 'XML') {
+            if (! $low->xml || ! is_file($low->xml)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El XML de esta comunicación todavía no está disponible.',
+                ], 404);
+            }
+
+            return response()->download($low->xml, $low->communication_name.'.xml', ['content-type' => 'application/xml']);
+        }
+
+        if (! $low->cdr || ! is_file($low->cdr)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'SUNAT todavía no devolvió el CDR de esta baja. Presiona Consultar para reintentar la descarga.',
+            ], 404);
+        }
+
+        return response()->download($low->cdr, $low->communication_name.'.zip', ['content-type' => 'application/zip']);
+    }
+
     public function destroy($id)
     {
         try {
             $low = SaleLowCommunication::find($id);
+
+            if (! $low) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontró la comunicación de baja.',
+                ]);
+            }
+
+            if ($low->status === 'Aceptado') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Esta baja ya fue aceptada por SUNAT y no se puede eliminar: las facturas quedarían inconsistentes. Si fue un error, emite una Nota de Crédito.',
+                ]);
+            }
             $documents = SaleDocument::join('sale_lowco_details', 'document_id', 'sale_documents.id')
                 ->select('sale_documents.*')
                 ->where('lowco_id', $low->id)
@@ -171,7 +213,10 @@ class SaleLowCommunicationController extends Controller
                 'message' => 'resumen eliminado'
             );
         } catch (Exception $e) {
-            var_dump($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo eliminar la comunicación de baja: '.$e->getMessage(),
+            ]);
         }
     }
 }

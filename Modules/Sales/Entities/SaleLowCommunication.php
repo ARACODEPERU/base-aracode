@@ -24,7 +24,18 @@ class SaleLowCommunication extends Model
         'notes',
         'status',
         'user_id',
-        'anio'
+        'anio',
+        // Trazabilidad de la respuesta de SUNAT (columnas nullable).
+        'sunat_result',
+        'error_kind',
+        'alert_level',
+        'alert_title',
+        'alert_message',
+        'recommended_action',
+        'cdr_code',
+        'cdr_description',
+        'last_checked_at',
+        'check_attempts',
     ];
 
     protected static function newFactory()

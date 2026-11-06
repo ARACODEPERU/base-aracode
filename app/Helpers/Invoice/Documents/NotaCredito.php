@@ -67,19 +67,21 @@ class NotaCredito
                     // (01 Anulacion, 02 Error RUC, 03 Error descripcion, 06 Devolucion total)
                     // por el total del documento dejan el comprobante afectado "Por anular".
                     // Los motivos parciales (04, 05, 07-12) no alteran su estado.
-                    $codMotivo = (string) $document->note_type_operation_id;
-                    $isFullMotivo = in_array($codMotivo, ['01', '02', '03', '06']);
-                    $notaCubreTotal = abs((float) $document->invoice_mto_imp_sale - (float) $invoice->invoice_mto_imp_sale) < 0.01;
+                    DB::transaction(function () use ($document, $invoice) {
+                        $codMotivo = (string) $document->note_type_operation_id;
+                        $isFullMotivo = in_array($codMotivo, ['01', '02', '03', '06']);
+                        $notaCubreTotal = abs((float) $document->invoice_mto_imp_sale - (float) $invoice->invoice_mto_imp_sale) < 0.01;
 
-                    if ($isFullMotivo && $notaCubreTotal) {
-                        $invoice->status = 3;
-                        $invoice->invoice_status = 'Por anular';
-                        $invoice->save();
+                        if ($isFullMotivo && $notaCubreTotal) {
+                            $invoice->status = 3;
+                            $invoice->invoice_status = 'Por anular';
+                            $invoice->save();
 
-                        Sale::find($invoice->sale_id)->update([
-                            'status' => 0
-                        ]);
-                    }
+                            Sale::find($invoice->sale_id)->update([
+                                'status' => 0
+                            ]);
+                        }
+                    });
                 } elseif ($cdr->getCode() == 2325) {
                     $status = 'Pendiente';
                 }
@@ -100,9 +102,40 @@ class NotaCredito
 
             $document->save();
 
+            // Impacto operativo (stock y caja) solo si SUNAT acepto la nota.
+            if ($document->invoice_status === 'Aceptada') {
+                $this->applyOperationalImpact($document);
+            }
+
             return array('success' => $res->isSuccess(), 'code' => $codeError, 'message' => $messageError, 'notes' => $notes);
         } catch (\Exception $e) {
             return array('success' => false, 'code' => 0, 'message' => $e->getMessage(), 'notes' => 'Error de falta de datos en el sistema');
+        }
+    }
+
+    /**
+     * Aplica en una sola transaccion el reingreso de stock y el ajuste de caja
+     * de una nota ya aceptada por SUNAT.
+     *
+     * Si el impacto falla, la nota NO se revierte (SUNAT ya la acepto): se deja
+     * constancia en invoice_notes para reintento administrativo, sin dejar
+     * movimientos de stock o caja a medias gracias al rollback de la transaccion.
+     */
+    protected function applyOperationalImpact($document): void
+    {
+        try {
+            DB::transaction(function () use ($document) {
+                $impact = app(\Modules\Sales\Services\NoteOperationalImpactService::class)->apply($document);
+
+                if (! empty($impact['warnings'])) {
+                    $extra = json_encode($impact['warnings'], JSON_UNESCAPED_UNICODE);
+                    $document->invoice_notes = trim(($document->invoice_notes ?? '').' '.$extra);
+                    $document->save();
+                }
+            });
+        } catch (\Throwable $e) {
+            $document->invoice_notes = trim(($document->invoice_notes ?? '').' | Impacto operativo pendiente: '.$e->getMessage(), ' |');
+            $document->save();
         }
     }
 

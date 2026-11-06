@@ -68,7 +68,22 @@ class SaleDocument extends Model
         'status_pay',
         'overdue_fee',
         'single_payment',
-        'schedule_id'
+        'schedule_id',
+        // Impacto operativo de notas de credito/debito (columnas nullable).
+        'restock_inventory',
+        'restock_applied_at',
+        'cash_adjustment_amount',
+        'cash_adjustment_mode',
+        'cash_adjustment_petty_cash_id',
+        'cash_adjustment_applied_at',
+        'cash_adjusted_externally',
+        // Cola de envio a SUNAT (columnas nullable).
+        'sunat_send_status',
+        'sunat_retry_attempts',
+        'sunat_last_attempt_at',
+        'sunat_next_retry_at',
+        'sunat_last_error',
+        'sunat_response_kind',
     ];
 
     public function items(): HasMany

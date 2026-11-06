@@ -96,6 +96,7 @@
         document_total_taxes: null,
         document_overall_total: null,
         document_currency: null,
+        restock_inventory: false,
         note_type: 3,
         note_operation_type: null,
         note_id: null,
@@ -117,7 +118,12 @@
                 formNote.document_client = res.data.document.client_number + ' ' +res.data.document.client_rzn_social;
                 formSeDoc.value.loading = false;
                 formNote.document_sale_id = res.data.document.sale_id;
-                formNote.document_items = res.data.document.items;
+                formNote.document_items = res.data.document.items.map((item) => ({
+                    ...item,
+                    reintegrar: true,
+                    restock_quantity: item.quantity,
+                }));
+                formNote.restock_inventory = false;
                 formNote.document_mto_taxed = res.data.document.invoice_mto_oper_taxed;
                 formNote.document_mto_igv = res.data.document.invoice_mto_igv;
                 formNote.document_mto_discount = res.data.document.invoice_mto_discount;
@@ -203,6 +209,10 @@
         dataTypeNote.value = [];
         formNote.note_operation_type = null;
         formNote.note_reason_cancellation = null;
+        // El reingreso de mercaderia solo aplica a notas de credito.
+        if (formNote.note_type != 3) {
+            formNote.restock_inventory = false;
+        }
         if(formNote.note_type == 3){
             dataTypeNote.value = props.typeCreditNote;
         }else{
@@ -513,6 +523,18 @@
                             <InputError :message="formNote.errors.note_reason_cancellation" class="mt-2" />
                         </div>
 
+                        <div v-if="formNote.note_type == 3" class="col-span-4">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" v-model="formNote.restock_inventory" class="form-checkbox" />
+                                <span class="font-semibold">Reingresar mercadería al almacén (devolución)</span>
+                            </label>
+                            <p class="mt-1 text-xs text-gray-500">
+                                Al ser aceptada por SUNAT se registra el ingreso al Kardex y se repone el stock de las líneas marcadas.
+                                Si la venta se pagó en efectivo, también se registra el ajuste de caja en la caja abierta del local
+                                (los cierres anteriores no se modifican).
+                            </p>
+                        </div>
+
                         <div class="col-span-4">
                             <div class="table-responsive">
                                 <table>
@@ -535,6 +557,10 @@
                                                         <button @click="item.editar = !item.editar" type="button" class="btn btn-sm btn-outline-primary text-xs" :disabled="itemsLocked" :title="itemsLocked ? 'Los importes no son editables para este motivo' : 'Editar'">
                                                             <icon-pencil class="w-4 h-4" />
                                                         </button>
+                                                    </div>
+                                                    <div v-if="formNote.restock_inventory && formNote.note_type == 3" class="mt-2 flex items-center justify-center gap-1">
+                                                        <input type="checkbox" v-model="item.reintegrar" class="form-checkbox" title="Reintegrar esta línea al almacén" />
+                                                        <input v-model="item.restock_quantity" :disabled="!item.reintegrar" class="form-input form-input-sm w-16" title="Cantidad a reingresar" />
                                                     </div>
                                                 </td>
                                                 <td>

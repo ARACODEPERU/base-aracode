@@ -31,6 +31,8 @@ use App\Models\SaleProduct;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Greenter\Model\Sale\Cuota;
+use App\Helpers\Invoice\Sunat\SunatResilience;
+
 class Factura
 {
     protected $see;
@@ -50,8 +52,15 @@ class Factura
             }])->find($document_id);
 
             $invoice = $this->setDocument($document);
-            $see = $this->util->getSee();
-            $res = $see->send($invoice);
+
+            // Resiliencia: getSee()/send() pueden lanzar por timeout, error cURL o
+            // SOAP. La capa los captura y devuelve un resultado con el mismo
+            // contrato, de modo que la venta nunca se bloquea por la red.
+            $resilience = app(SunatResilience::class);
+            $send = $resilience->send($this->util, $invoice);
+            $see = $send['see'];
+            $res = $send['outcome'];
+            $failure = $res->isSuccess() ? null : $resilience->describeFailure($res);
 
             // === DEBUG: Log detallado de respuesta SUNAT ===
             if (!$res->isSuccess()) {
@@ -74,7 +83,9 @@ class Factura
             //fecha en la que se envio a sunat el documento
             $document->invoice_send_date = Carbon::now();
 
-            $document->invoice_xml = $this->util->writeXml($invoice, $see->getFactory()->getLastXml());
+            if ($send['xml'] !== null) {
+                $document->invoice_xml = $this->util->writeXml($invoice, $send['xml']);
+            }
             $document->invoice_document_name = $invoice->getName();
             $notes = null;
             $status = null;
@@ -169,6 +180,21 @@ class Factura
                     }
                 }
             }
+            // Fallo de red / SUNAT caído: el comprobante queda en cola y el
+            // cajero ve un mensaje amigable en lugar de un error críptico.
+            $queued = false;
+
+            if (! $res->isSuccess() && $failure !== null && $failure['retryable']) {
+                $status = 'Pendiente de Reintento';
+                $messageError = SunatResilience::FRIENDLY_QUEUED;
+                $notes = null;
+                $queued = true;
+
+                $resilience->markQueued($document, $failure['kind'], $failure['technical']);
+            } elseif ($res->isSuccess()) {
+                $resilience->markSent($document, (string) $codeError === '0');
+            }
+
             $document->invoice_response_code = $codeError;
             $document->invoice_response_description = $messageError;
             $document->invoice_notes = $notes;
@@ -176,7 +202,13 @@ class Factura
 
             $document->save();
 
-            return array('success' => $res->isSuccess(), 'code' => $codeError, 'message' => $messageError, 'notes' => $notes);
+            return array(
+                'success' => $res->isSuccess() || $queued,
+                'queued' => $queued,
+                'code' => $codeError,
+                'message' => $messageError,
+                'notes' => $notes,
+            );
         } catch (\Exception $e) {
             return array('success' => false, 'code' => 0, 'message' => $e->getMessage(), 'notes' => 'Error de falta de datos en el sistema');
         }

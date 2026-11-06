@@ -33,6 +33,7 @@ class SaleDocumentItem extends Model
         'mto_discount',
         'json_discounts',
         'entity_name_product',
+        'restock_quantity',
     ];
 
     public function document(): BelongsTo

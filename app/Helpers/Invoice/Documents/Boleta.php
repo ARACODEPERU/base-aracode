@@ -2,6 +2,8 @@
 
 namespace App\Helpers\Invoice\Documents;
 
+use App\Helpers\Invoice\Sunat\SunatResilience;
+
 use Greenter\Model\Client\Client;
 use Greenter\Model\Sale\SaleDetail;
 use Greenter\Model\Sale\Legend;
@@ -47,12 +49,18 @@ class Boleta
 
         $invoice = $this->setDocument($document);
 
-        $see = $this->util->getSee();
-        $res = $see->send($invoice);
+        // Resiliencia: nunca se propaga una excepción de red a la caja.
+        $resilience = app(SunatResilience::class);
+        $send = $resilience->send($this->util, $invoice);
+        $res = $send['outcome'];
+        $failure = $res->isSuccess() ? null : $resilience->describeFailure($res);
+
         //fecha en la que se envio a sunat el documento
         $document->invoice_send_date = Carbon::now();
 
-        $document->invoice_xml = $this->util->writeXml($invoice, $see->getFactory()->getLastXml());
+        if ($send['xml'] !== null) {
+            $document->invoice_xml = $this->util->writeXml($invoice, $send['xml']);
+        }
         $document->invoice_document_name = $invoice->getName();
 
         $notes = null;
@@ -76,6 +84,21 @@ class Boleta
             //return array('success' => $res->isSuccess(), 'details' => $this->util->getErrorResponse($res->getError()));
 
         }
+        // Fallo de red / SUNAT caído: la boleta queda en cola y la venta se
+        // considera registrada (se reenvía con sunat:retry-queue).
+        $queued = false;
+
+        if (! $res->isSuccess() && $failure !== null && $failure['retryable']) {
+            $status = 'Pendiente de Reintento';
+            $messageError = SunatResilience::FRIENDLY_QUEUED;
+            $notes = null;
+            $queued = true;
+
+            $resilience->markQueued($document, $failure['kind'], $failure['technical']);
+        } elseif ($res->isSuccess()) {
+            $resilience->markSent($document, (string) $codeError === '0');
+        }
+
         $document->invoice_response_code = $codeError;
         $document->invoice_response_description = $messageError;
         $document->invoice_notes = $notes;
@@ -83,7 +106,13 @@ class Boleta
 
         $document->save();
 
-        return array('success' => $res->isSuccess(), 'code' => $codeError, 'message' => $messageError, 'notes' => $notes);
+        return array(
+            'success' => $res->isSuccess() || $queued,
+            'queued' => $queued,
+            'code' => $codeError,
+            'message' => $messageError,
+            'notes' => $notes,
+        );
     }
 
     public function setDocument($document, $tipDet = '022', $ipMeP = '001')

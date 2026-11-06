@@ -74,6 +74,61 @@
         });
     }
 
+    // ===== Alertas: traducen la respuesta de SUNAT a un mensaje entendible =====
+    const alertIcon = (level) => ({
+        success: 'success',
+        info: 'info',
+        warning: 'warning',
+        error: 'error',
+    }[level] || 'info');
+
+    const actionHint = (action) => ({
+        emitir_nota_credito: 'Siguiente paso: emite una Nota de Crédito (tipo 07) por el comprobante.',
+        reconsultar: 'Siguiente paso: presiona Consultar para revisar la respuesta de SUNAT.',
+        reintentar: 'Siguiente paso: vuelve a intentar el envío en unos minutos.',
+        regenerar_baja: 'Siguiente paso: genera una nueva comunicación de baja.',
+        corregir_y_reenviar: 'Siguiente paso: corrige el motivo o los datos y vuelve a enviar.',
+        contactar_soporte: 'Siguiente paso: contacta al área de sistemas si el problema persiste.',
+    }[action] || '');
+
+    const technicalDetail = (alert, fallback) => {
+        if (alert && alert.detail) {
+            return alert.detail;
+        }
+        if (!fallback) {
+            return '';
+        }
+        return fallback.code ? `Código ${fallback.code}. ${fallback.message || ''}` : (fallback.message || '');
+    };
+
+    const showAlert = (alert, fallback = {}) => {
+        if (!alert) {
+            Swal.fire({
+                title: fallback.success ? 'Información Importante' : 'Error',
+                text: fallback.message || 'Operación completada.',
+                icon: fallback.success ? 'success' : 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            return;
+        }
+
+        const hint = actionHint(alert.action);
+        const detail = technicalDetail(alert, fallback);
+
+        Swal.fire({
+            title: alert.title || 'Comunicación de baja',
+            html: `<div class="text-left">
+                    <p>${alert.message || ''}</p>
+                    ${hint ? `<p class="mt-2 font-semibold">${hint}</p>` : ''}
+                    ${detail ? `<p class="mt-3 text-xs opacity-70"><b>Detalle técnico:</b> ${detail}</p>` : ''}
+                </div>`,
+            icon: alertIcon(alert.level),
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+    };
+
     const statusTicket = (id,ticket,index) => {
 
         let btnCheck = document.getElementById('btn-check-summary'+ index);
@@ -84,46 +139,12 @@
         spCheck.style.display = 'block';
         btnCheck.style.opacity = '0.35';
         axios.get(route('low_communication_check',[id,ticket])).then((res) => {
-            if (res.data.success) {
-                Swal.fire({
-                    title: 'Información Importante',
-                    text: res.data.message,
-                    icon: 'success',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
-                router.visit(route('low_communication_list'), {
-                    replace: false,
-                    preserveState: true,
-                    preserveScroll: true,
-                });
-            } else if (res.data.is_processing) {
-                Swal.fire({
-                    title: 'Comprobante en proceso',
-                    html: 'SUNAT aún está procesando el comprobante (Código 0098). No es un error del sistema.<br><br>Puedes <b>volver a consultar más tarde</b> presionando nuevamente el botón Consultar.<br><br><b>Código:</b> '+ (res.data.code || 'N/A') + '<br><b>Descripción:</b> ' + (res.data.message || 'Sin detalles'),
-                    icon: 'info',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
-                router.visit(route('low_communication_list'), {
-                    replace: false,
-                    preserveState: true,
-                    preserveScroll: true,
-                });
-            } else {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Codigo: '+ res.data.code + '<br> Descripcion: ' + res.data.message ,
-                    icon: 'error',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
-                router.visit(route('low_communication_list'), {
-                    replace: false,
-                    preserveState: true,
-                    preserveScroll: true,
-                });
-            }
+            showAlert(res.data.alert, res.data);
+            router.visit(route('low_communication_list'), {
+                replace: false,
+                preserveState: true,
+                preserveScroll: true,
+            });
 
             btnCheck.style.width = '120';
             btnCheck.style.cursor = 'pointer';
@@ -140,6 +161,20 @@
         spCheck.style.display = 'block';
         btnCheck.style.opacity = '0.35';
         axios.get(route('low_communication_destroy',id)).then((res) => {
+            if (!res.data.success) {
+                Swal.fire({
+                    title: 'No se pudo eliminar',
+                    text: res.data.message || 'La comunicación de baja no se puede eliminar.',
+                    icon: 'warning',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                btnCheck.style.cursor = 'pointer';
+                spCheck.style.display = 'none';
+                btnCheck.style.opacity = '1';
+                return;
+            }
+
             if (res.data.success) {
                 Swal.fire({
                     title: 'Información Importante',
@@ -161,30 +196,18 @@
     const saveVoided = () => {
         formVoided.processing = true;
         axios.post(route('low_communication_store'),formVoided).then((res) => {
-            if (res.data.success) {
-                Swal.fire({
-                    title: 'Información Importante',
-                    text: 'El resumen se creó y envió correctamente',
-                    icon: 'success',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
+            showAlert(res.data.alert, res.data);
+
+            // 'sent' = SUNAT recibió la comunicación (con ticket) o la aceptó.
+            if (res.data.sent) {
                 router.visit(route('low_communication_list'), {
                     replace: false,
                     preserveState: true,
                     preserveScroll: true,
                 });
-                displayModalCreateCommunication.value =  false;
-            }else{
-                Swal.fire({
-                    title: 'Error',
-                    html: 'Codigo: '+ res.data.code + '<br> Descripcion: ' + res.data.message ,
-                    icon: 'error',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
+                displayModalCreateCommunication.value = false;
             }
-            formVoided.reset();
+
             formVoided.processing = false;
         }).catch(function (error) {
             formVoided.processing = false;
@@ -264,45 +287,82 @@
                             </thead>
                             <tbody>
                                 <template v-for="(communication, index) in communications.data" :key="communication.id">
-                                    <tr :class="communication.status ==='registrado' ? '' : communication.status ==='Rechazado' ? 'text-danger': communication.status ==='Enviado'? 'text-success' : 'text-primary'">
+                                    <tr :class="communication.status ==='registrado' ? '' : communication.status ==='Rechazado' ? 'text-danger': communication.status ==='Enviado'? 'text-success' : communication.status ==='sunat_disponible' ? 'text-warning' : communication.status ==='fue_enviado' ? 'text-secondary' : 'text-primary'">
                                         <td class="text-center">
                                             <div class="flex gap-4 items-center justify-center">
-                                                <button :id="'btn-check-summary'+index" @click="statusTicket(communication.id,communication.ticket,index)" v-if="communication.status ==='Enviado'" type="button" class="btn btn-info flex">
+                                                <button :id="'btn-check-summary'+index" @click="statusTicket(communication.id,communication.ticket,index)" v-if="communication.ticket && (communication.status ==='Enviado' || communication.status ==='fue_enviado' || (communication.status ==='Rechazado' && communication.response_code === 'HTTP'))" type="button" class="btn btn-info flex">
                                                     <svg :id="'sp-check-summary'+index" style="display: none;" aria-hidden="true" role="status" class="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                         <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
                                                         <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
                                                     </svg>
                                                     Consultar
                                                 </button>
-                                                <button :id="'btn-delete-summary'+index" @click="deleteCommunication(communication.id,index)" v-if="communication.status ==='Rechazado'" type="button" class="btn btn-danger flex">
+                                                <button :id="'btn-delete-summary'+index" @click="deleteCommunication(communication.id,index)" v-if="communication.status ==='Rechazado' || communication.status ==='sunat_disponible'" type="button" class="btn btn-danger flex">
                                                     <svg :id="'sp-delete-summary'+index" style="display: none;" aria-hidden="true" role="status" class="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                         <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
                                                         <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
                                                     </svg>
                                                     Eliminar
                                                 </button>
+                                                <button v-if="communication.cdr" @click="openDownloadTap(communication.id,'CDR')" type="button" class="btn btn-warning btn-sm text-sm flex" v-tippy="{ content: 'Descargar CDR', placement: 'bottom'}">
+                                                    CDR
+                                                </button>
+                                                <button v-if="communication.xml" @click="openDownloadTap(communication.id,'XML')" type="button" class="btn btn-secondary btn-sm text-sm flex" v-tippy="{ content: 'Descargar XML', placement: 'bottom'}">
+                                                    XML
+                                                </button>
                                             </div>
                                         </td>
                                         <td>
                                             <h6 class="font-semibold">
                                                 {{ communication.communication_name }}
-                                                <span v-if="communication.status == 'Rechazado' || communication.status == 'Aceptado'" class="block text-xs">
-                                                    <code v-if="communication.response_code != 0">
-                                                    Código: {{ communication.response_code }}
-                                                    </code>
-                                                    <code>
-                                                        Descripción: {{ communication.response_description }}
-                                                    </code>
-                                                 </span>
+                                                <span v-if="communication.ticket" class="block text-xs text-gray-500">
+                                                    Ticket: {{ communication.ticket }}
+                                                </span>
                                             </h6>
                                             <p v-if="communication.notes" class="text-xs">{{ communication.notes }}</p>
+                                            <div v-if="communication.alert_message" :class="{
+                                                    'border-green-300 bg-green-50 text-green-800': communication.alert_level === 'success',
+                                                    'border-blue-300 bg-blue-50 text-blue-800': communication.alert_level === 'info' || !communication.alert_level,
+                                                    'border-yellow-300 bg-yellow-50 text-yellow-800': communication.alert_level === 'warning',
+                                                    'border-red-300 bg-red-50 text-red-800': communication.alert_level === 'error',
+                                                }" class="mt-2 rounded border p-2 text-xs">
+                                                <p class="font-semibold">{{ communication.alert_title }}</p>
+                                                <p class="mt-1">{{ communication.alert_message }}</p>
+                                                <p v-if="communication.recommended_action === 'emitir_nota_credito'" class="mt-1 font-semibold">
+                                                    Emite una Nota de Crédito (tipo 07) para regularizar este comprobante.
+                                                </p>
+                                                <p v-if="communication.response_description" class="mt-1 opacity-70">
+                                                    <b>Detalle técnico:</b> {{ communication.response_description }}
+                                                </p>
+                                            </div>
+                                            <p v-else-if="communication.response_description" class="mt-2 text-xs text-red-500">
+                                                <span v-if="communication.response_code"><b>Código:</b> {{ communication.response_code }}. </span>
+                                                <span><b>Descripción:</b> {{ communication.response_description }}</span>
+                                            </p>
                                         </td>
                                         <td>
                                             {{ communication.communication_date }}
                                         </td>
                                         <td>
                                             <small>Estado Sunat:</small>
-                                            {{ communication.status }}
+                                            <span v-if="communication.status ==='sunat_disponible'" class="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded border border-orange-300">
+                                                SUNAT no disponible
+                                            </span>
+                                            <span v-else-if="communication.status ==='fue_enviado'" class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded border border-purple-300">
+                                                Ya enviado
+                                            </span>
+                                            <span v-else-if="communication.status ==='Enviado'" class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded border border-green-300">
+                                                Enviado
+                                            </span>
+                                            <span v-else-if="communication.status ==='Aceptado'" class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded border border-blue-300">
+                                                Aceptado
+                                            </span>
+                                            <span v-else-if="communication.status ==='Rechazado'" class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded border border-red-300">
+                                                Rechazado
+                                            </span>
+                                            <span v-else class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded border border-gray-300">
+                                                {{ communication.status }}
+                                            </span>
                                         </td>
                                     </tr>
                                 </template>

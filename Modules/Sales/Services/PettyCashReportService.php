@@ -195,7 +195,12 @@ class PettyCashReportService
                 $montoSoles = $rate > 0 ? $monto / $rate : $monto;
             }
 
-            $afectaCaja = $aceptada && !$esAnulacionTotal;
+            // Si el ajuste se registro como egreso en otra caja abierta (la caja
+            // original ya estaba cerrada), no se descuenta otra vez aqui: eso
+            // mantiene intactos los cierres anteriores.
+            $ajustadaEnOtraCaja = (bool) ($note->cash_adjusted_externally ?? false);
+
+            $afectaCaja = $aceptada && !$esAnulacionTotal && !$ajustadaEnOtraCaja;
 
             if ($afectaCaja) {
                 if ($isCredit) {
@@ -226,7 +231,9 @@ class PettyCashReportService
                 'afecta_caja' => $afectaCaja,
                 'sin_impacto' => $esAnulacionTotal
                     ? 'Anulación total (venta ya excluida)'
-                    : (!$aceptada ? 'No aceptada por SUNAT' : null),
+                    : (!$aceptada
+                        ? 'No aceptada por SUNAT'
+                        : ($ajustadaEnOtraCaja ? 'Ajustada como egreso en la caja abierta' : null)),
             ];
         }
 

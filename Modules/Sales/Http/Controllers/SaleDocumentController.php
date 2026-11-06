@@ -653,6 +653,8 @@ class SaleDocumentController extends Controller
 
         return response()->json([
             'success' => $result['success'],
+            // Enviado a la cola de reintento por falla de red de SUNAT.
+            'queued' => $result['queued'] ?? false,
             'code' => $result['code'],
             'message' => $result['message'],
             'notes' => $result['notes'],
