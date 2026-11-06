@@ -8,6 +8,7 @@ use App\Models\PaymentMethod;
 use App\Models\Sale;
 use App\Models\SaleDocument;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use InvalidArgumentException;
 use Modules\Sales\Entities\SaleDocumentQuota;
@@ -16,6 +17,7 @@ use Modules\Sales\Entities\SalePaymentScheduleDestination;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasurySourceMovement;
 use Modules\Treasury\Entities\TreasuryTransaction;
+use Modules\Treasury\Services\FinancialMovement;
 use Modules\Treasury\Services\TreasuryHooks;
 use Modules\Treasury\Services\TreasuryIntegrationService;
 use Modules\Treasury\Services\TreasuryLedgerService;
@@ -336,6 +338,156 @@ class TreasuryIntegrationTest extends TestCase
             amount: 0,
             date: now(),
         ));
+    }
+
+    public function test_dos_abonos_de_la_misma_cuota_generan_dos_movimientos(): void
+    {
+        [$firstPayment, $document] = $this->makeQuotaPayment(100);
+
+        $secondPayment = SalePaymentQuota::create([
+            'payment_method_id' => $this->yape->id,
+            'sale_document_quota_id' => $firstPayment->sale_document_quota_id,
+            'reference' => 'ABONO-2',
+            'payment_date' => now()->toDateString(),
+            'amount_applied' => 50,
+            'description' => null,
+            'estado' => true,
+        ]);
+
+        TreasuryHooks::recordQuotaPayment($firstPayment, $document);
+        TreasuryHooks::recordQuotaPayment($secondPayment, $document);
+
+        $this->assertSame(2, TreasuryTransaction::query()->count());
+        $this->assertSame(150.0, $this->balance());
+    }
+
+    public function test_la_clave_unica_de_la_base_impide_duplicar_el_movimiento(): void
+    {
+        $movement = new FinancialMovement(
+            module: TreasurySourceMovement::MODULE_SALES,
+            sourceType: TreasurySourceMovement::SOURCE_SALE,
+            sourceId: 999,
+            operation: 'sale_income',
+            type: TreasurySourceMovement::TYPE_INCOME,
+            amount: 25,
+            date: now(),
+        );
+
+        $this->service->register($movement);
+
+        $this->expectException(QueryException::class);
+
+        // Simula al segundo proceso que gana la carrera después de la
+        // comprobación previa: la restricción única es la que decide.
+        TreasurySourceMovement::create([
+            'module' => $movement->module,
+            'source_type' => $movement->sourceType,
+            'source_id' => $movement->sourceId,
+            'source_line' => null,
+            'operation' => $movement->operation,
+            'type' => $movement->type,
+            'status' => TreasurySourceMovement::STATUS_PENDING,
+            'amount' => 25,
+            'currency' => 'PEN',
+            'amount_base' => 25,
+            'movement_date' => now()->toDateString(),
+            'idempotency_key' => 'sales|sale|999|-|sale_income|-',
+            'source' => 'auto',
+        ]);
+    }
+
+    public function test_dos_instancias_del_servicio_no_duplican_el_mismo_pago(): void
+    {
+        $sale = $this->makeSale([
+            'payments' => [['type' => $this->yape->id, 'amount' => 35]],
+        ]);
+        $this->makeDocument($sale);
+
+        TreasuryHooks::recordSaleIncomes($sale);
+
+        app()->forgetInstance(TreasuryIntegrationService::class);
+        $secondRun = app(TreasuryIntegrationService::class);
+
+        $this->assertSame(
+            TreasurySourceMovement::query()->value('id'),
+            $secondRun->register($this->saleIncomeMovement($sale, 0, 35))->id
+        );
+        $this->assertSame(1, TreasuryTransaction::query()->count());
+        $this->assertSame(1, TreasurySourceMovement::query()->count());
+    }
+
+    public function test_el_fallo_del_libro_deja_el_movimiento_para_reintento(): void
+    {
+        $sale = $this->makeSale([
+            'payments' => [['type' => $this->yape->id, 'amount' => 120]],
+        ]);
+        $this->makeDocument($sale);
+
+        // Mock parcial: solo falla la escritura en el libro, el resto se comporta real.
+        $this->partialMock(TreasuryLedgerService::class, function ($mock) {
+            $mock->shouldReceive('registerIncome')->andReturn(null);
+        });
+        app()->forgetInstance(TreasuryIntegrationService::class);
+
+        TreasuryHooks::recordSaleIncomes($sale);
+
+        $bridge = TreasurySourceMovement::query()->firstOrFail();
+        $this->assertSame(TreasurySourceMovement::STATUS_FAILED, $bridge->status);
+        $this->assertStringContainsString('no creó el movimiento', (string) $bridge->error_message);
+        $this->assertSame(0, TreasuryTransaction::query()->count());
+
+        // Con el libro restaurado, el reintento resuelve sin duplicar.
+        app()->forgetInstance(TreasuryLedgerService::class);
+        app()->forgetInstance(TreasuryIntegrationService::class);
+
+        $result = app(TreasuryIntegrationService::class)->retryPending();
+
+        $this->assertSame(1, $result['processed']);
+        $this->assertSame(1, TreasuryTransaction::query()->count());
+        $this->assertSame(120.0, $this->balance());
+    }
+
+    public function test_una_devolucion_efectiva_se_registra_como_egreso(): void
+    {
+        $sale = $this->makeSale([
+            'payments' => [['type' => $this->yape->id, 'amount' => 200]],
+        ]);
+        $document = $this->makeDocument($sale);
+
+        TreasuryHooks::recordSaleIncomes($sale);
+        $this->assertSame(200.0, $this->balance());
+
+        $refund = $this->service->registerRefund(new FinancialMovement(
+            module: TreasurySourceMovement::MODULE_SALES,
+            sourceType: 'sale_document',
+            sourceId: $document->id,
+            operation: 'refund',
+            type: TreasurySourceMovement::TYPE_INCOME,
+            amount: 200,
+            date: now(),
+            paymentMethodId: $this->yape->id,
+            reference: 'DEV-1',
+        ));
+
+        $this->assertSame(TreasurySourceMovement::TYPE_EXPENSE, $refund->type);
+        $this->assertSame(TreasurySourceMovement::STATUS_PROCESSED, $refund->status);
+        $this->assertSame(0.0, $this->balance());
+        $this->assertSame(2, TreasuryTransaction::query()->count());
+    }
+
+    private function saleIncomeMovement(Sale $sale, int $line, float $amount): FinancialMovement
+    {
+        return new FinancialMovement(
+            module: TreasurySourceMovement::MODULE_SALES,
+            sourceType: TreasurySourceMovement::SOURCE_SALE,
+            sourceId: $sale->id,
+            operation: 'sale_income',
+            type: TreasurySourceMovement::TYPE_INCOME,
+            amount: $amount,
+            date: now(),
+            sourceLine: $line,
+            paymentMethodId: $this->yape->id,
+        );
     }
 
     private function makeSale(array $attributes = []): Sale

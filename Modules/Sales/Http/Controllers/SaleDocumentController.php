@@ -487,7 +487,8 @@ class SaleDocumentController extends Controller
                 $difference = abs($ttotal - $subtotal);
                 $rounding = number_format($difference, 2);
 
-                // Obtener la forma de pago del request ---                $status_pay = true;
+                // Obtener la forma de pago del request
+                $status_pay = true;
                 $initialPayments = [];
 
                 if ($forma_pago && $forma_pago === 'Credito') {

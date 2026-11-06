@@ -2,6 +2,7 @@
 
 namespace Modules\Treasury\Services;
 
+use App\Models\BankAccount;
 use App\Models\PaymentMethod;
 use Illuminate\Support\Collection;
 use Modules\Treasury\Entities\TreasuryAccount;
@@ -61,15 +62,38 @@ class PaymentAccountResolver
 
         // 1) Método configurado con cuenta bancaria explícita
         if (filled($method->bank_account_id)) {
-            return TreasuryAccount::query()
-                ->active()
-                ->where('type', TreasuryAccount::TYPE_BANK)
-                ->where('bank_account_id', $method->bank_account_id)
-                ->first();
+            return $this->bankAccountFor((int) $method->bank_account_id);
         }
 
         // 2) Método de billetera por nombre (Yape, Plin, MercadoPago...)
         return $this->walletForName($method->description);
+    }
+
+    /**
+     * Cuenta de tesorería de una cuenta bancaria vinculada explícitamente.
+     *
+     * Exige que la cuenta bancaria exista y esté activa, que la cuenta de
+     * tesorería esté activa y que ambas declaren la misma moneda. Si algo no
+     * cuadra devuelve null: el movimiento queda como "ignored" en lugar de
+     * registrarse en una cuenta equivocada.
+     */
+    private function bankAccountFor(int $bankAccountId): ?TreasuryAccount
+    {
+        $bankAccount = BankAccount::query()
+            ->whereKey($bankAccountId)
+            ->where('status', true)
+            ->first();
+
+        if (! $bankAccount) {
+            return null;
+        }
+
+        return TreasuryAccount::query()
+            ->active()
+            ->banks()
+            ->where('bank_account_id', $bankAccount->id)
+            ->where('currency_type_id', $bankAccount->currency_type_id)
+            ->first();
     }
 
     /**

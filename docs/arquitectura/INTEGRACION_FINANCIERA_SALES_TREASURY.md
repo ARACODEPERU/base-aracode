@@ -169,6 +169,33 @@ Consecuencias verificadas en pruebas:
 La referencia del movimiento conserva la anotación `TC USD 3.75` para poder
 auditar la conversión.
 
+### Vinculación método de pago → cuenta bancaria
+
+`payment_methods.bank_account_id` **ya existía** (migración
+`Modules/Sales/Database/Migrations/2025_07_15_124236_add_column_payment_bank.php`,
+FK `bank_account_id_fk` hacia `bank_accounts` con `ON DELETE SET NULL`). No se
+creó ninguna migración nueva: la vinculación se apoya en esa columna existente.
+
+`PaymentAccountResolver` resuelve así, en este orden:
+
+1. Si el método tiene `bank_account_id`, busca la cuenta bancaria (debe existir
+   y estar activa) y su cuenta de tesorería activa de tipo `bank` con la misma
+   moneda. Si algo no cuadra, devuelve `null` y el movimiento queda `ignored`:
+   nunca se registra en una cuenta equivocada.
+2. Si no hay cuenta bancaria vinculada, resuelve por nombre de billetera.
+3. Efectivo (excluido por configuración) o sin coincidencia: `ignored`.
+
+**Configuración desde el sistema** (permiso `treasury_cuentas_editar`):
+
+1. Crear la cuenta bancaria con su banco, número y moneda (Configuración →
+   Empresa → Cuentas bancarias).
+2. En **Tesorería → Cuentas → Nueva cuenta**, crear la cuenta de tesorería de
+   tipo banco apuntando a esa cuenta bancaria, con la **misma moneda** y activa.
+3. En **Tesorería → Cuentas → Asignación de métodos de pago**, elegir el método
+   (p. ej. *Transferencia BCP*) y la cuenta bancaria destino, y guardar.
+4. Yape, Plin y demás billeteras no necesitan asignación: se resuelven por
+   nombre contra la billetera de empresa.
+
 ---
 
 ## 7. Contratos por operación (Ventas)
@@ -272,8 +299,10 @@ La reversión queda enlazada al original. Nada se borra: se anula.
 
 ## 13. Pruebas
 
-`tests/Feature/Treasury/TreasuryIntegrationTest.php` — 15 pruebas, 57
-aserciones, ejecutadas con `php artisan test --filter=TreasuryIntegrationTest`.
+`tests/Feature/Treasury/TreasuryIntegrationTest.php` — 20 pruebas, 74
+aserciones; `tests/Feature/Treasury/PaymentMethodBankAccountTest.php` — 9
+pruebas, 30 aserciones. Ambas se ejecutan con
+`php artisan test tests/Feature/Treasury` (29 pruebas, 104 aserciones).
 
 | # | Escenario requerido | Cobertura |
 |---|---|---|
@@ -293,14 +322,20 @@ aserciones, ejecutadas con `php artisan test --filter=TreasuryIntegrationTest`.
 | 14 | Comprobante en USD → conversión con TC | Automática |
 | 15 | Cuenta USD + pago PEN → rechazo, sin mezclar | Automática |
 | 16 | Método sin cuenta mapeada → `ignored` | Automática (efectivo) |
+| 16b | Error al crear el movimiento del libro → `failed` y reintento | Automática (libro simulado sin escritura) |
+| 16c | Devolución efectiva de dinero → egreso | Automática (`registerRefund`) |
 | 17 | Cobro de cronograma → movimiento | Automática |
 | 18 | Backfill primera ejecución | Automática |
 | 19 | Backfill segunda ejecución → sin duplicados | Automática |
 | 20 | Backfill dry-run → sin escrituras | Automática |
 | 21 | Fallo + reintento → recuperación sin duplicar | Automática |
 | 22 | Monto no positivo → rechazo | Automática |
-| — | NC/baja no revierte ingresos | Verificado en código: no hay hook de NC hacia tesorería |
-| — | Devolución real → egreso | API implementada (`registerRefund`), sin flujo de UI que la invoque |
+| 23 | Dos abonos de una misma cuota → dos movimientos | Automática |
+| 24 | Dos solicitudes del mismo pago (instancias distintas) → una fila | Automática |
+| 25 | Clave única rechaza el duplicado en base de datos | Automática |
+| — | Venta al contado mediante transferencia bancaria | Automática (`PaymentMethodBankAccountTest`) |
+| — | Método vinculado a cuenta inexistente, inactiva o de otra moneda | Automática |
+| — | NC/baja no revierte ingresos | Verificado en código: `SaleCreditNotesController`, `SaleLowCommunicationController` y `SaleDocumentController@cancelDocument` (estado 3) no invocan tesorería |
 
 Las pruebas usan sqlite en memoria (`phpunit.xml`), con claves foráneas
 desactivadas; por eso los orígenes se crean con las columnas mínimas reales.
@@ -336,10 +371,13 @@ tipos y la categoría se resuelve por operación.
 3. **`QuickSaleService`:** registra los ingresos al final de su operación, que
    no está envuelta en una transacción propia. Un fallo queda como `failed` en
    la puente (recuperable), pero la venta y el movimiento no son atómicos.
-4. **Métodos de pago con cuenta bancaria:** la tabla `payment_methods` no tiene
-   `bank_account_id`, por lo que hoy el mapeo efectivo es por billetera
-   (Yape/Plin) o cuenta indicada explícitamente. No se modificó el esquema para
-   no romper el resto del sistema.
+4. **Métodos de pago con cuenta bancaria:** la columna existe y la vinculación
+   funciona, pero **nadie la configura sola**: hasta que un administrador asigne
+   el método desde Tesorería → Cuentas, una transferencia bancaria queda
+   `ignored` (no entra al libro). No es un defecto de esquema, es configuración
+   pendiente en cada instalación. Las cuentas de tesorería no tienen
+   `company_id` (sistema de una sola empresa); la unicidad de la vinculación se
+   resuelve por método, no por empresa.
 5. **Montos enteros del cronograma:** `sale_payment_schedules` guarda montos
    `integer`; la capa registra lo que el cronograma reporta, sin redondear de
    nuevo.
@@ -348,3 +386,44 @@ tipos y la categoría se resuelve por operación.
 7. **Backfill histórico:** se ejecutó solo en pruebas. En producción debe
    correrse primero con `--dry-run` y revisar el informe de diferencias antes de
    escribir.
+
+---
+
+## 16. Verificación end-to-end de los flujos de Sales
+
+Pruebas en `tests/Feature/Treasury/SalesTreasuryFlowsTest.php` (5 pruebas, 45
+aserciones). Entran por la ruta HTTP del módulo, con permisos Spatie reales, y
+terminan comprobando `treasury_source_movements` y `treasury_transactions`.
+
+| Flujo | Controlador | Invocación a la integración | Resultado | Prueba |
+|---|---|---|---|---|
+| Contado por transferencia | `SaleDocumentController@store` | `TreasuryHooks::recordSaleIncomes` dentro de `DB::transaction` | 1 movimiento, 1 ingreso en la cuenta bancaria | `test_flujo_venta_contado_por_transferencia` |
+| Crédito con cuota inicial | `SaleDocumentController@store` | `recordDownPayment` por pago inicial + `recordSaleIncomes` | 1 movimiento por la inicial; el saldo no genera ingreso | `test_flujo_venta_al_credito_con_cuota_inicial_por_transferencia` |
+| Abono de cuota | `SalePaymentQuotaController@store` | `recordQuotaPayment` antes del commit | 1 movimiento por el abono; cuota actualizada | `test_flujo_abono_de_cuota_por_transferencia` |
+| Cancelación total | `SalePaymentQuotaController@storePayFull` | `recordFullPayment` con el importe recibido | 1 solo movimiento (no uno por cuota de relleno) | `test_flujo_cancelacion_total_de_la_deuda_por_transferencia` |
+| Cobro de cronograma | `AccountsReceivableController@storeSpacePayments` | `recordScheduleDestination` por cada destino | 1 movimiento por cobro, con su cuenta bancaria | `test_flujo_cobro_de_cronograma_por_transferencia` |
+
+### Defecto encontrado y corregido
+
+`SaleDocumentController@store` tenía la inicialización `$status_pay = true;`
+absorbida por un comentario de línea (`// Obtener la forma de pago del request
+---  $status_pay = true;`). Toda venta al contado por comprobante electrónico
+fallaba con `Undefined variable $status_pay`, la transacción se revertía y el
+controlador respondía **HTTP 200** con `{"success": false}`. Corregido separando
+el comentario de la asignación; el flujo quedó cubierto por la prueba anterior.
+
+### Fuera de una transacción
+
+`QuickSaleService` (venta rápida) llama a `recordSaleIncomes` al final de su
+operación, sin `DB::transaction`. Un fallo del libro deja la venta guardada y la
+fila puente en `failed`, recuperable con `treasury:integration-retry`. No hay
+prueba de ese flujo: solo se verificó por lectura de código.
+
+### Límite de la idempotencia
+
+La clave única protege contra reprocesar el **mismo registro de origen**. No
+protege contra un doble envío del formulario de abono: cada POST crea un nuevo
+`sale_payment_quotas` con su propio `source_id` y, por tanto, un segundo ingreso
+legítimo a ojos de la capa. Para cerrarlo haría falta una clave de idempotencia
+de solicitud enviada por el cliente (o un control de referencia duplicada), que
+no existe hoy.
