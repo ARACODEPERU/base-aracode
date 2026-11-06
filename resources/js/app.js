@@ -7,7 +7,7 @@ import { createApp, h } from "vue";
 import VueGates from "vue-gates";
 import { createInertiaApp, router } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
-import { ZiggyVue } from "../../vendor/tightenco/ziggy/dist/vue.m";
+import { ZiggyVue } from 'ziggy-js';
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import VueTheMask from "vue-the-mask";
 import Permissions from "./Plugins/Permissions";
