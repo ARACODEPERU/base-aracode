@@ -185,6 +185,13 @@ const menuSales = [
                 permissions: 'invo_comunicacion_baja',
                 icom: faFileArrowDown,
             },
+            {
+                route: route('guias_remision_list'),
+                status: false,
+                text: 'Guías de Remisión',
+                permissions: 'invo_guia_remision_lista',
+                icom: faFileArrowDown,
+            },
             // {
             //     route: route('reports_invoice'),
             //     status: false,

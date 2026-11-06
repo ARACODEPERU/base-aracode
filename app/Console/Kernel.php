@@ -82,6 +82,13 @@ class Kernel extends ConsoleKernel
                     ->withoutOverlapping()
                     ->timezone('America/Lima');
 
+        // Consulta asincrona de tickets de resumenes diarios y bajas: SUNAT
+        // procesa en segundo plano, asi que el estado se resuelve aqui.
+        $schedule->command('sunat:check-tickets')
+                    ->everyTenMinutes()
+                    ->withoutOverlapping()
+                    ->timezone('America/Lima');
+
     }
 
     /**

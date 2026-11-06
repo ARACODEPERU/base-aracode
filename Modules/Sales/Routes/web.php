@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Sales\Http\Controllers\AccountsReceivableController;
 use Modules\Sales\Http\Controllers\AccountsReceivableDashboardController;
 use Modules\Sales\Http\Controllers\Facturador3ImportController;
+use Modules\Sales\Http\Controllers\GuiaRemisionController;
 use Modules\Sales\Http\Controllers\InvoiceReportsController;
 use Modules\Sales\Http\Controllers\PettyCashController;
 use Modules\Sales\Http\Controllers\ProductController;
@@ -185,6 +186,25 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
         Route::get('lowcommunication/check/{id}/{ticket}', [SaleLowCommunicationController::class, 'check'])->name('low_communication_check');
         Route::get('lowcommunication/destroy/{id}', [SaleLowCommunicationController::class, 'destroy'])->name('low_communication_destroy');
         Route::get('lowcommunication/download/{id}/{type}', [SaleLowCommunicationController::class, 'downloadFile'])->name('low_communication_download');
+    });
+
+    // //guias de remision electronica (remitente)
+    Route::middleware(['permission:invo_guia_remision_lista'])->group(function () {
+        Route::get('guiaremision/list', [GuiaRemisionController::class, 'index'])->name('guias_remision_list');
+        Route::get('guiaremision/download/{id}/{type}', [GuiaRemisionController::class, 'download'])->name('guias_remision_download');
+        Route::get('guiaremision/check/{id}', [GuiaRemisionController::class, 'check'])->name('guias_remision_check');
+    });
+    Route::middleware(['permission:invo_guia_remision_nuevo'])
+        ->post('guiaremision/store', [GuiaRemisionController::class, 'store'])->name('guias_remision_store');
+    Route::middleware(['permission:invo_guia_remision_envio_sunat'])
+        ->get('guiaremision/send/{id}', [GuiaRemisionController::class, 'send'])->name('guias_remision_send');
+    Route::middleware(['permission:invo_guia_remision_anular'])
+        ->get('guiaremision/destroy/{id}', [GuiaRemisionController::class, 'destroy'])->name('guias_remision_destroy');
+
+    // //consulta asincrona de tickets y descarga centralizada de XML / CDR
+    Route::middleware(['permission:invo_documento_lista'])->group(function () {
+        Route::get('sunat/tickets/{entity}/{id}', [\Modules\Sales\Http\Controllers\SunatTrackingController::class, 'check'])->name('sunat_ticket_check');
+        Route::get('sunat/files/{entity}/{id}/{type}', [\Modules\Sales\Http\Controllers\SunatTrackingController::class, 'download'])->name('sunat_file_download');
     });
     // //rutas de notas de credito
     Route::get('creditnote/list', [SaleCreditNotesController::class, 'index'])->name('sale_credit_notes_list');

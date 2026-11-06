@@ -248,6 +248,29 @@ class LowCommunication
     }
 
     /**
+     * Anula los comprobantes de una baja aceptada por SUNAT.
+     *
+     * Expuesto para que la consulta asincrona de tickets (SunatTicketQuery)
+     * reutilice exactamente la misma logica de anulacion y reingreso de stock.
+     */
+    public function annulDocuments(int $lowcoId, ?string $communicationName = null, ?string $ticket = null): int
+    {
+        $documents = SaleLowcoDetail::where('lowco_id', $lowcoId)->get()->toArray();
+
+        if (count($documents) === 0) {
+            return 0;
+        }
+
+        $this->markDocumentsAsAnnulled(
+            $documents,
+            (object) ['communication_name' => $communicationName ?: 'baja-'.$lowcoId],
+            $ticket
+        );
+
+        return count($documents);
+    }
+
+    /**
      * Marca como anulados los comprobantes de una baja aceptada por SUNAT.
      */
     protected function markDocumentsAsAnnulled(array $documents, $voided, ?string $ticket): void

@@ -86,6 +86,16 @@ final class Util
         $this->service = ($this->mode == 'prod') ? SunatEndpoints::FE_PRODUCCION : SunatEndpoints::FE_BETA;
     }
 
+    /**
+     * Endpoint del WebService de Guías de Remisión (distinto al de facturación).
+     */
+    public function getGuiaService(): string
+    {
+        return $this->mode === 'prod'
+            ? SunatEndpoints::GUIA_PRODUCCION
+            : SunatEndpoints::GUIA_BETA;
+    }
+
     public function getSee()
     {
         $see = new See;

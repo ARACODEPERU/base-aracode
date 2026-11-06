@@ -51,32 +51,54 @@ class SunatResilience
      */
     public function send(Util $util, DocumentInterface $document): array
     {
-        $see = null;
-
         try {
             $see = $util->getSee();
-            $result = $see->send($document);
-
-            return [
-                'outcome' => SunatSendOutcome::fromResult($result),
-                'xml' => $this->lastXml($see),
-                'see' => $see,
-            ];
         } catch (Throwable $e) {
-            $classification = $this->classifyException($e);
-
-            Log::warning('SUNAT: fallo de comunicación al enviar comprobante', [
-                'document' => method_exists($document, 'getName') ? $document->getName() : null,
-                'kind' => $classification['kind'],
-                'error' => mb_substr($e->getMessage(), 0, 500),
-            ]);
-
-            return [
-                'outcome' => SunatSendOutcome::fromException($e, $classification),
-                'xml' => $see ? $this->lastXml($see) : null,
-                'see' => $see,
-            ];
+            return $this->failure($e, null, $document);
         }
+
+        return $this->sendWith($see, $document, $util);
+    }
+
+    /**
+     * Igual que send(), pero con un See ya configurado (por ejemplo guías de
+     * remisión, que usan otro WebService).
+     *
+     * @return array{outcome: SunatSendOutcome, xml: string|null, see: See|null}
+     */
+    public function sendWith(See $see, DocumentInterface $document, ?Util $util = null): array
+    {
+        try {
+            $result = $see->send($document);
+        } catch (Throwable $e) {
+            return $this->failure($e, $see, $document);
+        }
+
+        return [
+            'outcome' => SunatSendOutcome::fromResult($result),
+            'xml' => $this->lastXml($see),
+            'see' => $see,
+        ];
+    }
+
+    /**
+     * @return array{outcome: SunatSendOutcome, xml: string|null, see: See|null}
+     */
+    protected function failure(Throwable $e, ?See $see, DocumentInterface $document): array
+    {
+        $classification = $this->classifyException($e);
+
+        Log::warning('SUNAT: fallo de comunicación al enviar comprobante', [
+            'document' => method_exists($document, 'getName') ? $document->getName() : null,
+            'kind' => $classification['kind'],
+            'error' => mb_substr($e->getMessage(), 0, 500),
+        ]);
+
+        return [
+            'outcome' => SunatSendOutcome::fromException($e, $classification),
+            'xml' => $see ? $this->lastXml($see) : null,
+            'see' => $see,
+        ];
     }
 
     /**
