@@ -1,0 +1,626 @@
+/* ==========================================================================
+   Aracodito — asistente virtual centrado
+   Componente global (independiente de Vue): lo monta resources/js/aracodito.js
+   y se controla con window.Aracodito.showMessage(...).
+   ========================================================================== */
+
+#aracodito-widget {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 20px;
+    /* El contenedor cubre la pantalla para centrar el aviso, pero no debe
+       bloquear los clics del ERP: solo la burbuja y el robot los reciben. */
+    pointer-events: none;
+    font-family: inherit;
+    --aracodito-accent: #2196f3;
+    --aracodito-bubble-bg: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%);
+    --aracodito-bubble-tail: #f5f9ff;
+    --aracodito-bubble-border: rgba(33, 150, 243, 0.20);
+    --aracodito-bubble-text: #10203a;
+    --aracodito-bubble-highlight: rgba(255, 255, 255, 0.85);
+    --aracodito-bubble-tint: rgba(33, 150, 243, 0.07);
+    --aracodito-bubble-shadow: 0 24px 60px rgba(15, 23, 42, 0.18), 0 6px 18px rgba(15, 23, 42, 0.08);
+    --aracodito-icon-bg: rgba(33, 150, 243, 0.12);
+    --aracodito-icon-border: rgba(33, 150, 243, 0.26);
+    --aracodito-button-primary-bg: #10203a;
+    --aracodito-button-primary-text: #ffffff;
+}
+
+#aracodito-widget.aracodito--success {
+    --aracodito-accent: #00ab55;
+    --aracodito-bubble-border: rgba(0, 171, 85, 0.22);
+    --aracodito-bubble-tint: rgba(0, 171, 85, 0.08);
+    --aracodito-icon-bg: rgba(0, 171, 85, 0.12);
+    --aracodito-icon-border: rgba(0, 171, 85, 0.28);
+}
+
+#aracodito-widget.aracodito--error {
+    --aracodito-accent: #e7515a;
+    --aracodito-bubble-border: rgba(231, 81, 90, 0.22);
+    --aracodito-bubble-tint: rgba(231, 81, 90, 0.09);
+    --aracodito-icon-bg: rgba(231, 81, 90, 0.12);
+    --aracodito-icon-border: rgba(231, 81, 90, 0.28);
+}
+
+#aracodito-widget.aracodito--info {
+    --aracodito-accent: #2196f3;
+    --aracodito-bubble-border: rgba(33, 150, 243, 0.20);
+    --aracodito-bubble-tint: rgba(33, 150, 243, 0.07);
+    --aracodito-icon-bg: rgba(33, 150, 243, 0.12);
+    --aracodito-icon-border: rgba(33, 150, 243, 0.26);
+}
+
+#aracodito-widget.aracodito--warning {
+    --aracodito-accent: #d97706;
+    --aracodito-bubble-border: rgba(217, 119, 6, 0.24);
+    --aracodito-bubble-tint: rgba(245, 158, 11, 0.10);
+    --aracodito-icon-bg: rgba(245, 158, 11, 0.12);
+    --aracodito-icon-border: rgba(217, 119, 6, 0.30);
+}
+
+#aracodito-widget.aracodito--confirm {
+    --aracodito-accent: #0d9488;
+    --aracodito-bubble-border: rgba(13, 148, 136, 0.24);
+    --aracodito-bubble-tint: rgba(13, 148, 136, 0.09);
+    --aracodito-icon-bg: rgba(13, 148, 136, 0.12);
+    --aracodito-icon-border: rgba(13, 148, 136, 0.30);
+}
+
+#aracodito-widget.aracodito--help {
+    --aracodito-accent: #6366f1;
+    --aracodito-bubble-border: rgba(99, 102, 241, 0.24);
+    --aracodito-bubble-tint: rgba(99, 102, 241, 0.09);
+    --aracodito-icon-bg: rgba(99, 102, 241, 0.12);
+    --aracodito-icon-border: rgba(99, 102, 241, 0.30);
+}
+
+#aracodito-widget.aracodito--question {
+    --aracodito-accent: #c026d3;
+    --aracodito-bubble-border: rgba(192, 38, 211, 0.24);
+    --aracodito-bubble-tint: rgba(217, 70, 239, 0.08);
+    --aracodito-icon-bg: rgba(217, 70, 239, 0.12);
+    --aracodito-icon-border: rgba(192, 38, 211, 0.30);
+}
+
+/* Modo oscuro del tema Vristo */
+.dark #aracodito-widget {
+    --aracodito-bubble-bg: linear-gradient(180deg, #1a2742 0%, #101a2e 100%);
+    --aracodito-bubble-tail: #101a2e;
+    --aracodito-bubble-border: rgba(130, 170, 255, 0.24);
+    --aracodito-bubble-text: #eef4ff;
+    --aracodito-bubble-highlight: rgba(255, 255, 255, 0.10);
+    --aracodito-bubble-tint: rgba(56, 189, 248, 0.10);
+    --aracodito-bubble-shadow: 0 26px 65px rgba(0, 0, 0, 0.60), 0 0 0 1px rgba(148, 180, 255, 0.06);
+    --aracodito-icon-bg: rgba(56, 189, 248, 0.16);
+    --aracodito-icon-border: rgba(125, 211, 252, 0.30);
+    --aracodito-button-primary-bg: #eef4ff;
+    --aracodito-button-primary-text: #10203a;
+}
+
+.dark #aracodito-widget.aracodito--success {
+    --aracodito-accent: #34d399;
+    --aracodito-bubble-border: rgba(52, 211, 153, 0.32);
+    --aracodito-bubble-tint: rgba(52, 211, 153, 0.12);
+    --aracodito-icon-bg: rgba(52, 211, 153, 0.16);
+    --aracodito-icon-border: rgba(52, 211, 153, 0.36);
+}
+
+.dark #aracodito-widget.aracodito--error {
+    --aracodito-accent: #fb7185;
+    --aracodito-bubble-border: rgba(251, 113, 133, 0.32);
+    --aracodito-bubble-tint: rgba(251, 113, 133, 0.12);
+    --aracodito-icon-bg: rgba(251, 113, 133, 0.16);
+    --aracodito-icon-border: rgba(251, 113, 133, 0.36);
+}
+
+.dark #aracodito-widget.aracodito--info {
+    --aracodito-accent: #7dd3fc;
+    --aracodito-bubble-border: rgba(125, 211, 252, 0.30);
+    --aracodito-bubble-tint: rgba(56, 189, 248, 0.10);
+    --aracodito-icon-bg: rgba(56, 189, 248, 0.16);
+    --aracodito-icon-border: rgba(125, 211, 252, 0.34);
+}
+
+.dark #aracodito-widget.aracodito--warning {
+    --aracodito-accent: #fbbf24;
+    --aracodito-bubble-border: rgba(251, 191, 36, 0.34);
+    --aracodito-bubble-tint: rgba(251, 191, 36, 0.12);
+    --aracodito-icon-bg: rgba(251, 191, 36, 0.16);
+    --aracodito-icon-border: rgba(251, 191, 36, 0.38);
+}
+
+.dark #aracodito-widget.aracodito--confirm {
+    --aracodito-accent: #2dd4bf;
+    --aracodito-bubble-border: rgba(45, 212, 191, 0.32);
+    --aracodito-bubble-tint: rgba(45, 212, 191, 0.12);
+    --aracodito-icon-bg: rgba(45, 212, 191, 0.16);
+    --aracodito-icon-border: rgba(45, 212, 191, 0.36);
+}
+
+.dark #aracodito-widget.aracodito--help {
+    --aracodito-accent: #a5b4fc;
+    --aracodito-bubble-border: rgba(165, 180, 252, 0.32);
+    --aracodito-bubble-tint: rgba(129, 140, 248, 0.14);
+    --aracodito-icon-bg: rgba(129, 140, 248, 0.18);
+    --aracodito-icon-border: rgba(165, 180, 252, 0.36);
+}
+
+.dark #aracodito-widget.aracodito--question {
+    --aracodito-accent: #e879f9;
+    --aracodito-bubble-border: rgba(232, 121, 249, 0.32);
+    --aracodito-bubble-tint: rgba(232, 121, 249, 0.13);
+    --aracodito-icon-bg: rgba(232, 121, 249, 0.18);
+    --aracodito-icon-border: rgba(232, 121, 249, 0.36);
+}
+
+/* Burbuja de conversación ------------------------------------------------- */
+
+.aracodito__bubble {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: max-content;
+    max-width: min(440px, calc(100vw - 32px));
+    padding: 14px 46px 14px 18px;
+    border: 1px solid var(--aracodito-bubble-border);
+    border-radius: 22px;
+    background:
+        linear-gradient(180deg, var(--aracodito-bubble-tint) 0%, transparent 65%),
+        var(--aracodito-bubble-bg);
+    color: var(--aracodito-bubble-text);
+    box-shadow:
+        var(--aracodito-bubble-shadow),
+        inset 0 1px 0 var(--aracodito-bubble-highlight);
+    /* Oculta por defecto; showMessage() agrega .is-visible */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.97);
+    pointer-events: none;
+    transition:
+        opacity 0.22s ease,
+        transform 0.22s ease,
+        visibility 0s linear 0.22s;
+}
+
+.aracodito__bubble.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+    transition-delay: 0s;
+}
+
+.aracodito__close {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--aracodito-bubble-text);
+    opacity: 0.6;
+    cursor: pointer;
+    transition: opacity 0.18s ease, background-color 0.18s ease;
+}
+
+.aracodito__close:hover {
+    background: rgba(15, 23, 42, 0.08);
+    opacity: 1;
+}
+
+.dark .aracodito__close:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.aracodito__close:focus-visible {
+    outline: 2px solid var(--aracodito-accent);
+    outline-offset: 2px;
+    opacity: 1;
+}
+
+.aracodito__close svg {
+    display: block;
+    width: 14px;
+    height: 14px;
+}
+
+/* Pico de la burbuja apuntando al robot */
+.aracodito__bubble::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -9px;
+    width: 18px;
+    height: 18px;
+    background: var(--aracodito-bubble-tail);
+    border-inline-end: 1px solid var(--aracodito-bubble-border);
+    border-bottom: 1px solid var(--aracodito-bubble-border);
+    border-bottom-right-radius: 5px;
+    transform: translateX(-50%) rotate(45deg);
+}
+
+.aracodito__icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+    border: 1px solid var(--aracodito-icon-border);
+    border-radius: 50%;
+    background: var(--aracodito-icon-bg);
+    color: var(--aracodito-accent);
+    box-shadow: inset 0 1px 0 var(--aracodito-bubble-highlight);
+}
+
+.aracodito__icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.aracodito__content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.aracodito__text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.aracodito__badge {
+    align-self: flex-start;
+    margin-top: 1px;
+    padding: 2px 7px;
+    border: 1px solid rgba(67, 97, 238, 0.18);
+    border-radius: 999px;
+    background: rgba(67, 97, 238, 0.10);
+    color: #3d55d9;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.dark .aracodito__badge {
+    border-color: rgba(147, 180, 255, 0.22);
+    background: rgba(67, 97, 238, 0.24);
+    color: #b8ceff;
+}
+
+/* Botones de acción ------------------------------------------------------- */
+
+.aracodito__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.aracodito__actions[hidden] {
+    display: none;
+}
+
+.aracodito__action {
+    appearance: none;
+    padding: 7px 12px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.1;
+    cursor: pointer;
+    transition: transform 0.16s ease, background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
+}
+
+.aracodito__action:hover {
+    transform: translateY(-1px);
+}
+
+.aracodito__action:active {
+    transform: none;
+}
+
+.aracodito__action:focus-visible {
+    outline: 2px solid var(--aracodito-accent);
+    outline-offset: 2px;
+}
+
+.aracodito__action--primary {
+    border-color: var(--aracodito-button-primary-bg);
+    background: var(--aracodito-button-primary-bg);
+    color: var(--aracodito-button-primary-text);
+}
+
+.aracodito__action--primary:hover {
+    opacity: 0.9;
+}
+
+.aracodito__action--secondary {
+    border-color: var(--aracodito-bubble-border);
+    background: transparent;
+    color: var(--aracodito-bubble-text);
+}
+
+.aracodito__action--secondary:hover {
+    background: var(--aracodito-icon-bg);
+}
+
+.aracodito__action--danger {
+    border-color: #b91c1c;
+    background: #b91c1c;
+    color: #ffffff;
+}
+
+/* Robot ------------------------------------------------------------------ */
+
+.aracodito__avatar {
+    display: grid;
+    place-items: center;
+    width: clamp(180px, 26vw, 300px);
+    height: clamp(180px, 26vw, 300px);
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    pointer-events: auto;
+    background: transparent;
+    box-shadow: none;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.aracodito__avatar:hover {
+    transform: translateY(-2px);
+}
+
+.aracodito__avatar:focus-visible {
+    outline: 3px solid rgba(67, 97, 238, 0.45);
+    outline-offset: 3px;
+}
+
+.aracodito__avatar svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    transform-origin: center;
+    animation: aracodito-float 4.5s ease-in-out infinite;
+}
+
+/* La cabeza gira sobre el cuello y el personaje entero flota. */
+.aracodito__head {
+    transform-box: fill-box;
+    transform-origin: 50% 95%;
+    animation: aracodito-head 3.8s ease-in-out infinite;
+}
+
+.aracodito__eyes {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: aracodito-blink 5.2s ease-in-out infinite;
+}
+
+@keyframes aracodito-float {
+    0%,
+    100% {
+        transform: translateY(0) rotate(-1.2deg);
+    }
+    50% {
+        transform: translateY(-9px) rotate(1.2deg);
+    }
+}
+
+@keyframes aracodito-head {
+    0%,
+    100% {
+        transform: rotate(-2deg);
+    }
+    50% {
+        transform: rotate(2.5deg) translateY(-1px);
+    }
+}
+
+@keyframes aracodito-blink {
+    0%,
+    91%,
+    100% {
+        transform: scaleY(1);
+    }
+    94% {
+        transform: scaleY(0.12);
+    }
+    97% {
+        transform: scaleY(1);
+    }
+}
+
+/* Boca del robot ---------------------------------------------------------- */
+
+.aracodito__mouth {
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+#aracodito-widget.is-talking .aracodito__mouth {
+    animation: aracodito-mouth-talk 0.28s ease-in-out infinite;
+}
+
+@keyframes aracodito-mouth-talk {
+    0%,
+    100% {
+        transform: scaleY(0.45);
+    }
+    50% {
+        transform: scaleY(1.8);
+    }
+}
+
+/* Proceso en curso: mini consola en el pecho y cara feliz ----------------- */
+
+.aracodito__chest-screen,
+.aracodito__eyes-happy,
+.aracodito__mouth-smile {
+    opacity: 0;
+}
+
+#aracodito-widget.is-loading .aracodito__chest-screen,
+#aracodito-widget.is-loading .aracodito__eyes-happy,
+#aracodito-widget.is-loading .aracodito__mouth-smile {
+    opacity: 1;
+}
+
+#aracodito-widget.is-loading .aracodito__chest-core,
+#aracodito-widget.is-loading .aracodito__eyes,
+#aracodito-widget.is-loading .aracodito__mouth {
+    opacity: 0;
+}
+
+/* La carita no se mueve: ojos cerrados hacia arriba y una sonrisa tranquila. */
+#aracodito-widget.is-loading .aracodito__eyes {
+    animation: none;
+}
+
+.aracodito__terminal-cursor {
+    animation: aracodito-terminal-blink 0.9s steps(1, end) infinite;
+}
+
+.aracodito__terminal-line {
+    opacity: 0.4;
+}
+
+#aracodito-widget.is-loading .aracodito__terminal-line {
+    animation: aracodito-terminal-code 1.8s ease-in-out infinite;
+}
+
+#aracodito-widget.is-loading .aracodito__terminal-line--2 {
+    animation-delay: 0.22s;
+}
+
+#aracodito-widget.is-loading .aracodito__terminal-line--3 {
+    animation-delay: 0.44s;
+}
+
+.aracodito__terminal-progress {
+    transform-box: fill-box;
+    transform-origin: left center;
+    transform: scaleX(0.68);
+}
+
+#aracodito-widget.is-loading .aracodito__terminal-progress {
+    animation: aracodito-terminal-progress 1.8s ease-in-out infinite alternate;
+}
+
+#aracodito-widget.is-loading .aracodito__chest-screen-bezel {
+    animation: aracodito-terminal-glow 2s ease-in-out infinite;
+}
+
+@keyframes aracodito-terminal-blink {
+    0%,
+    45% {
+        opacity: 1;
+    }
+    46%,
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes aracodito-terminal-code {
+    0%,
+    100% {
+        opacity: 0.35;
+    }
+    30%,
+    60% {
+        opacity: 1;
+    }
+}
+
+@keyframes aracodito-terminal-progress {
+    from {
+        transform: scaleX(0.18);
+    }
+    to {
+        transform: scaleX(0.92);
+    }
+}
+
+@keyframes aracodito-terminal-glow {
+    0%,
+    100% {
+        stroke-opacity: 0.55;
+    }
+    50% {
+        stroke-opacity: 1;
+    }
+}
+
+/* Responsive y accesibilidad --------------------------------------------- */
+
+@media (max-width: 480px) {
+    #aracodito-widget {
+        gap: 14px;
+        padding: 16px;
+    }
+
+    .aracodito__avatar {
+        width: clamp(170px, 48vw, 220px);
+        height: clamp(170px, 48vw, 220px);
+    }
+
+    .aracodito__bubble {
+        max-width: calc(100vw - 32px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aracodito__bubble,
+    .aracodito__bubble.is-visible,
+    .aracodito__avatar,
+    .aracodito__close,
+    .aracodito__action {
+        transition: none;
+        transform: none;
+    }
+
+    .aracodito__avatar svg,
+    .aracodito__head,
+    .aracodito__eyes,
+    #aracodito-widget.is-loading .aracodito__terminal-cursor,
+    #aracodito-widget.is-loading .aracodito__terminal-line,
+    #aracodito-widget.is-loading .aracodito__terminal-progress,
+    #aracodito-widget.is-loading .aracodito__chest-screen-bezel {
+        animation: none;
+    }
+
+    #aracodito-widget.is-talking .aracodito__mouth {
+        animation: none;
+    }
+}
+
+@media print {
+    #aracodito-widget {
+        display: none !important;
+    }
+}

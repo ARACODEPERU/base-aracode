@@ -99,6 +99,38 @@ class ProfileController extends Controller
         return Redirect::route('profile.edit');
     }
 
+    /**
+     * Muestra la configuración del asistente Aracodito.
+     */
+    public function aracodito(): Response
+    {
+        return Inertia::render('Security::Profile/Aracodito');
+    }
+
+    /**
+     * Guarda la configuración del asistente Aracodito del usuario autenticado.
+     */
+    public function saveSettings(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'aracodito_enabled' => ['sometimes', 'boolean'],
+            'aracodito_audio_enabled' => ['sometimes', 'boolean'],
+            'aracodito_ia_enabled' => ['sometimes', 'boolean'],
+        ]);
+
+        $user = $request->user();
+
+        // boolean() normaliza "1", "on", "true", 1 y true, y devuelve false
+        // cuando el interruptor no viene en la petición (valor apagado).
+        $user->aracodito_enabled = $request->boolean('aracodito_enabled');
+        $user->aracodito_audio_enabled = $request->boolean('aracodito_audio_enabled');
+        $user->aracodito_ia_enabled = $request->boolean('aracodito_ia_enabled');
+
+        $user->save();
+
+        return Redirect::route('profile.aracodito')->with('status', 'aracodito-settings-updated');
+    }
+
 
     /**
      * Delete the user's account.

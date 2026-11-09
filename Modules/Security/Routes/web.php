@@ -15,8 +15,14 @@ Route::middleware(['auth','user_activity_log'])->prefix('security')->group(funct
     Route::get('dashboard', 'SecurityController@index')->name('security_dashboard');
 
     Route::get('profile', 'ProfileController@edit')->name('profile.edit');
+    Route::get('profile/aracodito', 'ProfileController@aracodito')
+        ->middleware('permission:conf_asistente')
+        ->name('profile.aracodito');
     Route::post('profile', 'ProfileController@update')->name('profile.update');
     Route::delete('profile', 'ProfileController@destroy')->name('profile.destroy');
+    Route::put('profile/aracodito', 'ProfileController@saveSettings')
+        ->middleware('permission:conf_asistente')
+        ->name('profile.aracodito.update');
 
     Route::get('/config', function () {
         return Inertia::render('Security::Config');

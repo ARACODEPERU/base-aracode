@@ -2,6 +2,8 @@ import "./bootstrap";
 import "../css/app.css";
 import "../../public/themes/vristo/css/app.css"
 import 'easymde/dist/easymde.min.css';
+import "./aracodito";
+import "./alerta-sistema";
 
 import { createApp, h } from "vue";
 import VueGates from "vue-gates";
@@ -100,6 +102,11 @@ createInertiaApp({
             },
         });
         appSetting.init();
+
+        // Aracodito es global: al iniciar otra vista se retira el aviso anterior.
+        router.on('navigate', () => {
+            window.Aracodito?.hide('navigation');
+        });
 
         router.on('success', (event) => {
             const page = event.detail?.page ?? event.page;

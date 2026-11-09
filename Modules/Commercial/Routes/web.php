@@ -109,6 +109,16 @@ Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function ()
         ->post('contracts/payments/document/store', [CommercialContractPaymentController::class, 'storeDocument'])
         ->name('comm_contract_payment_document_store');
 
+    // Vinculacion de una cuota del cronograma con una factura o boleta ya
+    // emitida en el modulo de facturacion electronica.
+    Route::middleware(['middleware' => 'permission:comm_contratos_cronograma'])
+        ->get('contracts/payments/{payment}/documents/search', [CommercialContractPaymentController::class, 'searchDocuments'])
+        ->name('comm_contract_payment_documents_search');
+
+    Route::middleware(['middleware' => 'permission:comm_contratos_cronograma'])
+        ->post('contracts/payments/{payment}/link-document', [CommercialContractPaymentController::class, 'linkDocument'])
+        ->name('comm_contract_payment_link_document');
+
     Route::middleware(['middleware' => 'permission:comm_contratos_cronograma'])
         ->get('contracts/{id}/payments', [CommercialContractPaymentController::class, 'index'])
         ->name('comm_contracts_payments');

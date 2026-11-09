@@ -243,13 +243,28 @@ const submit = () => {
         preserveScroll: true,
         forceFormData: true,
         onSuccess: () => {
-            Swal2.fire({
-                title: "Enhorabuena",
-                text: isEdit.value ? "Se actualizo correctamente" : "Se guardo correctamente",
-                icon: "success",
-                padding: "2em",
-                customClass: "sweet-alerts",
-            });
+            // Mensaje de exito del guardado. window.alertaSistema respeta la
+            // configuracion de Aracodito del usuario: con el asistente activo el
+            // aviso sale con Aracodito y, si no, con SweetAlert2 como antes.
+            const title = isEdit.value ? "Contrato actualizado" : "Contrato guardado";
+            const text = isEdit.value
+                ? "Los cambios del contrato se guardaron correctamente."
+                : "El contrato se registró correctamente.";
+
+            if (typeof window.alertaSistema === "function") {
+                window.alertaSistema(title, text, "success", {
+                    padding: "2em",
+                    customClass: "sweet-alerts",
+                });
+            } else {
+                Swal2.fire({
+                    title,
+                    text,
+                    icon: "success",
+                    padding: "2em",
+                    customClass: "sweet-alerts",
+                });
+            }
 
             if (!isEdit.value) {
                 form.reset();

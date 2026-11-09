@@ -25,6 +25,8 @@
         'slug' => $edition->landingSlug(),
         'playerId' => '__PLAYER__',
     ]);
+    // Las vistas cacheadas antes de este cambio no traen la clave.
+    $champion = $champion ?? null;
     // Puntaje sin decimales innecesarios: 12.00 -> 12, 12.50 -> 12.5
     $fmtPoints = static function ($value): string {
         return rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
@@ -109,6 +111,9 @@
                 @endif
         <a href="#fixture">Fixture</a>
         <a href="#posiciones">Posiciones</a>
+        @if (!empty($champion))
+            <a href="#campeon">Campeón</a>
+        @endif
         @if (filled($gallery ?? null) && count($gallery) > 0)
             <a href="#galeria">Galería</a>
         @endif
@@ -137,6 +142,9 @@
         @endif
         <a href="#fixture">Fixture</a>
         <a href="#posiciones">Posiciones</a>
+        @if (!empty($champion))
+            <a href="#campeon">Campeón</a>
+        @endif
         @if (filled($gallery ?? null) && count($gallery) > 0)
             <a href="#galeria">Galería</a>
         @endif
@@ -576,6 +584,51 @@
                 </section>
             </div>
         </section>
+
+        @if (!empty($champion))
+            {{-- Sección del campeón: solo aparece cuando la final ya se terminó. --}}
+            <section id="campeon" class="se-section se-champion" aria-labelledby="se-champion-title">
+                <div class="se-champion__glow" aria-hidden="true"></div>
+                <div class="se-container">
+                    <div class="se-champion__card" data-se-reveal>
+                        <div class="se-champion__art">
+                            @include('socialevents::torneos.partials.champion-trophy')
+                        </div>
+
+                        <div class="se-champion__content">
+                            <p class="se-champion__eyebrow">
+                                <i class="fas fa-crown" aria-hidden="true"></i>
+                                Campeón del torneo
+                            </p>
+                            <h2 class="se-champion__name" id="se-champion-title">
+                                <span class="se-champion__name-fill">{{ $champion['name'] }}</span>
+                            </h2>
+                            <p class="se-champion__message">¡Felicitaciones, campeón!</p>
+                            <p class="se-champion__text">
+                                {{ $champion['name'] }} levantó la copa de {{ $edition->name }}
+                                @if (!empty($champion['rival_name']))
+                                    después de vencer a {{ $champion['rival_name'] }} en la final.
+                                @else
+                                    tras ganar la final.
+                                @endif
+                            </p>
+
+                            <div class="se-champion__result">
+                                <span class="se-champion__result-score">{{ $champion['final_label'] }}</span>
+                                <span class="se-champion__result-note">{{ $champion['final_note'] }}</span>
+                            </div>
+
+                            <div class="se-champion__actions">
+                                <a href="{{ $champion['profile_url'] }}" class="se-btn se-btn--primary">
+                                    Ver ficha del campeón
+                                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        @endif
 
         @if (filled($gallery ?? null) && count($gallery) > 0)
             <section id="galeria" class="se-section se-section--alt">

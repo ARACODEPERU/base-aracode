@@ -21,7 +21,7 @@
     import IconDollarSignCircle from '@/Components/vristo/icon/icon-dollar-sign-circle.vue';
     import ExchangeRateButton from '@/Components/vristo/layout/ExchangeRateButton.vue';
 
-    import { faCartPlus, faUserGroup, faChartPie } from  '@fortawesome/free-solid-svg-icons';
+    import { faCartPlus, faUserGroup, faChartPie, faRobot } from  '@fortawesome/free-solid-svg-icons';
     import SuperEditorToggle from 'Modules/Security/Resources/assets/js/Components/SuperEditor/Toggle.vue';
     import ChatNotifications from 'Modules/CRM/Resources/assets/js/Components/ChatNotifications.vue';
     import ShoppingCartMenu from 'Modules/Onlineshop/Resources/assets/js/Components/ShoppingCartMenu.vue';
@@ -314,6 +314,12 @@
                                             <icon-settings class="w-4.5 h-4.5 ltr:mr-2 rtl:ml-2 shrink-0" />
                                             Apariencia
                                         </button>
+                                    </li>
+                                    <li v-can="'conf_asistente'">
+                                        <Link :href="route('profile.aracodito')" class="dark:hover:text-white" @click="close()">
+                                            <font-awesome-icon :icon="faRobot" class="w-4.5 h-4.5 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                            Asistente
+                                        </Link>
                                     </li>
 
                                     <li class="border-t border-white-light dark:border-white-light/10">

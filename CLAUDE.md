@@ -6,6 +6,14 @@
 - Los comentarios nuevos en el código deben escribirse en español.
 - Si encuentras documentación o mensajes en inglés, explícalos en español.
 
+# Alertas y confirmaciones (Aracodito / Swal)
+
+Existe la skill `.agents/skills/aracodito-alertas/`. **Léela antes de añadir cualquier aviso, confirmación o mensaje de resultado.**
+
+- Toda confirmación y todo mensaje posterior a una acción se muestran con `window.alertaSistema(...)`; no se llama a `Swal2` directamente en componentes nuevos.
+- El puente decide el canal: con `users.aracodito_enabled` activo **y** la vista marcada como nueva se muestra Aracodito; si no, SweetAlert2, igual que antes.
+- Las vistas nuevas se marcan con `<Head><meta name="aracodito-view" content="new" /></Head>`; solo las nuevas, nunca en el layout global.
+
 # Skills de diseño (UI/UX)
 
 En `.agents/skills/` están instaladas las skills de diseño. **Antes de crear, rediseñar, maquetar o revisar cualquier pantalla, landing, dashboard, modal o componente visual, léelas y aplícalas.**

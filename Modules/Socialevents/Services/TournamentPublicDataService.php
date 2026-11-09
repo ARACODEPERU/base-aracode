@@ -15,6 +15,7 @@ class TournamentPublicDataService
         private TournamentStandingsService $standingsService,
         private TournamentRankingsService $rankingsService,
         private TournamentFixtureService $fixtureService,
+        private TournamentChampionService $championService,
     ) {}
 
     /**
@@ -58,6 +59,8 @@ class TournamentPublicDataService
             // Cuartos de final a ida y vuelta: la landing los pinta en una fila por llave.
             'quarterfinalTies' => $this->fixtureService->quarterfinalTies($fixture),
             'currentEquipment' => $this->standingsService->sortedTeams($editionId),
+            // Solo hay campeón cuando la final ya se terminó (ver ChampionService).
+            'champion' => $this->championService->forEdition($edition),
             'pointAdjustments' => EventEditionPointAdjustment::netByTeam($editionId),
             'playersRanking' => $this->rankingsService->topPlayers($editionId),
             'scorersRanking' => $this->rankingsService->topScorers($editionId),

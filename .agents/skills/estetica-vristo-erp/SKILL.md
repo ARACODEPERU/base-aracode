@@ -10,9 +10,11 @@ metadata:
 
 Usar esta skill **siempre** al crear o editar páginas Vue (núcleo o módulos). El objetivo: que todo el ERP tenga una apariencia estética unificada reutilizando los componentes existentes en lugar de reinventar.
 
-## 1. Alertas y confirmaciones — SweetAlert2 (obligatorio)
+## 1. Alertas y confirmaciones — window.alertaSistema (obligatorio)
 
-Importar siempre `import Swal2 from 'sweetalert2';` (la convención es nombrarlo `Swal2` o `Swal`; NUNCA usar `window.confirm`, `alert()` nativos ni `Modal.confirm` de ant-design-vue).
+Regla vigente: toda confirmación y todo mensaje posterior a una acción (éxito, error, advertencia) se muestran con `window.alertaSistema(...)`, que usa **Aracodito** cuando el usuario lo tiene activo y la vista está marcada como nueva, y **SweetAlert2** en caso contrario. La API, los patrones y el checklist están en la skill **`aracodito-alertas`**; esta sección conserva el patrón clásico de Swal como respaldo del puente y para las vistas antiguas que aún no se migran.
+
+Nunca usar `window.confirm`, `alert()` nativos ni `Modal.confirm` de ant-design-vue, y no importar `Swal2` en componentes nuevos solo para alertar.
 
 ### Confirmación de acción destructiva (eliminar/anular) — patrón estándar
 
@@ -170,8 +172,8 @@ Ubicación: `resources/js/Components/` — importar con alias `@/Components/X.vu
 ## 6. Checklist antes de terminar una página
 
 1. ¿Usa AppLayout + Navigation + Head?
-2. ¿Todas las alertas usan Swal2 con `customClass: 'sweet-alerts'` y `padding: '2em'`?
-3. ¿Las confirmaciones destructivas siguen el patrón preConfirm + allowOutsideClick?
+2. ¿Todas las alertas y confirmaciones usan `window.alertaSistema` (skill `aracodito-alertas`) y la vista está marcada como nueva?
+3. ¿Las confirmaciones esperan la respuesta del backend (`onConfirm` en Aracodito, `preConfirm` en Swal) y revisan `result.isConfirmed`?
 4. ¿Los modales son del núcleo (ModalSmall/Medium/Large/LargeX/LargeXX) — sin modales propios?
 5. ¿Inputs/labels/errores usan TextInput/InputLabel/InputError o clases `form-input` de Vristo?
 6. ¿Botones del núcleo (PrimaryButton/DangerButton/...) y `form.processing` deshabilita el botón?

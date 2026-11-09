@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\District;
 use App\Models\Parameter;
 use App\Models\PaymentMethod;
+use App\Models\SaleDocument;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -222,6 +223,185 @@ class CommercialContractPaymentController extends Controller
             ];
 
             return response()->json($payload);
+        });
+    }
+
+    /**
+     * Documentos de venta (facturas y boletas electronicas ya emitidas) que se
+     * pueden vincular a una cuota del cronograma.
+     *
+     * Se excluyen los comprobantes anulados o rechazados y los que ya estan
+     * vinculados a otra cuota, porque cada documento se vincula a una sola cuota.
+     *
+     * No se devuelve nada sin criterio: con miles de comprobantes no se puede
+     * traer una lista completa al modal. El usuario busca por serie/numero, por
+     * cliente o por fecha de emision.
+     */
+    public function searchDocuments(Request $request, $paymentId): JsonResponse
+    {
+        $payment = CommercialContractPayment::findOrFail($paymentId);
+        $search = trim((string) $request->get('q', ''));
+        $date = trim((string) $request->get('date', ''));
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            $date = '';
+        }
+
+        if ($search === '' && $date === '') {
+            return response()->json(['documents' => []]);
+        }
+
+        // Documentos ya vinculados a otras cuotas (se comparan en PHP porque
+        // document_payments es un arreglo JSON de objetos).
+        $linkedIds = CommercialContractPayment::query()
+            ->whereNotNull('document_payments')
+            ->get(['document_payments'])
+            ->flatMap(fn ($item) => collect($item->document_payments ?: [])->pluck('document_id'))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $documents = SaleDocument::query()
+            ->whereIn('invoice_type_doc', ['01', '03'])
+            ->where(function ($query) {
+                $query->whereNull('invoice_status')
+                    ->orWhereNotIn('invoice_status', ['Anulada', 'Rechazada']);
+            })
+            ->whereNotIn('id', $linkedIds)
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($sub) use ($search) {
+                    $sub->where('invoice_serie', 'like', "%{$search}%")
+                        ->orWhere('invoice_correlative', 'like', "%{$search}%")
+                        ->orWhere('client_rzn_social', 'like', "%{$search}%")
+                        ->orWhere('client_number', 'like', "%{$search}%")
+                        ->orWhereRaw("CONCAT(invoice_serie, '-', invoice_correlative) LIKE ?", ["%{$search}%"]);
+                });
+            })
+            ->when($date !== '', fn ($query) => $query->whereDate('invoice_broadcast_date', $date))
+            ->orderByDesc('invoice_broadcast_date')
+            ->orderByDesc('id')
+            ->limit(15)
+            ->get([
+                'id',
+                'invoice_serie',
+                'invoice_correlative',
+                'invoice_type_doc',
+                'invoice_broadcast_date',
+                'client_rzn_social',
+                'client_number',
+                'invoice_mto_imp_sale',
+                'overall_total',
+                'invoice_type_currency',
+                'invoice_status',
+            ]);
+
+        return response()->json([
+            'documents' => $documents->map(fn (SaleDocument $document) => [
+                'id' => $document->id,
+                'serie' => $document->invoice_serie,
+                'correlativo' => (string) $document->invoice_correlative,
+                'label' => trim($document->invoice_serie.'-'.$document->invoice_correlative),
+                'type' => $document->invoice_type_doc === '01' ? 'Factura' : 'Boleta',
+                'date' => $document->invoice_broadcast_date,
+                'client' => $document->client_rzn_social,
+                'client_number' => $document->client_number,
+                'total' => (float) ($document->invoice_mto_imp_sale ?? $document->overall_total ?? 0),
+                'currency' => $document->invoice_type_currency ?: $payment->currency,
+                'status' => $document->invoice_status,
+            ])->values(),
+        ]);
+    }
+
+    /**
+     * Vincula un comprobante existente a una cuota y aplica el estado elegido por
+     * el usuario. La cuota puede estar pagada o no: el estado y la fecha de pago
+     * se guardan tal como llegan del modal.
+     */
+    public function linkDocument(Request $request, $paymentId): JsonResponse
+    {
+        $data = $request->validate([
+            'document_id' => ['required', 'integer', 'exists:sale_documents,id'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'status' => ['required', Rule::in(array_column($this->paymentStatuses(), 'value'))],
+            'paid_at' => ['nullable', 'date'],
+        ]);
+
+        return DB::transaction(function () use ($data, $paymentId) {
+            $payment = CommercialContractPayment::query()->lockForUpdate()->findOrFail($paymentId);
+            $document = SaleDocument::findOrFail($data['document_id']);
+
+            if (! in_array($document->invoice_type_doc, ['01', '03'], true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Solo se pueden vincular facturas o boletas electronicas.',
+                ], 422);
+            }
+
+            $duplicate = CommercialContractPayment::query()
+                ->where('id', '!=', $payment->id)
+                ->whereNotNull('document_payments')
+                ->get(['id', 'payment_number', 'document_payments'])
+                ->first(fn ($item) => collect($item->document_payments ?: [])
+                    ->contains(fn ($linked) => (int) ($linked['document_id'] ?? 0) === (int) $document->id));
+
+            if ($duplicate) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "El documento {$document->invoice_serie}-{$document->invoice_correlative} ya esta vinculado a la cuota {$duplicate->payment_number}.",
+                ], 422);
+            }
+
+            $documents = collect($payment->document_payments ?: []);
+
+            if ($documents->contains(fn ($linked) => (int) ($linked['document_id'] ?? 0) === (int) $document->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Este documento ya esta vinculado a la cuota.',
+                ], 422);
+            }
+
+            $amount = round((float) $data['amount'], 2);
+            $total = round((float) ($payment->total_amount ?: 0), 2);
+
+            if ($amount > $total + 0.01) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El monto vinculado no puede ser mayor al total de la cuota.',
+                ], 422);
+            }
+
+            $documents->push([
+                'document_id' => $document->id,
+                'serie' => $document->invoice_serie,
+                'correlativo' => (string) $document->invoice_correlative,
+                'amount' => $amount,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]);
+
+            $paid = round($documents->sum(fn ($linked) => round((float) ($linked['amount'] ?? 0), 2)), 2);
+            $balance = max(0, round($total - $paid, 2));
+            $status = $data['status'];
+
+            $payment->update([
+                'document_payments' => $documents->all(),
+                'balance_amount' => $balance,
+                'status' => $status,
+                'paid_at' => $status === 'paid'
+                    ? ($data['paid_at'] ?? Carbon::now()->format('Y-m-d'))
+                    : null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "La cuota {$payment->payment_number} quedo vinculada al documento {$document->invoice_serie}-{$document->invoice_correlative}.",
+                'payment' => [
+                    'id' => $payment->id,
+                    'status' => $payment->status,
+                    'paid_at' => $payment->paid_at,
+                    'balance_amount' => (float) $payment->balance_amount,
+                    'document_payments' => $payment->document_payments,
+                ],
+            ]);
         });
     }
 

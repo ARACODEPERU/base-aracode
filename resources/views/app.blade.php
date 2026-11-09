@@ -53,6 +53,20 @@
         // el menu de Academico lo lee para decidir si muestra el grupo Colegio
         // (5 = Colegio, 6 = Colegio y capacitaciones).
         window.businessType = @json(\App\Models\Parameter::where('parameter_code', 'P000009')->value('value_default'));
+
+        // Configuración del asistente Aracodito del usuario autenticado.
+        // La lee window.alertaSistema para decidir entre Aracodito y Swal.
+        // La directiva JSON no acepta un array literal con comas: las interpreta como
+        // argumentos separados. Por eso el array se arma aparte.
+        @php
+            $aracoditoUser = auth()->user();
+            $aracoditoConfig = [
+                'aracodito_enabled' => (bool) ($aracoditoUser?->aracodito_enabled ?? false),
+                'aracodito_audio_enabled' => (bool) ($aracoditoUser?->aracodito_audio_enabled ?? false),
+                'aracodito_ia_enabled' => (bool) ($aracoditoUser?->aracodito_ia_enabled ?? false),
+            ];
+        @endphp
+        window.USER_CONFIG = @json($aracoditoConfig);
     </script>
 
 </body>
