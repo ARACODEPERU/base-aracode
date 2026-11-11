@@ -224,11 +224,6 @@
                                              alt="{{ $article->title }}" 
                                              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                              loading="lazy">
-                                        @if($article->category)
-                                            <span class="absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-ara-blue/90 text-white backdrop-blur-sm">
-                                                {{ $article->category->description }}
-                                            </span>
-                                        @endif
                                     </div>
                                     
                                     {{-- Content --}}
