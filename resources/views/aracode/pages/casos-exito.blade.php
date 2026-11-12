@@ -6,21 +6,13 @@
 @section('content')
     @include('aracode.components.v2.navbar')
 
-    {{-- Hero --}}
-    <section class="pt-32 pb-20 bg-ara-navy relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-96 h-96 bg-ara-blue/10 rounded-full filter blur-3xl pointer-events-none"></div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="max-w-3xl mx-auto text-center">
-                <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">Portfolio</span>
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 reveal reveal-delay-1">
-                    Casos de <span class="text-gradient">Éxito</span>
-                </h1>
-                <p class="text-lg text-white/70 reveal reveal-delay-2">
-                    Conoce los proyectos que hemos desarrollado y los resultados obtenidos para nuestros clientes.
-                </p>
-            </div>
-        </div>
-    </section>
+    {{-- Hero (formato común de páginas internas) --}}
+    <x-v2.hero-pagina
+        etiqueta="Portfolio"
+        titulo="Casos de"
+        resaltado="Éxito"
+        bajada="Conoce los proyectos que hemos desarrollado y los resultados obtenidos para nuestros clientes."
+    />
 
     {{-- Stats --}}
     <section class="py-12 bg-white border-y border-ara-slate-100">

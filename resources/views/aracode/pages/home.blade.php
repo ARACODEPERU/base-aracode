@@ -11,9 +11,12 @@
     @include('aracode.components.v2.hero')
 
     {{-- Client Logos --}}
-    <section class="py-12 bg-ara-slate-50 border-y border-ara-slate-100 ara-clients">
+    {{-- El padding lo pone .ara-clients en aracode-evolucion.css --}}
+    <section class="bg-ara-slate-50 border-y border-ara-slate-100 ara-clients">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-ara-slate-400 text-sm font-medium mb-8 reveal">Empresas que confían en nosotros</p>
+            {{-- El antetítulo se quita de la vista, pero queda para lectores de
+                 pantalla: la cinta sola no dice de quiénes son los logos. --}}
+            <h2 class="ara-sr">Empresas que confían en nosotros</h2>
             @php
                 $clients = ['erios', 'brise', 'iprase', 'cpa', 'horizonte', 'orbe', 'cprod', 'jrrss', 'zoelife', 'celmovil', 'cap', 'kentha'];
             @endphp
@@ -116,11 +119,10 @@
                 :light="false"
             />
 
-            {{-- Tres por fila y con la misma tarjeta compacta de /soluciones:
-                 el ecosistema se presenta igual en la portada y en el catálogo.
-                 La tarjeta compacta resume con la frase del producto —que es
-                 además el texto alternativo de su imagen— e ignora `features`,
-                 así que no hace falta pasar ninguna. --}}
+            {{-- Tres por fila. La portada usa la variante `ficha` —cabecera
+                 navy con el nombre y el rubro, diseño entero debajo y botón a
+                 todo el ancho—; /soluciones mantiene la tarjeta compacta navy
+                 con el mismo contenido. --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {{-- KAPTA LMS --}}
                 <x-v2.product-card
@@ -128,7 +130,9 @@
                     description="Plataforma SaaS para gestión y formación educativa."
                     :href="route('solucion_kapta')"
                     image="{{ asset('themes/webpage/images/misc/producto-kapta.webp') }}"
-                    {{-- badge="Plataforma SaaS" --}}
+                    variante="sobrepuesta"
+                    etiqueta="Leer más"
+                    badge="Educación"
                     :delay="1"
                     :compacta="true"
                 />
@@ -140,7 +144,9 @@
                     :href="\App\Support\SitiosProducto::url('pichanguero')"
                     :nuevaPestana="true"
                     image="{{ asset('themes/webpage/images/misc/producto-pichanguero.webp') }}"
-                    {{-- badge="App móvil" --}}
+                    variante="sobrepuesta"
+                    etiqueta="Leer más"
+                    badge="Deportes"
                     :delay="3"
                     :compacta="true"
                 />
@@ -152,7 +158,9 @@
                     description="Facturación electrónica y gestión comercial para empresas."
                     :href="route('solucion_facturacion')"
                     image="{{ asset('themes/webpage/images/misc/producto-kirafact.webp') }}"
-                    {{-- badge="SUNAT" --}}
+                    variante="sobrepuesta"
+                    etiqueta="Leer más"
+                    badge="Empresas"
                     :delay="2"
                     :compacta="true"
                 />

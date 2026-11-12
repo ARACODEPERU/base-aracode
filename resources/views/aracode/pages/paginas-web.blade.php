@@ -119,59 +119,24 @@
 @section('content')
     @include('aracode.components.v2.navbar')
 
-    {{-- Hero --}}
-    <section class="pt-32 pb-20 bg-ara-navy relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-96 h-96 bg-ara-blue/10 rounded-full filter blur-3xl pointer-events-none"></div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div>
-                    <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">Servicio de ARACODE</span>
+    {{-- Hero (formato común de páginas internas) --}}
+    <x-v2.hero-pagina
+        etiqueta="Servicio de ARACODE"
+        titulo="Tu página web"
+        resaltado="publicada en días"
+        :bajada="'Elige tu plantilla, la adaptamos con tu marca y la publicamos en tu dominio. Desde ' . $precioDesde . ' al mes, sin costo de implementación.'"
+    >
+        <x-slot:acciones>
+            <a href="{{ route('plantillas.catalogo') }}" class="ara-btn ara-btn-primary">
+                Ver las plantillas
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+            </a>
+            <a href="{{ route('contacto') }}" data-asesoria class="ara-btn ara-btn-secondary">Solicitar asesoría</a>
+        </x-slot:acciones>
 
-                    <h1 class="text-4xl sm:text-5xl font-bold text-white mb-6 reveal reveal-delay-1">
-                        Tu página web <span class="text-gradient">publicada en días</span>
-                    </h1>
-
-                    <p class="text-lg text-white/70 mb-8 reveal reveal-delay-2">
-                        Elige una plantilla de nuestro catálogo, la adaptamos con tu logo, tus textos y tus fotos,
-                        y la dejamos online con tu propio dominio. Planes desde
-                        {{ $precioDesde }} al mes o el año completo: sin costo de implementación
-                        y sin sorpresas.
-                    </p>
-
-                    <div class="flex flex-col sm:flex-row gap-4 reveal reveal-delay-3">
-                        <a href="{{ route('plantillas.catalogo') }}" class="ara-btn ara-btn-primary ara-btn-lg">
-                            Ver las plantillas
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                            </svg>
-                        </a>
-                        <a href="{{ route('contacto') }}" data-asesoria class="ara-btn ara-btn-secondary ara-btn-lg">
-                            Solicitar asesoría
-                        </a>
-                    </div>
-
-                    <ul class="mt-8 space-y-2 reveal reveal-delay-4">
-                        <li class="flex items-start gap-2 text-sm text-white/70">
-                            <svg class="w-5 h-5 text-ara-green flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            Sin costo de implementación: se paga el plan, no el proyecto
-                        </li>
-                        <li class="flex items-start gap-2 text-sm text-white/70">
-                            <svg class="w-5 h-5 text-ara-green flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            Dominio, hosting y certificado de seguridad incluidos
-                        </li>
-                        <li class="flex items-start gap-2 text-sm text-white/70">
-                            <svg class="w-5 h-5 text-ara-green flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            Publicada y con cambios de contenido incluidos
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="hidden lg:block reveal reveal-delay-4">
-                    <img src="{{ asset('themes/webpage/images/productos/paginas-web.webp') }}" alt="Publicación de una página web de ARACODE" class="rounded-2xl shadow-2xl w-full" loading="lazy">
-                </div>
-            </div>
-        </div>
-    </section>
+    </x-v2.hero-pagina>
 
     {{-- Cómo funciona --}}
     <section class="py-20 lg:py-28 bg-white">

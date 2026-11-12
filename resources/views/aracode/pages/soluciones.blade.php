@@ -51,41 +51,35 @@
 @section('content')
     @include('aracode.components.v2.navbar')
 
-    {{-- Hero --}}
-    <section class="pt-32 pb-20 bg-ara-navy relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-96 h-96 bg-ara-blue/10 rounded-full filter blur-3xl pointer-events-none"></div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="max-w-3xl mx-auto text-center">
-                <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">Nuestras Soluciones</span>
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 reveal reveal-delay-1">
-                    Soluciones que <span class="text-gradient">impulsan</span> tu negocio
-                </h1>
-                <p class="text-lg text-white/70 reveal reveal-delay-2">
-                    Ofrecemos un ecosistema completo de productos y servicios tecnológicos diseñados para la transformación digital de tu empresa.
-                </p>
-            </div>
-        </div>
-    </section>
+    {{-- Hero (formato común de páginas internas) --}}
+    <x-v2.hero-pagina
+        etiqueta="Nuestras Soluciones"
+        titulo="Soluciones que"
+        resaltado="impulsan"
+        resto=" tu negocio"
+        bajada="Ofrecemos un ecosistema completo de productos y servicios tecnológicos diseñados para la transformación digital de tu empresa."
+    />
 
     {{-- Products --}}
     <section class="py-20 lg:py-28 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {{-- Tres por fila y con la misma tarjeta compacta del home: el
-                 ecosistema se presenta igual en la portada y en el catálogo.
-                 La tarjeta compacta resume con la frase del producto —que es
-                 además el texto alternativo de su imagen— e ignora `features`,
-                 así que no hace falta pasar la lista de prestaciones. --}}
+            {{-- Siete soluciones con la misma tarjeta del home: el diseño del
+                 producto a sangre, el rubro en píldora, el nombre, la frase
+                 corta y la píldora blanca «Leer más» sobre el velo navy.
+                 Las frases se dejan en dos o tres líneas: la tarjeta tiene
+                 alto fijo y el texto vive sobre el pie oscuro. --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {{-- KAPTA LMS --}}
                 <x-v2.product-card
                     title="KAPTA LMS"
-                    description="Plataforma SaaS para gestión y formación educativa completa."
+                    description="Plataforma SaaS para gestión y formación educativa."
                     :href="$sitiosProducto['kapta']"
                     :nuevaPestana="true"
                     image="{{ asset('themes/webpage/images/misc/s1.jpg') }}"
-                    {{-- badge="Plataforma SaaS" --}}
+                    badge="Educación"
+                    variante="sobrepuesta"
+                    etiqueta="Leer más"
                     :delay="1"
-                    :compacta="true"
                 />
 
                 {{-- KIRAFACT: el nombre comercial se escribe como el producto lo
@@ -93,121 +87,84 @@
                      su propio sitio). Una sola grafía en todo el ecosistema. --}}
                 <x-v2.product-card
                     title="KIRAFACT"
-                    description="Facturación electrónica y gestión comercial para empresas: ventas, inventario y comprobantes electrónicos."
+                    description="Facturación electrónica y gestión comercial para empresas."
                     :href="$sitiosProducto['kirafact']"
                     :nuevaPestana="true"
                     image="{{ asset('themes/webpage/images/misc/s2.jpg') }}"
-                    {{-- badge="SUNAT" --}}
+                    badge="Empresas"
+                    variante="sobrepuesta"
+                    etiqueta="Leer más"
                     :delay="2"
-                    :compacta="true"
                 />
 
                 {{-- Pichanguero --}}
                 <x-v2.product-card
                     title="Pichanguero"
-                    description="Plataforma para organizar torneos de fútbol: fixture automático, posiciones y estadísticas en tiempo real."
+                    description="Plataforma para organizar torneos de fútbol: fixture, posiciones y estadísticas."
                     :href="$sitiosProducto['pichanguero']"
                     :nuevaPestana="true"
                     image="{{ asset('themes/webpage/images/misc/s3.jpg') }}"
-                    {{-- badge="App móvil" --}}
-                    :delay="4"
-                    :compacta="true"
+                    badge="Deportes"
+                    variante="sobrepuesta"
+                    etiqueta="Leer más"
+                    :delay="3"
                 />
 
-                {{-- Desarrollo --}}
+                {{-- Desarrollo: enlace interno, así que abre en la misma
+                     pestaña. --}}
                 <x-v2.product-card
                     title="Desarrollo a Medida"
-                    description="Creamos soluciones de software personalizadas para las necesidades específicas de tu empresa."
+                    description="Software a medida para las necesidades específicas de tu empresa."
                     :href="route('solucion_desarrollo')"
                     image="{{ asset('themes/webpage/images/productos/desarrollo-medida.webp') }}"
-                    {{-- badge="Personalizado" --}}
-                    :delay="3"
-                    :compacta="true"
+                    badge="Personalizado"
+                    variante="sobrepuesta"
+                    etiqueta="Leer más"
+                    :delay="4"
                 />
 
-                {{-- Automatización: servicio, no producto con web propia. Usa la
-                     misma tarjeta compacta del resto y su misma estructura
-                     (franja superior + texto debajo) para que la fila se
-                     alinee; la franja lleva su imagen diseñada, con la misma
-                     proporción que el archivo para que no queden bandas. --}}
-                <article class="ara-product-card ara-product-card--plano ara-product-card--compacta reveal reveal-delay-5">
-                    <div class="ara-product-media"
-                         style="--ara-product-media-bg: url('{{ asset('themes/webpage/images/productos/automatizacion-procesos.webp') }}'); --ara-product-media-ratio: 960 / 600">
-                        <img src="{{ asset('themes/webpage/images/productos/automatizacion-procesos.webp') }}"
-                             alt="Automatización de procesos" loading="lazy" decoding="async">
-                        <span class="ara-product-badge">Servicios</span>
-                    </div>
+                {{-- Automatización: servicio, no producto con web propia. El
+                     botón abre el formulario de asesoría (`data-asesoria`), no
+                     navega a otra página. --}}
+                <x-v2.product-card
+                    title="Automatización de Procesos"
+                    description="Automatiza los procesos manuales y reduce errores y tiempos."
+                    :href="route('contacto')"
+                    :asesoria="true"
+                    image="{{ asset('themes/webpage/images/productos/automatizacion-procesos.webp') }}"
+                    badge="Servicios"
+                    variante="sobrepuesta"
+                    etiqueta="Solicitar asesoría"
+                    :delay="5"
+                />
 
-                    <div class="ara-product-content">
-                        <h3 class="ara-product-title">Automatización de Procesos</h3>
-                        <p class="ara-product-text">
-                            Optimiza y automatiza los procesos manuales de tu empresa para reducir errores, ahorrar tiempo y aumentar la productividad de tu equipo.
-                        </p>
-                        <a href="{{ route('contacto') }}" data-asesoria class="ara-btn ara-btn-primary ara-product-cta">
-                            Solicitar Asesoría
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                            </svg>
-                        </a>
-                    </div>
-                </article>
+                {{-- IA --}}
+                <x-v2.product-card
+                    title="Inteligencia Artificial"
+                    description="Inteligencia artificial aplicada a tus datos para decidir mejor."
+                    :href="route('contacto')"
+                    image="{{ asset('themes/webpage/images/productos/inteligencia-artificial.webp') }}"
+                    badge="Innovación"
+                    variante="sobrepuesta"
+                    etiqueta="Conocer más"
+                    :delay="6"
+                />
 
-                {{-- IA: mismo caso que Automatización, con su imagen diseñada en
-                     lugar del degradado con el icono. --}}
-                <article class="ara-product-card ara-product-card--plano ara-product-card--compacta reveal reveal-delay-6">
-                    <div class="ara-product-media"
-                         style="--ara-product-media-bg: url('{{ asset('themes/webpage/images/productos/inteligencia-artificial.webp') }}'); --ara-product-media-ratio: 960 / 600">
-                        <img src="{{ asset('themes/webpage/images/productos/inteligencia-artificial.webp') }}"
-                             alt="Inteligencia artificial" loading="lazy" decoding="async">
-                        <span class="ara-product-badge">Innovación</span>
-                    </div>
-
-                    <div class="ara-product-content">
-                        <h3 class="ara-product-title">Inteligencia Artificial</h3>
-                        <p class="ara-product-text">
-                            Integramos IA en cada una de nuestras soluciones para analizar datos de forma inteligente y brindar una toma de decisiones asistida.
-                        </p>
-                        <a href="{{ route('contacto') }}" class="ara-btn ara-btn-green ara-product-cta">
-                            Conocer Más
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                            </svg>
-                        </a>
-                    </div>
-                </article>
-
-                {{-- Páginas Web: el servicio que publica una plantilla del Banco de
-                     Plantillas con la marca y el dominio del cliente. Lleva su
-                     propia imagen diseñada y su color (morado): el azul y el
-                     verde ya son de Automatización e IA.
-
-                     El enlace es interno (misma pestaña) y el precio de entrada
-                     sale de config/servicio_web.php: el mismo que publican
-                     /paginas-web, el catálogo y la ficha de cada plantilla.
-                     Lo que incluye el plan se detalla en /paginas-web: aquí
-                     basta la frase con el precio, como en el resto. --}}
-                <article class="ara-product-card ara-product-card--plano ara-product-card--compacta reveal reveal-delay-7">
-                    <div class="ara-product-media"
-                         style="--ara-product-media-bg: url('{{ asset('themes/webpage/images/productos/paginas-web.webp') }}'); --ara-product-media-ratio: 960 / 600">
-                        <img src="{{ asset('themes/webpage/images/productos/paginas-web.webp') }}"
-                             alt="Páginas web con plantillas profesionales" loading="lazy" decoding="async">
-                        <span class="ara-product-badge">Servicios</span>
-                    </div>
-
-                    <div class="ara-product-content">
-                        <h3 class="ara-product-title">Páginas Web</h3>
-                        <p class="ara-product-text">
-                            Elige una plantilla de nuestro catálogo y la publicamos con tu marca y tu dominio.
-                            Desde {{ $precioDesdeServicio }} al mes, sin costo de implementación.
-                        </p>
-                        <a href="{{ $urlServicioWeb }}" class="ara-btn ara-btn-primary ara-product-cta">
-                            Ver los planes
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                            </svg>
-                        </a>
-                    </div>
-                </article>
+                {{-- Páginas Web: el servicio que publica una plantilla del Banco
+                     de Plantillas con la marca y el dominio del cliente. El
+                     enlace es interno y el precio de entrada sale de
+                     config/servicio_web.php, igual que en /paginas-web y en el
+                     catálogo: aquí no se escribe ningún importe. --}}
+                <x-v2.product-card
+                    title="Páginas Web"
+                    description="Web con plantilla del catálogo, tu marca y tu dominio. Desde {{ $precioDesdeServicio }} al mes."
+                    :href="$urlServicioWeb"
+                    image="{{ asset('themes/webpage/images/productos/paginas-web.webp') }}"
+                    badge="Servicios"
+                    variante="sobrepuesta"
+                    etiqueta="Ver los planes"
+                    :delay="7"
+                />
             </div>
         </div>
     </section>

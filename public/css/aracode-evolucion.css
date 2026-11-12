@@ -263,7 +263,7 @@
 }
 
 .ara-marquee img {
-    height: 2.5rem;
+    height: 3rem;
     width: auto;
     max-width: none;
     object-fit: contain;
@@ -272,6 +272,25 @@
 @keyframes ara-marquee {
     from { transform: translate3d(0, 0, 0); }
     to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* Texto solo para lectores de pantalla */
+.ara-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* La cinta de clientes va arriba, sin antetítulo: poco aire arriba y algo
+   más abajo para separarla de la sección siguiente. */
+.ara-clients {
+    padding: 1.5rem 0 2rem;
 }
 
 /* Fondo tenue para que el vidrio de las tarjetas tenga algo que leer */
@@ -474,7 +493,7 @@
     }
 
     .ara-marquee img {
-        height: 2rem;
+        height: 2.25rem;
     }
 
     .ara-stats-panel {
@@ -673,8 +692,9 @@
 }
 
 .ara-hero-inner {
-    padding-top: 6.8rem;
-    padding-bottom: 2.2rem;
+    /* Más aire bajo la barra: el contenido del hero no arranca pegado al menú */
+    padding-top: 9rem;
+    padding-bottom: 3rem;
 }
 
 /* El titular manda: contenedor más ancho y tipografía más grande para que
@@ -784,7 +804,8 @@
 
 .ara-hero .ara-stat-value {
     margin-bottom: .4rem;
-    font-size: 1.35rem;
+    /* +2 px sobre los 1.35rem originales */
+    font-size: calc(1.35rem + 2px);
     font-weight: 800;
     line-height: 1;
     letter-spacing: -.02em;
@@ -797,13 +818,14 @@
 }
 
 .ara-hero .ara-stat-caption {
-    font-size: .72rem;
+    /* +2 px sobre los .72rem originales */
+    font-size: calc(.72rem + 2px);
     color: #93A6C4;
 }
 
 @media (max-width: 640px) {
     .ara-hero-inner {
-        padding-top: 5.5rem;
+        padding-top: 7.25rem;
     }
 
     .ara-hero h1 {
@@ -1013,5 +1035,98 @@
 
     .ara-cta-auto__panel {
         border-radius: 24px;
+    }
+}
+
+/* ============================================================
+   Hero de páginas internas (mismo formato que el del catálogo)
+   ============================================================ */
+.ara-ph {
+    position: relative;
+    overflow: hidden;
+    padding: 8.5rem 0 3.5rem;
+    background: radial-gradient(circle at 15% 0, #12294F 0, #060E2D 55%, #04091E 100%);
+    color: #fff;
+}
+
+.ara-ph__halo {
+    position: absolute;
+    top: -8rem;
+    right: -6rem;
+    width: 26rem;
+    height: 26rem;
+    border-radius: 50%;
+    pointer-events: none;
+    background: rgba(1, 136, 238, .22);
+    filter: blur(90px);
+}
+
+.ara-ph__texto {
+    max-width: 46rem;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.ara-ph__badge {
+    display: inline-block;
+    margin-bottom: 1.15rem;
+}
+
+.ara-ph__titulo {
+    margin: 0 0 .95rem;
+    font-size: clamp(2rem, 5vw, 2.6rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -.02em;
+}
+
+.ara-ph__lead {
+    margin: 0 auto;
+    max-width: 34rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, .72);
+}
+
+.ara-ph__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .6rem;
+    margin-top: 1.6rem;
+}
+
+.ara-ph__extra {
+    max-width: 34rem;
+    margin: 1.4rem auto 0;
+    text-align: left;
+    font-size: .875rem;
+    color: rgba(255, 255, 255, .72);
+}
+
+.ara-ph__extra ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: .45rem;
+}
+
+@media (min-width: 1024px) {
+    .ara-ph {
+        min-height: 440px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 3rem 0;
+    }
+
+    .ara-ph__titulo {
+        font-size: clamp(1.95rem, 2.4vw, 2.375rem);
+    }
+
+    .ara-ph__lead {
+        font-size: .95rem;
+        line-height: 1.55;
     }
 }

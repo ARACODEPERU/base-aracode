@@ -63,177 +63,42 @@
         {{-- ===================== PORTADA ===================== --}}
         <section class="plt-hero">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="plt-hero__grid">
-                    <div class="plt-hero__contenido">
-                <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">Banco de Plantillas</span>
+                <div class="plt-hero__contenido">
+                    <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">Banco de Plantillas</span>
 
-                <h1 class="plt-hero__titulo reveal reveal-delay-1">
-                    Plantillas web listas para <span class="text-gradient">personalizar</span>
-                </h1>
+                    <h1 class="plt-hero__titulo reveal reveal-delay-1">
+                        Plantillas web listas para <span class="text-gradient">personalizar</span>
+                    </h1>
 
-                <p class="plt-hero__lead reveal reveal-delay-2">
-                    Elige el rubro, mira la demostración funcionando y la adaptamos con tu marca,
-                    tus textos y tus datos. Cada plantilla es un sitio web completo, no una imagen.
-                </p>
+                    <p class="plt-hero__lead reveal reveal-delay-2">
+                        Elige el rubro, mira la demostración funcionando y la adaptamos con tu marca,
+                        tus textos y tus datos. Cada plantilla es un sitio web completo, no una imagen.
+                    </p>
 
-                {{-- Buscador: nombre, rubro o etiqueta --}}
-                <form class="plt-buscador reveal reveal-delay-3" method="get"
-                      action="{{ route('plantillas.catalogo') }}" role="search">
-                    <label class="plt-buscador__label" for="plt-q">¿Qué rubro buscas?</label>
+                    {{-- Buscador: nombre, rubro o etiqueta --}}
+                    <form class="plt-buscador reveal reveal-delay-3" method="get"
+                          action="{{ route('plantillas.catalogo') }}" role="search">
+                        <label class="plt-buscador__label" for="plt-q">¿Qué rubro buscas?</label>
 
-                    <div class="plt-buscador__campo">
-                        <span class="plt-buscador__icono" aria-hidden="true">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
-                            </svg>
-                        </span>
+                        <div class="plt-buscador__campo">
+                            <span class="plt-buscador__icono" aria-hidden="true">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
+                                </svg>
+                            </span>
 
-                        <input id="plt-q" type="search" name="q" value="{{ $busqueda }}"
-                               placeholder="dental, carta, propiedades, cursos…"
-                               aria-label="Buscar plantillas por nombre, rubro o etiqueta">
+                            <input id="plt-q" type="search" name="q" value="{{ $busqueda }}"
+                                   placeholder="dental, carta, propiedades, cursos…"
+                                   aria-label="Buscar plantillas por nombre, rubro o etiqueta">
 
-                        @if ($categoria !== '')
-                            <input type="hidden" name="categoria" value="{{ $categoria }}">
-                        @endif
+                            @if ($categoria !== '')
+                                <input type="hidden" name="categoria" value="{{ $categoria }}">
+                            @endif
 
-                        <button type="submit" class="ara-btn ara-btn-primary">Buscar</button>
-                    </div>
-                </form>
-                    </div>{{-- /plt-hero__contenido --}}
-
-                    {{-- Maqueta dibujada con CSS: una plantilla del catálogo dentro
-                         de su ventana, con el bloque de texto seleccionado y la
-                         paleta de color. No hay ninguna imagen; el script solo
-                         cambia el color de marca y mueve el cursor. --}}
-                    <div class="plt-demo" aria-hidden="true">
-                        <span class="plt-demo__halo"></span>
-
-                        <div class="plt-demo__ventana">
-                            <div class="plt-demo__barra">
-                                <i></i><i></i><i></i>
-                                <span class="plt-demo__url">aracode.pe/plantillas/dental</span>
-                                <span class="plt-demo__estado">Borrador</span>
-                            </div>
-
-                            <div class="plt-demo__lienzo">
-                                <div class="plt-demo__nav">
-                                    <span class="plt-demo__logo"></span>
-                                    <span class="plt-demo__enlaces"><i></i><i></i><i></i><i></i></span>
-                                    <span class="plt-demo__nav-cta"></span>
-                                </div>
-
-                                <div class="plt-demo__bloque">
-                                    <span class="plt-demo__etiqueta"></span>
-                                    <span class="plt-demo__titular"></span>
-                                    <span class="plt-demo__titular plt-demo__titular--corto"></span>
-                                    <span class="plt-demo__texto"></span>
-                                    <span class="plt-demo__texto plt-demo__texto--corto"></span>
-                                    <span class="plt-demo__boton"></span>
-                                    <span class="plt-demo__marco"></span>
-                                    <span class="plt-demo__marco-tag">Texto editable</span>
-                                </div>
-
-                                {{-- Una sección más de la página: imagen y texto,
-                                     para que el lienzo no quede vacío. --}}
-                                <div class="plt-demo__tira">
-                                    <span class="plt-demo__foto"></span>
-                                    <span class="plt-demo__tira-texto"><i></i><i></i><i></i></span>
-                                </div>
-
-                                <div class="plt-demo__tarjetas">
-                                    <span class="plt-demo__tarjeta"><span class="plt-demo__icono"></span><i></i><i></i></span>
-                                    <span class="plt-demo__tarjeta"><span class="plt-demo__icono"></span><i></i><i></i></span>
-                                    <span class="plt-demo__tarjeta"><span class="plt-demo__icono"></span><i></i><i></i></span>
-                                </div>
-                            </div>
+                            <button type="submit" class="ara-btn ara-btn-primary">Buscar</button>
                         </div>
-
-                        <span class="plt-demo__chip">
-                            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                                <path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="2.2"
-                                      stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            100 % personalizable
-                        </span>
-
-                        <span class="plt-demo__paleta">
-                            <span class="plt-demo__paleta-titulo">Color de marca</span>
-                            <span class="plt-demo__muestra is-activa" data-color="#0188EE" style="--c:#0188EE"></span>
-                            <span class="plt-demo__muestra" data-color="#4EAE33" style="--c:#4EAE33"></span>
-                            <span class="plt-demo__muestra" data-color="#7C5CFF" style="--c:#7C5CFF"></span>
-                            <span class="plt-demo__muestra" data-color="#F59E0B" style="--c:#F59E0B"></span>
-                        </span>
-
-                        <span class="plt-demo__cursor">
-                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M5.5 3.2l12.8 8.4-5.8 1.1 2.8 5.8-2.2 1.1-2.9-5.9-4.7 4.4z"/>
-                            </svg>
-                        </span>
-                    </div>
-
-                    <script>
-                    (function maquetaPlantillas() {
-                        var demo = document.querySelector('.plt-demo');
-                        if (!demo) return;
-
-                        var muestras = demo.querySelectorAll('.plt-demo__muestra');
-                        var cursor = demo.querySelector('.plt-demo__cursor');
-                        if (!muestras.length) return;
-
-                        var actual = 0;
-                        var temporizador = null;
-
-                        // Un paso del recorrido: el cursor viaja a la muestra,
-                        // "hace clic" y recién ahí entra el color nuevo.
-                        function paso() {
-                            actual = (actual + 1) % muestras.length;
-                            var muestra = muestras[actual];
-
-                            if (cursor) {
-                                var caja = demo.getBoundingClientRect();
-                                var punto = muestra.getBoundingClientRect();
-                                cursor.style.left = (punto.left - caja.left + punto.width / 2 - 4) + 'px';
-                                cursor.style.top = (punto.top - caja.top + punto.height / 2 - 2) + 'px';
-                                cursor.classList.add('is-pulsando');
-                                setTimeout(function () { cursor.classList.remove('is-pulsando'); }, 220);
-                            }
-
-                            setTimeout(function () {
-                                demo.style.setProperty('--acc', muestra.dataset.color);
-                                muestras.forEach(function (otra) {
-                                    otra.classList.toggle('is-activa', otra === muestra);
-                                });
-                            }, 240);
-                        }
-
-                        function arrancar() {
-                            if (!temporizador) temporizador = setInterval(paso, 3200);
-                        }
-
-                        function parar() {
-                            clearInterval(temporizador);
-                            temporizador = null;
-                        }
-
-                        // Arranca de una: el recorrido ya se ve al cargar. El
-                        // observador solo lo detiene cuando la maqueta sale de
-                        // pantalla o la pestaña queda oculta.
-                        arrancar();
-
-                        if ('IntersectionObserver' in window) {
-                            new IntersectionObserver(function (entradas) {
-                                entradas.forEach(function (entrada) {
-                                    if (entrada.isIntersecting && !document.hidden) { arrancar(); } else { parar(); }
-                                });
-                            }, { threshold: 0.1 }).observe(demo);
-                        }
-
-                        document.addEventListener('visibilitychange', function () {
-                            if (document.hidden) { parar(); } else if (demo.getBoundingClientRect().top < innerHeight) { arrancar(); }
-                        });
-                    })();
-                    </script>
+                    </form>
                 </div>
             </div>
         </section>

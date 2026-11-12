@@ -2045,3 +2045,166 @@ section form button[type="submit"]:hover {
         height: 23px;
     }
 }
+
+/* --- Variante sobrepuesta (home): el diseño del producto ocupa toda la
+       tarjeta y el texto se apoya encima, sobre un velo navy que asegura la
+       lectura. El rubro va en píldora con borde claro y la acción en píldora
+       blanca con el texto en navy, como el botón de la referencia. --- */
+.ara-product-card--sobrepuesta {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    aspect-ratio: 4 / 3;
+    background: #071027;
+    border-color: rgba(6, 14, 45, 0.08);
+    box-shadow: 0 26px 50px -36px rgba(6, 14, 45, 0.55);
+}
+
+.ara-product-card--sobrepuesta:hover {
+    border-color: rgba(1, 136, 238, 0.35);
+    box-shadow: 0 34px 60px -34px rgba(6, 14, 45, 0.6);
+}
+
+.ara-product-card--sobrepuesta .ara-product-media {
+    position: absolute;
+    inset: 0;
+    aspect-ratio: auto;
+    background: #071027;
+}
+
+/* El diseño entra ENTERO: se ajusta dentro de la tarjeta (`contain`) y lo que
+   sobra arriba y abajo lo rellena el propio diseño desenfocado, así no se
+   recorta ningún borde del arte. */
+.ara-product-card--sobrepuesta .ara-product-media::before {
+    opacity: 0.7;
+}
+
+.ara-product-card--sobrepuesta .ara-product-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Pegado al borde superior: el aire que sobra cae abajo, donde lo tapa el
+       pie de texto. */
+    object-position: center top;
+}
+
+/* Velo: limpio arriba para no tapar el diseño, navy abajo para el texto.
+   Va por encima de la imagen (que lleva z-index 1) y por debajo del texto. */
+.ara-product-card--sobrepuesta::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    /* La mitad de arriba queda limpia —sin tinte— y el degradado arranca a la
+       mitad para cerrarse sólido detrás del pie de texto. */
+    background-color: transparent;
+    background-image: linear-gradient(180deg, rgba(6, 14, 45, 0) 48%, rgba(6, 14, 45, 0.5) 62%, rgba(6, 14, 45, 0.92) 80%, #060e2d 94%, #060e2d 100%);
+}
+
+.ara-product-card--sobrepuesta .ara-product-content {
+    position: relative;
+    z-index: 4;
+    flex: 0 0 auto;
+    align-items: flex-start;
+    padding: 1.1rem 1.25rem 1.35rem;
+}
+
+.ara-product-card--sobrepuesta .ara-product-chip {
+    display: inline-block;
+    margin-bottom: 0.6rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    /* Ahora el chip cae en la zona limpia del arte: se oscurece más para que el
+       rubro no dependa de la imagen que tenga detrás. */
+    background: rgba(6, 14, 45, 0.62);
+    color: #ffffff;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+.ara-product-card--sobrepuesta .ara-product-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+/* Texto y acción en la misma fila: el botón queda al costado, con el rótulo
+   siempre visible. La fila se reparte sola, así el rótulo puede ser más largo
+   («Solicitar asesoría») sin taparse con la frase. */
+.ara-product-card--sobrepuesta .ara-product-pie {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.ara-product-card--sobrepuesta .ara-product-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    max-width: 34ch;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Píldora con el rótulo siempre visible, anclada al borde derecho de la
+   tarjeta. */
+.ara-product-card--sobrepuesta .ara-product-cta {
+    display: inline-flex;
+    align-items: center;
+    /* Un margen apenas negativo acerca la píldora al borde de la tarjeta sin
+       quedar pegada al redondeo. */
+    margin: 0 -0.2rem 0 0;
+    flex: 0 0 auto;
+    gap: 0.45rem;
+    height: 2.6rem;
+    padding: 0 0.85rem;
+    border-radius: 9999px;
+    background: #ffffff;
+    color: #0b1b3f;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.25s ease, gap 0.25s ease;
+}
+
+.ara-product-card--sobrepuesta .ara-product-cta:hover,
+.ara-product-card--sobrepuesta .ara-product-cta:focus-visible {
+    gap: 0.5rem;
+    background: #e8f1fb;
+}
+
+.ara-product-card--sobrepuesta .ara-product-cta svg {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+}
+
+
+/* En pantallas estrechas el botón vuelve a su sitio, debajo del texto: no hay
+   ancho para la píldora al costado. */
+@media (max-width: 640px) {
+    .ara-product-card--sobrepuesta .ara-product-pie {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .ara-product-card--sobrepuesta .ara-product-text {
+        max-width: none;
+    }
+
+    .ara-product-card--sobrepuesta .ara-product-cta {
+        margin: 0.9rem 0 0;
+    }
+}

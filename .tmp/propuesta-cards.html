@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propuestas · tarjetas de producto</title>
+<style>
+  :root{
+    --navy:#060E2D; --navy-2:#0B1B3F; --blue:#0188EE; --blue-ink:#0173CE;
+    --green:#4EAE33; --ink:#16233F; --slate:#51607A; --muted:#8695AC;
+    --line:#E6EBF3; --mist:#F5F8FC;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#EDF1F7;color:var(--ink);
+    font-family:Inter,"Segoe UI",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  img{display:block;max-width:100%}
+  .cont{width:90%;max-width:1433px;margin:0 auto}
+  .franja{padding:52px 0 60px}
+  .franja--oscura{background:var(--navy);color:#fff}
+  .franja--clara{background:#fff}
+  .franja--gris{background:var(--mist)}
+  .prop-head{max-width:64ch;margin-bottom:32px}
+  .etiqueta{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;
+    font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    background:rgba(1,136,238,.12);color:var(--blue-ink)}
+  .franja--oscura .etiqueta{background:rgba(94,176,255,.16);color:#9ED0FF}
+  .prop-head h2{margin:14px 0 8px;font-size:1.55rem;line-height:1.2;letter-spacing:-.01em}
+  .prop-head p{margin:0;color:var(--slate);font-size:.95rem;line-height:1.6}
+  .franja--oscura .prop-head p{color:rgba(255,255,255,.68)}
+  .rejilla{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px}
+  .notas{display:flex;flex-wrap:wrap;gap:8px 22px;margin:24px 0 0;padding:0;list-style:none;
+    font-size:.85rem;color:var(--slate)}
+  .franja--oscura .notas{color:rgba(255,255,255,.6)}
+  .notas li::before{content:"·";margin-right:8px;color:var(--blue)}
+  .rubro{display:inline-block;margin-bottom:6px;font-size:.63rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--blue-ink)}
+  .card-a .rubro{color:#7FC4FF}
+  @media (max-width:900px){.rejilla{grid-template-columns:1fr}}
+
+  /* Las tres imágenes del ecosistema miden 960×600 (8:5) */
+  .media{aspect-ratio:8/5;overflow:hidden}
+  .media img{width:100%;height:100%;object-fit:cover;object-position:center;
+    transition:transform .5s ease}
+  .card-a:hover .media img,.card-b:hover .media img,.card-c:hover .media img{transform:scale(1.02)}
+
+  /* ---------- A · oscura depurada ---------- */
+  .card-a{display:flex;flex-direction:column;overflow:hidden;border-radius:20px;
+    background:linear-gradient(180deg,var(--navy-2),#071027);
+    border:1px solid rgba(130,180,255,.16);
+    box-shadow:0 26px 50px -38px rgba(6,14,45,.9);
+    transition:transform .35s ease,box-shadow .35s ease,border-color .35s ease}
+  .card-a:hover{transform:translateY(-6px);border-color:rgba(94,176,255,.45);
+    box-shadow:0 34px 60px -34px rgba(1,136,238,.5)}
+  .card-a__media{position:relative}
+  .card-a__chip{position:absolute;left:12px;top:12px;padding:5px 11px;border-radius:999px;
+    font-size:.66rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    background:rgba(6,14,45,.82);color:#fff;backdrop-filter:blur(4px)}
+  .card-a__cuerpo{display:flex;flex-direction:column;flex:1;padding:18px 20px 20px}
+  .card-a__cuerpo h3{margin:0 0 7px;font-size:1.1rem;letter-spacing:.01em}
+  .card-a__cuerpo p{margin:0 0 18px;font-size:.9rem;line-height:1.55;color:rgba(255,255,255,.7)}
+  .card-a__cta{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;margin-top:auto;
+    padding:10px 18px;border-radius:999px;border:1px solid rgba(94,176,255,.5);
+    color:#CFE7FF;font-size:.86rem;font-weight:600;text-decoration:none;
+    transition:background .25s ease,color .25s ease,border-color .25s ease}
+  .card-a__cta svg{width:15px;height:15px;transition:transform .25s ease}
+  .card-a__cta:hover{background:var(--blue);border-color:var(--blue);color:#fff}
+  .card-a__cta:hover svg{transform:translateX(3px)}
+
+  /* ---------- B · clara de catálogo ---------- */
+  .card-b{display:flex;flex-direction:column;overflow:hidden;border-radius:20px;background:#fff;
+    border:1px solid var(--line);box-shadow:0 20px 44px -34px rgba(6,14,45,.4);
+    transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease}
+  .card-b:hover{transform:translateY(-6px);border-color:rgba(1,136,238,.4);
+    box-shadow:0 30px 55px -30px rgba(1,136,238,.3)}
+  .card-b__media{position:relative;margin:12px 12px 0;border-radius:14px;overflow:hidden;
+    border:1px solid rgba(6,14,45,.06)}
+  .card-b__chip{position:absolute;left:10px;top:10px;padding:5px 11px;border-radius:999px;
+    background:rgba(255,255,255,.94);color:var(--blue-ink);
+    font-size:.64rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    box-shadow:0 6px 14px -8px rgba(6,14,45,.55)}
+  .card-b__cuerpo{display:flex;flex-direction:column;flex:1;padding:16px 20px 18px}
+  .card-b__cuerpo h3{margin:0 0 7px;font-size:1.1rem;color:var(--ink)}
+  .card-b__cuerpo p{margin:0 0 14px;font-size:.9rem;line-height:1.55;color:var(--slate)}
+  .card-b__pie{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;
+    padding-top:13px;border-top:1px solid var(--line)}
+  .card-b__enlace{display:inline-flex;align-items:center;gap:7px;color:var(--blue-ink);
+    font-size:.88rem;font-weight:700;text-decoration:none}
+  .card-b__enlace svg{width:15px;height:15px;transition:transform .25s ease}
+  .card-b__enlace:hover svg{transform:translateX(3px)}
+  .card-b__flecha{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;
+    background:var(--mist);color:var(--blue-ink);transition:background .25s ease,color .25s ease}
+  .card-b__flecha svg{width:16px;height:16px}
+  .card-b:hover .card-b__flecha{background:var(--blue);color:#fff}
+
+  /* ---------- C · dos tonos ---------- */
+  .card-c{display:flex;flex-direction:column;overflow:hidden;border-radius:20px;background:#fff;
+    border:1px solid var(--line);box-shadow:0 20px 44px -34px rgba(6,14,45,.4);
+    transition:transform .3s ease,box-shadow .3s ease}
+  .card-c:hover{transform:translateY(-6px);box-shadow:0 30px 55px -30px rgba(6,14,45,.45)}
+  .card-c__cabeza{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:16px 20px;background:var(--navy);color:#fff}
+  .card-c__cabeza h3{margin:0;font-size:1.05rem;letter-spacing:.02em}
+  .card-c__chip{padding:4px 10px;border-radius:999px;border:1px solid rgba(94,176,255,.45);
+    font-size:.62rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#9ED0FF;
+    white-space:nowrap}
+  .card-c__cuerpo{display:flex;flex-direction:column;flex:1;padding:0 0 20px}
+  .card-c__cuerpo p{margin:16px 20px 18px;font-size:.9rem;line-height:1.55;color:var(--slate)}
+  .card-c__cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    margin:0 20px;padding:11px 18px;border-radius:999px;background:var(--blue);color:#fff;
+    font-size:.88rem;font-weight:700;text-decoration:none;transition:background .25s ease}
+  .card-c__cta:hover{background:var(--blue-ink)}
+  .card-c__cta svg{width:15px;height:15px}
+</style>
+</head>
+<body>
+
+<!-- ============ A ============ -->
+<section class="franja franja--oscura">
+  <div class="cont">
+    <header class="prop-head">
+      <span class="etiqueta">Propuesta A · evolución</span>
+      <h2>La tarjeta de hoy, menos ruidosa</h2>
+      <p>Mismo esquema oscuro, con el diseño del producto entero (960×600, sin recorte), el rubro como chip sobre la
+         imagen y el botón azul macizo convertido en un contorno que se rellena al pasar el cursor. Cambio de bajo
+         riesgo: se ajusta el estilo, no la estructura.</p>
+    </header>
+
+    <div class="rejilla">
+      <article class="card-a">
+        <div class="media card-a__media">
+          <img src="http://base-aracode.test/themes/webpage/images/misc/producto-kapta.webp" alt="KAPTA LMS">
+        </div>
+        <div class="card-a__cuerpo">
+          <span class="rubro">Educación</span>
+          <h3>KAPTA LMS</h3>
+          <p>Plataforma SaaS para gestión y formación educativa.</p>
+          <a class="card-a__cta" href="#">Conocer más
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="card-a">
+        <div class="media card-a__media">
+          <img src="http://base-aracode.test/themes/webpage/images/misc/producto-pichanguero.webp" alt="PICHANGUERO">
+        </div>
+        <div class="card-a__cuerpo">
+          <span class="rubro">Deportes</span>
+          <h3>PICHANGUERO</h3>
+          <p>Plataforma para organizar torneos de fútbol: fixture, posiciones y estadísticas.</p>
+          <a class="card-a__cta" href="#">Conocer más
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="card-a">
+        <div class="media card-a__media">
+          <img src="http://base-aracode.test/themes/webpage/images/misc/producto-kirafact.webp" alt="KIRAFACT">
+        </div>
+        <div class="card-a__cuerpo">
+          <span class="rubro">Empresas</span>
+          <h3>KIRAFACT</h3>
+          <p>Facturación electrónica y gestión comercial para empresas.</p>
+          <a class="card-a__cta" href="#">Conocer más
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+        </div>
+      </article>
+    </div>
+
+    <ul class="notas">
+      <li>El botón deja de competir con la imagen</li>
+      <li>El rubro se lee sobre la imagen, no ocupa alto</li>
+      <li>Solo CSS: mismo componente y mismo home</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ B ============ -->
+<section class="franja franja--clara">
+  <div class="cont">
+    <header class="prop-head">
+      <span class="etiqueta">Propuesta B · recomendada</span>
+      <h2>Tarjeta clara de catálogo</h2>
+      <p>Los diseños de producto son claros y coloridos: sobre blanco se ven completos y el texto en azul marino se
+         lee sin esfuerzo. La imagen va enmarcada con aire, el rubro en un chip blanco y la acción se reparte entre
+         un enlace y un botón circular que se rellena en azul al pasar el cursor.</p>
+    </header>
+
+    <div class="rejilla">
+      <article class="card-b">
+        <div class="media card-b__media">
+          <img src="http://base-aracode.test/themes/webpage/images/misc/producto-kapta.webp" alt="KAPTA LMS">
+        </div>
+        <div class="card-b__cuerpo">
+          <span class="rubro">Educación</span>
+          <h3>KAPTA LMS</h3>
+          <p>Plataforma SaaS para gestión y formación educativa.</p>
+          <div class="card-b__pie">
+            <a class="card-b__enlace" href="#">Conocer más
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+            <span class="card-b__flecha">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17L17 7M17 7H9m8 0v8"/></svg>
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card-b">
+        <div class="media card-b__media">
+          <img src="http://base-aracode.test/themes/webpage/images/misc/producto-pichanguero.webp" alt="PICHANGUERO">
+        </div>
+        <div class="card-b__cuerpo">
+          <span class="rubro">Deportes</span>
+          <h3>PICHANGUERO</h3>
+          <p>Plataforma para organizar torneos de fútbol: fixture, posiciones y estadísticas.</p>
+          <div class="card-b__pie">
+            <a class="card-b__enlace" href="#">Conocer más
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+            <span class="card-b__flecha">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17L17 7M17 7H9m8 0v8"/></svg>
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card-b">
+        <div class="media card-b__media">
+          <img src="http://base-aracode.test/themes/webpage/images/misc/producto-kirafact.webp" alt="KIRAFACT">
+        </div>
+        <div class="card-b__cuerpo">
+          <span class="rubro">Empresas</span>
+          <h3>KIRAFACT</h3>
+          <p>Facturación electrónica y gestión comercial para empresas.</p>
+          <div class="card-b__pie">
+            <a class="card-b__enlace" href="#">Conocer más
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+            <span class="card-b__flecha">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17L17 7M17 7H9m8 0v8"/></svg>
+            </span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <ul class="notas">
+      <li>El diseño del producto se aprecia entero y con aire</li>
+      <li>Texto navy sobre blanco: máxima legibilidad</li>
+      <li>Funciona igual en móvil, con el enlace y el botón visibles</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ C ============ -->
+<section class="franja franja--gris">
+  <div class="cont">
+    <header class="prop-head">
+      <span class="etiqueta">Propuesta C · dos tonos</span>
+      <h2>Cabecera navy + ficha clara</h2>
+      <p>El nombre del producto y su rubro viven en una cabecera azul marino, la imagen queda limpia debajo y el pie
+         cierra con la descripción y un botón azul a todo el ancho. Ordena los tres productos como una lista de
+         fichas y deja la imagen sin ningún velo.</p>
+    </header>
+
+    <div class="rejilla">
+      <article class="card-c">
+        <div class="card-c__cabeza">
+          <h3>KAPTA LMS</h3>
+          <span class="card-c__chip">Educación</span>
+        </div>
+        <div class="card-c__cuerpo">
+          <div class="media">
+            <img src="http://base-aracode.test/themes/webpage/images/misc/producto-kapta.webp" alt="KAPTA LMS">
+          </div>
+          <p>Plataforma SaaS para gestión y formación educativa.</p>
+          <a class="card-c__cta" href="#">Conocer más
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="card-c">
+        <div class="card-c__cabeza">
+          <h3>PICHANGUERO</h3>
+          <span class="card-c__chip">Deportes</span>
+        </div>
+        <div class="card-c__cuerpo">
+          <div class="media">
+            <img src="http://base-aracode.test/themes/webpage/images/misc/producto-pichanguero.webp" alt="PICHANGUERO">
+          </div>
+          <p>Plataforma para organizar torneos de fútbol: fixture, posiciones y estadísticas.</p>
+          <a class="card-c__cta" href="#">Conocer más
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="card-c">
+        <div class="card-c__cabeza">
+          <h3>KIRAFACT</h3>
+          <span class="card-c__chip">Empresas</span>
+        </div>
+        <div class="card-c__cuerpo">
+          <div class="media">
+            <img src="http://base-aracode.test/themes/webpage/images/misc/producto-kirafact.webp" alt="KIRAFACT">
+          </div>
+          <p>Facturación electrónica y gestión comercial para empresas.</p>
+          <a class="card-c__cta" href="#">Conocer más
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+        </div>
+      </article>
+    </div>
+
+    <ul class="notas">
+      <li>La imagen no lleva ningún velo encima</li>
+      <li>El nombre pesa más: se escanea de un vistazo</li>
+      <li>Botón grande, fácil de pulsar en móvil</li>
+    </ul>
+  </div>
+</section>
+
+</body>
+</html>
