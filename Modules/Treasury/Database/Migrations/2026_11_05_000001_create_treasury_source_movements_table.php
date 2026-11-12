@@ -18,9 +18,17 @@ return new class extends Migration
      * Sin claves foráneas hacia las tablas de origen a propósito: la capa debe
      * poder recibir movimientos de Compras, Caja Chica, Académico o Contratos
      * sin acoplarse a sus esquemas.
+     *
+     * Idempotente: si la tabla ya existe (por ejemplo, porque una ejecución
+     * anterior la creó pero no llegó a registrarse en `migrations`), se omite
+     * la creación en lugar de fallar con «table already exists».
      */
     public function up(): void
     {
+        if (Schema::hasTable('treasury_source_movements')) {
+            return;
+        }
+
         Schema::create('treasury_source_movements', function (Blueprint $table) {
             $table->id();
 
