@@ -73,11 +73,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    {{-- Tailwind CSS (compiled) --}}
-    <link rel="stylesheet" href="{{ asset('css/website.css') }}">
+    {{-- Tailwind CSS (compiled) — build reducido al sitio público.
+         `website.css` se genera escaneando todo el ERP (7,5 MB); este build
+         solo mira las vistas de `aracode` y pesa ~249 KB. El panel sigue
+         usando su bundle de Vite, así que no se toca. --}}
+    <link rel="stylesheet" href="{{ asset('css/website-public.css') }}?v={{ filemtime(public_path('css/website-public.css')) }}">
     
     {{-- Custom CSS --}}
-    <link rel="stylesheet" href="{{ asset('css/webpage-v2.css') }}">
+    {{-- La versión sale del mtime: al editar la hoja cambia la URL y el
+         navegador no sigue mostrando una copia vieja en caché. --}}
+    <link rel="stylesheet" href="{{ asset('css/webpage-v2.css') }}?v={{ filemtime(public_path('css/webpage-v2.css')) }}">
+
+    {{-- Evolución UX/UI · Fase 1 y 2 (navbar de vidrio, hero, tarjetas y
+         estadísticas). Va en su propia hoja para poder revertirla sin tocar
+         webpage-v2.css. --}}
+    <link rel="stylesheet" href="{{ asset('css/aracode-evolucion.css') }}?v={{ filemtime(public_path('css/aracode-evolucion.css')) }}">
     
     {{-- Extra Head --}}
     @stack('head')
@@ -245,6 +255,9 @@
 
     {{-- Modal de asesoría: lo abren los botones «Solicitar Asesoría» del sitio. --}}
     @include('aracode.components.v2.asesoria-modal')
+
+    {{-- Evolución UX/UI · Fase 1: entrada del titular, botones magnéticos y chips --}}
+    <script src="{{ asset('js/aracode-evolucion.js') }}?v={{ filemtime(public_path('js/aracode-evolucion.js')) }}" defer></script>
 
     @stack('scripts')
 </body>

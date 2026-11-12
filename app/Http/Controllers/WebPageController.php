@@ -1282,11 +1282,6 @@ class WebPageController extends Controller
         return view('aracode.products.kirafact.index');
     }
 
-    public function solucionPichanguero()
-    {
-        return view('aracode.products.pichanguero.index');
-    }
-
     public function solucionClinica()
     {
         return view('aracode.products.clinica.index');

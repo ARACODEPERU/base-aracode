@@ -11,29 +11,38 @@
     @include('aracode.components.v2.hero')
 
     {{-- Client Logos --}}
-    <section class="py-12 bg-ara-slate-50 border-y border-ara-slate-100">
+    <section class="py-12 bg-ara-slate-50 border-y border-ara-slate-100 ara-clients">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <p class="text-center text-ara-slate-400 text-sm font-medium mb-8 reveal">Empresas que confían en nosotros</p>
-            <div class="overflow-hidden">
-                <div class="flex items-center justify-center flex-wrap gap-8 md:gap-12">
-                    @php
-                        $clients = ['erios', 'brise', 'iprase', 'cpa', 'horizonte', 'orbe', 'cprod', 'jrrss', 'zoelife', 'celmovil', 'cap', 'kentha'];
-                    @endphp
-                    @foreach($clients as $client)
-                        <img
-                            src="{{ asset('themes/webpage/images/customers/' . $client . '.png') }}"
-                            alt="Cliente {{ ucfirst($client) }}"
-                            class="ara-client-logo h-10 md:h-12 object-contain"
-                            loading="lazy"
-                        >
-                    @endforeach
+            @php
+                $clients = ['erios', 'brise', 'iprase', 'cpa', 'horizonte', 'orbe', 'cprod', 'jrrss', 'zoelife', 'celmovil', 'cap', 'kentha'];
+            @endphp
+            {{-- Cinta continua: el catálogo se duplica para que el bucle no tenga
+                 costura. La copia se oculta a lectores de pantalla y no repite
+                 texto alternativo. --}}
+            <div class="ara-marquee">
+                <div class="ara-marquee-track">
+                    @for($copia = 0; $copia < 2; $copia++)
+                        <div class="ara-marquee-group" @if($copia === 1) aria-hidden="true" @endif>
+                            {{-- El catálogo se repite dentro de cada grupo para que
+                                 una mitad cubra pantallas anchas (1920+) sin huecos. --}}
+                            @foreach(array_merge($clients, $clients) as $client)
+                                <img
+                                    src="{{ asset('themes/webpage/images/customers/' . $client . '.webp') }}"
+                                    alt="{{ $copia === 0 && $loop->index < count($clients) ? 'Cliente ' . ucfirst($client) : '' }}"
+                                    class="ara-client-logo object-contain"
+                                    loading="lazy"
+                                >
+                            @endforeach
+                        </div>
+                    @endfor
                 </div>
             </div>
         </div>
     </section>
 
     {{-- Services Section --}}
-    <section class="py-20 lg:py-28 bg-white">
+    <section class="py-20 lg:py-28 bg-white ara-services">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-v2.section-heading
                 badge="Nuestros Servicios"
@@ -98,7 +107,7 @@
     </section>
 
     {{-- Featured Products --}}
-    <section class="py-20 lg:py-28 bg-ara-slate-50">
+    <section class="py-20 lg:py-28 bg-ara-slate-50 ara-products">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-v2.section-heading
                 badge="Productos Destacados"
@@ -118,7 +127,7 @@
                     title="KAPTA LMS"
                     description="Plataforma SaaS para gestión y formación educativa."
                     :href="route('solucion_kapta')"
-                    image="{{ asset('themes/webpage/images/misc/s1.jpg') }}"
+                    image="{{ asset('themes/webpage/images/misc/producto-kapta.webp') }}"
                     {{-- badge="Plataforma SaaS" --}}
                     :delay="1"
                     :compacta="true"
@@ -128,8 +137,9 @@
                 <x-v2.product-card
                     title="PICHANGUERO"
                     description="Plataforma para organizar torneos de fútbol: fixture, posiciones y estadísticas."
-                    :href="route('solucion_pichanguero')"
-                    image="{{ asset('themes/webpage/images/misc/s3.jpg') }}"
+                    :href="\App\Support\SitiosProducto::url('pichanguero')"
+                    :nuevaPestana="true"
+                    image="{{ asset('themes/webpage/images/misc/producto-pichanguero.webp') }}"
                     {{-- badge="App móvil" --}}
                     :delay="3"
                     :compacta="true"
@@ -141,7 +151,7 @@
                     title="KIRAFACT"
                     description="Facturación electrónica y gestión comercial para empresas."
                     :href="route('solucion_facturacion')"
-                    image="{{ asset('themes/webpage/images/misc/s2.jpg') }}"
+                    image="{{ asset('themes/webpage/images/misc/producto-kirafact.webp') }}"
                     {{-- badge="SUNAT" --}}
                     :delay="2"
                     :compacta="true"
@@ -212,19 +222,23 @@
     </section>
 
     {{-- Stats Section --}}
-    <section class="py-16 bg-white border-y border-ara-slate-100">
+    <section class="py-16 lg:py-20 bg-white ara-stats-section">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                <x-v2.stats-counter number="100" suffix="+" label="Empresas Atendidas" :delay="1" />
-                <x-v2.stats-counter number="5" suffix="+" label="Años de Experiencia" :delay="2" />
-                <x-v2.stats-counter number="500" suffix="+" label="Usuarios Activos" :delay="3" />
-                <x-v2.stats-counter number="99" suffix="%" label="Uptime Garantizado" :delay="4" />
+            {{-- Panel de vidrio oscuro: los contadores ganan peso y la línea
+                 inferior verde se completa al entrar en pantalla (JS). --}}
+            <div class="ara-stats-panel">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-2">
+                    <x-v2.stats-counter number="100" suffix="+" label="Empresas Atendidas" :delay="1" />
+                    <x-v2.stats-counter number="5" suffix="+" label="Años de Experiencia" :delay="2" />
+                    <x-v2.stats-counter number="500" suffix="+" label="Usuarios Activos" :delay="3" />
+                    <x-v2.stats-counter number="99" suffix="%" label="Uptime Garantizado" :delay="4" />
+                </div>
             </div>
         </div>
     </section>
 
-    {{-- CTA Section --}}
-    <x-v2.cta-section />
+    {{-- CTA: «Cuéntanos qué quieres automatizar» (diseño del prototipo A) --}}
+    <x-v2.cta-automatizar />
 
     {{-- Footer --}}
     @include('aracode.components.v2.footer')

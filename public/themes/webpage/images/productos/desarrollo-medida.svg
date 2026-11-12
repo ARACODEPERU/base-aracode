@@ -1,0 +1,189 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600" viewBox="0 0 960 600" role="img" aria-label="Desarrollo de software a medida: editor de código, gráficos y automatización">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#050b22"/>
+      <stop offset="0.55" stop-color="#0a1738"/>
+      <stop offset="1" stop-color="#04102b"/>
+    </linearGradient>
+    <radialGradient id="glowBlue" cx="0.8" cy="0.14" r="0.62">
+      <stop offset="0" stop-color="#0188EE" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#0188EE" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowGreen" cx="0.12" cy="0.9" r="0.55">
+      <stop offset="0" stop-color="#25D366" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#25D366" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="vidrio" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1b3d"/>
+      <stop offset="1" stop-color="#070f26"/>
+    </linearGradient>
+    <linearGradient id="barra" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0188EE"/>
+      <stop offset="1" stop-color="#25D366"/>
+    </linearGradient>
+    <linearGradient id="pildora" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0188EE" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#25D366" stop-opacity="0.9"/>
+    </linearGradient>
+    <filter id="sombra" x="-30%" y="-30%" width="160%" height="180%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+    <filter id="brilloSuave" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+    <clipPath id="ventana">
+      <rect x="140" y="118" width="680" height="356" rx="18"/>
+    </clipPath>
+  </defs>
+
+  <!-- Fondo -->
+  <rect width="960" height="600" fill="url(#bg)"/>
+  <rect width="960" height="600" fill="url(#glowBlue)"/>
+  <rect width="960" height="600" fill="url(#glowGreen)"/>
+
+  <!-- Rejilla en perspectiva -->
+  <g stroke="#7aa2ff" stroke-opacity="0.10" stroke-width="1">
+    <path d="M480 96 L40 600"/>
+    <path d="M480 96 L180 600"/>
+    <path d="M480 96 L320 600"/>
+    <path d="M480 96 L440 600"/>
+    <path d="M480 96 L520 600"/>
+    <path d="M480 96 L640 600"/>
+    <path d="M480 96 L780 600"/>
+    <path d="M480 96 L920 600"/>
+    <path d="M0 392 H960"/>
+    <path d="M0 442 H960"/>
+    <path d="M0 508 H960"/>
+    <path d="M0 590 H960"/>
+  </g>
+
+  <!-- Signo de código de fondo -->
+  <g fill="#0188EE" fill-opacity="0.055" font-family="ui-monospace, Menlo, Consolas, monospace" font-weight="800">
+    <text x="612" y="470" font-size="260">&lt;/&gt;</text>
+  </g>
+
+  <!-- Nodos tipo constelación -->
+  <g fill="none" stroke="#5eb0ff" stroke-opacity="0.35" stroke-width="1.4">
+    <path d="M74 168 L142 116 L206 150"/>
+    <path d="M74 168 L112 232 L206 150"/>
+    <path d="M818 330 L862 386 L806 424"/>
+    <path d="M862 386 L906 356"/>
+  </g>
+  <g fill="#7cc4ff">
+    <circle cx="74" cy="168" r="4.5"/>
+    <circle cx="142" cy="116" r="3.5"/>
+    <circle cx="206" cy="150" r="3"/>
+    <circle cx="112" cy="232" r="3"/>
+    <circle cx="818" cy="330" r="3.5"/>
+    <circle cx="862" cy="386" r="4.5"/>
+    <circle cx="806" cy="424" r="3"/>
+    <circle cx="906" cy="356" r="3"/>
+  </g>
+  <g fill="#25D366">
+    <circle cx="142" cy="116" r="9" opacity="0.18" filter="url(#brilloSuave)"/>
+    <circle cx="862" cy="386" r="10" opacity="0.16" filter="url(#brilloSuave)"/>
+  </g>
+
+  <!-- Ventana principal -->
+  <g transform="rotate(-2 480 296)">
+    <rect x="146" y="140" width="680" height="356" rx="20" fill="#000" opacity="0.45" filter="url(#sombra)"/>
+    <rect x="140" y="118" width="680" height="356" rx="18" fill="url(#vidrio)" stroke="#6ea8ff" stroke-opacity="0.22"/>
+
+    <g clip-path="url(#ventana)">
+      <!-- Barra de título -->
+      <rect x="140" y="118" width="680" height="44" fill="#0b1736"/>
+      <circle cx="170" cy="140" r="5.5" fill="#ff5f57"/>
+      <circle cx="190" cy="140" r="5.5" fill="#febc2e"/>
+      <circle cx="210" cy="140" r="5.5" fill="#28c840"/>
+
+      <!-- Pestañas -->
+      <rect x="240" y="126" width="118" height="28" rx="8" fill="#13224a"/>
+      <rect x="256" y="137" width="64" height="6" rx="3" fill="#5eb0ff" opacity="0.85"/>
+      <rect x="368" y="126" width="96" height="28" rx="8" fill="#0e1c3e"/>
+      <rect x="384" y="137" width="46" height="6" rx="3" fill="#8aa4d6" opacity="0.55"/>
+
+      <!-- Separador -->
+      <rect x="140" y="162" width="680" height="1" fill="#6ea8ff" opacity="0.14"/>
+
+      <!-- Código -->
+      <g>
+        <rect x="172" y="192" width="16" height="8" rx="4" fill="#25D366" opacity="0.9"/>
+        <rect x="196" y="192" width="120" height="8" rx="4" fill="#5eb0ff" opacity="0.85"/>
+        <rect x="324" y="192" width="64" height="8" rx="4" fill="#8aa4d6" opacity="0.45"/>
+
+        <rect x="196" y="216" width="44" height="8" rx="4" fill="#a78bfa" opacity="0.75"/>
+        <rect x="248" y="216" width="168" height="8" rx="4" fill="#dbe7ff" opacity="0.32"/>
+        <rect x="424" y="216" width="40" height="8" rx="4" fill="#25D366" opacity="0.6"/>
+
+        <rect x="196" y="240" width="86" height="8" rx="4" fill="#5eb0ff" opacity="0.55"/>
+        <rect x="290" y="240" width="132" height="8" rx="4" fill="#dbe7ff" opacity="0.22"/>
+
+        <rect x="196" y="264" width="58" height="8" rx="4" fill="#8aa4d6" opacity="0.35"/>
+        <rect x="262" y="264" width="196" height="8" rx="4" fill="#25D366" opacity="0.45"/>
+
+        <rect x="172" y="288" width="16" height="8" rx="4" fill="#25D366" opacity="0.9"/>
+        <rect x="196" y="288" width="72" height="8" rx="4" fill="#5eb0ff" opacity="0.7"/>
+        <rect x="276" y="288" width="110" height="8" rx="4" fill="#dbe7ff" opacity="0.26"/>
+
+        <rect x="196" y="312" width="150" height="8" rx="4" fill="#dbe7ff" opacity="0.18"/>
+        <rect x="354" y="312" width="52" height="8" rx="4" fill="#a78bfa" opacity="0.6"/>
+
+        <rect x="172" y="336" width="16" height="8" rx="4" fill="#25D366" opacity="0.9"/>
+        <rect x="196" y="336" width="96" height="8" rx="4" fill="#25D366" opacity="0.55"/>
+        <rect x="300" y="336" width="140" height="8" rx="4" fill="#dbe7ff" opacity="0.2"/>
+
+        <rect x="172" y="360" width="16" height="8" rx="4" fill="#25D366" opacity="0.9"/>
+        <rect x="196" y="360" width="180" height="8" rx="4" fill="#5eb0ff" opacity="0.45"/>
+      </g>
+
+      <!-- Panel de resultado -->
+      <g>
+        <rect x="536" y="186" width="252" height="196" rx="14" fill="#0a1733" stroke="#6ea8ff" stroke-opacity="0.16"/>
+        <rect x="558" y="208" width="84" height="8" rx="4" fill="#dbe7ff" opacity="0.35"/>
+
+        <!-- Barras -->
+        <rect x="558" y="300" width="26" height="58" rx="6" fill="#0188EE" opacity="0.55"/>
+        <rect x="594" y="272" width="26" height="86" rx="6" fill="#0188EE" opacity="0.8"/>
+        <rect x="630" y="238" width="26" height="120" rx="6" fill="url(#barra)"/>
+        <rect x="666" y="286" width="26" height="72" rx="6" fill="#25D366" opacity="0.75"/>
+        <rect x="702" y="254" width="26" height="104" rx="6" fill="#25D366" opacity="0.55"/>
+        <rect x="738" y="224" width="26" height="134" rx="6" fill="url(#barra)"/>
+
+        <!-- Línea de base -->
+        <rect x="558" y="366" width="206" height="2" rx="1" fill="#8aa4d6" opacity="0.25"/>
+
+        <!-- Etiqueta de estado -->
+        <rect x="558" y="228" width="70" height="18" rx="9" fill="#25D366" opacity="0.16"/>
+        <circle cx="570" cy="237" r="3" fill="#25D366"/>
+        <rect x="580" y="233" width="38" height="7" rx="3.5" fill="#25D366" opacity="0.7"/>
+      </g>
+
+      <!-- Barra de estado -->
+      <rect x="140" y="440" width="680" height="34" fill="#081228"/>
+      <rect x="140" y="440" width="680" height="2" fill="url(#barra)" opacity="0.65"/>
+      <rect x="164" y="454" width="92" height="7" rx="3.5" fill="#25D366" opacity="0.65"/>
+      <rect x="268" y="454" width="58" height="7" rx="3.5" fill="#8aa4d6" opacity="0.35"/>
+      <rect x="338" y="454" width="42" height="7" rx="3.5" fill="#8aa4d6" opacity="0.25"/>
+      <rect x="712" y="454" width="84" height="7" rx="3.5" fill="#5eb0ff" opacity="0.55"/>
+    </g>
+  </g>
+
+  <!-- Píldoras flotantes -->
+  <g font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="600">
+    <g transform="translate(96 430)">
+      <rect width="96" height="36" rx="18" fill="#0b1736" stroke="#5eb0ff" stroke-opacity="0.35"/>
+      <circle cx="22" cy="18" r="5" fill="#5eb0ff"/>
+      <text x="36" y="23" fill="#cfe2ff">API</text>
+    </g>
+    <g transform="translate(206 470)">
+      <rect width="118" height="36" rx="18" fill="#0b1736" stroke="#25D366" stroke-opacity="0.35"/>
+      <circle cx="22" cy="18" r="5" fill="#25D366"/>
+      <text x="36" y="23" fill="#d6ffe6">Automatización</text>
+    </g>
+    <g transform="translate(786 128)">
+      <rect width="92" height="36" rx="18" fill="#0b1736" stroke="#a78bfa" stroke-opacity="0.35"/>
+      <circle cx="22" cy="18" r="5" fill="#a78bfa"/>
+      <text x="36" y="23" fill="#e9ddff">IA</text>
+    </g>
+  </g>
+</svg>

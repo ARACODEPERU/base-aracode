@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARACODE · Propuesta de evolución UX/UI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#060E2D; --navy-2:#0C1A40; --navy-3:#0A1740;
+    --blue:#0188EE; --blue-soft:#5EB0FF;
+    --green:#25D366; --green-deep:#4EAE33;
+    --ink:#0F172A; --muted:#64748B; --muted-2:#94A3B8;
+    --paper:#F6F8FC; --white:#fff; --line:#E3E9F2;
+    --glass-d:rgba(255,255,255,.06);
+    --glass-border:rgba(255,255,255,.14);
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:Inter,system-ui,-apple-system,sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.6}
+  img{max-width:100%;display:block}
+  a{color:inherit}
+  .wrap{width:min(1120px,calc(100% - 2.5rem));margin:0 auto}
+  .eyebrow{font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;font-weight:700;color:var(--blue)}
+  h2{font-size:clamp(1.5rem,3vw,2.1rem);letter-spacing:-.03em;line-height:1.15;font-weight:800}
+  h3{font-size:1.02rem;letter-spacing:-.01em;font-weight:700}
+  p{color:var(--muted)}
+  .lead{font-size:1.02rem;color:#475569;max-width:62ch}
+
+  /* ---------- cabecera ---------- */
+  .top{background:
+      radial-gradient(90% 120% at 15% 0%,rgba(1,136,238,.28),transparent 55%),
+      radial-gradient(70% 100% at 95% 10%,rgba(37,211,102,.16),transparent 60%),
+      linear-gradient(150deg,#050B22,#0B1B44 60%,#06102B);
+    color:#fff;padding:4.5rem 0 4rem;position:relative;overflow:hidden}
+  .top::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(70% 70% at 50% 30%,#000,transparent);pointer-events:none}
+  .brand{display:flex;align-items:center;gap:.75rem;font-weight:800;letter-spacing:-.02em;margin-bottom:2.6rem;position:relative;z-index:2}
+  .brand img{height:38px;filter:brightness(0) invert(1)}
+  .brand small{display:block;font-size:.5rem;letter-spacing:.34em;color:#8FA6D0;font-weight:600}
+  .pill{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .85rem;border-radius:99px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(10px);font-size:.74rem;color:#CFE0FF;font-weight:500}
+  .pill i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(37,211,102,.16)}
+  .top h1{font-size:clamp(2rem,4.6vw,3.4rem);line-height:1.04;letter-spacing:-.045em;margin:1.4rem 0 1.1rem;max-width:20ch;position:relative;z-index:2}
+  .top h1 em{font-style:normal;background:linear-gradient(100deg,var(--blue-soft),var(--green));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .top p{color:#A9BCDD;max-width:56ch;position:relative;z-index:2}
+  .top .meta{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:2rem;position:relative;z-index:2}
+  .top .meta span{font-size:.72rem;padding:.38rem .7rem;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#B9CAE6}
+
+  /* ---------- secciones ---------- */
+  section.block{padding:4.2rem 0}
+  section.block > .wrap > .head{margin-bottom:2.4rem;max-width:70ch}
+  section.block > .wrap > .head p{margin-top:.7rem}
+  .rule{height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+
+  /* principios */
+  .principles{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+  .p-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:1.3rem;transition:transform .5s var(--ease),box-shadow .5s var(--ease),border-color .5s}
+  .p-card:hover{transform:translateY(-4px);box-shadow:0 18px 40px -22px rgba(10,23,64,.35);border-color:#CFE0F5}
+  .p-card .n{font-size:.7rem;font-weight:800;color:var(--blue);letter-spacing:.14em}
+  .p-card h3{margin:.55rem 0 .4rem}
+  .p-card p{font-size:.84rem;line-height:1.55}
+
+  /* paleta */
+  .palette{display:grid;grid-template-columns:repeat(5,1fr);gap:.8rem}
+  .sw{border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#fff}
+  .sw .chip{height:76px;position:relative}
+  .sw .info{padding:.7rem .8rem}
+  .sw b{display:block;font-size:.78rem}
+  .sw small{font-size:.68rem;color:var(--muted);display:block;margin-top:.15rem}
+  .sw code{font-size:.66rem;color:var(--muted-2)}
+  .roles{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;margin-top:1.2rem}
+  .role{display:flex;gap:.75rem;padding:1rem;border-radius:14px;background:#fff;border:1px solid var(--line)}
+  .role i{flex:0 0 10px;height:10px;border-radius:50%;margin-top:.45rem}
+  .role p{font-size:.8rem;margin-top:.15rem}
+
+  /* ---------- panel de demos (oscuro) ---------- */
+  .demo-stage{background:
+      radial-gradient(80% 90% at 20% 0%,rgba(1,136,238,.28),transparent 55%),
+      radial-gradient(60% 80% at 100% 100%,rgba(37,211,102,.14),transparent 60%),
+      linear-gradient(160deg,#050B22,#0A1740 70%,#050B22);
+    border-radius:24px;padding:1.1rem;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+  .demo-stage .grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:52px 52px;mask-image:radial-gradient(80% 80% at 50% 20%,#000,transparent);pointer-events:none}
+  .demo-note{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.2rem .4rem 1rem;position:relative;z-index:2}
+  .demo-note span{font-size:.7rem;color:#8FA6D0;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+  .demo-note em{font-size:.72rem;color:#7E93B8;font-style:normal}
+
+  /* navbar demo */
+  .nav-demo{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.55rem .7rem .55rem 1rem;border-radius:14px;
+    background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 20px 40px -28px #000;position:relative;z-index:3}
+  .nav-demo .logo{display:flex;align-items:center;gap:.5rem;font-weight:800;font-size:.8rem;color:#fff}
+  .nav-demo .logo img{height:24px;filter:brightness(0) invert(1)}
+  .nav-demo nav{display:flex;gap:.1rem;flex-wrap:wrap}
+  .nav-demo nav a{font-size:.74rem;color:rgba(255,255,255,.72);text-decoration:none;padding:.42rem .6rem;border-radius:8px;position:relative;transition:color .3s,background .3s}
+  .nav-demo nav a:hover{color:#fff;background:rgba(255,255,255,.06)}
+  .nav-demo nav a.on{color:#fff}
+  .nav-demo nav a.on::after{content:"";position:absolute;left:.6rem;right:.6rem;bottom:.2rem;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--blue),var(--green))}
+  .nav-demo .cta{display:inline-flex;align-items:center;gap:.45rem;background:linear-gradient(180deg,#0E9BF7,#0188EE);color:#fff;font-size:.74rem;font-weight:600;padding:.5rem .9rem;border-radius:9px;text-decoration:none;box-shadow:0 10px 24px -10px rgba(1,136,238,.9),inset 0 1px 0 rgba(255,255,255,.35)}
+  .nav-demo .cta:hover{filter:brightness(1.06)}
+  .nav-demo .theme{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#CBE0FF;font-size:.75rem}
+
+  /* hero demo */
+  .hero-demo{margin-top:1rem;padding:2.2rem 1.6rem 1.6rem;text-align:center;position:relative;z-index:2}
+  .hero-demo .badge{display:inline-flex;align-items:center;gap:.5rem;padding:.35rem .8rem;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);font-size:.68rem;color:#C9DAF6}
+  .hero-demo .badge i{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.5)}50%{box-shadow:0 0 0 6px rgba(37,211,102,0)}}
+  .hero-demo h1{font-size:clamp(1.5rem,3.4vw,2.5rem);line-height:1.1;letter-spacing:-.04em;color:#fff;margin:1rem auto .8rem;max-width:22ch;font-weight:800}
+  .hero-demo h1 .grad{display:inline-block;background:linear-gradient(100deg,var(--blue-soft),var(--green));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero-demo .w{display:inline-block;overflow:hidden;vertical-align:top}
+  .hero-demo .w > i{display:inline-block;font-style:normal;transform:translateY(105%);animation:rise .9s var(--ease) forwards;animation-delay:calc(var(--i)*.05s + .1s)}
+  @keyframes rise{to{transform:translateY(0)}}
+  .hero-demo .sub{color:#A5B9DA;font-size:.84rem;max-width:46ch;margin:0 auto .1rem}
+  .hero-demo .actions{display:flex;gap:.6rem;justify-content:center;margin:1.3rem 0 1.6rem;flex-wrap:wrap}
+  .btn-demo{display:inline-flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;padding:.65rem 1.05rem;border-radius:9px;text-decoration:none;transition:transform .4s var(--ease),box-shadow .4s}
+  .btn-demo.primary{color:#fff;background:linear-gradient(180deg,#12A0F8,#0188EE);box-shadow:0 14px 30px -14px rgba(1,136,238,.95),inset 0 1px 0 rgba(255,255,255,.35)}
+  .btn-demo.primary:hover{box-shadow:0 18px 38px -14px rgba(1,136,238,1),inset 0 1px 0 rgba(255,255,255,.45)}
+  .btn-demo.ghost{color:#EAF2FF;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(10px)}
+  .btn-demo.ghost:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.28)}
+  .stats-demo{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;border-top:1px solid rgba(255,255,255,.1);padding-top:1rem}
+  .stat-chip{border-radius:12px;padding:.7rem .5rem;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(12px)}
+  .stat-chip b{display:block;color:#fff;font-size:1.15rem;letter-spacing:-.02em}
+  .stat-chip small{display:block;font-size:.62rem;color:#8FA6D0;margin-top:.15rem;line-height:1.3}
+  .stat-chip b i{font-style:normal;color:var(--green)}
+
+  /* tarjetas glass */
+  .cards-demo{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-top:1.2rem;position:relative;z-index:2}
+  .glass-card{position:relative;border-radius:16px;padding:1.1rem;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.11);
+    backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);transform-style:preserve-3d;transition:transform .35s var(--ease),border-color .35s,box-shadow .35s;overflow:hidden}
+  .glass-card::before{content:"";position:absolute;inset:0;background:radial-gradient(220px 160px at var(--mx,50%) var(--my,0%),rgba(94,176,255,.18),transparent 70%);opacity:0;transition:opacity .4s;pointer-events:none}
+  .glass-card:hover{border-color:rgba(94,176,255,.34);box-shadow:0 26px 50px -30px #000,inset 0 1px 0 rgba(255,255,255,.16)}
+  .glass-card:hover::before{opacity:1}
+  .glass-card .ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(1,136,238,.16);border:1px solid rgba(94,176,255,.28);color:#9BD0FF;margin-bottom:.8rem;transition:background .35s,color .35s,box-shadow .35s}
+  .glass-card:hover .ico{background:rgba(37,211,102,.14);border-color:rgba(37,211,102,.3);color:#7BE6A1;box-shadow:0 0 0 6px rgba(37,211,102,.06)}
+  .glass-card h3{color:#fff;font-size:.86rem;font-weight:700}
+  .glass-card p{color:#9FB3D4;font-size:.74rem;line-height:1.5;margin-top:.4rem}
+  .glass-card .glowline{position:absolute;left:1.1rem;right:1.1rem;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(37,211,102,.55),transparent);transform:scaleX(0);transition:transform .5s var(--ease)}
+  .glass-card:hover .glowline{transform:scaleX(1)}
+
+  /* marquee */
+  .marquee-demo{margin-top:1.2rem;position:relative;z-index:2;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);padding:.6rem 0 0;border-top:1px solid rgba(255,255,255,.07)}
+  .marquee-track{display:flex;gap:2.4rem;width:max-content;animation:marq 26s linear infinite;padding:.9rem 0}
+  .marquee-demo:hover .marquee-track{animation-play-state:paused}
+  .marquee-track img{height:26px;opacity:.5;filter:grayscale(1) brightness(2);transition:opacity .3s}
+  .marquee-track img:hover{opacity:1}
+  @keyframes marq{to{transform:translateX(-50%)}}
+
+  /* comparativa antes / después */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .compare .box{background:#fff;border:1px solid var(--line);border-radius:18px;padding:1.2rem}
+  .compare .box.evo{background:linear-gradient(160deg,#081530,#0B1B44);border-color:rgba(255,255,255,.1);color:#fff}
+  .compare .box .tag{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--muted-2)}
+  .compare .box.evo .tag{color:var(--green)}
+  .compare .box p{font-size:.8rem;margin-top:.5rem}
+  .compare .box.evo p{color:#A5B9DA}
+  .mini-card{margin-top:1rem;display:flex;gap:.7rem;align-items:flex-start;padding:.9rem;border-radius:12px;background:#F8FAFD;border:1px solid var(--line)}
+  .mini-card .sq{width:34px;height:34px;border-radius:9px;background:#EAF2FB;display:grid;place-items:center;color:var(--blue);flex:0 0 auto}
+  .mini-card b{font-size:.78rem}
+  .mini-card small{display:block;font-size:.72rem;color:var(--muted);margin-top:.15rem;line-height:1.45}
+  .mini-glass{margin-top:1rem;display:flex;gap:.7rem;align-items:flex-start;padding:.9rem;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(12px)}
+  .mini-glass .sq{width:34px;height:34px;border-radius:9px;background:rgba(1,136,238,.18);border:1px solid rgba(94,176,255,.26);color:#9BD0FF;display:grid;place-items:center;flex:0 0 auto}
+  .mini-glass b{font-size:.78rem;color:#fff}
+  .mini-glass small{display:block;font-size:.72rem;color:#9FB3D4;margin-top:.15rem;line-height:1.45}
+  .mini-glass .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(37,211,102,.14);margin-left:auto;flex:0 0 auto}
+  .green-note{display:inline-flex;align-items:center;gap:.45rem;margin-top:.9rem;font-size:.7rem;color:#7BE6A1;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.24);padding:.3rem .6rem;border-radius:99px}
+
+  /* tabla */
+  .tbl{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .tbl table{width:100%;border-collapse:collapse;font-size:.83rem}
+  .tbl th{text-align:left;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2);padding:.9rem 1rem;background:#FBFCFE;border-bottom:1px solid var(--line);font-weight:700}
+  .tbl td{padding:.95rem 1rem;border-bottom:1px solid #EEF2F8;vertical-align:top;color:#475569}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl td:first-child{font-weight:700;color:var(--ink);white-space:nowrap}
+  .tbl td:nth-child(3){font-size:.78rem}
+  .tag-cost{display:inline-block;font-size:.62rem;font-weight:700;padding:.18rem .45rem;border-radius:6px;letter-spacing:.04em}
+  .tag-cost.low{background:#E9F9EF;color:#12803F}
+  .tag-cost.mid{background:#EEF4FF;color:#1B5FBF}
+  .tag-cost.no{background:#F4F6FA;color:#64748B}
+
+  /* listas */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .list{background:#fff;border:1px solid var(--line);border-radius:18px;padding:1.3rem}
+  .list h3{display:flex;align-items:center;gap:.5rem;font-size:.92rem;margin-bottom:.8rem}
+  .list h3 .mark{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:.7rem;background:#EAF2FB;color:var(--blue)}
+  .list h3 .mark.g{background:#E9F9EF;color:#12803F}
+  .list ul{list-style:none;display:grid;gap:.55rem}
+  .list li{display:flex;gap:.55rem;font-size:.82rem;color:#475569;line-height:1.5}
+  .list li::before{content:"";flex:0 0 6px;height:6px;border-radius:50%;margin-top:.5rem;background:var(--blue)}
+  .list.green li::before{background:var(--green)}
+  .list li b{color:var(--ink)}
+
+  /* fases */
+  .phases{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;counter-reset:f}
+  .phase{background:#fff;border:1px solid var(--line);border-radius:18px;padding:1.3rem;position:relative;overflow:hidden;transition:transform .45s var(--ease),box-shadow .45s}
+  .phase:hover{transform:translateY(-4px);box-shadow:0 22px 44px -30px rgba(10,23,64,.4)}
+  .phase::before{counter-increment:f;content:"0" counter(f);position:absolute;top:.6rem;right:1rem;font-size:2.6rem;font-weight:900;color:#EEF2F8;letter-spacing:-.06em}
+  .phase h3{margin-bottom:.4rem}
+  .phase p{font-size:.8rem}
+  .phase ul{list-style:none;margin-top:.7rem;display:grid;gap:.35rem}
+  .phase li{font-size:.76rem;color:#64748B}
+  .phase li::before{content:"·";color:var(--blue);margin-right:.35rem;font-weight:900}
+  .phase .time{display:inline-block;margin-top:.9rem;font-size:.68rem;font-weight:700;color:var(--blue);background:#EEF6FF;padding:.25rem .55rem;border-radius:6px}
+
+  /* menú intacto */
+  .menu-block{background:#fff;border:1px solid var(--line);border-radius:18px;padding:1.4rem}
+  .menu-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+  .menu-row span{font-size:.8rem;padding:.45rem .8rem;border-radius:9px;border:1px solid var(--line);background:#FBFCFE;color:#334155;font-weight:500}
+  .menu-row span.on{background:#081530;color:#fff;border-color:#081530}
+  .menu-note{display:flex;gap:.6rem;font-size:.8rem;color:#475569;background:#F7FBFF;border:1px solid #DDEBF9;border-radius:12px;padding:.8rem .9rem}
+  .menu-note b{color:#0F172A}
+
+  /* cierre */
+  .close{background:linear-gradient(150deg,#050B22,#0B1B44 60%,#071230);color:#fff;padding:3.6rem 0;margin-top:1rem}
+  .close h2{color:#fff;max-width:26ch}
+  .close p{color:#A5B9DA;margin-top:.8rem;max-width:60ch}
+  .close .actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.6rem}
+  .close .actions a{text-decoration:none}
+  footer.foot{padding:1.6rem 0 2.4rem;font-size:.74rem;color:var(--muted-2);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+
+  /* aparición */
+  .rv{opacity:0;transform:translateY(22px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .rv.in{opacity:1;transform:none}
+
+  @media (max-width:900px){
+    .principles{grid-template-columns:1fr 1fr}
+    .palette{grid-template-columns:1fr 1fr}
+    .roles{grid-template-columns:1fr}
+    .cards-demo{grid-template-columns:1fr}
+    .compare,.cols{grid-template-columns:1fr}
+    .phases{grid-template-columns:1fr}
+    .stats-demo{grid-template-columns:1fr 1fr}
+    .nav-demo nav{display:none}
+    .tbl{overflow-x:auto}
+    .tbl table{min-width:620px}
+    .top{padding:3rem 0 2.6rem}
+  }
+  /* Movimiento reducido manual: se activa con el interruptor de la cabecera */
+  body.rm *,body.rm *::before,body.rm *::after{animation:none!important;transition:none!important}
+  body.rm .rv{opacity:1;transform:none}
+  body.rm .hero-demo .w > i{transform:none}
+  button.pill{cursor:pointer;font-family:inherit;transition:background .3s,border-color .3s}
+  button.pill:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.24)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <img src="/themes/webpage/images/logo.png" alt="ARACODE Smart Solutions">
+    </div>
+    <span class="pill"><i></i>Propuesta de evolución · para revisión</span>
+    <h1>Tu web actual, con la <em>experiencia</em> del prototipo A.</h1>
+    <p>No es un rediseño ni un reemplazo: es una capa de acabado premium sobre la estructura que ya tienes y que ya posiciona. Mismo menú, mismas rutas, mismos textos. Mejor sensación.</p>
+    <div class="meta">
+      <span>Menu actual intacto</span>
+      <span>Glass + verde + movimiento</span>
+      <span>Sin librerías externas</span>
+      <span>~7 KB de JS propio</span>
+      <span>Reversible por sección</span>
+      <button class="pill" id="motionToggle" type="button" aria-pressed="true"><i></i>Movimiento: activado</button>
+    </div>
+    <p style="font-size:.72rem;color:#7E93B8;margin-top:1rem;position:relative;z-index:2;max-width:60ch">Vista de revisión con el movimiento forzado para que puedas evaluarlo. En el sitio final se respeta la preferencia de accesibilidad del sistema; usa el interruptor para ver esa versión.</p>
+  </div>
+</header>
+
+<!-- 1. LECTURA DE LA PROPUESTA -->
+<section class="block">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">01 · La idea</span>
+      <h2>Subir el acabado, no cambiar el plano</h2>
+      <p class="lead">El prototipo A gustó por cómo <b>se siente</b>: el vidrio, el brillo, el verde en el momento justo y el movimiento. Pero su menú llevaba a secciones del home y eso rompería tu arquitectura de páginas internas. Así que conservo tu sitio tal como está y le aplico esas sensaciones, sección por sección.</p>
+    </div>
+    <div class="principles">
+      <div class="p-card rv"><span class="n">01</span><h3>Vidrio con intención</h3><p>Superficies translúcidas solo donde hay algo detrás que valga la pena ver: navbar, hero, tarjetas sobre fondo oscuro y stats. Nunca vidrio sobre vidrio.</p></div>
+      <div class="p-card rv"><span class="n">02</span><h3>Verde como señal</h3><p>El verde deja de ser decoración: marca estado, disponibilidad, éxito y acentos puntuales. El azul sigue siendo el color de acción.</p></div>
+      <div class="p-card rv"><span class="n">03</span><h3>Movimiento que informa</h3><p>Cada animación responde a algo: entrada, foco, avance o jerarquía. Nada gira por girar y todo se apaga en móvil y con movimiento reducido.</p></div>
+      <div class="p-card rv"><span class="n">04</span><h3>Cero riesgo comercial</h3><p>No toco rutas, textos, SEO, imágenes ni el modal de asesoría. Si algo no convence, se revierte esa sección sola.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- 2. SISTEMA VISUAL -->
+<section class="block">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">02 · Sistema visual</span>
+      <h2>Los mismos colores, con roles claros</h2>
+      <p class="lead">Tu paleta se queda. Lo que cambia es la disciplina: cada color pasa a tener un trabajo definido, y aparece una escala de vidrio reutilizable en todo el sitio.</p>
+    </div>
+
+    <div class="palette rv">
+      <div class="sw"><div class="chip" style="background:#060E2D"></div><div class="info"><b>Navy base</b><small>Fondos oscuros</small><code>#060E2D</code></div></div>
+      <div class="sw"><div class="chip" style="background:#0C1A40"></div><div class="info"><b>Navy elevado</b><small>Degradados y paneles</small><code>#0C1A40</code></div></div>
+      <div class="sw"><div class="chip" style="background:#0188EE"></div><div class="info"><b>Azul acción</b><small>Botones y enlaces</small><code>#0188EE</code></div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,#25D366,#4EAE33)"></div><div class="info"><b>Verde señal</b><small>Estado y acentos</small><code>#25D366</code></div></div>
+      <div class="sw"><div class="chip" style="background:#F6F8FC;border-bottom:1px solid #E3E9F2"></div><div class="info"><b>Papel</b><small>Fondos claros</small><code>#F6F8FC</code></div></div>
+    </div>
+
+    <div class="roles rv">
+      <div class="role"><i style="background:#0188EE"></i><div><b style="font-size:.84rem">Azul = hacer</b><p>Botones primarios, enlaces, foco de teclado, iconos activos. Es el único color que pide clic.</p></div></div>
+      <div class="role"><i style="background:#25D366"></i><div><b style="font-size:.84rem">Verde = saber</b><p>Punto de disponibilidad, uptime, checks, subrayado activo del menú, línea que crece al hover.</p></div></div>
+      <div class="role"><i style="background:#94A3B8"></i><div><b style="font-size:.84rem">Gris = leer</b><p>Texto secundario y metadatos. Sube un punto de contraste en el rediseño para accesibilidad AA.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. DEMO -->
+<section class="block" style="padding-top:.6rem">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">03 · Cómo se siente</span>
+      <h2>Pruébalo aquí mismo</h2>
+      <p class="lead">Estos componentes son código real de la propuesta, con tus colores y tus logos. Pasa el cursor, mira el menú y los botones.</p>
+    </div>
+
+    <div class="demo-stage rv">
+      <div class="grid-bg"></div>
+      <div class="demo-note"><span>Navbar + hero evolucionados</span><em>Interactivo</em></div>
+
+      <!-- navbar con el menú real -->
+      <div class="nav-demo">
+        <span class="logo"><img src="/themes/webpage/images/logo.png" alt="ARACODE"></span>
+        <nav>
+          <a href="#" class="on">Inicio</a>
+          <a href="#">Soluciones</a>
+          <a href="#">Empresa</a>
+          <a href="#">Plantillas</a>
+          <a href="#">Blog</a>
+          <a href="#">Contacto</a>
+        </nav>
+        <span style="display:flex;align-items:center;gap:.4rem">
+          <span class="theme">☾</span>
+          <a href="#" class="cta" data-magnetic>Solicitar Asesoría</a>
+        </span>
+      </div>
+
+      <!-- hero -->
+      <div class="hero-demo">
+        <span class="badge"><i></i>Enterprise Software &amp; AI Solutions</span>
+        <h1 id="heroTitle">Desarrollamos soluciones digitales <span class="grad">que impulsan</span> el crecimiento de tu empresa</h1>
+        <p class="sub">Software empresarial, automatización de procesos e inteligencia artificial diseñados para escalar tu negocio.</p>
+        <div class="actions">
+          <a href="#" class="btn-demo primary" data-magnetic>Solicitar Asesoría →</a>
+          <a href="#" class="btn-demo ghost">Ver Soluciones</a>
+        </div>
+        <div class="stats-demo">
+          <div class="stat-chip"><b><span data-count="100">0</span><i>+</i></b><small>Empresas atendidas</small></div>
+          <div class="stat-chip"><b><span data-count="5">0</span><i>+</i></b><small>Años de experiencia</small></div>
+          <div class="stat-chip"><b><span data-count="500">0</span><i>+</i></b><small>Usuarios activos</small></div>
+          <div class="stat-chip"><b><span data-count="99">0</span><i>%</i></b><small>Uptime garantizado</small></div>
+        </div>
+      </div>
+
+      <!-- tarjetas glass -->
+      <div class="cards-demo">
+        <div class="glass-card" data-tilt>
+          <div class="ico">⌘</div>
+          <h3>Desarrollo de Software</h3>
+          <p>Producto a medida, con arquitectura modular y entregas por hitos.</p>
+          <span class="glowline"></span>
+        </div>
+        <div class="glass-card" data-tilt>
+          <div class="ico">⟳</div>
+          <h3>Automatización</h3>
+          <p>Menos tareas manuales, menos errores, más tiempo para decidir.</p>
+          <span class="glowline"></span>
+        </div>
+        <div class="glass-card" data-tilt>
+          <div class="ico">✦</div>
+          <h3>Inteligencia Artificial</h3>
+          <p>Modelos integrados a tu operación para analizar y anticipar.</p>
+          <span class="glowline"></span>
+        </div>
+      </div>
+
+      <!-- logos -->
+      <div class="marquee-demo">
+        <div class="marquee-track">
+          <img src="/themes/webpage/images/customers/erios.png" alt="Erios">
+          <img src="/themes/webpage/images/customers/brise.png" alt="Brise">
+          <img src="/themes/webpage/images/customers/iprase.png" alt="Iprase">
+          <img src="/themes/webpage/images/customers/cpa.png" alt="CPA">
+          <img src="/themes/webpage/images/customers/horizonte.png" alt="Horizonte">
+          <img src="/themes/webpage/images/customers/orbe.png" alt="Orbe">
+          <img src="/themes/webpage/images/customers/cprod.png" alt="Cprod">
+          <img src="/themes/webpage/images/customers/jrrss.png" alt="JRRSS">
+          <img src="/themes/webpage/images/customers/zoelife.png" alt="Zoelife">
+          <img src="/themes/webpage/images/customers/celmovil.png" alt="Celmovil">
+          <img src="/themes/webpage/images/customers/cap.png" alt="Cap">
+          <img src="/themes/webpage/images/customers/kentha.png" alt="Kentha">
+          <!-- duplicado para el bucle continuo -->
+          <img src="/themes/webpage/images/customers/erios.png" alt="">
+          <img src="/themes/webpage/images/customers/brise.png" alt="">
+          <img src="/themes/webpage/images/customers/iprase.png" alt="">
+          <img src="/themes/webpage/images/customers/cpa.png" alt="">
+          <img src="/themes/webpage/images/customers/horizonte.png" alt="">
+          <img src="/themes/webpage/images/customers/orbe.png" alt="">
+          <img src="/themes/webpage/images/customers/cprod.png" alt="">
+          <img src="/themes/webpage/images/customers/jrrss.png" alt="">
+          <img src="/themes/webpage/images/customers/zoelife.png" alt="">
+          <img src="/themes/webpage/images/customers/celmovil.png" alt="">
+          <img src="/themes/webpage/images/customers/cap.png" alt="">
+          <img src="/themes/webpage/images/customers/kentha.png" alt="">
+        </div>
+      </div>
+    </div>
+
+    <div class="compare rv" style="margin-top:1.2rem">
+      <div class="box">
+        <span class="tag">Hoy</span>
+        <p>Tarjeta blanca plana, borde gris, icono azul fijo. Correcta, pero se pierde entre secciones.</p>
+        <div class="mini-card">
+          <span class="sq">⌘</span>
+          <div><b>Desarrollo de Software</b><small>Creamos soluciones a medida para tu empresa.</small></div>
+        </div>
+      </div>
+      <div class="box evo">
+        <span class="tag">Evolución</span>
+        <p>Misma tarjeta, ahora con vidrio, halo que sigue al cursor y acento verde al enfocar. Sin cambiar el contenido.</p>
+        <div class="mini-glass">
+          <span class="sq">⌘</span>
+          <div><b>Desarrollo de Software</b><small>Creamos soluciones a medida para tu empresa.</small></div>
+          <span class="dot"></span>
+        </div>
+        <span class="green-note">● Verde = disponible / activo ahora</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- 4. MENÚ -->
+<section class="block">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">04 · Navegación</span>
+      <h2>Tu menú, tal cual</h2>
+      <p class="lead">Lo primero que pediste y la regla que ordena todo lo demás: el menú sigue llevando a tus páginas internas. Nada de anclas al home, nada de scroll dentro de la portada.</p>
+    </div>
+    <div class="menu-block rv">
+      <div class="menu-row">
+        <span class="on">Inicio</span><span>Soluciones</span><span>Empresa</span><span>Plantillas</span><span>Blog</span><span>Contacto</span>
+        <span style="border-style:dashed;color:#64748B">+ Solicitar Asesoría (modal)</span>
+      </div>
+      <div class="menu-note">
+        <span>✓</span>
+        <div><b>Se conservan rutas, orden, etiquetas y estados activos.</b> La evolución es solo de presentación: navbar de vidrio desde el inicio, indicador activo con subrayado azul→verde, más aire y botón con brillo. En móvil, el panel lateral pasa a vidrio oscuro con entrada escalonada de los enlaces y cierre por teclado.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. MAPA DE CAMBIOS -->
+<section class="block" style="padding-top:.8rem">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">05 · Sección por sección</span>
+      <h2>Qué se toca y cuánto esfuerzo cuesta</h2>
+      <p class="lead">Cada fila es una sección de tu home actual. «Riesgo» indica cuánto puede afectar a lo que ya funciona comercialmente.</p>
+    </div>
+    <div class="tbl rv">
+      <table>
+        <thead><tr><th>Sección</th><th>Hoy</th><th>Evolución propuesta</th><th>Riesgo</th></tr></thead>
+        <tbody>
+          <tr><td>Navbar</td><td>Fijo, fondo sólido al bajar, 6 enlaces + tema + CTA.</td><td>Vidrio con desenfoque desde el inicio, borde inferior luminoso, indicador activo con degradado azul→verde, CTA con brillo y botón magnético. Mismos enlaces y rutas.</td><td><span class="tag-cost low">Nulo</span></td></tr>
+          <tr><td>Hero</td><td>Partículas canvas, orbes, degradado en el titular, botones y stats.</td><td>Entrada del titular palabra por palabra, halo que sigue al puntero en el botón, stats en chips de vidrio, partículas con menos densidad y pausa real fuera de pantalla.</td><td><span class="tag-cost low">Bajo</span></td></tr>
+          <tr><td>Logos de clientes</td><td>12 logos en grilla estática que se parte en dos líneas.</td><td>Cinta continua con pausa al pasar el cursor, máscara de degradado en los bordes y opacidad uniforme. El contenido no cambia.</td><td><span class="tag-cost low">Nulo</span></td></tr>
+          <tr><td>Servicios (6)</td><td>Tarjetas blancas con icono, título, texto y enlace.</td><td>Tarjetas con vidrio claro, inclinación 3D suave, halo que sigue al cursor, icono con acento verde al enfocar y línea verde inferior. Mismo grid y mismos textos.</td><td><span class="tag-cost low">Bajo</span></td></tr>
+          <tr><td>Productos (3)</td><td>Tarjetas con imagen, título y descripción.</td><td>Zoom lento de la imagen, chip de estado de vidrio con punto verde, flecha que se desplaza al hover y sombra que se eleva. Enlaces intactos.</td><td><span class="tag-cost low">Bajo</span></td></tr>
+          <tr><td>Propuesta de valor</td><td>Sección navy con orbes difusos y foto.</td><td>Orbes con deriva muy lenta, lista con separadores finos, iconos en placa de vidrio y foto con marco de vidrio y parallax leve.</td><td><span class="tag-cost low">Nulo</span></td></tr>
+          <tr><td>Estadísticas</td><td>Cuatro contadores sobre blanco.</td><td>Panel de vidrio oscuro con contadores que arrancan al entrar, separadores y una línea verde que se completa como progreso.</td><td><span class="tag-cost low">Bajo</span></td></tr>
+          <tr><td>CTA final</td><td>Bloque azul con botón.</td><td>Panel de vidrio con anillo luminoso en movimiento lento, titular con degradado azul→verde y botón magnético. Mismo destino y mismo modal.</td><td><span class="tag-cost low">Nulo</span></td></tr>
+          <tr><td>Footer</td><td>Columnas de enlaces y datos.</td><td>Fondo con retícula tenue, subrayado animado en enlaces y punto verde en el indicador de disponibilidad. Estructura y enlaces iguales.</td><td><span class="tag-cost no">Nulo</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- 6. QUÉ NO CAMBIA -->
+<section class="block">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">06 · Límites</span>
+      <h2>Lo que no se toca</h2>
+      <p class="lead">La evolución es visual y de interacción. Todo lo que hoy te trae tráfico y clientes queda exactamente donde está.</p>
+    </div>
+    <div class="cols">
+      <div class="list rv">
+        <h3><span class="mark">✓</span>Se queda igual</h3>
+        <ul>
+          <li><b>Rutas y menú:</b> Inicio, Soluciones, Empresa, Plantillas, Blog, Contacto y sus páginas internas.</li>
+          <li><b>Contenido y SEO:</b> titulares, textos, meta títulos, descripciones, datos estructurados y sitemap.</li>
+          <li><b>Imágenes y logos:</b> los mismos archivos y los mismos textos alternativos.</li>
+          <li><b>Conversión:</b> el modal de asesoría, WhatsApp, formularios y sus destinos.</li>
+          <li><b>Modo día/noche:</b> el interruptor sigue y la nueva capa respeta ambos temas.</li>
+          <li><b>Orden de secciones:</b> nadie tiene que reaprender tu home.</li>
+        </ul>
+      </div>
+      <div class="list green rv">
+        <h3><span class="mark g">+</span>Se añade</h3>
+        <ul>
+          <li><b>Escala de vidrio:</b> tres niveles reutilizables (navbar, tarjeta, panel) con su borde y su brillo interno.</li>
+          <li><b>Reglas del verde:</b> disponibilidad, éxito, foco y acentos; nunca como color de botón principal.</li>
+          <li><b>Microinteracciones:</b> tilt, halo, botones magnéticos, contadores, marquesina, revelados escalonados.</li>
+          <li><b>Rendimiento controlado:</b> animar solo <i>transform</i> y <i>opacidad</i>, pausar canvas y sensores fuera de pantalla.</li>
+          <li><b>Accesibilidad:</b> foco visible, contraste AA y respeto total a <i>prefers-reduced-motion</i>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. RENDIMIENTO -->
+<section class="block" style="padding-top:.4rem">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">07 · Rendimiento</span>
+      <h2>Bonito sí, lento no</h2>
+      <p class="lead">El sitio arrastra un CSS de 7,3 MB; no vamos a sumarle otro problema. La capa nueva se entrega como un archivo pequeño y aislado, con presupuesto cerrado.</p>
+    </div>
+    <div class="principles">
+      <div class="p-card rv"><span class="n">JS</span><h3>≤ 7 KB</h3><p>Un solo archivo propio, sin GSAP ni frameworks. Se carga con <i>defer</i> y no bloquea el pintado.</p></div>
+      <div class="p-card rv"><span class="n">CSS</span><h3>≤ 22 KB</h3><p>Hoja aparte de la actual, para poder revertir sin tocar <i>webpage-v2.css</i>.</p></div>
+      <div class="p-card rv"><span class="n">FPS</span><h3>60 estables</h3><p>Solo <i>transform</i> y <i>opacidad</i>. Sin animar sombras, filtros ni posiciones que fuercen layout.</p></div>
+      <div class="p-card rv"><span class="n">Móvil</span><h3>Sin tilt</h3><p>En táctil se desactivan inclinación y parallax; el canvas baja a ~35 partículas y se pausa al salir de vista.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. FASES -->
+<section class="block">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">08 · Cómo lo haría</span>
+      <h2>Tres entregas revisables</h2>
+      <p class="lead">Cada fase deja el sitio funcionando y se revisa en el navegador antes de pasar a la siguiente. Puedes parar en cualquiera.</p>
+    </div>
+    <div class="phases">
+      <div class="phase rv">
+        <h3>Base y primera impresión</h3>
+        <p>Tokens de vidrio y verde, navbar de vidrio, hero con entrada por palabras, chips de stats y botones magnéticos.</p>
+        <ul><li>Hoja nueva aislada</li><li>JS base con reduced-motion</li><li>Menú intacto</li></ul>
+        <span class="time">Sesión 1</span>
+      </div>
+      <div class="phase rv">
+        <h3>Secciones con carácter</h3>
+        <p>Marquesina de logos, tarjetas de servicio con tilt y halo, productos con zoom y chip, valor con parallax leve y stats en panel de vidrio.</p>
+        <ul><li>Componentes Blade actualizados</li><li>Sin cambios de contenido</li><li>Prueba en móvil real</li></ul>
+        <span class="time">Sesión 2</span>
+      </div>
+      <div class="phase rv">
+        <h3>Pulido y medición</h3>
+        <p>CTA con anillo, footer, foco visible, contraste, modo oscuro y comparación de métricas antes/después.</p>
+        <ul><li>Lighthouse antes/después</li><li>Ajuste de densidades</li><li>Checklist de accesibilidad</li></ul>
+        <span class="time">Sesión 3</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="close">
+  <div class="wrap">
+    <span class="eyebrow" style="color:#7BE6A1">Siguiente paso</span>
+    <h2>Si te convence, empiezo por la Fase 1.</h2>
+    <p>Te dejo el home con navbar y hero evolucionados para que lo veas en el navegador, sin tocar el resto. Si te gusta cómo se siente, seguimos con las secciones; si no, se revierte esa capa sin rastro.</p>
+    <div class="actions">
+      <a href="/prototipos/a.html" class="btn-demo ghost">Volver al prototipo A</a>
+      <a href="/" class="btn-demo primary">Ver el sitio actual</a>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <footer class="foot">
+    <span>ARACODE Smart Solutions · Propuesta de evolución UX/UI</span>
+    <span>Documento de revisión · no modifica el sitio</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var body = document.body;
+  var reduce = body.classList.contains('rm');
+  var touch = window.matchMedia('(hover: none)').matches;
+
+  /* Revelado escalonado de bloques */
+  var rvs = document.querySelectorAll('.rv');
+  if ('IntersectionObserver' in window && !reduce) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e, i) {
+        if (!e.isIntersecting) return;
+        var el = e.target;
+        el.style.transitionDelay = (Math.min(i, 4) * 60) + 'ms';
+        el.classList.add('in');
+        io.unobserve(el);
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    rvs.forEach(function (el) { io.observe(el); });
+  } else {
+    rvs.forEach(function (el) { el.classList.add('in'); });
+  }
+
+  /* Titular del demo: entrada palabra por palabra */
+  var title = document.getElementById('heroTitle');
+  if (title && !reduce) {
+    var words = [];
+    title.childNodes.forEach(function (node) {
+      if (node.nodeType === 3) {
+        node.textContent.split(/\s+/).filter(Boolean).forEach(function (w) { words.push(document.createTextNode(w)); });
+      } else {
+        words.push(node.cloneNode(true));
+      }
+    });
+    title.innerHTML = '';
+    var k = 0;
+    words.forEach(function (node) {
+      if (node.nodeType === 3) {
+        var w = document.createElement('span');
+        w.className = 'w';
+        var inner = document.createElement('i');
+        inner.textContent = node.textContent;
+        inner.style.setProperty('--i', k++);
+        w.appendChild(inner);
+        title.appendChild(w);
+        title.appendChild(document.createTextNode(' '));
+      } else {
+        var el = node.cloneNode(true);
+        el.style.display = 'inline-block';
+        el.style.opacity = '0';
+        el.style.transition = 'opacity .9s ease ' + (k++ * 0.05 + 0.1) + 's';
+        title.appendChild(el);
+        requestAnimationFrame(function () { el.style.opacity = '1'; });
+        title.appendChild(document.createTextNode(' '));
+      }
+    });
+  }
+
+  /* Contadores del demo */
+  var counters = document.querySelectorAll('[data-count]');
+  function runCounter(el) {
+    var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+    if (reduce) { el.textContent = target; return; }
+    var start = performance.now(), dur = 1400;
+    function tick(now) {
+      var p = Math.min((now - start) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * eased);
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  if ('IntersectionObserver' in window) {
+    var io2 = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        runCounter(e.target);
+        io2.unobserve(e.target);
+      });
+    }, { threshold: 0.6 });
+    counters.forEach(function (c) { io2.observe(c); });
+  } else {
+    counters.forEach(runCounter);
+  }
+
+  /* Tilt + halo en tarjetas */
+  if (!touch && !reduce) {
+    document.querySelectorAll('[data-tilt]').forEach(function (card) {
+      card.addEventListener('pointermove', function (ev) {
+        var r = card.getBoundingClientRect();
+        var x = (ev.clientX - r.left) / r.width;
+        var y = (ev.clientY - r.top) / r.height;
+        card.style.setProperty('--mx', (x * 100) + '%');
+        card.style.setProperty('--my', (y * 100) + '%');
+        card.style.transform = 'perspective(900px) rotateX(' + ((0.5 - y) * 6).toFixed(2) + 'deg) rotateY(' + ((x - 0.5) * 7).toFixed(2) + 'deg) translateY(-4px)';
+      });
+      card.addEventListener('pointerleave', function () {
+        card.style.transform = '';
+      });
+    });
+  }
+
+  /* Botones magnéticos */
+  if (!touch && !reduce) {
+    document.querySelectorAll('[data-magnetic]').forEach(function (btn) {
+      btn.addEventListener('pointermove', function (ev) {
+        var r = btn.getBoundingClientRect();
+        var dx = (ev.clientX - (r.left + r.width / 2)) / r.width;
+        var dy = (ev.clientY - (r.top + r.height / 2)) / r.height;
+        btn.style.transform = 'translate(' + (dx * 6).toFixed(2) + 'px,' + (dy * 4).toFixed(2) + 'px)';
+      });
+      btn.addEventListener('pointerleave', function () { btn.style.transform = ''; });
+    });
+  }
+
+  /* Interruptor de movimiento (solo para la revisión) */
+  var mt = document.getElementById('motionToggle');
+  if (mt) {
+    mt.addEventListener('click', function () {
+      var reduceNow = !body.classList.contains('rm');
+      body.classList.toggle('rm', reduceNow);
+      mt.innerHTML = '<i></i>Movimiento: ' + (reduceNow ? 'reducido' : 'activado');
+      mt.setAttribute('aria-pressed', String(!reduceNow));
+    });
+  }
+})();
+</script>
+</body>
+</html>

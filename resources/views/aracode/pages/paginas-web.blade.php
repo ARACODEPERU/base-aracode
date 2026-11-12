@@ -167,7 +167,7 @@
                 </div>
 
                 <div class="hidden lg:block reveal reveal-delay-4">
-                    <img src="{{ asset('themes/webpage/images/misc/s3.jpg') }}" alt="Publicación de una página web de ARACODE" class="rounded-2xl shadow-2xl w-full" loading="lazy">
+                    <img src="{{ asset('themes/webpage/images/productos/paginas-web.webp') }}" alt="Publicación de una página web de ARACODE" class="rounded-2xl shadow-2xl w-full" loading="lazy">
                 </div>
             </div>
         </div>

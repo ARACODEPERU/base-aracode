@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600" viewBox="0 0 960 600" role="img" aria-label="Inteligencia artificial: red neuronal, chip y destellos de innovación">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#04101f"/>
+      <stop offset="0.5" stop-color="#062a20"/>
+      <stop offset="1" stop-color="#04101f"/>
+    </linearGradient>
+    <radialGradient id="glowVerde" cx="0.52" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#25D366" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#25D366" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowAzul" cx="0.18" cy="0.2" r="0.5">
+      <stop offset="0" stop-color="#0188EE" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#0188EE" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="barra" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0188EE"/>
+      <stop offset="1" stop-color="#25D366"/>
+    </linearGradient>
+    <linearGradient id="chip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a2130"/>
+      <stop offset="1" stop-color="#061626"/>
+    </linearGradient>
+    <filter id="brillo" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <filter id="sombra" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="20"/>
+    </filter>
+  </defs>
+
+  <!-- Fondo -->
+  <rect width="960" height="600" fill="url(#bg)"/>
+  <rect width="960" height="600" fill="url(#glowVerde)"/>
+  <rect width="960" height="600" fill="url(#glowAzul)"/>
+
+  <!-- Rejilla -->
+  <g stroke="#25D366" stroke-opacity="0.08" stroke-width="1">
+    <path d="M480 90 L40 600"/>
+    <path d="M480 90 L240 600"/>
+    <path d="M480 90 L400 600"/>
+    <path d="M480 90 L560 600"/>
+    <path d="M480 90 L720 600"/>
+    <path d="M480 90 L920 600"/>
+    <path d="M0 408 H960"/>
+    <path d="M0 478 H960"/>
+    <path d="M0 560 H960"/>
+  </g>
+
+  <!-- Red neuronal -->
+  <g fill="none" stroke="#5eb0ff" stroke-opacity="0.32" stroke-width="1.6">
+    <path d="M232 176 L354 242 L480 300"/>
+    <path d="M206 300 L354 292 L480 300"/>
+    <path d="M236 428 L356 356 L480 300"/>
+    <path d="M480 300 L606 242 L728 176"/>
+    <path d="M480 300 L606 300 L754 300"/>
+    <path d="M480 300 L606 356 L724 428"/>
+
+    <path d="M354 242 L356 356"/>
+    <path d="M606 242 L606 356"/>
+    <path d="M232 176 L236 428"/>
+    <path d="M728 176 L724 428"/>
+  </g>
+
+  <g fill="#7cc4ff">
+    <circle cx="232" cy="176" r="5"/>
+    <circle cx="206" cy="300" r="4.5"/>
+    <circle cx="236" cy="428" r="5"/>
+    <circle cx="354" cy="242" r="4"/>
+    <circle cx="356" cy="356" r="4"/>
+    <circle cx="606" cy="242" r="4"/>
+    <circle cx="606" cy="356" r="4"/>
+    <circle cx="728" cy="176" r="5"/>
+    <circle cx="754" cy="300" r="4.5"/>
+    <circle cx="724" cy="428" r="5"/>
+  </g>
+
+  <g fill="#25D366">
+    <circle cx="354" cy="242" r="4"/>
+    <circle cx="606" cy="356" r="4"/>
+    <circle cx="728" cy="176" r="4"/>
+    <circle cx="236" cy="428" r="4"/>
+  </g>
+
+  <!-- Halo central -->
+  <circle cx="480" cy="300" r="150" fill="#25D366" opacity="0.10" filter="url(#sombra)"/>
+
+  <!-- Chip -->
+  <g>
+    <rect x="392" y="212" width="176" height="176" rx="34" fill="url(#chip)" stroke="url(#barra)" stroke-opacity="0.7" stroke-width="2"/>
+
+    <!-- Patas del chip -->
+    <g stroke="#25D366" stroke-opacity="0.55" stroke-width="4" stroke-linecap="round">
+      <path d="M424 196 V212"/><path d="M456 196 V212"/><path d="M504 196 V212"/><path d="M536 196 V212"/>
+      <path d="M424 388 V404"/><path d="M456 388 V404"/><path d="M504 388 V404"/><path d="M536 388 V404"/>
+      <path d="M376 244 H392"/><path d="M376 292 H392"/><path d="M376 340 H392"/>
+      <path d="M568 244 H584"/><path d="M568 292 H584"/><path d="M568 340 H584"/>
+    </g>
+
+    <!-- Circuito interior -->
+    <g fill="none" stroke="#5eb0ff" stroke-opacity="0.55" stroke-width="2">
+      <path d="M412 268 H446 V300"/>
+      <path d="M548 268 H514 V300"/>
+      <path d="M412 336 H446 V308"/>
+      <path d="M548 336 H514 V308"/>
+      <circle cx="446" cy="300" r="6" fill="#25D366" stroke="none"/>
+      <circle cx="514" cy="308" r="6" fill="#25D366" stroke="none"/>
+      <circle cx="446" cy="268" r="4" fill="#0188EE" stroke="none"/>
+      <circle cx="514" cy="336" r="4" fill="#0188EE" stroke="none"/>
+    </g>
+
+    <!-- Núcleo -->
+    <circle cx="480" cy="300" r="42" fill="none" stroke="#25D366" stroke-width="3" opacity="0.85"/>
+    <circle cx="480" cy="300" r="26" fill="#0188EE" opacity="0.22" filter="url(#brillo)"/>
+  </g>
+
+  <!-- Destellos (innovación) -->
+  <g>
+    <path transform="translate(480 300) scale(0.62)" fill="#d6ffe6" d="M0 -46 C6 -16 16 -6 46 0 C16 6 6 16 0 46 C-6 16 -16 6 -46 0 C-16 -6 -6 -16 0 -46 Z" opacity="0.95"/>
+    <path transform="translate(596 178) scale(0.34)" fill="#25D366" d="M0 -46 C6 -16 16 -6 46 0 C16 6 6 16 0 46 C-6 16 -16 6 -46 0 C-16 -6 -6 -16 0 -46 Z"/>
+    <path transform="translate(334 402) scale(0.26)" fill="#7cc4ff" d="M0 -46 C6 -16 16 -6 46 0 C16 6 6 16 0 46 C-6 16 -16 6 -46 0 C-16 -6 -6 -16 0 -46 Z" opacity="0.9"/>
+    <path transform="translate(690 404) scale(0.2)" fill="#d6ffe6" d="M0 -46 C6 -16 16 -6 46 0 C16 6 6 16 0 46 C-6 16 -16 6 -46 0 C-16 -6 -6 -16 0 -46 Z" opacity="0.55"/>
+  </g>
+
+  <!-- Destellos suaves -->
+  <g fill="#25D366">
+    <circle cx="596" cy="178" r="10" opacity="0.25" filter="url(#brillo)"/>
+    <circle cx="334" cy="402" r="8" opacity="0.2" filter="url(#brillo)"/>
+  </g>
+
+  <!-- Partículas -->
+  <g fill="#7cc4ff" opacity="0.8">
+    <circle cx="160" cy="120" r="3"/>
+    <circle cx="806" cy="106" r="3.5"/>
+    <circle cx="152" cy="508" r="3.5"/>
+    <circle cx="826" cy="500" r="3"/>
+  </g>
+</svg>

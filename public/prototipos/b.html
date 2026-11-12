@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARACODE · Prototipo B — Atelier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F5F0; --paper:#FFFFFF; --ink:#0B0B0F; --soft:#6E6A62;
+    --blue:#0188EE; --green:#1FA855; --line:rgba(11,11,15,.12);
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  ::selection{background:var(--ink);color:var(--bg)}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  .wrap{width:min(1240px,92vw);margin-inline:auto}
+  .serif{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight:400;letter-spacing:-.01em}
+  .label{font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;font-weight:700;color:var(--soft)}
+  h1,h2,h3{letter-spacing:-.035em;line-height:.96;font-weight:800}
+
+  body.cursor-on, body.cursor-on *{cursor:none!important}
+  .cur{position:fixed;z-index:9999;left:0;top:0;width:10px;height:10px;border-radius:50%;background:var(--ink);pointer-events:none;transform:translate(-50%,-50%);transition:width .3s var(--ease),height .3s var(--ease),background .3s}
+  .cur.big{width:64px;height:64px;background:var(--blue)}
+  .cur .lbl{position:absolute;inset:0;display:grid;place-items:center;font-size:.6rem;letter-spacing:.1em;color:#fff;opacity:0;font-weight:700}
+  .cur.big .lbl{opacity:1}
+
+  .prog{position:fixed;left:0;top:0;height:3px;width:0;background:var(--ink);z-index:100}
+
+  /* nav */
+  header{position:fixed;inset:0 0 auto;z-index:90;background:rgba(247,245,240,.82);backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:border-color .3s,transform .5s var(--ease)}
+  header.stuck{border-color:var(--line)}
+  header.hide{transform:translateY(-101%)}
+  .nav{display:flex;align-items:center;justify-content:space-between;gap:2rem;padding:1rem 0}
+  .brand{display:flex;align-items:center;gap:.65rem;font-weight:800;font-size:1rem;letter-spacing:-.02em}
+  .brand i{width:32px;height:32px;border-radius:50%;background:conic-gradient(from 210deg,var(--blue),var(--green),var(--blue));display:grid;place-items:center;color:#fff;font-style:normal;font-size:.75rem;font-weight:900}
+  .brand small{display:block;font-size:.52rem;letter-spacing:.3em;color:var(--soft);font-weight:600}
+  .nav ul{display:flex;gap:.2rem;list-style:none}
+  .nav ul a{position:relative;font-size:.85rem;padding:.5rem .8rem;border-radius:99px;transition:background .25s}
+  .nav ul a::after{content:"";position:absolute;left:.8rem;right:.8rem;bottom:.35rem;height:1px;background:var(--ink);transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease)}
+  .nav ul a:hover::after{transform:scaleX(1)}
+  .nav .btn{padding:.68rem 1.15rem;border-radius:99px;background:var(--ink);color:var(--bg);font-size:.84rem;font-weight:600;transition:transform .3s var(--ease),background .3s}
+  .nav .btn:hover{transform:translateY(-2px);background:var(--blue)}
+  .burger{display:none;border:1px solid var(--line);background:none;width:42px;height:42px;border-radius:50%;font-size:1rem}
+
+  /* hero */
+  .hero{padding:9.5rem 0 3rem}
+  .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(2rem,5vw,4.5rem);align-items:center}
+  .hero h1{font-size:clamp(2.6rem,6vw,5.4rem)}
+  .hero h1 em{font-style:normal;color:var(--blue)}
+  .hero p{margin-top:1.5rem;max-width:32rem;color:var(--soft);font-size:clamp(1rem,1.5vw,1.14rem);line-height:1.65}
+  .hero-actions{display:flex;gap:.7rem;margin-top:2.2rem;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:.55rem;padding:.95rem 1.5rem;border-radius:99px;font-weight:600;font-size:.92rem;border:1px solid transparent;transition:transform .3s var(--ease),background .3s,color .3s,border-color .3s}
+  .btn-dark{background:var(--ink);color:#fff}
+  .btn-dark:hover{transform:translateY(-3px);background:var(--blue)}
+  .btn-line{border-color:var(--line)}
+  .btn-line:hover{border-color:var(--ink);transform:translateY(-3px)}
+  .btn span{transition:transform .3s var(--ease)}
+  .btn:hover span{transform:translate(3px,-3px)}
+
+  .hero-media{position:relative}
+  .hero-frame{position:relative;border-radius:24px;overflow:hidden;background:#0A1740;aspect-ratio:4/5;clip-path:inset(0 0 100% 0);transition:clip-path 1.3s var(--ease)}
+  .hero-frame.in{clip-path:inset(0 0 0% 0)}
+  .hero-frame img{width:100%;height:100%;object-fit:cover;transform:scale(1.15);transition:transform 1.6s var(--ease)}
+  .hero-frame.in img{transform:scale(1)}
+  .chip{position:absolute;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:.7rem .9rem;font-size:.76rem;box-shadow:0 16px 40px rgba(11,11,15,.10);display:flex;align-items:center;gap:.5rem}
+  .chip b{font-size:1.05rem;letter-spacing:-.03em}
+  .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+  .chip.c1{left:-1.2rem;top:12%;animation:bob 7s ease-in-out infinite}
+  .chip.c2{right:-1rem;bottom:18%;animation:bob 8s ease-in-out infinite reverse}
+  @keyframes bob{50%{transform:translateY(-10px)}}
+  .hero-note{margin-top:1rem;display:flex;align-items:center;gap:.5rem;color:var(--soft);font-size:.78rem}
+
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:4.5rem}
+  .metric{background:var(--bg);padding:1.6rem 1rem;text-align:left}
+  .metric b{display:block;font-size:clamp(1.6rem,3vw,2.3rem);letter-spacing:-.04em}
+  .metric span{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--soft)}
+
+  /* ticker */
+  .ticker{border-bottom:1px solid var(--line);overflow:hidden;padding:1.1rem 0;background:var(--paper)}
+  .ticker .row{display:flex;gap:3rem;width:max-content;animation:slide 38s linear infinite;align-items:center}
+  .ticker img{height:26px;opacity:.45;filter:grayscale(1);transition:.3s}
+  .ticker img:hover{opacity:1;filter:none}
+  .ticker .sep{width:5px;height:5px;border-radius:50%;background:var(--line)}
+  @keyframes slide{to{transform:translateX(-50%)}}
+
+  /* manifiesto scrub */
+  .manifesto{padding:9rem 0}
+  .manifesto p{font-size:clamp(1.7rem,4.2vw,3.4rem);line-height:1.22;letter-spacing:-.03em;font-weight:600;max-width:20ch}
+  .manifesto p{max-width:none}
+  .manifesto .w{color:#CFCBC2;transition:color .25s linear}
+  .manifesto .w.on{color:var(--ink)}
+  .manifesto .w.acc.on{color:var(--blue)}
+  .manifesto .meta{margin-top:3rem;display:flex;gap:3rem;flex-wrap:wrap;color:var(--soft);font-size:.85rem}
+  .manifesto .meta b{display:block;color:var(--ink);font-size:1.4rem;letter-spacing:-.03em}
+
+  /* bento */
+  .bento-sec{padding:0 0 8rem}
+  .sec-head{display:flex;justify-content:space-between;align-items:end;gap:2rem;flex-wrap:wrap;margin-bottom:2.4rem}
+  .sec-head h2{font-size:clamp(2rem,4.4vw,3.4rem)}
+  .sec-head p{max-width:26rem;color:var(--soft);line-height:1.6;font-size:.95rem}
+  .bento{display:grid;grid-template-columns:repeat(12,1fr);gap:.9rem}
+  .card{position:relative;border-radius:22px;border:1px solid var(--line);background:var(--paper);padding:1.6rem;overflow:hidden;transition:transform .45s var(--ease),box-shadow .45s var(--ease)}
+  .card:hover{transform:translateY(-4px);box-shadow:0 24px 50px rgba(11,11,15,.08)}
+  .card h3{font-size:1.15rem;margin-bottom:.45rem;letter-spacing:-.02em}
+  .card p{color:var(--soft);font-size:.88rem;line-height:1.6}
+  .card img{width:100%;height:100%;object-fit:cover;transition:transform .9s var(--ease)}
+  .card:hover img{transform:scale(1.05)}
+  .b1{grid-column:span 7;min-height:280px;display:flex;flex-direction:column;justify-content:space-between;background:#0A1740;color:#fff;border:none}
+  .b1 .big{font-size:clamp(2.6rem,6vw,4.6rem);letter-spacing:-.05em;line-height:1;background:linear-gradient(100deg,#fff,#7CC4FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .b1 p{color:#B9C8E6}
+  .b1 .arrow{position:absolute;right:1.6rem;bottom:1.4rem;font-size:1.4rem;transition:transform .35s var(--ease)}
+  .b1:hover .arrow{transform:translate(4px,-4px)}
+  .b2{grid-column:span 5;padding:0;min-height:280px;background:#0A1740}
+  .b2 img{height:100%;min-height:280px}
+  .b2 .cap{position:absolute;left:1.2rem;bottom:1.2rem;background:rgba(255,255,255,.92);padding:.65rem .9rem;border-radius:12px;font-size:.78rem;font-weight:600}
+  .b3,.b4,.b5{grid-column:span 4;min-height:200px;display:flex;flex-direction:column;justify-content:space-between}
+  .b6{grid-column:span 12;display:grid;grid-template-columns:1.1fr .9fr;gap:2rem;padding:0;overflow:hidden;min-height:260px}
+  .b6 .txt{padding:2rem}
+  .b6 .pic{overflow:hidden}
+  .b6 img{height:100%}
+  .ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(1,136,238,.1);color:var(--blue);margin-bottom:1rem;font-size:1rem}
+
+  /* showcase sticky */
+  .show{padding:6rem 0 8rem;background:var(--paper);border-block:1px solid var(--line)}
+  .show-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:clamp(2rem,6vw,5rem);align-items:start}
+  .show-list{position:sticky;top:7rem}
+  .show-list h2{font-size:clamp(1.9rem,3.6vw,2.9rem);margin-bottom:1.2rem}
+  .show-item{padding:1.05rem 0;border-top:1px solid var(--line);display:flex;align-items:center;gap:1rem;color:#B7B3AA;transition:color .35s}
+  .show-item:last-child{border-bottom:1px solid var(--line)}
+  .show-item b{font-size:.8rem;font-weight:600;color:#B7B3AA}
+  .show-item h3{font-size:clamp(1.15rem,2vw,1.6rem);font-weight:700;letter-spacing:-.02em}
+  .show-item.on{color:var(--ink)}
+  .show-item.on b{color:var(--blue)}
+  .show-item .mini{opacity:0;transform:translateX(-6px);transition:.35s;color:var(--blue);font-weight:700}
+  .show-item.on .mini{opacity:1;transform:none}
+  .show-stage{position:relative;border-radius:24px;overflow:hidden;background:#0A1740;aspect-ratio:4/3.2}
+  .show-stage figure{position:absolute;inset:0;opacity:0;transform:scale(1.04);transition:opacity .6s var(--ease),transform .8s var(--ease)}
+  .show-stage figure.on{opacity:1;transform:none}
+  .show-stage img{width:100%;height:100%;object-fit:cover}
+  .show-stage .tag{position:absolute;left:1rem;top:1rem;background:rgba(255,255,255,.92);border-radius:99px;padding:.45rem .8rem;font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+
+  /* casos */
+  .cases{padding:8rem 0}
+  .case-row{position:relative;display:grid;grid-template-columns:90px 1.6fr 1fr;gap:2rem;align-items:center;padding:2rem 0;border-top:1px solid var(--line);transition:padding .3s var(--ease)}
+  .case-row:last-child{border-bottom:1px solid var(--line)}
+  .case-row small{color:var(--soft);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase}
+  .case-row h3{font-size:clamp(1.4rem,3vw,2.3rem);font-weight:700;letter-spacing:-.03em;transition:transform .35s var(--ease)}
+  .case-row:hover h3{transform:translateX(10px)}
+  .case-row p{color:var(--soft);font-size:.9rem;line-height:1.6}
+  .hover-img{position:fixed;pointer-events:none;z-index:80;width:280px;height:190px;border-radius:16px;overflow:hidden;opacity:0;transform:translate(-50%,-50%) scale(.9) rotate(-4deg);transition:opacity .3s,transform .3s var(--ease)}
+  .hover-img.on{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-3deg)}
+  .hover-img img{width:100%;height:100%;object-fit:cover}
+
+  /* faq */
+  .faq{padding:0 0 8rem}
+  .faq-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:4rem;align-items:start}
+  .faq h2{font-size:clamp(1.9rem,3.6vw,2.9rem)}
+  .acc{border-top:1px solid var(--line)}
+  .acc article{border-bottom:1px solid var(--line)}
+  .acc button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:1rem;background:none;border:0;padding:1.3rem 0;font:inherit;font-weight:600;font-size:1rem;text-align:left;letter-spacing:-.01em}
+  .acc button i{font-style:normal;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;transition:.35s var(--ease)}
+  .acc article.open button i{background:var(--ink);color:#fff;transform:rotate(45deg)}
+  .acc .a{max-height:0;overflow:hidden;transition:max-height .45s var(--ease)}
+  .acc .a p{color:var(--soft);line-height:1.7;padding-bottom:1.3rem;max-width:44rem}
+
+  /* cta */
+  .cta{padding:0 0 6rem}
+  .cta-in{position:relative;border-radius:28px;background:#0A1740;color:#fff;padding:clamp(2rem,6vw,4.5rem);overflow:hidden}
+  .cta-in::after{content:"";position:absolute;width:520px;height:520px;border-radius:50%;right:-140px;top:-160px;background:radial-gradient(circle,rgba(37,211,102,.35),transparent 65%)}
+  .cta-in::before{content:"";position:absolute;width:420px;height:420px;border-radius:50%;left:-120px;bottom:-180px;background:radial-gradient(circle,rgba(1,136,238,.45),transparent 65%)}
+  .cta-in>*{position:relative}
+  .cta h2{font-size:clamp(2rem,4.6vw,3.4rem);max-width:18ch}
+  .cta p{color:#B9C8E6;margin-top:1rem;max-width:32rem;line-height:1.65}
+  .cta form{display:flex;gap:.6rem;margin-top:2rem;flex-wrap:wrap}
+  .cta input{flex:1 1 260px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:99px;padding:1rem 1.2rem;font:inherit;outline:none}
+  .cta input:focus{border-color:#7CC4FF}
+  .cta .btn{background:#fff;color:var(--ink)}
+  .cta .ok{margin-top:.9rem;color:#8DF0B3;opacity:0;transition:.4s}
+  .cta .ok.in{opacity:1}
+
+  /* footer */
+  footer.site{background:#0B0B0F;color:#E9E6DF;padding:4rem 0 2rem}
+  .fgrid{display:grid;grid-template-columns:1.7fr 1fr 1fr 1fr;gap:2rem}
+  .fgrid h4{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#8E8A80;margin-bottom:1rem}
+  .fgrid ul{list-style:none;display:grid;gap:.55rem;font-size:.9rem}
+  .fgrid a{color:#D6D2C9;transition:color .25s}
+  .fgrid a:hover{color:#fff}
+  .fbot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;border-top:1px solid rgba(255,255,255,.12);margin-top:3rem;padding-top:1.5rem;font-size:.78rem;color:#8E8A80}
+
+  .proto{position:fixed;right:16px;bottom:16px;z-index:95;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;padding:.5rem .8rem;border-radius:99px;background:rgba(11,11,15,.86);color:#fff}
+
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .reveal.in{opacity:1;transform:none}
+
+  @media (max-width:980px){
+    .nav ul{display:none}.burger{display:block}
+    .hero-grid,.show-grid,.faq-grid,.b6{grid-template-columns:1fr}
+    .hero-frame{aspect-ratio:16/11}
+    .metrics{grid-template-columns:repeat(2,1fr)}
+    .b1,.b2,.b3,.b4,.b5,.b6{grid-column:span 12}
+    .show-list{position:static}
+    .case-row{grid-template-columns:1fr;gap:.6rem}
+    .fgrid{grid-template-columns:1fr 1fr}
+    .cur,.hover-img{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;transition-duration:.001s!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="prog" id="prog"></div>
+<div class="cur" id="cur"><span class="lbl">VER</span></div>
+<div class="hover-img" id="hoverImg"><img alt=""></div>
+
+<header id="header">
+  <div class="wrap nav">
+    <a href="/prototipos/b.html" class="brand"><i>A</i><span>ARACODE<small>SMART SOLUTIONS</small></span></a>
+    <ul>
+      <li><a href="#estudio">Estudio</a></li>
+      <li><a href="#servicios">Servicios</a></li>
+      <li><a href="#casos">Casos</a></li>
+      <li><a href="/plantillas">Plantillas</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a class="btn btn-dark" href="/contacto">Hablemos</a>
+    <button class="burger" aria-label="Menú">☰</button>
+  </div>
+</header>
+
+<main>
+  <section class="hero" id="estudio">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <span class="label">Software · Automatización · IA</span>
+          <h1 style="margin-top:1.2rem">Hacemos que tu operación <span class="serif" style="color:var(--blue)">fluya</span>.</h1>
+          <p>Diseñamos, construimos y mantenemos el software que tu empresa usa todos los días. Menos Excel, menos WhatsApp, menos trabajo manual.</p>
+          <div class="hero-actions">
+            <a class="btn btn-dark" href="/contacto">Solicitar asesoría <span>↗</span></a>
+            <a class="btn btn-line" href="#servicios">Ver servicios <span>↓</span></a>
+          </div>
+          <div class="hero-note"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span> Disponibles para nuevos proyectos este mes</div>
+        </div>
+        <div class="hero-media">
+          <div class="hero-frame" id="heroFrame">
+            <img src="/themes/webpage/images/productos/desarrollo-medida.webp" alt="Desarrollo de software a medida">
+          </div>
+          <div class="chip c1"><span class="dot"></span><span><b>+500</b> usuarios activos</span></div>
+          <div class="chip c2"><span class="dot" style="background:var(--blue)"></span><span><b>99%</b> uptime</span></div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric"><b data-count="100" data-suffix="+">0</b><span>Empresas atendidas</span></div>
+        <div class="metric"><b data-count="5" data-suffix="+">0</b><span>Años de experiencia</span></div>
+        <div class="metric"><b data-count="500" data-suffix="+">0</b><span>Usuarios activos</span></div>
+        <div class="metric"><b data-count="99" data-suffix="%">0</b><span>Uptime garantizado</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="ticker"><div class="row" id="ticker"></div></div>
+
+  <section class="manifesto">
+    <div class="wrap">
+      <p id="manifesto">No vendemos horas. <span class="acc">Resolvemos</span> procesos: <span class="acc">facturar</span>, enseñar, vender, coordinar y decidir con datos.</p>
+      <div class="meta">
+        <div><b>01</b> Diagnóstico antes de escribir código</div>
+        <div><b>02</b> Entregas cada semana</div>
+        <div><b>03</b> Soporte del mismo equipo que construyó</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bento-sec" id="servicios">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div><span class="label">Qué hacemos</span><h2 style="margin-top:.9rem">Un ecosistema, <span class="serif">no piezas sueltas</span></h2></div>
+        <p>Productos propios y desarrollo a medida que comparten equipo, infraestructura y forma de trabajar.</p>
+      </div>
+      <div class="bento">
+        <a class="card b1 reveal" href="/soluciones">
+          <div><span class="label" style="color:#8FB4FF">Plataforma educativa</span>
+          <div class="big" style="margin-top:1rem">KAPTA LMS</div>
+          <p style="margin-top:.8rem">Cursos, aulas virtuales, certificados y asistencia en un solo lugar.</p></div>
+          <span class="arrow">↗</span>
+        </a>
+        <a class="card b2 reveal" href="/paginas-web">
+          <img src="/themes/webpage/images/productos/paginas-web.webp" alt="Páginas web">
+          <span class="cap">Páginas web desde S/ 89 / mes</span>
+        </a>
+        <a class="card b3 reveal" href="/kirafact"><div class="ico">⌁</div><div><h3>KIRAFACT</h3><p>Facturación electrónica con SUNAT, inventario y ventas.</p></div></a>
+        <a class="card b4 reveal" href="/pichanguero"><div class="ico">⚽</div><div><h3>Pichanguero</h3><p>Torneos de fútbol con fixture y resultados en vivo.</p></div></a>
+        <a class="card b5 reveal" href="/contacto"><div class="ico">✦</div><div><h3>Automatización e IA</h3><p>Procesos que se ejecutan solos y decisiones asistidas.</p></div></a>
+        <div class="card b6 reveal">
+          <div class="txt">
+            <span class="label">Desarrollo a medida</span>
+            <h3 style="font-size:clamp(1.4rem,2.6vw,2rem);margin:.7rem 0 .6rem">Si tu proceso es único, el sistema también debería serlo.</h3>
+            <p>ERP, portales, integraciones y aplicaciones internas construidas sobre lo que ya usas.</p>
+            <a class="btn btn-line" style="margin-top:1.2rem" href="/soluciones/desarrollo">Ver enfoque <span>↗</span></a>
+          </div>
+          <div class="pic"><img src="/themes/webpage/images/productos/desarrollo-medida.webp" alt="Desarrollo a medida"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="show" id="show">
+    <div class="wrap show-grid">
+      <div class="show-list">
+        <span class="label">Ecosistema</span>
+        <h2 style="margin-top:.8rem">Siete formas de resolver tu operación</h2>
+        <div id="showList"></div>
+      </div>
+      <div class="show-stage" id="showStage">
+        <span class="tag" id="showTag">Educación</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="cases" id="casos">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div><span class="label">Casos</span><h2 style="margin-top:.9rem">Lo que cambió <span class="serif">de verdad</span></h2></div>
+        <a class="btn btn-line" href="/casos-exito">Todos los casos <span>↗</span></a>
+      </div>
+      <div id="cases"></div>
+    </div>
+  </section>
+
+  <section class="faq" id="faq">
+    <div class="wrap faq-grid">
+      <div class="reveal">
+        <span class="label">Preguntas</span>
+        <h2 style="margin-top:.9rem">Antes de escribir el primer correo</h2>
+        <p style="color:var(--soft);margin-top:1rem;line-height:1.7">Si falta algo, escríbenos: respondemos con alcance, tiempos y precio.</p>
+        <a class="btn btn-line" style="margin-top:1.4rem" href="/contacto">Hablar con el equipo <span>↗</span></a>
+      </div>
+      <div class="acc" id="acc">
+        <article class="open"><button>¿Cuánto tarda un proyecto?<i>+</i></button><div class="a"><p>Una página web con plantilla, días. Un sistema a medida, entre 4 y 12 semanas según alcance. Damos fechas antes de empezar.</p></div></article>
+        <article><button>¿Trabajan con lo que ya tenemos?<i>+</i></button><div class="a"><p>Sí. Integramos con tu facturación, tu base de datos o tus hojas de cálculo actuales; no obligamos a migrar todo de golpe.</p></div></article>
+        <article><button>¿Qué incluye el soporte?<i>+</i></button><div class="a"><p>Monitoreo, correcciones y acompañamiento. El mismo equipo que construyó el sistema atiende los tickets.</p></div></article>
+        <article><button>¿Puedo empezar con algo pequeño?<i>+</i></button><div class="a"><p>Sí. Muchos proyectos empiezan con un módulo o una web y crecen por etapas, con presupuesto aprobado en cada una.</p></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="wrap">
+      <div class="cta-in reveal">
+        <span class="label" style="color:#8FB4FF">Siguiente paso</span>
+        <h2 style="margin-top:1rem">Cuéntanos qué te está <span class="serif" style="color:#8DF0B3">frenando</span>.</h2>
+        <p>Una llamada de 20 minutos suele bastar para saber si podemos ayudarte y cuánto costaría.</p>
+        <form id="form"><input type="email" placeholder="tu@empresa.com" required aria-label="Correo"><button class="btn" type="submit">Escribirnos <span>↗</span></button></form>
+        <div class="ok" id="ok">Recibido. Te escribimos hoy mismo.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="fgrid">
+      <div>
+        <a href="/prototipos/b.html" class="brand" style="color:#fff"><i>A</i><span>ARACODE<small style="color:#8E8A80">SMART SOLUTIONS</small></span></a>
+        <p style="color:#8E8A80;font-size:.88rem;line-height:1.7;margin-top:1rem;max-width:24rem">Software empresarial, automatización e inteligencia artificial. Nuevo Chimbote, Perú.</p>
+      </div>
+      <div><h4>Soluciones</h4><ul><li><a href="/kapta">KAPTA LMS</a></li><li><a href="/kirafact">KIRAFACT</a></li><li><a href="/pichanguero">Pichanguero</a></li><li><a href="/paginas-web">Páginas Web</a></li></ul></div>
+      <div><h4>Empresa</h4><ul><li><a href="/empresa">Sobre nosotros</a></li><li><a href="/casos-exito">Casos</a></li><li><a href="/plantillas">Plantillas</a></li><li><a href="/blog">Blog</a></li></ul></div>
+      <div><h4>Contacto</h4><ul><li><a href="https://wa.me/51917295856" target="_blank" rel="noopener">WhatsApp</a></li><li><a href="/contacto">Formulario</a></li><li><a href="https://www.instagram.com/aracode_peru/" target="_blank" rel="noopener">Instagram</a></li></ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="year"></span> ARACODE</span><span>Prototipo B · Atelier</span></div>
+  </div>
+</footer>
+
+<div class="proto">Prototipo B</div>
+
+<script>
+(() => {
+  const $ = (s, c = document) => c.querySelector(s);
+  const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  $('#year').textContent = new Date().getFullYear();
+
+  /* cursor */
+  if (!reduce && matchMedia('(hover:hover)').matches) {
+    document.body.classList.add('cursor-on');
+    const cur = $('#cur');
+    let x = innerWidth / 2, y = innerHeight / 2, cx = x, cy = y;
+    addEventListener('mousemove', e => { x = e.clientX; y = e.clientY; });
+    const loop = () => { cx += (x - cx) * .2; cy += (y - cy) * .2; cur.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`; requestAnimationFrame(loop); };
+    loop();
+    $$('a,button').forEach(el => { el.addEventListener('mouseenter', () => cur.classList.add('big')); el.addEventListener('mouseleave', () => cur.classList.remove('big')); });
+    $$('.case-row').forEach(el => { el.addEventListener('mouseenter', () => cur.classList.add('big')); el.addEventListener('mouseleave', () => cur.classList.remove('big')); });
+  }
+
+  /* nav + progreso */
+  const header = $('#header'); let lastY = 0;
+  addEventListener('scroll', () => {
+    const y = scrollY;
+    header.classList.toggle('stuck', y > 10);
+    header.classList.toggle('hide', y > lastY && y > 300);
+    lastY = y;
+    $('#prog').style.width = (y / (document.documentElement.scrollHeight - innerHeight) * 100) + '%';
+  }, { passive: true });
+
+  /* hero */
+  addEventListener('load', () => $('#heroFrame').classList.add('in'));
+  setTimeout(() => $('#heroFrame').classList.add('in'), 250);
+
+  /* reveal */
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12 });
+  $$('.reveal').forEach(el => io.observe(el));
+
+  /* contadores */
+  const cio = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target, to = +el.dataset.count, suf = el.dataset.suffix || '';
+    const t0 = performance.now();
+    const tick = now => { const p = Math.min((now - t0) / 1300, 1); el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))) + suf; if (p < 1) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick); cio.unobserve(el);
+  }), { threshold: .6 });
+  $$('[data-count]').forEach(el => cio.observe(el));
+
+  /* ticker */
+  const logos = ['brise','cap','celmovil','cpa','cprod','erios','horizonte','iprase','jrrss','kentha','orbe','zoelife'];
+  const row = $('#ticker');
+  const items = logos.map(l => `<img src="/themes/webpage/images/customers/${l}.png" alt="${l}" loading="lazy"><span class="sep"></span>`).join('');
+  row.innerHTML = items + items;
+
+  /* manifiesto scrub */
+  const mp = $('#manifesto');
+  const walker = document.createTreeWalker(mp, NodeFilter.SHOW_TEXT);
+  const texts = []; while (walker.nextNode()) texts.push(walker.currentNode);
+  texts.forEach(node => {
+    const acc = node.parentElement.classList.contains('acc');
+    const words = node.textContent.split(/(\s+)/);
+    const frag = document.createDocumentFragment();
+    words.forEach(w => {
+      if (!w.trim()) { frag.appendChild(document.createTextNode(w)); return; }
+      const s = document.createElement('span'); s.className = 'w' + (acc ? ' acc' : ''); s.textContent = w; frag.appendChild(s);
+    });
+    node.parentNode.replaceChild(frag, node);
+  });
+  const ws = $$('.w', mp);
+  const scrub = () => {
+    const r = mp.getBoundingClientRect();
+    const p = Math.min(Math.max((innerHeight * .82 - r.top) / (r.height + innerHeight * .1), 0), 1);
+    const n = Math.floor(p * ws.length * 1.05);
+    ws.forEach((w, i) => w.classList.toggle('on', i < n));
+  };
+  addEventListener('scroll', scrub, { passive: true }); scrub();
+
+  /* showcase */
+  const items2 = [
+    ['KAPTA LMS','Educación','/themes/webpage/images/misc/s1.jpg','/kapta'],
+    ['KIRAFACT','Comercio','/themes/webpage/images/misc/s2.jpg','/kirafact'],
+    ['Pichanguero','Deporte','/themes/webpage/images/misc/s3.jpg','https://pichanguero.com/'],
+    ['Desarrollo a Medida','Servicios','/themes/webpage/images/productos/desarrollo-medida.webp','/soluciones/desarrollo'],
+    ['Automatización','Servicios','/themes/webpage/images/productos/automatizacion-procesos.webp','/contacto'],
+    ['Inteligencia Artificial','Innovación','/themes/webpage/images/productos/inteligencia-artificial.webp','/contacto'],
+    ['Páginas Web','Servicios','/themes/webpage/images/productos/paginas-web.webp','/paginas-web']
+  ];
+  const list = $('#showList'), stage = $('#showStage');
+  list.innerHTML = items2.map(([t, tag], i) => `<a class="show-item ${i === 0 ? 'on' : ''}" href="${items2[i][3]}" data-i="${i}"><b>0${i + 1}</b><h3>${t}</h3><span class="mini">↗</span></a>`).join('');
+  stage.innerHTML = items2.map(([t, tag, img], i) => `<figure class="${i === 0 ? 'on' : ''}"><img src="${img}" alt="${t}" loading="lazy"></figure>`).join('') + '<span class="tag" id="showTagx">' + items2[0][1] + '</span>';
+  const figs = $$('figure', stage), rows = $$('.show-item', list), tagEl = $('#showTagx');
+  const activate = i => {
+    figs.forEach((f, n) => f.classList.toggle('on', n === i));
+    rows.forEach((r, n) => r.classList.toggle('on', n === i));
+    tagEl.textContent = items2[i][1];
+  };
+  rows.forEach((r, i) => r.addEventListener('mouseenter', () => activate(i)));
+  const sio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) activate(+e.target.dataset.i); }), { threshold: .7, rootMargin: '-30% 0px -30% 0px' });
+  rows.forEach(r => sio.observe(r));
+
+  /* casos + hover preview */
+  const cases = [
+    ['Educación','KAPTA LMS para instituto','200+ cursos, aulas virtuales y certificaciones automáticas.','+500 estudiantes','/themes/webpage/images/misc/s1.jpg','/casos-exito'],
+    ['Comercio','Facturación para 15 sedes','SUNAT, inventario y comprobantes en tiempo real.','10k comprobantes/mes','/themes/webpage/images/misc/s2.jpg','/casos-exito'],
+    ['Industria','ERP para agroindustria','Inventario, producción y distribución en un solo sistema.','40% menos tiempo','/themes/webpage/images/misc/about.jpg','/casos-exito'],
+    ['IA','Chatbot de atención','Automatiza consultas frecuentes y deriva lo complejo.','70% menos consultas','/themes/webpage/images/productos/inteligencia-artificial.webp','/casos-exito']
+  ];
+  $('#cases').innerHTML = cases.map(([tag, t, d, kpi, img, href]) => `
+    <a class="case-row reveal" href="${href}" data-img="${img}">
+      <small>${tag}</small>
+      <h3>${t}</h3>
+      <p>${d} <b style="color:var(--ink)">${kpi}</b></p>
+    </a>`).join('');
+  $$('.reveal', $('#cases')).forEach(el => io.observe(el));
+
+  const hi = $('#hoverImg'), hiImg = $('#hoverImg img');
+  $$('.case-row').forEach(r => {
+    r.addEventListener('mouseenter', () => { hiImg.src = r.dataset.img; hi.classList.add('on'); });
+    r.addEventListener('mouseleave', () => hi.classList.remove('on'));
+    r.addEventListener('mousemove', e => { hi.style.left = e.clientX + 'px'; hi.style.top = e.clientY + 'px'; });
+  });
+
+  /* faq */
+  $$('#acc article').forEach(a => {
+    const btn = $('button', a), panel = $('.a', a);
+    const setH = () => panel.style.maxHeight = a.classList.contains('open') ? panel.scrollHeight + 'px' : '0px';
+    setH();
+    btn.addEventListener('click', () => {
+      const open = a.classList.contains('open');
+      $$('#acc article').forEach(o => { o.classList.remove('open'); $('.a', o).style.maxHeight = '0px'; });
+      if (!open) { a.classList.add('open'); setH(); }
+    });
+  });
+  addEventListener('resize', () => $$('#acc article.open').forEach(a => { $('.a', a).style.maxHeight = $('.a', a).scrollHeight + 'px'; }));
+
+  /* form */
+  $('#form').addEventListener('submit', e => {
+    e.preventDefault(); const ok = $('#ok'); ok.classList.add('in'); e.target.reset();
+    setTimeout(() => ok.classList.remove('in'), 4200);
+  });
+
+  /* anclas */
+  $$('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+    const t = $(a.getAttribute('href')); if (!t) return;
+    e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+})();
+</script>
+</body>
+</html>

@@ -119,7 +119,7 @@
                     title="Desarrollo a Medida"
                     description="Creamos soluciones de software personalizadas para las necesidades específicas de tu empresa."
                     :href="route('solucion_desarrollo')"
-                    image="{{ asset('themes/webpage/images/misc/s4.webp') }}"
+                    image="{{ asset('themes/webpage/images/productos/desarrollo-medida.webp') }}"
                     {{-- badge="Personalizado" --}}
                     :delay="3"
                     :compacta="true"
@@ -128,13 +128,13 @@
                 {{-- Automatización: servicio, no producto con web propia. Usa la
                      misma tarjeta compacta del resto y su misma estructura
                      (franja superior + texto debajo) para que la fila se
-                     alinee; en la franja va un degradado con el icono, no una
-                     imagen. --}}
+                     alinee; la franja lleva su imagen diseñada, con la misma
+                     proporción que el archivo para que no queden bandas. --}}
                 <article class="ara-product-card ara-product-card--plano ara-product-card--compacta reveal reveal-delay-5">
-                    <div class="ara-product-media ara-product-media--azul">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
+                    <div class="ara-product-media"
+                         style="--ara-product-media-bg: url('{{ asset('themes/webpage/images/productos/automatizacion-procesos.webp') }}'); --ara-product-media-ratio: 960 / 600">
+                        <img src="{{ asset('themes/webpage/images/productos/automatizacion-procesos.webp') }}"
+                             alt="Automatización de procesos" loading="lazy" decoding="async">
                         <span class="ara-product-badge">Servicios</span>
                     </div>
 
@@ -152,12 +152,13 @@
                     </div>
                 </article>
 
-                {{-- IA: mismo caso que Automatización. --}}
+                {{-- IA: mismo caso que Automatización, con su imagen diseñada en
+                     lugar del degradado con el icono. --}}
                 <article class="ara-product-card ara-product-card--plano ara-product-card--compacta reveal reveal-delay-6">
-                    <div class="ara-product-media ara-product-media--verde">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z"/>
-                        </svg>
+                    <div class="ara-product-media"
+                         style="--ara-product-media-bg: url('{{ asset('themes/webpage/images/productos/inteligencia-artificial.webp') }}'); --ara-product-media-ratio: 960 / 600">
+                        <img src="{{ asset('themes/webpage/images/productos/inteligencia-artificial.webp') }}"
+                             alt="Inteligencia artificial" loading="lazy" decoding="async">
                         <span class="ara-product-badge">Innovación</span>
                     </div>
 
@@ -176,10 +177,9 @@
                 </article>
 
                 {{-- Páginas Web: el servicio que publica una plantilla del Banco de
-                     Plantillas con la marca y el dominio del cliente. Es un
-                     servicio, así que lleva la franja con degradado e icono en
-                     vez de una imagen diseñada, y su propio color (morado): el
-                     azul y el verde ya son de Automatización e IA.
+                     Plantillas con la marca y el dominio del cliente. Lleva su
+                     propia imagen diseñada y su color (morado): el azul y el
+                     verde ya son de Automatización e IA.
 
                      El enlace es interno (misma pestaña) y el precio de entrada
                      sale de config/servicio_web.php: el mismo que publican
@@ -187,10 +187,10 @@
                      Lo que incluye el plan se detalla en /paginas-web: aquí
                      basta la frase con el precio, como en el resto. --}}
                 <article class="ara-product-card ara-product-card--plano ara-product-card--compacta reveal reveal-delay-7">
-                    <div class="ara-product-media ara-product-media--morado">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3c2.4 2.4 3.6 5.4 3.6 9s-1.2 6.6-3.6 9c-2.4-2.4-3.6-5.4-3.6-9S9.6 5.4 12 3z"/>
-                        </svg>
+                    <div class="ara-product-media"
+                         style="--ara-product-media-bg: url('{{ asset('themes/webpage/images/productos/paginas-web.webp') }}'); --ara-product-media-ratio: 960 / 600">
+                        <img src="{{ asset('themes/webpage/images/productos/paginas-web.webp') }}"
+                             alt="Páginas web con plantillas profesionales" loading="lazy" decoding="async">
                         <span class="ara-product-badge">Servicios</span>
                     </div>
 

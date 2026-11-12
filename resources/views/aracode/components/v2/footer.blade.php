@@ -28,11 +28,11 @@
 
             {{-- Soluciones --}}
             <div>
-                <h4 class="text-white font-semibold mb-6">Soluciones</h4>
+                <h3 class="text-white font-semibold mb-6">Soluciones</h3>
                 <ul class="space-y-3">
                     <li><a href="{{ route('solucion_kapta') }}" class="ara-footer-link">KAPTA LMS</a></li>
                     <li><a href="{{ route('solucion_facturacion') }}" class="ara-footer-link">KIRAFACT</a></li>
-                    <li><a href="{{ route('solucion_pichanguero') }}" class="ara-footer-link">Pichanguero</a></li>
+                    <li><a href="{{ \App\Support\SitiosProducto::url('pichanguero') }}" class="ara-footer-link" target="_blank" rel="noopener">Pichanguero<span class="sr-only"> (se abre en una pestaña nueva)</span></a></li>
                     {{-- Gestión de Clínica es el producto del módulo Salud. Se enlaza
                          aquí, junto al resto del ecosistema, y abre en la misma
                          pestaña: su página vive en este sitio. --}}
@@ -45,7 +45,7 @@
 
             {{-- Empresa --}}
             <div>
-                <h4 class="text-white font-semibold mb-6">Empresa</h4>
+                <h3 class="text-white font-semibold mb-6">Empresa</h3>
                 <ul class="space-y-3">
                     <li><a href="{{ route('empresa') }}" class="ara-footer-link">Sobre Nosotros</a></li>
                     <li><a href="{{ route('empresa') }}#mision" class="ara-footer-link">Misión y Visión</a></li>
@@ -62,7 +62,7 @@
 
             {{-- Contacto --}}
             <div>
-                <h4 class="text-white font-semibold mb-6">Contacto</h4>
+                <h3 class="text-white font-semibold mb-6">Contacto</h3>
                 <ul class="space-y-4">
                     <li class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-ara-blue mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

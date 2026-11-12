@@ -7,7 +7,7 @@
     'delay' => 0,
 ])
 
-<div class="ara-card group reveal reveal-delay-{{ $delay }}">
+<div class="ara-card group reveal reveal-delay-{{ $delay }} ara-service-card" data-tilt>
     <div class="ara-icon-box mb-5">
         {!! $icon !!}
     </div>

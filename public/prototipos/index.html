@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARACODE · Elegir prototipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0A1024;--ink:#EAF1FF;--muted:#9FB0D0;--line:rgba(140,170,255,.16);--blue:#0188EE;--green:#25D366}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(120% 90% at 50% 0%,#122355,#070b1a 60%);color:var(--ink);font-family:Inter,system-ui,sans-serif;min-height:100vh;display:grid;place-items:center;padding:3rem 1.2rem}
+  .wrap{width:min(1080px,100%)}
+  header{text-align:center;margin-bottom:3rem}
+  .brand{display:inline-flex;align-items:center;gap:.7rem;font-weight:800;letter-spacing:-.02em;font-size:1.05rem;margin-bottom:1.4rem}
+  .brand i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:conic-gradient(from 200deg,var(--blue),var(--green),var(--blue));font-style:normal;color:#04102b;font-weight:900;font-size:.78rem}
+  h1{font-size:clamp(1.8rem,4.4vw,3rem);letter-spacing:-.04em;line-height:1.05}
+  header p{color:var(--muted);margin-top:.9rem;line-height:1.6}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+  .card{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:22px;padding:1.4rem;background:rgba(8,18,44,.7);transition:transform .35s cubic-bezier(.2,.8,.2,1),border-color .35s;overflow:hidden;text-decoration:none;color:inherit}
+  .card:hover{transform:translateY(-6px);border-color:rgba(94,176,255,.5)}
+  .thumb{height:130px;border-radius:14px;margin-bottom:1.1rem;overflow:hidden;position:relative;border:1px solid var(--line)}
+  .thumb.a{background:radial-gradient(80% 100% at 20% 0%,#0a2a5e,#050b22 70%)}
+  .thumb.b{background:linear-gradient(160deg,#F7F5F0,#E6E1D6)}
+  .thumb.c{background:linear-gradient(160deg,#0A1740,#050B22)}
+  .thumb .bar{position:absolute;left:12px;right:12px;height:6px;border-radius:99px;background:rgba(255,255,255,.16)}
+  .thumb.a .bar:nth-child(1){top:16px;width:40%}
+  .thumb.a .bar:nth-child(2){top:34px;width:66%;opacity:.6}
+  .thumb.a .bar:nth-child(3){top:74px;height:38px;border-radius:10px;background:linear-gradient(100deg,rgba(1,136,238,.7),rgba(37,211,102,.45))}
+  .thumb.b .bar{background:rgba(11,11,15,.16)}
+  .thumb.b .bar:nth-child(1){top:16px;width:34%}
+  .thumb.b .bar:nth-child(2){top:36px;width:76%;height:16px;border-radius:6px;background:rgba(11,11,15,.75)}
+  .thumb.b .bar:nth-child(3){top:74px;height:38px;border-radius:10px;background:linear-gradient(100deg,rgba(1,136,238,.75),rgba(31,168,85,.55))}
+  .thumb.c .bar:nth-child(1){top:16px;width:50%}
+  .thumb.c .bar:nth-child(2){top:40px;height:44px;border-radius:10px;background:linear-gradient(100deg,rgba(1,136,238,.45),rgba(6,14,45,.2))}
+  .tag{font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;color:var(--green);font-weight:700}
+  .card h2{font-size:1.3rem;letter-spacing:-.02em;margin:.5rem 0 .4rem}
+  .card p{color:var(--muted);font-size:.86rem;line-height:1.55;flex:1}
+  .card ul{list-style:none;margin:1rem 0 1.2rem;display:grid;gap:.35rem;font-size:.78rem;color:#C9D6F0}
+  .card ul li::before{content:"—";color:var(--blue);margin-right:.4rem}
+  .go{display:inline-flex;align-items:center;gap:.45rem;font-weight:600;font-size:.85rem;color:#fff}
+  .go span{transition:transform .3s}
+  .card:hover .go span{transform:translateX(4px)}
+  footer{text-align:center;color:var(--muted);font-size:.76rem;margin-top:2.4rem;line-height:1.7}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><i>A</i><span>ARACODE <small style="display:block;font-size:.52rem;letter-spacing:.3em;color:var(--muted)">SMART SOLUTIONS</small></span></div>
+    <h1>Elige el rumbo del sitio</h1>
+    <p>Dos propuestas de home, completas y navegables, para comparar con el modelo actual.<br>Ninguna toca tu web: son archivos aparte.</p>
+  </header>
+
+  <div class="grid">
+    <a class="card" href="/prototipos/a.html">
+      <div class="thumb a"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+      <span class="tag">Propuesta A</span>
+      <h2>Nebula</h2>
+      <p>Oscura y cinematográfica. Movimiento constante, canvas de partículas, scroll horizontal del ecosistema y tarjetas con inclinación 3D.</p>
+      <ul><li>Canvas interactivo</li><li>Scroll horizontal</li><li>Cursor magnético</li><li>Alta intensidad visual</li></ul>
+      <span class="go">Abrir prototipo <span>→</span></span>
+    </a>
+
+    <a class="card" href="/prototipos/b.html">
+      <div class="thumb b"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+      <span class="tag">Propuesta B</span>
+      <h2>Atelier</h2>
+      <p>Clara y editorial. Tipografía grande, scroll narrativo que ilumina el texto, bento de servicios y previsualización de casos al pasar el cursor.</p>
+      <ul><li>Scroll narrativo</li><li>Bento asimétrico</li><li>Preview al cursor</li><li>Lectura más sobria</li></ul>
+      <span class="go">Abrir prototipo <span>→</span></span>
+    </a>
+
+    <a class="card" href="/">
+      <div class="thumb c"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+      <span class="tag">Actual</span>
+      <h2>Tu web de hoy</h2>
+      <p>El sitio en producción, sin cambios. Úsalo como referencia para comparar jerarquía, ritmo y claridad del mensaje.</p>
+      <ul><li>Una sola página por servicio</li><li>Contenido ya indexado</li><li>Sin animaciones nuevas</li></ul>
+      <span class="go">Ver sitio actual <span>→</span></span>
+    </a>
+  </div>
+
+  <footer>Los prototipos cargan imágenes y textos reales del sitio. Los enlaces internos llevan a las páginas actuales.</footer>
+</div>
+</body>
+</html>

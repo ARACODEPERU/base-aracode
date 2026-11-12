@@ -5,12 +5,13 @@ use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
-| Contrato SEO de las fichas /kapta, /kirafact y /pichanguero
+| Contrato SEO de las fichas /kapta y /kirafact
 |--------------------------------------------------------------------------
 |
-| Las tres URLs se MANTIENEN como ficha de producto del sitio corporativo (no
+| Las dos fichas se MANTIENEN como ficha de producto del sitio corporativo (no
 | se retiran ni se redirigen): la decisión y su porqué están en
-| docs/SEO_ECOSISTEMA_PRODUCTOS.md. Estas pruebas fijan lo que esa decisión
+| docs/SEO_ECOSISTEMA_PRODUCTOS.md. /pichanguero, en cambio, ya tiene su propio
+| sitio y su URL antigua redirige allí con 301. Estas pruebas fijan lo que esa decisión
 | promete para que un cambio posterior no la deshaga sin darse cuenta: cada
 | ficha responde 200, se declara canónica de sí misma, publica un solo
 | SoftwareApplication que apunta al sitio del producto, no publica importes y
@@ -75,7 +76,7 @@ it('mantiene las tres fichas publicadas con canónica propia', function (string 
 
     // El sitio del producto NO es canónico de la ficha: se enlaza, no se declara.
     expect($html)->not->toContain('<link rel="canonical" href="'.SitiosProducto::url($producto).'"');
-})->with(['kapta', 'kirafact', 'pichanguero']);
+})->with(['kapta', 'kirafact']);
 
 it('publica un solo SoftwareApplication que apunta al sitio del producto', function (string $producto) {
     $ruta = "/{$producto}";
@@ -98,7 +99,7 @@ it('publica un solo SoftwareApplication que apunta al sitio del producto', funct
     // La autoría es lo que aporta la ficha: ARACODE como quien desarrolla.
     expect($aplicacion['author']['name'])->toBe('ARACODE Smart Solutions');
     expect($aplicacion['publisher']['name'])->toBe('ARACODE Smart Solutions');
-})->with(['kapta', 'kirafact', 'pichanguero']);
+})->with(['kapta', 'kirafact']);
 
 it('no publica importes ni compite por las consultas del producto', function (string $producto) {
     $html = $this->get("/{$producto}")->getContent();
@@ -120,7 +121,7 @@ it('no publica importes ni compite por las consultas del producto', function (st
     // El texto visible del botón hacia el sitio oficial, con el aviso para
     // lectores de pantalla (el destino abre en otra pestaña).
     expect($html)->toContain('Ir al sitio de '.SitiosProducto::nombre($producto));
-})->with(['kapta', 'kirafact', 'pichanguero']);
+})->with(['kapta', 'kirafact']);
 
 it('enlaza al sitio oficial y a su página de planes o descargas', function (string $producto) {
     // La segunda página del producto: los planes (KAPTA y KIRAFACT) o las
@@ -137,7 +138,18 @@ it('enlaza al sitio oficial y a su página de planes o descargas', function (str
     // Los enlaces salientes no llevan nofollow: es el vendedor recomendando el
     // producto, no contenido patrocinado.
     expect($html)->not->toContain('rel="nofollow"');
-})->with(['kapta', 'kirafact', 'pichanguero']);
+})->with(['kapta', 'kirafact']);
+
+it('redirige /pichanguero a su sitio oficial con 301', function () {
+    $respuesta = $this->get('/pichanguero');
+
+    $respuesta->assertStatus(301);
+
+    // El destino puede llegar con o sin la barra final: las dos formas son la
+    // raíz del sitio oficial.
+    expect(rtrim($respuesta->headers->get('Location'), '/'))
+        ->toBe(rtrim(SitiosProducto::url('pichanguero'), '/'));
+});
 
 it('sigue redirigiendo con 301 las URLs antiguas que apuntan a cada ficha', function (string $antigua, string $destino) {
     $this->get($antigua)->assertStatus(301)->assertRedirect($destino);

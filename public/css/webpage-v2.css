@@ -1891,7 +1891,9 @@ section form button[type="submit"]:hover {
    ============================================= */
 .ara-scroll-top {
     position: fixed;
-    bottom: 2rem;
+    /* Va por encima del botón de WhatsApp, que ocupa la esquina inferior derecha.
+       Se suman los 20px que el botón se desplaza mientras está oculto. */
+    bottom: 7.5rem;
     right: 2rem;
     z-index: 999;
     width: 48px;
@@ -1945,7 +1947,7 @@ section form button[type="submit"]:hover {
 .ara-whatsapp-float {
     position: fixed;
     bottom: 2rem;
-    left: 2rem;
+    right: 2rem;
     z-index: 999;
     width: 56px;
     height: 56px;
@@ -2025,14 +2027,16 @@ section form button[type="submit"]:hover {
 /* Hide on small mobile if needed */
 @media (max-width: 480px) {
     .ara-scroll-top {
-        bottom: 1rem;
+        /* Deja libre la esquina para el botón de WhatsApp (incluidos los 20px
+           que se desplaza mientras está oculto). */
+        bottom: 6rem;
         right: 1rem;
         width: 44px;
         height: 44px;
     }
     .ara-whatsapp-float {
         bottom: 1rem;
-        left: 1rem;
+        right: 1rem;
         width: 50px;
         height: 50px;
     }

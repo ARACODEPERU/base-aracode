@@ -11,7 +11,9 @@
         {!! $icon !!}
     </div>
     <div>
-        <h4 class="text-lg font-bold text-white mb-2">{{ $title }}</h4>
+        {{-- h3: cuelga de un h2 de sección. Con h4 se saltaba un nivel y eso
+             rompe el orden de encabezados que usan los lectores de pantalla. --}}
+        <h3 class="text-lg font-bold text-white mb-2">{{ $title }}</h3>
         <p class="text-white/70 leading-relaxed">{{ $description }}</p>
     </div>
 </div>
