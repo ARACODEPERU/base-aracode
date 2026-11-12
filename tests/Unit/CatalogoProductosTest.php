@@ -155,33 +155,43 @@ it('muestra el diseño entero dentro de la tarjeta, sin recortarlo', function ()
 });
 
 it('no recorta el diseño del producto en su franja', function () {
-    // Los diseños del ecosistema no comparten proporción —s1, s3 y s4 son
-    // cuadrados (1:1) y s2 es panorámico (2:1)—, así que una franja de
-    // proporción fija solo puede enseñarlos enteros ajustándolos dentro: con
-    // `cover` se perdía el 44 % del alto de los cuadrados y los laterales del
-    // panorámico.
+    // Los diseños del ecosistema se enseñan enteros dentro de su franja: con
+    // `cover` se perdían los laterales del diseño y su titular.
     //
-    // Se miran las DOS copias de la hoja: la de resources es el original y la de
-    // public la que carga el navegador. Si la regla viviera solo en una, en
-    // producción el diseño seguiría recortándose.
-    foreach (['css/webpage-v2.css', '../resources/css/webpage-v2.css'] as $hoja) {
-        $css = file_get_contents(public_path($hoja));
+    // webpage-v2.css no pasa por ningún build: el layout enlaza el archivo de
+    // public/css tal cual, así que esa es la única copia de la hoja.
+    $css = file_get_contents(public_path('css/webpage-v2.css'));
 
-        preg_match('#\.ara-product-card \.ara-product-media img \{(?<cuerpo>[^}]*)\}#', $css, $regla);
+    preg_match('#\.ara-product-card \.ara-product-media img \{(?<cuerpo>[^}]*)\}#', $css, $regla);
 
-        expect($regla)->not->toBeEmpty('No se encontró la regla de la imagen de la tarjeta');
+    expect($regla)->not->toBeEmpty('No se encontró la regla de la imagen de la tarjeta');
 
-        expect($regla['cuerpo'])->toContain('object-fit: contain')
-            ->and($regla['cuerpo'])->not->toContain('object-fit: cover');
+    expect($regla['cuerpo'])->toContain('object-fit: contain')
+        ->and($regla['cuerpo'])->not->toContain('object-fit: cover');
 
-        // Y al pasar el ratón la imagen no se amplía: dentro de una franja que
-        // ajusta el diseño, un `scale` lo recortaría otra vez por los cuatro
-        // lados —justo lo que se acaba de corregir—.
-        preg_match('#\.ara-product-card:hover \.ara-product-media img \{(?<cuerpo>[^}]*)\}#', $css, $realce);
+    // Y al pasar el ratón la imagen no se amplía: dentro de una franja que
+    // ajusta el diseño, un `scale` lo recortaría otra vez por los cuatro
+    // lados —justo lo que se acaba de corregir—.
+    preg_match('#\.ara-product-card:hover \.ara-product-media img \{(?<cuerpo>[^}]*)\}#', $css, $realce);
 
-        expect($realce)->not->toBeEmpty('No se encontró el realce de la imagen al pasar el ratón');
-        expect($realce['cuerpo'])->not->toContain('scale');
-    }
+    expect($realce)->not->toBeEmpty('No se encontró el realce de la imagen al pasar el ratón');
+    expect($realce['cuerpo'])->not->toContain('scale');
+});
+
+it('tiene una sola copia de la hoja: la de public, que es la que enlaza el layout', function () {
+    // La hoja del sitio no se compila: el layout enlaza public/css/webpage-v2.css
+    // tal cual, con su `filemtime` como versión. Una copia en resources solo
+    // puede desviarse de la que ve el navegador —y así se perdió una vez la
+    // variante sobrepuesta de las tarjetas—, así que no debe existir.
+    $html = $this->get('/')->getContent();
+
+    expect($html)->toContain('css/webpage-v2.css');
+
+    expect(file_exists(resource_path('css/webpage-v2.css')))
+        ->toBeFalse('Volvió a aparecer resources/css/webpage-v2.css; edita la de public, que es la que carga el navegador');
+
+    expect(file_get_contents(public_path('css/webpage-v2.css')))
+        ->toContain('.ara-product-card--sobrepuesta');
 });
 
 it('incorpora los servicios a la misma tarjeta, con su propia imagen', function () {
