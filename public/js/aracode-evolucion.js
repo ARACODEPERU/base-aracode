@@ -171,52 +171,100 @@
     pintar();
 })();
 
+
 /* ============================================================
-   CTA de portada: el correo abre el modal de asesoría ya escrito.
-   Sin modal disponible, el formulario sigue siendo un GET a /contacto.
+   Propuesta de valor: las cuatro ventajas como pestañas.
+   La ventaja activa abre su descripción y cambia la imagen, el
+   chip y el contador del panel de la derecha. Patrón ARIA: una
+   sola pestaña activa y un panel compartido (role="tabpanel").
    ============================================================ */
-(function ctaDePortada() {
-    var formulario = document.getElementById('ctaEmail');
-    if (!formulario) return;
+(function valorEnPestanas() {
+    var lista = document.querySelector('.ara-valor__lista');
 
-    var campo = formulario.querySelector('input[type="email"]');
-    var boton = formulario.querySelector('button[type="submit"]');
-    var modal = document.getElementById('asesoriaModal');
-    var destino = document.getElementById('asesoriaEmail');
-
-    // Copia el correo al modal solo si es válido.
-    function precargarCorreo() {
-        if (!campo || !destino || !campo.checkValidity()) return false;
-        destino.value = campo.value.trim();
-        return true;
+    if (!lista) {
+        return;
     }
 
-    // El botón lleva `data-asesoria`, así que el modal intercepta el clic y
-    // abre el diálogo: el correo se copia antes de que eso ocurra.
-    if (boton) {
-        boton.addEventListener('click', precargarCorreo);
+    var tabs = Array.prototype.slice.call(lista.querySelectorAll('[role="tab"]'));
+    var panel = document.getElementById('valor-panel');
+
+    if (!tabs.length || !panel) {
+        return;
     }
 
-    // Enviar con Enter no dispara el clic del botón: el mismo camino, a mano.
-    formulario.addEventListener('submit', function (evento) {
-        if (!campo || !campo.checkValidity()) {
-            if (campo) campo.reportValidity();
-            evento.preventDefault();
-            return;
+    var imagenes = Array.prototype.slice.call(panel.querySelectorAll('img[data-valor]'));
+    var chipNumero = document.getElementById('valor-chip-num');
+    var chipTexto = document.getElementById('valor-chip-texto');
+    var contador = document.getElementById('valor-actual');
+
+    function dosDigitos(numero) {
+        return (numero < 10 ? '0' : '') + numero;
+    }
+
+    function activar(indice, enfocar) {
+        tabs.forEach(function (tab, posicion) {
+            var activa = posicion === indice;
+            tab.setAttribute('aria-selected', activa ? 'true' : 'false');
+            tab.tabIndex = activa ? 0 : -1;
+        });
+
+        imagenes.forEach(function (imagen, posicion) {
+            var activa = posicion === indice;
+            imagen.classList.toggle('is-activa', activa);
+
+            // La imagen oculta no se anuncia; la visible sí.
+            if (activa) {
+                imagen.removeAttribute('aria-hidden');
+            } else {
+                imagen.setAttribute('aria-hidden', 'true');
+            }
+        });
+
+        // El panel anuncia qué ventaja está mostrando.
+        panel.setAttribute('aria-labelledby', tabs[indice].id);
+
+        if (chipNumero) {
+            chipNumero.textContent = dosDigitos(indice + 1);
         }
 
-        // Sin modal en la página, el GET a /contacto sigue su curso.
-        if (!modal || !destino) return;
+        if (chipTexto) {
+            chipTexto.textContent = tabs[indice].getAttribute('data-chip') || '';
+        }
 
-        evento.preventDefault();
-        precargarCorreo();
+        if (contador) {
+            contador.textContent = dosDigitos(indice + 1);
+        }
 
-        if (!modal.hidden) return;
+        if (enfocar) {
+            tabs[indice].focus();
+        }
+    }
 
-        var disparador = document.querySelector('[data-asesoria]');
-        if (!disparador) return;
+    tabs.forEach(function (tab, indice) {
+        tab.addEventListener('click', function () {
+            activar(indice, false);
+        });
 
-        disparador.click();
-        setTimeout(function () { destino.focus(); }, 80);
+        tab.addEventListener('keydown', function (evento) {
+            var destino = null;
+
+            if (evento.key === 'ArrowDown' || evento.key === 'ArrowRight') {
+                destino = (indice + 1) % tabs.length;
+            } else if (evento.key === 'ArrowUp' || evento.key === 'ArrowLeft') {
+                destino = (indice - 1 + tabs.length) % tabs.length;
+            } else if (evento.key === 'Home') {
+                destino = 0;
+            } else if (evento.key === 'End') {
+                destino = tabs.length - 1;
+            }
+
+            if (destino === null) {
+                return;
+            }
+
+            // Sin `preventDefault` la flecha haría scroll de la página.
+            evento.preventDefault();
+            activar(destino, true);
+        });
     });
 })();

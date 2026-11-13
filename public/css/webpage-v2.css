@@ -2208,3 +2208,545 @@ section form button[type="submit"]:hover {
         margin: 0.9rem 0 0;
     }
 }
+
+/* --- Propuesta de valor: ventajas en pestañas con panel visual -------------
+   Cuatro ventajas numeradas. La activa abre su descripción y cambia el panel
+   de la derecha (imagen, chip y contador). La lista es un `tablist` vertical
+   que se maneja con flechas, Inicio y Fin (public/js/aracode-evolucion.js).
+   Sin JavaScript queda abierta la primera ventaja. ------------------------- */
+/* El padding horizontal lo pone el container del marcado (`px-4 sm:px-6
+   lg:px-8`), igual que en servicios y productos: aquí solo va el vertical. */
+.ara-valor {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(3.5rem, 7vw, 6.5rem) 0;
+    background:
+        radial-gradient(120% 90% at 88% 0%, #0d2049 0%, rgba(6, 14, 45, 0) 58%),
+        linear-gradient(160deg, #060e2d 0%, #081231 55%, #060e2d 100%);
+    color: #fff;
+}
+
+/* Dos halos suaves: azul arriba a la derecha, verde abajo a la izquierda. */
+.ara-valor::before,
+.ara-valor::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    pointer-events: none;
+}
+
+.ara-valor::before {
+    width: 26rem;
+    height: 26rem;
+    top: -10rem;
+    right: -6rem;
+    background: rgba(1, 136, 238, 0.18);
+}
+
+.ara-valor::after {
+    width: 20rem;
+    height: 20rem;
+    bottom: -9rem;
+    left: -6rem;
+    background: rgba(37, 211, 102, 0.12);
+}
+
+.ara-valor__envoltura {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: center;
+}
+
+.ara-valor__ceja {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #5eb0ff;
+}
+
+.ara-valor__ceja::before {
+    content: '';
+    width: 28px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #0188ee, #25d366);
+}
+
+.ara-valor__titulo {
+    margin: 1.1rem 0 0.9rem;
+    font-size: clamp(2rem, 4.4vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.06;
+    letter-spacing: -0.03em;
+    color: #fff;
+}
+
+.ara-valor__bajada {
+    max-width: 34rem;
+    margin: 0 0 2.4rem;
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.68);
+}
+
+.ara-valor__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.ara-valor__tab {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.95rem;
+    width: 100%;
+    padding: 0.95rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.ara-valor__tab:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.ara-valor__tab:focus-visible {
+    outline: 2px solid #5eb0ff;
+    outline-offset: 2px;
+}
+
+.ara-valor__tab[aria-selected='true'] {
+    align-items: start;
+    background: linear-gradient(90deg, rgba(1, 136, 238, 0.16), rgba(1, 136, 238, 0.02));
+    border-color: rgba(94, 176, 255, 0.28);
+    box-shadow: inset 2px 0 0 #0188ee;
+}
+
+/* Con la descripción abierta, número e icono acompañan al título arriba. */
+.ara-valor__tab[aria-selected='true'] .ara-valor__num,
+.ara-valor__tab[aria-selected='true'] .ara-valor__icono {
+    margin-top: 0.1rem;
+}
+
+.ara-valor__num {
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.35);
+    transition: color 0.25s ease;
+}
+
+.ara-valor__tab[aria-selected='true'] .ara-valor__num {
+    color: #5eb0ff;
+}
+
+.ara-valor__icono {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.68);
+    transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.ara-valor__icono svg {
+    width: 19px;
+    height: 19px;
+}
+
+.ara-valor__tab[aria-selected='true'] .ara-valor__icono {
+    border-color: rgba(94, 176, 255, 0.45);
+    background: rgba(1, 136, 238, 0.22);
+    color: #d6ecff;
+}
+
+.ara-valor__tab-texto {
+    min-width: 0;
+}
+
+.ara-valor__tab-titulo {
+    display: block;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+/* Solo se lee la descripción de la ventaja activa; el resto sigue en el
+   documento para los lectores de pantalla. */
+.ara-valor__desc {
+    display: block;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.7);
+    transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.3s ease;
+}
+
+.ara-valor__tab[aria-selected='true'] .ara-valor__desc {
+    max-height: 9rem;
+    margin-top: 0.4rem;
+    opacity: 1;
+}
+
+.ara-valor__flecha {
+    width: 16px;
+    height: 16px;
+    color: rgba(255, 255, 255, 0.3);
+    transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.ara-valor__tab[aria-selected='true'] .ara-valor__flecha {
+    color: #5eb0ff;
+    transform: translateX(3px);
+}
+
+.ara-valor__panel {
+    position: relative;
+    aspect-ratio: 5 / 4;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid rgba(94, 176, 255, 0.22);
+    background: #071229;
+    box-shadow: 0 40px 80px -50px rgba(1, 8, 30, 0.9);
+}
+
+.ara-valor__panel img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transform: scale(1.03);
+    transition: opacity 0.5s ease, transform 6s ease;
+}
+
+.ara-valor__panel img.is-activa {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Velo inferior: el pie del panel se lee sobre cualquier imagen. */
+.ara-valor__panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(6, 14, 45, 0) 42%, rgba(6, 14, 45, 0.55) 68%, #060e2d 96%);
+}
+
+.ara-valor__pie {
+    position: absolute;
+    inset: auto 0 0 0;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.4rem 1.5rem;
+}
+
+.ara-valor__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.38rem 0.8rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(6, 14, 45, 0.55);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.ara-valor__chip b {
+    font-weight: 800;
+    color: #5eb0ff;
+}
+
+.ara-valor__contador {
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.14em;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+/* Tablet y móvil: panel arriba, lista debajo; los halos se achican. */
+@media (max-width: 900px) {
+    .ara-valor__envoltura {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ara-valor__panel {
+        order: -1;
+        aspect-ratio: 16 / 10;
+    }
+
+    .ara-valor__bajada {
+        margin-bottom: 1.75rem;
+    }
+
+    .ara-valor::before,
+    .ara-valor::after {
+        width: 18rem;
+        height: 18rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .ara-valor {
+        padding: 3rem 0 3.5rem;
+    }
+
+    .ara-valor__tab {
+        gap: 0.75rem;
+        padding: 0.85rem 0.75rem;
+    }
+
+    .ara-valor__panel {
+        border-radius: 18px;
+    }
+
+    .ara-valor__pie {
+        padding: 1rem 1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ara-valor__tab,
+    .ara-valor__desc,
+    .ara-valor__flecha,
+    .ara-valor__num,
+    .ara-valor__icono,
+    .ara-valor__panel img {
+        transition: none;
+    }
+}
+
+/* --- Cómo trabajamos: los cuatro pasos del proceso ------------------------
+   Reemplaza la franja de cifras. va sobre blanco para separar la sección de
+   valor (navy) del CTA final (navy): los pasos son tarjetas claras, unidas
+   por una línea fina, y el cierre lleva la única llamada a la acción, que
+   abre el modal de asesoría. --------------------------------------------- */
+/* Igual que `.ara-valor`: el ancho y el padding lateral los pone el container
+   de Tailwind del marcado (`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8`). */
+.ara-proceso {
+    padding: clamp(3.5rem, 7vw, 6rem) 0;
+    background: #fff;
+}
+
+.ara-proceso__ceja {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #0188ee;
+}
+
+.ara-proceso__ceja::before {
+    content: '';
+    width: 28px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #0188ee, #25d366);
+}
+
+.ara-proceso__titulo {
+    margin: 1.1rem 0 0.9rem;
+    font-size: clamp(2rem, 4.2vw, 3rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    color: #0b1b3f;
+}
+
+.ara-proceso__bajada {
+    max-width: 44rem;
+    margin: 0 0 2.5rem;
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: #5b6b8c;
+}
+
+/* La línea que une los pasos la dibuja cada tarjeta por la derecha; la
+   última no la lleva. */
+.ara-proceso__pasos {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ara-proceso__paso {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 1.4rem 1.25rem 1.5rem;
+    border: 1px solid #e2e9f4;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 18px 40px -34px rgba(6, 14, 45, 0.5);
+}
+
+.ara-proceso__paso::after {
+    content: '';
+    position: absolute;
+    top: 2.9rem;
+    right: -1rem;
+    width: 1rem;
+    height: 2px;
+    background: #d6e2f2;
+}
+
+.ara-proceso__paso:last-child::after {
+    display: none;
+}
+
+.ara-proceso__num {
+    display: inline-grid;
+    place-items: center;
+    align-self: flex-start;
+    width: 34px;
+    height: 34px;
+    margin-bottom: 0.9rem;
+    border-radius: 11px;
+    background: rgba(1, 136, 238, 0.1);
+    color: #0188ee;
+    font-size: 0.78rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.ara-proceso__paso-titulo {
+    margin: 0 0 0.4rem;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #0b1b3f;
+}
+
+/* `flex: 1` empuja la etiqueta al pie: las cuatro quedan alineadas aunque
+   los textos midan distinto. */
+.ara-proceso__paso-texto {
+    flex: 1 1 auto;
+    margin: 0 0 0.9rem;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: #5b6b8c;
+}
+
+.ara-proceso__chip {
+    align-self: flex-start;
+    padding: 0.28rem 0.65rem;
+    border-radius: 9999px;
+    background: #f1f6fd;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #1d5f9e;
+}
+
+.ara-proceso__cierre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.9rem 1.5rem;
+    margin-top: 1.75rem;
+    padding: 1.1rem 1.35rem;
+    border: 1px solid #e2e9f4;
+    border-radius: 16px;
+    background: #f7faff;
+}
+
+.ara-proceso__cierre-texto {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: #5b6b8c;
+}
+
+.ara-proceso__cierre-texto strong {
+    color: #0b1b3f;
+}
+
+.ara-proceso__btn {
+    margin-left: auto;
+    padding: 0.8rem 1.4rem;
+    border-radius: 9999px;
+    background: linear-gradient(100deg, #0188ee, #0aa0ff);
+    font-size: 0.88rem;
+    font-weight: 700;
+    box-shadow: 0 14px 30px -18px rgba(1, 136, 238, 0.8);
+}
+
+.ara-proceso__btn:hover {
+    background: linear-gradient(100deg, #0aa0ff, #0188ee);
+    transform: translateY(-1px);
+}
+
+.ara-proceso__btn:focus-visible {
+    outline: 2px solid #0188ee;
+    outline-offset: 3px;
+}
+
+/* Tablet: dos por fila y sin conector, que a dos columnas no significa nada. */
+@media (max-width: 1024px) {
+    .ara-proceso__pasos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ara-proceso__paso::after {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .ara-proceso {
+        padding: 3rem 0 3.5rem;
+    }
+
+    .ara-proceso__pasos {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ara-proceso__btn {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ara-proceso__btn {
+        transition: none;
+    }
+}
