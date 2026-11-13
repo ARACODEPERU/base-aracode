@@ -32,7 +32,11 @@ Route::get('/soluciones', [WebPageController::class, 'soluciones'])->name('soluc
 // Las rutas mantienen el nombre solucion_* para el estado activo del navbar.
 Route::get('/kapta', [WebPageController::class, 'solucionKapta'])->name('solucion_kapta');
 Route::get('/kirafact', [WebPageController::class, 'solucionFacturacion'])->name('solucion_facturacion');
-Route::get('/pichanguero', [WebPageController::class, 'solucionPichanguero'])->name('solucion_pichanguero');
+// Pichanguero ya vive en su propio dominio: la URL antigua del corporativo
+// redirige con 301 a su sitio oficial (la URL sale de config/productos.php).
+// Se usa `away()` para conservar la barra final tal como está configurada.
+Route::get('/pichanguero', fn () => redirect()->away(\App\Support\SitiosProducto::url('pichanguero'), 301))
+    ->name('solucion_pichanguero');
 
 // Gestión de Clínica: el sistema de gestión para consultorios y clínicas que
 // vive en el módulo Salud. Todavía no tiene web propia, así que su página es la

@@ -1,0 +1,25 @@
+
+> aracode@3.0 dev
+> vite
+
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m600[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+
+  [31m[1mLARAVEL[22m v13.42.0[39m  [2mplugin[22m [1mv1.3.0[22m
+
+  [32m➜[39m  [1mAPP_URL[22m: [36mhttp://base-aracode.test[39m
+[2m20:35:52[22m [36m[1m[vite][22m[39m [32mfull reload[39m [2mresources\views\aracode\layouts\webpage.blade.php[22m
+[2m20:35:52[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mresources/views/aracode/layouts/webpage.blade.php[22m
+[2m20:35:53[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorage/framework/views/a1b3f3947ad6e260465c116b478d3307.php[22m
+[2m20:36:28[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2m.tmp/home5.html[22m
+[2m20:36:29[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2m.tmp/home5.html[22m
+[2m20:37:32[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2m.tmp/sol.html[22m
+[2m20:37:32[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2m.tmp/sol.html[22m
+[2m20:49:59[22m [36m[1m[vite][22m[39m [32mfull reload[39m [2mresources\views\aracode\pages\home.blade.php[22m
+[2m20:49:59[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mresources/views/aracode/pages/home.blade.php[22m
+[2m20:50:08[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorage/framework/views/8d7d4493e48cedd760249416ac2ac789.php[22m
+[2m20:51:51[22m [36m[1m[vite][22m[39m [32mfull reload[39m [2mresources\views\aracode\pages\home.blade.php[22m
+[2m20:51:51[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mresources/views/aracode/pages/home.blade.php[22m
+[2m20:51:58[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorage/framework/views/8d7d4493e48cedd760249416ac2ac789.php[22m

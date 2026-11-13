@@ -20,7 +20,7 @@
 
 @push('head')
     {{-- Estilos de la sección: se cargan solo aquí (ver el encabezado del archivo) --}}
-    <link rel="stylesheet" href="{{ asset('themes/plantillas/css/plantillas.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/plantillas/css/plantillas.css') }}?v={{ filemtime(public_path('themes/plantillas/css/plantillas.css')) }}">
 @endpush
 
 @push('json-ld')
@@ -63,41 +63,43 @@
         {{-- ===================== PORTADA ===================== --}}
         <section class="plt-hero">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">Banco de Plantillas</span>
+                <div class="plt-hero__contenido">
+                    <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">Banco de Plantillas</span>
 
-                <h1 class="plt-hero__titulo reveal reveal-delay-1">
-                    Plantillas web listas para <span class="text-gradient">personalizar</span>
-                </h1>
+                    <h1 class="plt-hero__titulo reveal reveal-delay-1">
+                        Plantillas web listas para <span class="text-gradient">personalizar</span>
+                    </h1>
 
-                <p class="plt-hero__lead reveal reveal-delay-2">
-                    Elige el rubro, mira la demostración funcionando y la adaptamos con tu marca,
-                    tus textos y tus datos. Cada plantilla es un sitio web completo, no una imagen.
-                </p>
+                    <p class="plt-hero__lead reveal reveal-delay-2">
+                        Elige el rubro, mira la demostración funcionando y la adaptamos con tu marca,
+                        tus textos y tus datos. Cada plantilla es un sitio web completo, no una imagen.
+                    </p>
 
-                {{-- Buscador: nombre, rubro o etiqueta --}}
-                <form class="plt-buscador reveal reveal-delay-3" method="get"
-                      action="{{ route('plantillas.catalogo') }}" role="search">
-                    <label class="plt-buscador__label" for="plt-q">¿Qué rubro buscas?</label>
+                    {{-- Buscador: nombre, rubro o etiqueta --}}
+                    <form class="plt-buscador reveal reveal-delay-3" method="get"
+                          action="{{ route('plantillas.catalogo') }}" role="search">
+                        <label class="plt-buscador__label" for="plt-q">¿Qué rubro buscas?</label>
 
-                    <div class="plt-buscador__campo">
-                        <span class="plt-buscador__icono" aria-hidden="true">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
-                            </svg>
-                        </span>
+                        <div class="plt-buscador__campo">
+                            <span class="plt-buscador__icono" aria-hidden="true">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
+                                </svg>
+                            </span>
 
-                        <input id="plt-q" type="search" name="q" value="{{ $busqueda }}"
-                               placeholder="dental, carta, propiedades, cursos…"
-                               aria-label="Buscar plantillas por nombre, rubro o etiqueta">
+                            <input id="plt-q" type="search" name="q" value="{{ $busqueda }}"
+                                   placeholder="dental, carta, propiedades, cursos…"
+                                   aria-label="Buscar plantillas por nombre, rubro o etiqueta">
 
-                        @if ($categoria !== '')
-                            <input type="hidden" name="categoria" value="{{ $categoria }}">
-                        @endif
+                            @if ($categoria !== '')
+                                <input type="hidden" name="categoria" value="{{ $categoria }}">
+                            @endif
 
-                        <button type="submit" class="ara-btn ara-btn-primary">Buscar</button>
-                    </div>
-                </form>
+                            <button type="submit" class="ara-btn ara-btn-primary">Buscar</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </section>
 

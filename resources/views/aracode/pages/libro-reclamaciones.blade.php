@@ -6,21 +6,13 @@
 @section('content')
     @include('aracode.components.v2.navbar')
 
-    {{-- Hero --}}
-    <section class="pt-32 pb-16 bg-ara-navy relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-96 h-96 bg-ara-blue/10 rounded-full filter blur-3xl pointer-events-none"></div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="max-w-3xl mx-auto text-center">
-                <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">Legal</span>
-                <h1 class="text-4xl sm:text-5xl font-bold text-white mb-6 reveal reveal-delay-1">
-                    Libro de <span class="text-gradient">Reclamaciones</span>
-                </h1>
-                <p class="text-lg text-white/70 reveal reveal-delay-2">
-                    En cumplimiento de la normativa de INDECOPI
-                </p>
-            </div>
-        </div>
-    </section>
+    {{-- Hero (formato común de páginas internas) --}}
+    <x-v2.hero-pagina
+        etiqueta="Legal"
+        titulo="Libro de"
+        resaltado="Reclamaciones"
+        bajada="En cumplimiento de la normativa de INDECOPI"
+    />
 
     {{-- Content --}}
     <section class="py-20 lg:py-28 bg-white">

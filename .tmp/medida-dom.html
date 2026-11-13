@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<title>medida hero</title>
+<link rel="stylesheet" href="http://base-aracode.test/css/website-public.css">
+<link rel="stylesheet" href="http://base-aracode.test/css/webpage-v2.css">
+<link rel="stylesheet" href="http://base-aracode.test/css/aracode-evolucion.css">
+<style>.reveal{opacity:1!important;transform:none!important}</style>
+</head>
+<body data-listo="1">
+<section class="ara-hero">
+    <div class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 ara-hero-inner">
+        <div class="max-w-4xl mx-auto text-center ara-hero-copy" id="copy" style="max-width: 1200px;">
+            <h1 class="text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight reveal reveal-delay-1" id="titulo" style="font-size: 84px; max-width: 17em;">
+                Desarrollamos soluciones digitales
+                <span class="text-gradient">que impulsan el crecimiento</span>
+                de tu empresa
+            </h1>
+        </div>
+    </div>
+</section>
+<pre id="salida"></pre>
+<script>
+(function () {
+    var h1 = document.getElementById('titulo');
+    var copy = document.getElementById('copy');
+    function lineas(el) {
+        var r = document.createRange();
+        r.selectNodeContents(el);
+        var tops = new Set();
+        [].forEach.call(r.getClientRects(), function (x) {
+            if (x.height > 6) tops.add(Math.round(x.top));
+        });
+        return tops.size;
+    }
+    var filas = [];
+    var anchos = [896, 1040, 1120, 1200];
+    var tamanos = [64, 68, 72, 76, 80, 84];
+    var emes = [12, 13, 14, 15, 16, 17];
+    anchos.forEach(function (ancho) {
+        copy.style.maxWidth = ancho + 'px';
+        tamanos.forEach(function (fs) {
+            h1.style.fontSize = fs + 'px';
+            emes.forEach(function (em) {
+                h1.style.maxWidth = em + 'em';
+                var w = Math.round(h1.getBoundingClientRect().width);
+                var n = lineas(h1);
+                if (n <= 3) filas.push(ancho + 'px copy / ' + fs + 'px / ' + em + 'em -> ' + n + ' linea(s), ancho ' + w);
+            });
+        });
+    });
+    document.getElementById('salida').textContent = filas.join('\n');
+    document.body.setAttribute('data-listo', '1');
+})();
+</script>
+
+
+</body></html>

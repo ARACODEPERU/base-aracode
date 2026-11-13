@@ -181,7 +181,7 @@ it('compila su hoja de estilos sin declarar clases del sitio', function () {
     expect($css)->not->toBeEmpty();
 
     // La sección se sirve con el layout corporativo, que ya carga
-    // public/css/website.css con el preflight y todas las utilidades del sitio.
+    // public/css/website-public.css con el preflight y todas las utilidades del sitio.
     // Si esta hoja vuelve a declarar una utilidad, gana por orden de carga
     // —misma especificidad y más al final— y rompe el comportamiento responsivo
     // del navbar y del pie: así desapareció el menú de escritorio cuando el

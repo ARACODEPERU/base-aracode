@@ -7,22 +7,18 @@ use Tests\TestCase;
 | Tarjetas de producto del catálogo (/soluciones y home)
 |--------------------------------------------------------------------------
 |
-| La imagen diseñada del producto es lo primero que se ve en la tarjeta: va en
-| su propia franja, arriba, con la proporción reservada por CSS y sin ningún
-| degradado encima.
+| La imagen diseñada del producto ocupa TODA la tarjeta (a sangre, `cover`) y el
+| texto se apoya encima, sobre un velo navy que asegura la lectura.
 |
 | El home y /soluciones presentan el ecosistema con la MISMA tarjeta: la
-| compacta, tres por fila, que resume el producto con su frase corta (que es
-| además el texto alternativo de la imagen). La lista de prestaciones ya no se
-| pinta en ninguna de las dos: alargaba las tarjetas y dejaba el catálogo
-| distinto de la portada.
+| variante `sobrepuesta`, tres por fila, con el rubro en píldora, el nombre, la
+| frase corta (que es además el texto alternativo de la imagen) y la píldora
+| blanca de la acción. La lista de prestaciones no se pinta en ninguna de las
+| dos: alargaba las tarjetas y dejaba el catálogo distinto de la portada.
 |
-| Estas pruebas fijan esas reglas: la imagen es la protagonista (franja propia +
-| texto alternativo, y siempre antes del bloque de texto), el resumen va por la
-| frase corta, las dos páginas usan la misma rejilla y la franja no recorta el
-| diseño. La parte visual que no cabe aquí —medidas y aspecto— se comprueba
-| contra webpage-v2.css y con la revisión en Chrome
-| (storage/tmp/revisar-tarjetas-ecosistema.mjs).
+| Estas pruebas fijan esas reglas: la imagen va primero en el marcado y llena la
+| tarjeta, el resumen va por la frase corta y las dos páginas comparten rejilla
+| y tarjeta. El aspecto que no cabe aquí se comprueba contra webpage-v2.css.
 |
 */
 
@@ -88,14 +84,16 @@ it('pone la franja de la imagen antes que el texto, con su texto alternativo', f
     ['/', 3],
 ]);
 
-it('usa la misma tarjeta compacta en la portada y en el catálogo', function (string $ruta, int $esperadas) {
+it('usa la misma tarjeta sobrepuesta en la portada y en el catálogo', function (string $ruta, int $esperadas) {
     $tarjetas = tarjetasProducto($this->get($ruta)->getContent());
 
     expect($tarjetas)->toHaveCount($esperadas);
 
     foreach ($tarjetas as $tarjeta) {
-        expect($tarjeta)->toContain('ara-product-card--compacta');
+        expect($tarjeta)->toContain('ara-product-card--sobrepuesta');
+        expect($tarjeta)->toContain('ara-product-chip');
         expect($tarjeta)->toContain('ara-product-text');
+        expect($tarjeta)->toContain('ara-product-cta');
         expect($tarjeta)->not->toContain('ara-product-features');
     }
 })->with([
@@ -114,7 +112,7 @@ it('resume el producto con la frase corta, visible y como texto alternativo', fu
     expect($html)->toContain('alt="'.$frase.'"');
 })->with([
     ['/', 'Plataforma SaaS para gestión y formación educativa.'],
-    ['/soluciones', 'Plataforma SaaS para gestión y formación educativa completa.'],
+    ['/soluciones', 'Plataforma SaaS para gestión y formación educativa.'],
 ]);
 
 it('presenta las tarjetas con la rejilla del home: tres por fila', function () {
@@ -127,72 +125,87 @@ it('presenta las tarjetas con la rejilla del home: tres por fila', function () {
     expect($catalogo)->toContain('lg:grid-cols-3');
 });
 
-it('reserva en la franja el alto exacto de la imagen', function (string $ruta) {
-    // La franja no lleva una proporción fija: cada tarjeta reserva la de su
-    // propio archivo, así que el diseño queda pegado a los bordes de la franja
-    // —sin banda de relleno— y la tarjeta no salta cuando la imagen termina de
-    // cargar. La proporción la mide App\Support\ProporcionImagen.
-    foreach (tarjetasProducto($this->get($ruta)->getContent()) as $tarjeta) {
-        if (str_contains($tarjeta, 'ara-product-card--plano')) {
-            // Los servicios no tienen imagen: su franja es el degradado.
-            continue;
-        }
-
-        preg_match('#<img\b[^>]*\bsrc="([^"]+)"#', $tarjeta, $src);
-        preg_match('#--ara-product-media-ratio:\s*(\d+)\s*/\s*(\d+)#', $tarjeta, $ratio);
-
-        expect($src)->not->toBeEmpty('La tarjeta del producto no publica su imagen');
-        expect($ratio)->not->toBeEmpty('La franja no reserva la proporción de su imagen');
-
-        $medidas = getimagesize(public_path(parse_url($src[1], PHP_URL_PATH)));
-
-        expect([$ratio[1], $ratio[2]])->toBe([(string) $medidas[0], (string) $medidas[1]]);
-    }
-})->with(['/', '/soluciones']);
-
-it('no recorta el diseño del producto en su franja', function () {
-    // Los diseños del ecosistema no comparten proporción —s1, s3 y s4 son
-    // cuadrados (1:1) y s2 es panorámico (2:1)—, así que una franja de
-    // proporción fija solo puede enseñarlos enteros ajustándolos dentro: con
-    // `cover` se perdía el 44 % del alto de los cuadrados y los laterales del
-    // panorámico.
+it('muestra el diseño entero dentro de la tarjeta, sin recortarlo', function () {
+    // La tarjeta mantiene su proporción (4/3) y el diseño entra completo
+    // (`contain`): lo que sobra arriba y abajo lo rellena el mismo diseño
+    // desenfocado que publica la tarjeta en `--ara-product-media-bg`. Con
+    // `cover` el arte se recortaba por los lados y se perdían el titular y el
+    // logo del producto.
     //
-    // Se miran las DOS copias de la hoja: la de resources es el original y la de
-    // public la que carga el navegador. Si la regla viviera solo en una, en
-    // producción el diseño seguiría recortándose.
-    foreach (['css/webpage-v2.css', '../resources/css/webpage-v2.css'] as $hoja) {
-        $css = file_get_contents(public_path($hoja));
+    // Se mira la hoja que carga el navegador (`public/css`): es la que publica
+    // el sitio.
+    $css = file_get_contents(public_path('css/webpage-v2.css'));
 
-        preg_match('#\.ara-product-card \.ara-product-media img \{(?<cuerpo>[^}]*)\}#', $css, $regla);
+    preg_match('#\.ara-product-card--sobrepuesta \{(?<cuerpo>[^}]*)\}#', $css, $tarjeta);
 
-        expect($regla)->not->toBeEmpty('No se encontró la regla de la imagen de la tarjeta');
+    expect($tarjeta)->not->toBeEmpty('No se encontró la variante sobrepuesta');
+    expect($tarjeta['cuerpo'])->toContain('aspect-ratio: 4 / 3');
 
-        expect($regla['cuerpo'])->toContain('object-fit: contain')
-            ->and($regla['cuerpo'])->not->toContain('object-fit: cover');
+    preg_match('#\.ara-product-card--sobrepuesta \.ara-product-media img \{(?<cuerpo>[^}]*)\}#', $css, $imagen);
 
-        // Y al pasar el ratón la imagen no se amplía: dentro de una franja que
-        // ajusta el diseño, un `scale` lo recortaría otra vez por los cuatro
-        // lados —justo lo que se acaba de corregir—.
-        preg_match('#\.ara-product-card:hover \.ara-product-media img \{(?<cuerpo>[^}]*)\}#', $css, $realce);
+    expect($imagen)->not->toBeEmpty('No se encontró la imagen de la variante sobrepuesta');
+    expect($imagen['cuerpo'])->toContain('object-fit: contain');
+    expect($imagen['cuerpo'])->not->toContain('object-fit: cover');
 
-        expect($realce)->not->toBeEmpty('No se encontró el realce de la imagen al pasar el ratón');
-        expect($realce['cuerpo'])->not->toContain('scale');
+    // Y cada tarjeta publica el relleno desenfocado de su propio diseño.
+    foreach (tarjetasProducto($this->get('/soluciones')->getContent()) as $tarjetaHtml) {
+        expect($tarjetaHtml)->toContain('--ara-product-media-bg');
+        expect($tarjetaHtml)->toContain('--ara-product-media-ratio');
     }
 });
 
-it('incorpora los servicios al mismo esquema, con su franja y sin imagen', function () {
+it('no recorta el diseño del producto en su franja', function () {
+    // Los diseños del ecosistema se enseñan enteros dentro de su franja: con
+    // `cover` se perdían los laterales del diseño y su titular.
+    //
+    // webpage-v2.css no pasa por ningún build: el layout enlaza el archivo de
+    // public/css tal cual, así que esa es la única copia de la hoja.
+    $css = file_get_contents(public_path('css/webpage-v2.css'));
+
+    preg_match('#\.ara-product-card \.ara-product-media img \{(?<cuerpo>[^}]*)\}#', $css, $regla);
+
+    expect($regla)->not->toBeEmpty('No se encontró la regla de la imagen de la tarjeta');
+
+    expect($regla['cuerpo'])->toContain('object-fit: contain')
+        ->and($regla['cuerpo'])->not->toContain('object-fit: cover');
+
+    // Y al pasar el ratón la imagen no se amplía: dentro de una franja que
+    // ajusta el diseño, un `scale` lo recortaría otra vez por los cuatro
+    // lados —justo lo que se acaba de corregir—.
+    preg_match('#\.ara-product-card:hover \.ara-product-media img \{(?<cuerpo>[^}]*)\}#', $css, $realce);
+
+    expect($realce)->not->toBeEmpty('No se encontró el realce de la imagen al pasar el ratón');
+    expect($realce['cuerpo'])->not->toContain('scale');
+});
+
+it('tiene una sola copia de la hoja: la de public, que es la que enlaza el layout', function () {
+    // La hoja del sitio no se compila: el layout enlaza public/css/webpage-v2.css
+    // tal cual, con su `filemtime` como versión. Una copia en resources solo
+    // puede desviarse de la que ve el navegador —y así se perdió una vez la
+    // variante sobrepuesta de las tarjetas—, así que no debe existir.
+    $html = $this->get('/')->getContent();
+
+    expect($html)->toContain('css/webpage-v2.css');
+
+    expect(file_exists(resource_path('css/webpage-v2.css')))
+        ->toBeFalse('Volvió a aparecer resources/css/webpage-v2.css; edita la de public, que es la que carga el navegador');
+
+    expect(file_get_contents(public_path('css/webpage-v2.css')))
+        ->toContain('.ara-product-card--sobrepuesta');
+});
+
+it('incorpora los servicios a la misma tarjeta, con su propia imagen', function () {
     $tarjetas = tarjetasProducto($this->get('/soluciones')->getContent());
 
-    // Las tres últimas tarjetas son servicios de ARACODE: no tienen web propia
-    // ni imagen diseñada, así que su franja lleva degradado e icono; son la
-    // misma tarjeta compacta del resto.
+    // Las tres últimas tarjetas son servicios de ARACODE: no tienen web propia,
+    // pero sí diseño, y usan la misma tarjeta del resto del ecosistema.
     expect(array_slice($tarjetas, 4))->toHaveCount(3);
 
     foreach (array_slice($tarjetas, 4) as $servicio) {
-        expect($servicio)->toContain('ara-product-card--plano');
-        expect($servicio)->toContain('ara-product-card--compacta');
+        expect($servicio)->toContain('ara-product-card--sobrepuesta');
         expect($servicio)->toContain('ara-product-media');
-        expect($servicio)->not->toContain('<img');
+        expect($servicio)->toContain('<img');
+        expect($servicio)->toContain('ara-product-chip');
         expect($servicio)->toContain('ara-product-text');
         expect($servicio)->not->toContain('ara-product-features');
         expect($servicio)->toContain('ara-product-cta');

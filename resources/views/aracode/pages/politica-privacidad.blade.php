@@ -6,23 +6,13 @@
 @section('content')
     @include('aracode.components.v2.navbar')
 
-    {{-- Hero --}}
-    <section class="pt-32 pb-16 bg-ara-navy relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-96 h-96 bg-ara-blue/10 rounded-full filter blur-3xl pointer-events-none"></div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="max-w-3xl mx-auto text-center">
-                <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">Legal</span>
-                <h1 class="text-4xl sm:text-5xl font-bold text-white mb-6 reveal reveal-delay-1">
-                    Política de <span class="text-gradient">Privacidad</span>
-                </h1>
-                {{-- La fecha de vigencia se escribe a mano (no con now()): la politica
-                     debe mantener la fecha de su ultima version real, no cambiar a diario. --}}
-                <p class="text-lg text-white/70 reveal reveal-delay-2">
-                    Versión 2.0 — Última actualización: 16 de octubre de 2026
-                </p>
-            </div>
-        </div>
-    </section>
+    {{-- Hero (formato común de páginas internas) --}}
+    <x-v2.hero-pagina
+        etiqueta="Legal"
+        titulo="Política de"
+        resaltado="Privacidad"
+        bajada="Versión 2.0 — Última actualización: 16 de octubre de 2026"
+    />
 
     {{-- Content --}}
     <section class="py-20 lg:py-28 bg-white">

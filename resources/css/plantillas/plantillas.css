@@ -10,8 +10,9 @@
    Por qué esta hoja es CSS propio y NADA de Tailwind
    --------------------------------------------------
    La sección se sirve con el layout corporativo, que ya carga
-   public/css/website.css: ese archivo trae el preflight y TODAS las utilidades
-   del sitio, porque el config de la raíz escanea `resources/views/**`. Volver a
+   public/css/website-public.css (compilado desde resources/css/app.css): ese
+   archivo trae el preflight y TODAS las utilidades del sitio, porque el config
+   de la raíz escanea `resources/views/**`. Volver a
    emitirlas aquí era duplicarlas:
 
      - El preflight resetea márgenes, títulos, botones y listas de forma global,

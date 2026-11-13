@@ -335,15 +335,13 @@ it('lleva el campo trampa oculto en el modal y en la página de contacto', funct
 ]);
 
 it('publica en la hoja que carga el navegador la regla que esconde la trampa', function () {
-    // webpage-v2.css vive duplicado: el de resources es el original y el de
-    // public el que llega al navegador. Si la regla solo estuviera en uno, la
-    // trampa sería un campo de texto a la vista.
-    foreach (['css/webpage-v2.css', '../resources/css/webpage-v2.css'] as $hoja) {
-        $css = file_get_contents(public_path($hoja));
+    // webpage-v2.css no pasa por ningún build: el layout enlaza el archivo de
+    // public/css tal cual, así que esa es la única copia. Si la regla faltara
+    // ahí, la trampa sería un campo de texto a la vista.
+    $css = file_get_contents(public_path('css/webpage-v2.css'));
 
-        expect($css)->toContain('.ara-trampa {');
-        expect($css)->toContain('left: -9999px');
-    }
+    expect($css)->toContain('.ara-trampa {');
+    expect($css)->toContain('left: -9999px');
 });
 
 it('corta por IP la ráfaga de envíos y lo avisa en español', function () {

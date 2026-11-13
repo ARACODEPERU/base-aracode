@@ -102,7 +102,7 @@ it('nombra los sitios de producto igual que config/productos.php', function () {
 it('enlaza la portada de un producto a su sitio y no inventa URL para las del corporativo', function () {
     expect(PaginaPrincipal::url('3'))->toBe(url('site/kapta'));
     expect(PaginaPrincipal::url('4'))->toBe(url('site/kirafact'));
-    expect(PaginaPrincipal::url('5'))->toBe(url('site/pichanguero'));
+    expect(PaginaPrincipal::url('5'))->toBe(SitiosProducto::url('pichanguero'));
 
     expect(PaginaPrincipal::url('1'))->toBeNull();
     expect(PaginaPrincipal::url('2'))->toBeNull();

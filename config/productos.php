@@ -49,11 +49,11 @@ return [
 
     'pichanguero' => [
         'nombre' => 'Pichanguero',
-        'sitio' => 'site/pichanguero',
-        // Su sitio no tiene página de planes; sí la de descargas de la app, que
-        // es la que publica la versión vigente del APK.
+        // Sitio oficial: todos los botones de Pichanguero del corporativo
+        // apuntan aquí, incluida la descarga de la app.
+        'sitio' => 'https://pichanguero.com/',
         'planes' => null,
-        'descargas' => 'site/pichanguero/descargas',
+        'descargas' => 'https://pichanguero.com/',
     ],
 
 ];

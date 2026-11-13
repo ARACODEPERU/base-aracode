@@ -6,21 +6,13 @@
 @section('content')
     @include('aracode.components.v2.navbar')
 
-    {{-- Hero --}}
-    <section class="pt-32 pb-12 bg-ara-navy relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-96 h-96 bg-ara-blue/10 rounded-full filter blur-3xl pointer-events-none"></div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="max-w-3xl mx-auto text-center">
-                <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">Blog</span>
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 reveal reveal-delay-1">
-                    Noticias y <span class="text-gradient">recursos</span>
-                </h1>
-                <p class="text-lg text-white/70 reveal reveal-delay-2">
-                    Artículos sobre tecnología, automatización, inteligencia artificial y transformación digital para tu empresa.
-                </p>
-            </div>
-        </div>
-    </section>
+    {{-- Hero (formato común de páginas internas) --}}
+    <x-v2.hero-pagina
+        etiqueta="Blog"
+        titulo="Noticias y"
+        resaltado="recursos"
+        bajada="Artículos sobre tecnología, automatización, inteligencia artificial y transformación digital para tu empresa."
+    />
 
     {{-- Blog Content with Sidebar --}}
     <section class="py-10 lg:py-12 bg-ara-slate-50">
@@ -224,11 +216,6 @@
                                              alt="{{ $article->title }}" 
                                              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                              loading="lazy">
-                                        @if($article->category)
-                                            <span class="absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-ara-blue/90 text-white backdrop-blur-sm">
-                                                {{ $article->category->description }}
-                                            </span>
-                                        @endif
                                     </div>
                                     
                                     {{-- Content --}}
