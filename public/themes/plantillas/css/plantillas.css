@@ -73,6 +73,127 @@
 
 
 
+/* ========================================================================
+   Catálogo: cabecera, filtros y fila de la tarjeta
+   ------------------------------------------------------------------------
+   Los chips de rubro iban antes que el titular y sin aire debajo: ocho
+   píldoras seguidas, pegadas al h2, se leían como un bloque amontonado y no
+   se distinguía qué filtraba y qué resultaba. Ahora la cabecera abre el
+   listado, los filtros van agrupados bajo su etiqueta y la rejilla empieza
+   con margen propio. En móvil los filtros ocupan una sola línea que se
+   desplaza en horizontal, no cuatro filas apiladas.
+   ===================================================================== */
+.plt-catalogo {
+    padding: clamp(2.75rem, 4vw, 3.5rem) 0 clamp(3.5rem, 5vw, 4.5rem);
+    background: #fff;
+}
+
+.plt-catalogo__cabecera {
+    margin-bottom: clamp(1.5rem, 2.5vw, 1.75rem);
+}
+
+.plt-catalogo__titulo {
+    margin: 0;
+    font-size: clamp(1.5rem, 2.2vw, 1.875rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--plt-ink);
+}
+
+.plt-catalogo__meta {
+    margin: 0.45rem 0 0;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--plt-muted);
+}
+
+.plt-catalogo__limpiar {
+    color: var(--plt-blue-ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.plt-catalogo__limpiar:hover {
+    color: var(--plt-blue);
+}
+
+.plt-filtros {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: clamp(1.75rem, 3vw, 2.25rem);
+}
+
+/* La etiqueta se alinea con la primera fila de chips, no con el centro del
+   bloque: cuando los chips ocupan dos filas, el centro cae entre las dos. */
+.plt-filtros__etiqueta {
+    flex: 0 0 auto;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 2.5rem;
+    color: var(--plt-muted);
+}
+
+/* Los chips ceden el ancho que pide la fila y nunca parten el contenedor. */
+.plt-filtros .plt-categorias {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Una sola fila de etiquetas en la tarjeta: formato, rubro y palabras clave,
+   encima de los botones. El formato va primero y conserva la píldora oscura;
+   el rubro se distingue con borde y fondo blanco; las palabras clave siguen en
+   gris. Así la fila se lee como un solo grupo y no como dos rejillas. */
+.plt-card__etiquetas .plt-tipo {
+    padding: 0.25rem 0.6rem;
+    background: var(--plt-navy);
+    color: #fff;
+}
+
+.plt-card__etiquetas .plt-card__rubro {
+    border: 1px solid var(--plt-line);
+    background: #fff;
+    color: var(--plt-slate);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+@media (max-width: 1023px) {
+    /* Los filtros, una fila desplazable: se recorren con el dedo y no empujan
+       el titular fuera de la pantalla. */
+    .plt-filtros {
+        display: block;
+    }
+
+    .plt-filtros__etiqueta {
+        display: block;
+        margin-bottom: 0.65rem;
+        line-height: 1.4;
+    }
+
+    .plt-filtros .plt-categorias {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 0.35rem;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .plt-filtros .plt-categorias::-webkit-scrollbar {
+        display: none;
+    }
+
+    .plt-filtros .plt-chip {
+        flex: 0 0 auto;
+        /* Sin esto el nombre del rubro se parte en dos líneas dentro del chip. */
+        white-space: nowrap;
+    }
+}
+
 @media (min-width:1024px){
     /* Portada compacta: la maqueta se mide en vh y los aires se recortan
        para que el catálogo asome en la primera pantalla. */

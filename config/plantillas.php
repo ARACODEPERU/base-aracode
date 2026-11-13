@@ -55,7 +55,8 @@
 |                   absoluta el día que la demo viva en su propio subdominio
 |                   (`'https://clinica-dental.aracodeperu.com'`). Si es `null`
 |                   la ficha avisa de que la demostración está en preparación.
-|  - `destacada`    Aparece en el bloque de destacadas del catálogo.
+|  - `destacada`    Se ordena antes que las demás en el catálogo (no lleva
+|                   distintivo en la tarjeta: casi todas lo son).
 |  - `publicada`    `false` la esconde del catálogo y de su ficha (404), sin
 |                   borrar sus datos.
 |  - `actualizada`  Fecha (Y-m-d) que se muestra en la ficha y que conviene
@@ -68,23 +69,33 @@
 
 return [
 
+    /*
+        `etiqueta` es lo único que aparece en la tarjeta de cada plantilla y
+        tiene tres valores posibles, uno por formato: «Landing», «SitioWeb» y
+        «Tienda». Va sin la almohadilla del `hashtag`, que es la que usa el
+        buscador. El formato completo —y el plan que se contrata— se explica en
+        la ficha con `nombre` y `descripcion`.
+    */
     'tipos' => [
 
         'landing' => [
             'nombre' => 'Landing',
             'hashtag' => '#Landing',
+            'etiqueta' => 'Landing',
             'descripcion' => 'Una sola página con todos los contenidos en secciones y enlaces internos.',
         ],
 
         'sitio' => [
             'nombre' => 'Sitio web',
             'hashtag' => '#SitioWeb',
+            'etiqueta' => 'SitioWeb',
             'descripcion' => 'Varias páginas enlazadas (inicio, servicios, fichas o listados) con menú de navegación.',
         ],
 
         'tienda' => [
             'nombre' => 'Tienda en línea',
             'hashtag' => '#Tienda',
+            'etiqueta' => 'Tienda',
             'descripcion' => 'Catálogo con filtros, ficha de producto, canasta que recuerda lo elegido y pedido por WhatsApp.',
         ],
 

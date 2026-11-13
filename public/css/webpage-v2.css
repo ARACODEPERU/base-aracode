@@ -29,6 +29,35 @@ body {
 }
 
 /* =============================================
+   Escala tipográfica compartida
+
+   Servicios es la referencia del sitio: título de sección 30/36/48 px según
+   el ancho (text-3xl / sm:text-4xl / lg:text-5xl), bajada 18 px, título de
+   tarjeta 20 px, texto 16 px y etiquetas 12 px. Las secciones que no se
+   maquetaron con Tailwind toman estos valores para no quedar más chicas que
+   el resto.
+   ============================================= */
+:root {
+    --ara-titulo-seccion: 1.875rem;   /* 30 px */
+    --ara-bajada: 1.125rem;           /* 18 px */
+    --ara-titulo-tarjeta: 1.25rem;    /* 20 px */
+    --ara-texto: 1rem;                /* 16 px */
+    --ara-etiqueta: 0.75rem;          /* 12 px */
+}
+
+@media (min-width: 640px) {
+    :root {
+        --ara-titulo-seccion: 2.25rem; /* 36 px */
+    }
+}
+
+@media (min-width: 1024px) {
+    :root {
+        --ara-titulo-seccion: 3rem;    /* 48 px */
+    }
+}
+
+/* =============================================
    Scrollbar
    ============================================= */
 ::-webkit-scrollbar {
@@ -1030,6 +1059,48 @@ body {
 .ara-modal-enviar-icono {
     width: 1.25rem;
     height: 1.25rem;
+}
+
+/* Salida rápida del modal: WhatsApp con el mensaje que ya está escrito en el
+   formulario. Va debajo del botón de enviar, en tono discreto para que no
+   compita con él. */
+.ara-modal-wa {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem 0.5rem;
+    margin: 1rem 0 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #64748B;
+}
+
+.ara-modal-wa__enlace {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    color: #128C4A;
+    text-decoration: none;
+}
+
+.ara-modal-wa__enlace:hover {
+    text-decoration: underline;
+}
+
+.ara-modal-wa__enlace svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+.dark .ara-modal-wa {
+    color: #94A3B8;
+}
+
+.dark .ara-modal-wa__enlace {
+    color: #4ADE80;
 }
 
 .ara-modal-exito {
@@ -2121,7 +2192,7 @@ section form button[type="submit"]:hover {
        rubro no dependa de la imagen que tenga detrás. */
     background: rgba(6, 14, 45, 0.62);
     color: #ffffff;
-    font-size: 0.66rem;
+    font-size: var(--ara-etiqueta);
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -2131,7 +2202,7 @@ section form button[type="submit"]:hover {
 
 .ara-product-card--sobrepuesta .ara-product-title {
     margin: 0 0 0.35rem;
-    font-size: 1.35rem;
+    font-size: var(--ara-titulo-tarjeta);
     font-weight: 800;
     line-height: 1.15;
 }
@@ -2152,7 +2223,7 @@ section form button[type="submit"]:hover {
     min-width: 0;
     margin: 0;
     max-width: 34ch;
-    font-size: 0.9rem;
+    font-size: var(--ara-texto);
     line-height: 1.45;
     color: rgba(255, 255, 255, 0.9);
 }
@@ -2265,7 +2336,7 @@ section form button[type="submit"]:hover {
     display: inline-flex;
     align-items: center;
     gap: 0.65rem;
-    font-size: 0.7rem;
+    font-size: var(--ara-etiqueta);
     font-weight: 700;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -2282,7 +2353,7 @@ section form button[type="submit"]:hover {
 
 .ara-valor__titulo {
     margin: 1.1rem 0 0.9rem;
-    font-size: clamp(2rem, 4.4vw, 3.25rem);
+    font-size: var(--ara-titulo-seccion);
     font-weight: 800;
     line-height: 1.06;
     letter-spacing: -0.03em;
@@ -2292,7 +2363,7 @@ section form button[type="submit"]:hover {
 .ara-valor__bajada {
     max-width: 34rem;
     margin: 0 0 2.4rem;
-    font-size: 1.05rem;
+    font-size: var(--ara-bajada);
     line-height: 1.65;
     color: rgba(255, 255, 255, 0.68);
 }
@@ -2344,7 +2415,7 @@ section form button[type="submit"]:hover {
 }
 
 .ara-valor__num {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.06em;
@@ -2385,7 +2456,7 @@ section form button[type="submit"]:hover {
 
 .ara-valor__tab-titulo {
     display: block;
-    font-size: 1rem;
+    font-size: var(--ara-titulo-tarjeta);
     font-weight: 700;
     line-height: 1.3;
 }
@@ -2397,14 +2468,16 @@ section form button[type="submit"]:hover {
     max-height: 0;
     overflow: hidden;
     opacity: 0;
-    font-size: 0.9rem;
+    font-size: var(--ara-texto);
     line-height: 1.55;
     color: rgba(255, 255, 255, 0.7);
     transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.3s ease;
 }
 
 .ara-valor__tab[aria-selected='true'] .ara-valor__desc {
-    max-height: 9rem;
+    /* Holgura para el texto a 16 px: en móvil la descripción ocupa seis
+       líneas y con 9rem se recortaba la última. */
+    max-height: 16rem;
     margin-top: 0.4rem;
     opacity: 1;
 }
@@ -2477,7 +2550,7 @@ section form button[type="submit"]:hover {
     background: rgba(6, 14, 45, 0.55);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
-    font-size: 0.7rem;
+    font-size: var(--ara-etiqueta);
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -2490,7 +2563,7 @@ section form button[type="submit"]:hover {
 }
 
 .ara-valor__contador {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.14em;
     color: rgba(255, 255, 255, 0.55);
@@ -2564,7 +2637,7 @@ section form button[type="submit"]:hover {
     display: inline-flex;
     align-items: center;
     gap: 0.65rem;
-    font-size: 0.7rem;
+    font-size: var(--ara-etiqueta);
     font-weight: 700;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -2581,7 +2654,7 @@ section form button[type="submit"]:hover {
 
 .ara-proceso__titulo {
     margin: 1.1rem 0 0.9rem;
-    font-size: clamp(2rem, 4.2vw, 3rem);
+    font-size: var(--ara-titulo-seccion);
     font-weight: 800;
     line-height: 1.08;
     letter-spacing: -0.03em;
@@ -2591,7 +2664,7 @@ section form button[type="submit"]:hover {
 .ara-proceso__bajada {
     max-width: 44rem;
     margin: 0 0 2.5rem;
-    font-size: 1.05rem;
+    font-size: var(--ara-bajada);
     line-height: 1.65;
     color: #5b6b8c;
 }
@@ -2649,7 +2722,7 @@ section form button[type="submit"]:hover {
 
 .ara-proceso__paso-titulo {
     margin: 0 0 0.4rem;
-    font-size: 1rem;
+    font-size: var(--ara-titulo-tarjeta);
     font-weight: 700;
     line-height: 1.3;
     color: #0b1b3f;
@@ -2660,7 +2733,7 @@ section form button[type="submit"]:hover {
 .ara-proceso__paso-texto {
     flex: 1 1 auto;
     margin: 0 0 0.9rem;
-    font-size: 0.88rem;
+    font-size: var(--ara-texto);
     line-height: 1.55;
     color: #5b6b8c;
 }
@@ -2670,7 +2743,7 @@ section form button[type="submit"]:hover {
     padding: 0.28rem 0.65rem;
     border-radius: 9999px;
     background: #f1f6fd;
-    font-size: 0.7rem;
+    font-size: var(--ara-etiqueta);
     font-weight: 700;
     letter-spacing: 0.04em;
     color: #1d5f9e;
@@ -2690,7 +2763,7 @@ section form button[type="submit"]:hover {
 
 .ara-proceso__cierre-texto {
     margin: 0;
-    font-size: 0.92rem;
+    font-size: var(--ara-texto);
     line-height: 1.5;
     color: #5b6b8c;
 }
@@ -2748,5 +2821,480 @@ section form button[type="submit"]:hover {
 @media (prefers-reduced-motion: reduce) {
     .ara-proceso__btn {
         transition: none;
+    }
+}
+
+/* --- Sobre la empresa (/empresa) ------------------------------------------
+   Dos columnas que arrancan a la misma altura: el texto a la izquierda y la
+   foto recortada a un cuadrado a la derecha. Antes el bloque se centraba
+   contra una foto vertical y sobraba medio lienzo vacío; además el subtítulo
+   llevaba el margen de 64 px del componente de cabecera, que aquí solo abría
+   un hueco. ----------------------------------------------------------------- */
+.ara-about {
+    /* Si alguien llega por el ancla #nosotros, el titular no queda debajo de
+       la barra pegajosa. */
+    scroll-margin-top: 6rem;
+    padding: clamp(3.5rem, 6vw, 5.5rem) 0 clamp(3rem, 5vw, 4.5rem);
+    background: #fff;
+}
+
+.ara-about__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    gap: clamp(2rem, 4.5vw, 4rem);
+    /* Las dos columnas miden lo mismo: el dibujo no trae alto propio, lo toma
+       del contenido de la izquierda. */
+    align-items: stretch;
+}
+
+.ara-about__titulo {
+    max-width: 22ch;
+    margin: 0 0 1.1rem;
+    font-size: var(--ara-titulo-seccion);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: #0b1b3f;
+}
+
+.ara-about__lead {
+    max-width: 52ch;
+    margin: 0 0 1rem;
+    font-size: var(--ara-bajada);
+    line-height: 1.6;
+    color: #43536f;
+}
+
+.ara-about__parrafo {
+    max-width: 62ch;
+    margin: 0 0 2rem;
+    font-size: var(--ara-texto);
+    line-height: 1.7;
+    color: #5b6b8c;
+}
+
+/* Cuatro pilares en dos por dos: se leen como atributos de la empresa, no
+   como una lista de promesas en imperativo. */
+.ara-about__pilares {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 1.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ara-about__pilar {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.ara-about__pilar-icono {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(1, 136, 238, 0.09);
+    color: #0188ee;
+}
+
+.ara-about__pilar-icono svg {
+    width: 18px;
+    height: 18px;
+}
+
+.ara-about__pilar-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.ara-about__pilar-texto strong {
+    font-size: var(--ara-texto);
+    font-weight: 700;
+    line-height: 1.35;
+    color: #0b1b3f;
+}
+
+.ara-about__pilar-texto span {
+    font-size: var(--ara-texto);
+    line-height: 1.55;
+    color: #5b6b8c;
+}
+
+.ara-about__enlace {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 2rem;
+    font-size: var(--ara-texto);
+    font-weight: 600;
+    color: #0188ee;
+    text-decoration: none;
+    transition: gap 0.2s ease, color 0.2s ease;
+}
+
+.ara-about__enlace svg {
+    width: 18px;
+    height: 18px;
+}
+
+.ara-about__enlace:hover {
+    gap: 0.7rem;
+    color: #016bc4;
+}
+
+.ara-about__enlace:focus-visible {
+    outline: 2px solid #0188ee;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.ara-about__media {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+/* Lienzo del proceso: dibujo propio en lugar de la foto. Tres etapas
+   encadenadas —entra el dato, la IA lo clasifica, sale el documento— sobre un
+   navy plano con retícula tenue. Las etapas se encienden en orden desde
+   public/js/aracode-evolucion.js; el punto verde que viaja entre ellas y el
+   latido de la cabecera son CSS. El 4/5 iguala la altura de la columna de
+   texto. */
+.ara-flujo {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    /* Sin proporción fija: crece hasta la altura de la columna de texto. */
+    flex: 1 1 auto;
+    gap: 1.3rem;
+    width: 100%;
+    padding: 1.4rem 1.3rem 1.5rem;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid rgba(94, 176, 255, 0.18);
+    background: #081231;
+}
+
+.ara-flujo::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(148, 180, 255, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 180, 255, 0.055) 1px, transparent 1px);
+    background-size: 30px 30px;
+    pointer-events: none;
+}
+
+.ara-flujo > * {
+    position: relative;
+    z-index: 1;
+}
+
+.ara-flujo__cabecera {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--ara-etiqueta);
+    line-height: 1.4;
+    color: rgba(214, 234, 255, 0.6);
+}
+
+.ara-flujo__punto {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #25d366;
+    animation: araFlujoLatido 2.4s ease-in-out infinite;
+}
+
+.ara-flujo__titulo {
+    font-weight: 600;
+    color: rgba(226, 240, 255, 0.92);
+}
+
+.ara-flujo__marca {
+    margin-left: auto;
+    letter-spacing: 0.04em;
+    color: rgba(94, 176, 255, 0.85);
+}
+
+.ara-flujo__pasos {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    /* El hueco entre etapas deja sitio al conector y al punto que viaja; el
+       conector mide lo mismo que el hueco. */
+    gap: 2.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ara-flujo__paso {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.95rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #0e1f45;
+    transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+.ara-flujo__paso.is-activo {
+    border-color: rgba(94, 176, 255, 0.45);
+    background: #12294f;
+}
+
+/* Conector vertical entre etapas. */
+.ara-flujo__paso:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 1.95rem;
+    top: calc(100% + 2px);
+    width: 2px;
+    height: 2.1rem;
+    background: rgba(94, 176, 255, 0.28);
+}
+
+/* Punto que recorre el conector. */
+.ara-flujo__paso:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 1.6rem;
+    top: calc(100% + 2px);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #25d366;
+    animation: araFlujoViaje 2.4s ease-in-out infinite;
+}
+
+.ara-flujo__icono {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(214, 234, 255, 0.68);
+    transition: background 0.35s ease, color 0.35s ease;
+}
+
+.ara-flujo__icono svg {
+    width: 18px;
+    height: 18px;
+}
+
+.ara-flujo__paso.is-activo .ara-flujo__icono {
+    background: rgba(1, 136, 238, 0.28);
+    color: #c7e6ff;
+}
+
+.ara-flujo__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.ara-flujo__etapa {
+    font-size: var(--ara-etiqueta);
+    color: rgba(214, 234, 255, 0.55);
+}
+
+.ara-flujo__nombre {
+    font-size: var(--ara-texto);
+    font-weight: 700;
+    line-height: 1.3;
+    color: #fff;
+}
+
+.ara-flujo__nota {
+    /* Un respiro más respecto a la última etapa: pegada se leía como parte
+       de ella. */
+    margin: 0.4rem 0 0;
+    font-size: var(--ara-etiqueta);
+    line-height: 1.5;
+    color: rgba(214, 234, 255, 0.45);
+}
+
+@keyframes araFlujoLatido {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+}
+
+@keyframes araFlujoViaje {
+    0% { transform: translateY(0); opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(2.1rem); opacity: 0; }
+}
+
+.ara-about__pie {
+    margin-top: 0.85rem;
+    font-size: 0.875rem;
+    color: #5b6b8c;
+}
+
+@media (max-width: 1023px) {
+    .ara-about__grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* En una columna no hay hermano con el que igualar: el lienzo mide lo que
+       mide su contenido. */
+    .ara-flujo {
+        flex: 0 0 auto;
+    }
+}
+
+@media (max-width: 640px) {
+    .ara-about {
+        padding: 3rem 0 3.5rem;
+    }
+
+    .ara-about__pilares {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ara-flujo {
+        gap: 1.1rem;
+    }
+
+    .ara-flujo__pasos {
+        flex: 0 0 auto;
+        gap: 2.1rem;
+    }
+
+}
+
+/* En 360 la cabecera del diagrama quedaba al límite: el título y la marca se
+   tocaban. La marca es un adorno; el título, no. */
+@media (max-width: 420px) {
+    .ara-flujo__marca {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ara-about__enlace {
+        transition: none;
+    }
+
+    /* Sin movimiento, el diagrama queda quieto con la primera etapa marcada:
+       el recorrido se sigue leyendo en el texto. */
+    .ara-flujo__punto,
+    .ara-flujo__paso::before {
+        animation: none;
+    }
+
+    .ara-flujo__paso::before {
+        display: none;
+    }
+}
+
+/* --- Misión y visión (/empresa) -------------------------------------------
+   La sección no tenía titular: iba directo a dos tarjetas sobre gris. Ahora
+   abre con su cabecera, y las tarjetas toman la escala del sitio (título de
+   tarjeta 20 px, texto 16) con un icono de 44 px en vez de 64, que en móvil
+   dejaba la tarjeta innecesariamente alta. ---------------------------------- */
+.ara-mv {
+    /* Si alguien llega por el ancla #mision, el titular no queda debajo de la
+       barra pegajosa. */
+    scroll-margin-top: 6rem;
+    padding: clamp(3.5rem, 6vw, 5.5rem) 0;
+    background: #f5f7fa;
+}
+
+.ara-mv__titulo {
+    margin: 0 0 0.8rem;
+    font-size: var(--ara-titulo-seccion);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: #0b1b3f;
+}
+
+.ara-mv__lead {
+    max-width: 44rem;
+    margin: 0 0 clamp(2rem, 4vw, 2.75rem);
+    font-size: var(--ara-bajada);
+    line-height: 1.6;
+    color: #43536f;
+}
+
+.ara-mv__rejilla {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.25rem, 3vw, 2rem);
+}
+
+.ara-mv__tarjeta {
+    display: flex;
+    flex-direction: column;
+    padding: clamp(1.5rem, 3vw, 2rem);
+    border-radius: 20px;
+    border: 1px solid #e4eaf3;
+    background: #fff;
+}
+
+.ara-mv__icono {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 1.1rem;
+    border-radius: 12px;
+    background: rgba(1, 136, 238, 0.1);
+    color: #0188ee;
+}
+
+.ara-mv__icono--verde {
+    background: rgba(78, 174, 51, 0.12);
+    color: #3d8b29;
+}
+
+.ara-mv__icono svg {
+    width: 22px;
+    height: 22px;
+}
+
+.ara-mv__nombre {
+    margin: 0 0 0.6rem;
+    font-size: var(--ara-titulo-tarjeta);
+    font-weight: 700;
+    line-height: 1.3;
+    color: #0b1b3f;
+}
+
+.ara-mv__texto {
+    margin: 0;
+    font-size: var(--ara-texto);
+    line-height: 1.7;
+    color: #5b6b8c;
+}
+
+/* En móvil las tarjetas van una debajo de otra, con el texto en una columna
+   cómoda de leer. */
+@media (max-width: 767px) {
+    .ara-mv {
+        padding: 3rem 0 3.5rem;
+    }
+
+    .ara-mv__rejilla {
+        grid-template-columns: minmax(0, 1fr);
     }
 }

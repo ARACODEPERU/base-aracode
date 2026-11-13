@@ -3,17 +3,18 @@
     ---------------------------------------------------------------------------
     El bloque de arriba es la captura de la plantilla (16/10, la proporción en
     que se preparan) y el de abajo la información que se compara de un vistazo:
-    la fila de etiquetas (formato, rubro y «Destacada»), el nombre, el resumen,
-    las palabras clave y los dos accesos (ficha y demostración).
+    el nombre, el resumen, una sola fila de etiquetas —formato, rubro y palabras
+    clave— y los dos accesos (ficha y demostración).
 
-    Esa fila de etiquetas abre el cuerpo y no va encima de la captura: la
-    captura se ve entera —es lo primero que mira quien elige plantilla— y el
-    rubro queda junto al nombre, que es donde se lee.
+    El nombre abre el cuerpo, pegado a la captura. Antes lo precedía una fila de
+    píldoras con el formato y el rubro que lo empujaba ~40 px hacia abajo y
+    dejaba dos rejillas de etiquetas en la misma tarjeta; ahora todo va en una
+    sola, encima de los botones.
 
-    El formato va primero a propósito: una landing y un sitio web son planes
-    distintos, así que el visitante tiene que reconocer de un vistazo cuál va con
-    lo que quiere contratar antes de leer nada más. El tooltip lleva la frase que
-    explica ese formato (config/plantillas.php, `tipos`).
+    El formato va primero en esa fila a propósito: una landing, un sitio web y una
+    tienda en línea son planes distintos, y la etiqueta dice cuál es el de la
+    ficha (`etiqueta` en config/plantillas.php). El tooltip lleva la frase que
+    explica el formato completo (`tipos`).
 
     Mientras una plantilla no tenga captura, en su lugar se pinta un mosaico con
     el nombre: nunca un hueco gris ni una imagen rota. La ruta de la captura se
@@ -43,33 +44,29 @@
     </div>
 
     <div class="plt-card__cuerpo">
-        {{-- Formato, rubro y «Destacada», en una sola fila: es lo que se compara
-             de un vistazo antes de leer el nombre. --}}
-        <div class="plt-card__chips">
-            @if ($plantilla['tipo_hashtag'] !== '')
-                <span class="plt-tipo" title="{{ $plantilla['tipo_descripcion'] }}">{{ $plantilla['tipo_hashtag'] }}</span>
-            @endif
-
-            <span class="plt-card__etiqueta">{{ $plantilla['categoria_nombre'] }}</span>
-
-            @if ($plantilla['destacada'])
-                <span class="plt-card__destacada">Destacada</span>
-            @endif
-        </div>
-
         <h3 class="plt-card__nombre">
             <a href="{{ $urlFicha }}">{{ $plantilla['nombre'] }}</a>
         </h3>
 
         <p class="plt-card__resumen">{{ $plantilla['resumen'] }}</p>
 
-        @if (count($plantilla['etiquetas']) > 0)
-            <ul class="plt-card__etiquetas">
-                @foreach (array_slice($plantilla['etiquetas'], 0, 3) as $etiqueta)
-                    <li>{{ $etiqueta }}</li>
-                @endforeach
-            </ul>
-        @endif
+        {{-- Formato, rubro y palabras clave en la misma fila: al no haber otra
+             rejilla de píldoras encima, el nombre arranca justo debajo de la
+             captura. El formato se lee sin la almohadilla del buscador y dice
+             Landing, SitioWeb o Tienda; «Destacada» tampoco va aquí: lo son siete
+             de nueve fichas y el distintivo ya se nota en el orden del
+             listado. --}}
+        <ul class="plt-card__etiquetas">
+            @if ($plantilla['tipo_etiqueta'] !== '')
+                <li class="plt-tipo" title="{{ $plantilla['tipo_descripcion'] }}">{{ $plantilla['tipo_etiqueta'] }}</li>
+            @endif
+
+            <li class="plt-card__rubro">{{ $plantilla['categoria_nombre'] }}</li>
+
+            @foreach (array_slice($plantilla['etiquetas'], 0, 3) as $etiqueta)
+                <li>{{ $etiqueta }}</li>
+            @endforeach
+        </ul>
 
         <div class="plt-card__acciones">
             <a href="{{ $urlFicha }}" class="ara-btn ara-btn-primary">

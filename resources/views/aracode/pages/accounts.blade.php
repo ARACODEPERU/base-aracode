@@ -67,6 +67,7 @@
                                                     class="rounded-full"
                                                     src="{{ asset('themes/webpage/images/object/object-15.jpg') }}"
                                                     alt="avatar"
+                                                    loading="lazy" decoding="async"
                                                 />
                                                 </div>
 
@@ -273,7 +274,7 @@
                         <td class="whitespace-nowrap px-4 py-3 sm:px-5">
                             <div class="flex items-center space-x-4">
                                 <div class="avatar">
-                                    <img class="rounded-full" src="${image}" alt="avatar" />
+                                    <img class="rounded-full" src="${image}" alt="avatar" loading="lazy" decoding="async" />
                                 </div>
                                 <span class="font-medium text-slate-700 dark:text-navy-100">
                                     <a href="${url_descripcion_programa}" target="_blank">${name}</a>

@@ -110,7 +110,15 @@
                                 prose-a:text-ara-blue prose-a:no-underline hover:prose-a:underline
                                 prose-img:rounded-xl
                                 prose-strong:text-ara-slate-700">
-                        {!! $article->content_text !!}
+                        {{-- Las imágenes que vienen del editor no traen atributos de
+                             carga: se les añade el diferido aquí para que un artículo
+                             largo no descargue de golpe todo lo que hay bajo el
+                             pliegue. Las que ya traen `loading` se dejan quietas. --}}
+                        {!! preg_replace(
+                            '/<img(?![^>]*\bloading=)/i',
+                            '<img loading="lazy" decoding="async"',
+                            (string) $article->content_text
+                        ) !!}
                     </div>
 
                     {{-- Share --}}

@@ -53,6 +53,7 @@
                                                 class="rounded-full"
                                                 src="{{ asset('themes/webpage/images/object/object-15.jpg') }}"
                                                 alt="avatar"
+                                                loading="lazy" decoding="async"
                                             />
                                             </div>
 
@@ -323,6 +324,7 @@
                                                     class="rounded-full"
                                                     src="` + image + `"
                                                     alt="avatar"
+                                                    loading="lazy" decoding="async"
                                                 />
                                                 </div>
 

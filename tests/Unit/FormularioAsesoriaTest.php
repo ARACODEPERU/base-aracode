@@ -221,13 +221,45 @@ it('publica el modal en las páginas del sitio, con el formulario y sus botones'
     expect($html)->toContain('href="'.route('contacto').'" data-asesoria');
     expect(botonesDeAsesoria($html))->toBe($botones);
 })->with([
-    // La portada: navbar (escritorio y móvil), hero y el CTA del pie.
-    ['/', 4],
+    // La portada: navbar (escritorio y móvil), hero, el cierre del proceso y el
+    // CTA del pie.
+    ['/', 5],
     // El ecosistema: navbar, la tarjeta de Automatización y el CTA del pie.
     ['/soluciones', 4],
-    // El servicio de páginas web: navbar y sus dos botones de asesoría.
-    ['/paginas-web', 4],
+    // El servicio de páginas web: navbar, sus dos botones de asesoría y los
+    // tres planes, que abren el modal con el plan ya escrito.
+    ['/paginas-web', 7],
+    // El catálogo: navbar y el CTA del pie.
+    ['/plantillas', 3],
+    // La ficha: navbar, «Pedir esta plantilla» (arriba y en el panel) y el CTA.
+    ['/plantillas/clinica-dental', 5],
 ]);
+
+it('abre el modal con el plan o la plantilla ya cargados', function () {
+    // Los botones de un plan y de una plantilla traen el servicio y el mensaje
+    // en data-*: el visitante ya eligió y no vuelve a escribirlo.
+    $planes = $this->get('/paginas-web')->assertOk()->getContent();
+
+    expect($planes)->toContain('data-asesoria-servicio="web"')
+        ->and(substr_count($planes, 'data-asesoria-mensaje='))->toBe(3);
+
+    $ficha = $this->get('/plantillas/clinica-dental')->assertOk()->getContent();
+
+    expect(substr_count($ficha, 'data-asesoria-mensaje='))->toBe(2)
+        ->and($ficha)->toContain('data-asesoria-mensaje="Quiero la plantilla Clínica Dental');
+
+    // El modal lee esos datos al abrir y el enlace de WhatsApp reutiliza el
+    // mensaje que quedó en el formulario.
+    $portada = $this->get('/')->assertOk()->getContent();
+
+    expect($portada)->toContain('id="asesoriaWhatsapp"')
+        ->and($portada)->toContain('https://wa.me/51917295856')
+        ->and($portada)->toContain('dataset.asesoriaMensaje')
+        ->and($portada)->toContain('dataset.asesoriaServicio');
+
+    // La opción nueva del desplegable, con el texto que se pidió.
+    expect($portada)->toContain('<option value="web">Páginas web y plantillas</option>');
+});
 
 it('pinta la misma lista de servicios que la página de contacto', function () {
     $html = $this->get('/contacto')->getContent();

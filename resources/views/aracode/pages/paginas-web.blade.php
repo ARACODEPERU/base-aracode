@@ -244,7 +244,11 @@
                             <strong class="text-ara-slate-500">Para:</strong> {{ $plan['ideal_para'] }}
                         </p>
 
-                        <a href="{{ route('contacto') }}" class="mt-auto block text-center py-3 px-6 rounded-xl font-semibold transition-all {{ $plan['destacado'] ? 'bg-ara-blue text-white hover:bg-blue-600' : 'border-2 border-ara-blue text-ara-blue hover:bg-ara-blue hover:text-white' }}">
+                        {{-- El modal se abre con el plan ya cargado: el visitante ya
+                             eligió y no tiene que volver a explicarlo en /contacto. --}}
+                        <a href="{{ route('contacto') }}" data-asesoria data-asesoria-servicio="web"
+                           data-asesoria-mensaje="Quiero el plan {{ $plan['nombre'] }} ({{ $plan['precio_mensual'] }}/mes) para mi página web."
+                           class="mt-auto block text-center py-3 px-6 rounded-xl font-semibold transition-all {{ $plan['destacado'] ? 'bg-ara-blue text-white hover:bg-blue-600' : 'border-2 border-ara-blue text-ara-blue hover:bg-ara-blue hover:text-white' }}">
                             Quiero el plan {{ $plan['nombre'] }}
                         </a>
                     </div>

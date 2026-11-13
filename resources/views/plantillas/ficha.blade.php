@@ -141,7 +141,11 @@
                         </a>
                     @endif
 
-                    <a href="{{ route('contacto') }}" class="ara-btn ara-btn-secondary ara-btn-lg">
+                    {{-- Abre el modal con la plantilla ya anotada: quien llega aquí ya
+                         la eligió, así no vuelve a escribir cuál quiere. --}}
+                    <a href="{{ route('contacto') }}" data-asesoria data-asesoria-servicio="web"
+                       data-asesoria-mensaje="Quiero la plantilla {{ $plantilla['nombre'] }} ({{ $plantilla['tipo_etiqueta'] }}, {{ $plantilla['categoria_nombre'] }})."
+                       class="ara-btn ara-btn-secondary ara-btn-lg">
                         Pedir esta plantilla
                     </a>
                 </div>
@@ -225,7 +229,9 @@
                                 </div>
                             @endif
 
-                            <a href="{{ route('contacto') }}" class="ara-btn ara-btn-ghost">
+                            <a href="{{ route('contacto') }}" data-asesoria data-asesoria-servicio="web"
+                               data-asesoria-mensaje="Quiero la plantilla {{ $plantilla['nombre'] }} ({{ $plantilla['tipo_etiqueta'] }}, {{ $plantilla['categoria_nombre'] }})."
+                               class="ara-btn ara-btn-ghost">
                                 Pedir esta plantilla
                             </a>
                         </div>

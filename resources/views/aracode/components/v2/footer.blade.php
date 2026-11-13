@@ -5,7 +5,10 @@
             {{-- Brand --}}
             <div class="lg:col-span-1">
                 <a href="{{ route('index_main') }}" class="inline-block mb-6">
-                    <img src="{{ asset('themes/webpage/images/logo.png') }}" alt="ARACODE" class="h-10">
+                    {{-- Va al final de la página: se descarga cuando el visitante
+                         baja, no junto con el hero de arriba. --}}
+                    <img src="{{ asset('themes/webpage/images/logo.png') }}" alt="ARACODE" class="h-10"
+                         loading="lazy" decoding="async">
                 </a>
                 <p class="text-white/60 mb-6 leading-relaxed">
                     Empresa peruana especializada en desarrollo de software empresarial, automatización e inteligencia artificial.
