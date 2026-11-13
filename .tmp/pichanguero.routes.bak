@@ -1,0 +1,29 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Pichanguero — rutas de su sitio web independiente
+|--------------------------------------------------------------------------
+|
+| Blade puro: cada ruta devuelve una vista, sin controladores ni base de datos.
+| Todo el sitio vive en resources/views/pichanguero.
+|
+| El sitio se publica en /pichanguero dentro del corporativo: las tarjetas de
+| producto (portada y /soluciones) llevan ahí y no al dominio externo, así que
+| quien pulsa «Leer más» se queda en el sitio.
+|
+| COPIA A SU PROPIO DOMINIO:
+| Cuando copies el proyecto a su dominio, cambia $prefix a '' y las rutas
+| quedarán en la raíz (ej. https://pichanguero.pe/).
+|
+*/
+
+$prefix = 'pichanguero';
+
+Route::prefix($prefix)->name('pichanguero.')->group(function () {
+    Route::view('/', 'pichanguero.pages.home')->name('home');
+    Route::view('/descargas', 'pichanguero.pages.descargas')->name('descargas');
+    Route::view('/contacto', 'pichanguero.pages.contacto')->name('contacto');
+});

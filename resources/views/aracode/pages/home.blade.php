@@ -141,8 +141,10 @@
                 <x-v2.product-card
                     title="PICHANGUERO"
                     description="Plataforma para organizar torneos de fútbol: fixture, posiciones y estadísticas."
-                    :href="\App\Support\SitiosProducto::url('pichanguero')"
-                    :nuevaPestana="true"
+                    {{-- Como KAPTA y KIRAFACT: la tarjeta abre la ficha del
+                         producto en el corporativo (/pichanguero), que la explica
+                         y desde ahí enlaza a su web oficial. Misma pestaña. --}}
+                    :href="route('solucion_pichanguero')"
                     image="{{ asset('themes/webpage/images/misc/producto-pichanguero.webp') }}"
                     variante="sobrepuesta"
                     etiqueta="Leer más"

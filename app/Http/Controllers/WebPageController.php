@@ -1287,6 +1287,16 @@ class WebPageController extends Controller
         return view('aracode.products.clinica.index');
     }
 
+    /**
+     * Ficha de Pichanguero en el corporativo: explica el producto y enlaza a su
+     * web oficial. No confundir con el sitio independiente del producto, que
+     * vive en /site/pichanguero (routes/pichanguero.php).
+     */
+    public function solucionPichanguero()
+    {
+        return view('aracode.products.pichanguero.index');
+    }
+
     public function solucionDesarrollo()
     {
         return view('aracode.pages.desarrollo');

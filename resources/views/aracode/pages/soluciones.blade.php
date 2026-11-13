@@ -32,7 +32,6 @@
     $sitiosProducto = [
         'kapta' => \App\Support\SitiosProducto::url('kapta'),
         'kirafact' => \App\Support\SitiosProducto::url('kirafact'),
-        'pichanguero' => \App\Support\SitiosProducto::url('pichanguero'),
     ];
 
     /*
@@ -101,8 +100,10 @@
                 <x-v2.product-card
                     title="Pichanguero"
                     description="Plataforma para organizar torneos de fútbol: fixture, posiciones y estadísticas."
-                    :href="$sitiosProducto['pichanguero']"
-                    :nuevaPestana="true"
+                    {{-- Igual que en la portada: la tarjeta abre la ficha del
+                         producto en el corporativo (/pichanguero), que la explica
+                         y desde ahí enlaza a su web oficial. Misma pestaña. --}}
+                    :href="route('solucion_pichanguero')"
                     image="{{ asset('themes/webpage/images/misc/s3.jpg') }}"
                     badge="Deportes"
                     variante="sobrepuesta"
