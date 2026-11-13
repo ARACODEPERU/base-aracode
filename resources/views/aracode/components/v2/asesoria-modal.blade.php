@@ -11,6 +11,13 @@
     que lista /cms/contact-messages— y dispara el mismo aviso por correo al
     admin.
 
+    Los botones que ya saben qué se quiere —un plan de /paginas-web o una
+    plantilla del catálogo— traen el servicio en `data-asesoria-servicio` y el
+    mensaje en `data-asesoria-mensaje`: el formulario se abre con eso cargado y
+    el visitante solo deja sus datos. Ese mismo texto viaja al enlace de
+    WhatsApp que va bajo el botón de enviar, para quien prefiera escribir antes
+    que llenar el formulario.
+
     Sin JavaScript nada de esto carga: cada botón conserva su `href` a
     /contacto, así que el formulario completo sigue a un clic de distancia.
 --}}
@@ -21,6 +28,10 @@
     $recaptchaSecretKey = config('services.recaptcha.secret_key');
     $recaptchaActivo = filled($recaptchaSiteKey) && filled($recaptchaSecretKey);
     $recaptchaVersion = config('services.recaptcha.version', 'v3');
+
+    // Número del botón flotante de WhatsApp (layouts/webpage.blade.php), en
+    // formato internacional sin signos, que es lo que pide wa.me.
+    $whatsappSitio = '51917295856';
 @endphp
 
 <div class="ara-modal" id="asesoriaModal" hidden
@@ -86,6 +97,7 @@
                         <option value="kapta">KAPTA LMS</option>
                         <option value="facturacion">Facturación Electrónica</option>
                         <option value="desarrollo">Desarrollo a Medida</option>
+                        <option value="web">Páginas web y plantillas</option>
                         <option value="automatizacion">Automatización de Procesos</option>
                         <option value="consultoria">Consultoría Tecnológica</option>
                         <option value="otro">Otro</option>
@@ -131,6 +143,22 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                 </svg>
             </button>
+
+            {{-- Salida rápida: va dentro del formulario para que se oculte con
+                 él cuando el envío termina. El texto del enlace lo escribe el
+                 script con lo que haya en el mensaje. --}}
+            <p class="ara-modal-wa">
+                <span>¿Prefieres escribirnos?</span>
+                <a id="asesoriaWhatsapp" class="ara-modal-wa__enlace"
+                   href="https://wa.me/{{ $whatsappSitio }}" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.08-.3-.15-1.26-.47-2.39-1.48-.88-.79-1.48-1.76-1.65-2.06-.18-.3-.02-.46.13-.6.13-.14.3-.35.44-.53.15-.17.2-.3.3-.5.12-.2.06-.37-.03-.52-.09-.15-.66-1.59-.9-2.18-.24-.56-.47-.49-.65-.5h-.56c-.19 0-.51.07-.78.37-.27.3-1.02 1-1.02 2.43s1.05 2.82 1.19 3c.15.2 2.05 3.14 4.97 4.4.7.3 1.24.48 1.66.61.7.22 1.34.19 1.85.12.56-.09 1.73-.71 1.98-1.4.24-.68.24-1.27.17-1.39-.07-.12-.27-.2-.57-.35z"/>
+                        <path d="M12 2a10 10 0 00-8.6 15.1L2 22l5.05-1.32A10 10 0 1012 2zm0 18.2a8.2 8.2 0 01-4.18-1.14l-.3-.18-3 .79.8-2.93-.2-.31A8.2 8.2 0 1112 20.2z"/>
+                    </svg>
+                    Escríbenos por WhatsApp
+                    <span class="sr-only">(se abre en una pestaña nueva)</span>
+                </a>
+            </p>
         </form>
 
         {{-- Confirmación: al enviar bien se oculta el formulario y se muestra
@@ -161,6 +189,14 @@ document.addEventListener('DOMContentLoaded', function () {
     var exitoTexto = document.getElementById('asesoriaExitoTexto');
     var botones = document.querySelectorAll('[data-asesoria]');
     var botonDeOrigen = null;
+    var campoServicio = document.getElementById('asesoriaServicio');
+    var campoMensaje = document.getElementById('asesoriaMensaje');
+    var enlaceWhatsapp = document.getElementById('asesoriaWhatsapp');
+    var whatsappBase = enlaceWhatsapp ? enlaceWhatsapp.href.split('?')[0] : '';
+    // Lo último que cargó un botón. Sirve para no pisar lo que el visitante ya
+    // escribió con un mensaje de otro botón.
+    var servicioCargado = '';
+    var mensajeCargado = '';
     var captchaV3 = formulario.querySelector('#asesoriaRecaptcha');
     var captchaV2 = document.getElementById('asesoriaCaptcha');
     var versionCaptcha = modal.dataset.captchaVersion || '';
@@ -280,6 +316,40 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // ------------------------------------------------- contexto del botón
+    // El enlace de WhatsApp lleva el mensaje que hay en el formulario: el que
+    // cargó el botón o el que la persona escribió, para no obligarla a repetirlo.
+    function actualizarWhatsapp() {
+        if (!enlaceWhatsapp || !whatsappBase) {
+            return;
+        }
+
+        var texto = campoMensaje && campoMensaje.value.trim() !== ''
+            ? campoMensaje.value.trim()
+            : 'Hola ARACODE, quiero asesoría sobre una página web.';
+
+        enlaceWhatsapp.href = whatsappBase + '?text=' + encodeURIComponent(texto);
+    }
+
+    function aplicarContexto(boton) {
+        var servicio = boton && boton.dataset ? (boton.dataset.asesoriaServicio || '') : '';
+        var mensaje = boton && boton.dataset ? (boton.dataset.asesoriaMensaje || '') : '';
+
+        if (servicio && campoServicio && campoServicio.querySelector('option[value="' + servicio + '"]')) {
+            if (campoServicio.value === '' || campoServicio.value === servicioCargado) {
+                campoServicio.value = servicio;
+                servicioCargado = servicio;
+            }
+        }
+
+        if (mensaje && campoMensaje && (campoMensaje.value === '' || campoMensaje.value === mensajeCargado)) {
+            campoMensaje.value = mensaje;
+            mensajeCargado = mensaje;
+        }
+
+        actualizarWhatsapp();
+    }
+
     // ------------------------------------------------------------ abrir cerrar
     function ocultarError() {
         alerta.hidden = true;
@@ -296,6 +366,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         ocultarError();
+        // Primero el contexto (plan o plantilla) y después se muestra: así el
+        // formulario ya está cargado cuando el visitante lo ve.
+        aplicarContexto(botonDeOrigen);
         modal.hidden = false;
         document.body.style.overflow = 'hidden';
 
@@ -340,6 +413,13 @@ document.addEventListener('DOMContentLoaded', function () {
     modal.querySelectorAll('[data-asesoria-cerrar]').forEach(function (cerrar) {
         cerrar.addEventListener('click', cerrarModal);
     });
+
+    // Si el visitante cambia el mensaje, el enlace de WhatsApp lo sigue.
+    if (campoMensaje) {
+        campoMensaje.addEventListener('input', actualizarWhatsapp);
+    }
+
+    actualizarWhatsapp();
 
     // Escape cierra y el tabulador se queda dentro del diálogo.
     modal.addEventListener('keydown', function (evento) {

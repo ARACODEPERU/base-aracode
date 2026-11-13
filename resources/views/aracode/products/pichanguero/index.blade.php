@@ -156,7 +156,9 @@
                 :light="false"
             />
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {{-- Tres columnas solo desde 1024 px: en tablet, tres tarjetas con
+                 párrafo dejan el texto partido en tiras de tres palabras. --}}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 @php
                     $audiences = [
                         [
@@ -185,7 +187,9 @@
             {{-- Descarga de la app --}}
             {{-- El botón manda a la página de descargas del sitio oficial, que es
                  la que publica la versión vigente del APK y cómo instalarla. --}}
-            <div class="mt-12 ara-card bg-ara-navy text-center reveal">
+            {{-- Sin `ara-card`: esa clase fija fondo blanco y gana sobre
+                 `bg-ara-navy`, así que el texto blanco quedaba invisible. --}}
+            <div class="mt-12 rounded-2xl bg-ara-navy border border-white/10 p-8 text-center reveal">
                 <h3 class="text-2xl font-bold text-white mb-3">Lleva el torneo en el bolsillo</h3>
                 <p class="text-white/70 mb-6">Descarga la app y consulta el fixture, resultados y estadísticas desde tu celular.</p>
                 @if ($descargasPichanguero)

@@ -268,3 +268,74 @@
         });
     });
 })();
+
+
+/* ============================================================
+   Sobre la empresa: el diagrama del proceso avanza solo.
+   Enciende las tres etapas en orden —entrada, motor, salida— para
+   mostrar el recorrido de un dato. Se detiene cuando el diagrama
+   sale de pantalla y no arranca con «prefers-reduced-motion»: ahí
+   queda la primera etapa marcada y el recorrido se lee igual.
+   ============================================================ */
+(function flujoAutomatizado() {
+    var panel = document.querySelector('[data-flujo]');
+
+    if (!panel) {
+        return;
+    }
+
+    var pasos = Array.prototype.slice.call(panel.querySelectorAll('[data-flujo-paso]'));
+
+    if (!pasos.length) {
+        return;
+    }
+
+    var actual = 0;
+    var temporizador = null;
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function pintar(indice) {
+        pasos.forEach(function (paso, posicion) {
+            paso.classList.toggle('is-activo', posicion === indice);
+        });
+    }
+
+    function avanzar() {
+        actual = (actual + 1) % pasos.length;
+        pintar(actual);
+    }
+
+    function arrancar() {
+        if (reduce || temporizador) {
+            return;
+        }
+
+        // 2400 ms: el mismo tiempo que tarda el punto en cruzar el conector.
+        temporizador = window.setInterval(avanzar, 2400);
+    }
+
+    function detener() {
+        window.clearInterval(temporizador);
+        temporizador = null;
+    }
+
+    pintar(0);
+
+    if (reduce) {
+        return;
+    }
+
+    if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (entradas) {
+            entradas.forEach(function (entrada) {
+                if (entrada.isIntersecting) {
+                    arrancar();
+                } else {
+                    detener();
+                }
+            });
+        }, { threshold: 0.25 }).observe(panel);
+    } else {
+        arrancar();
+    }
+})();

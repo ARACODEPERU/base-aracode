@@ -91,6 +91,34 @@ it('publica el catálogo con una tarjeta por plantilla publicada', function () {
     expect($html)->toContain('themes/plantillas/css/plantillas.css');
 });
 
+it('pone la cabecera del listado por delante de los filtros', function () {
+    $html = $this->get('/plantillas')->getContent();
+
+    $titulo = strpos($html, 'plt-catalogo__titulo');
+    $filtros = strpos($html, 'plt-filtros__etiqueta');
+
+    expect($titulo)->not->toBeFalse()
+        ->and($filtros)->not->toBeFalse()
+        ->and($titulo)->toBeLessThan($filtros);
+
+    // Los chips se anuncian como una sola cosa: el filtro por rubro.
+    expect($html)->toContain('aria-labelledby="plt-filtros-etiqueta"');
+
+    // Y en móvil se desplazan en una fila en vez de apilarse.
+    $css = file_get_contents(public_path('themes/plantillas/css/plantillas.css'));
+
+    expect($css)->toContain('.plt-catalogo__titulo')
+        ->and($css)->toContain('.plt-filtros .plt-categorias');
+});
+
+it('no repite el distintivo de destacada en la tarjeta', function () {
+    // Siete de las nueve fichas están marcadas como destacadas: el distintivo
+    // no distingue nada y partía la fila de formato y rubro en dos líneas.
+    $html = $this->get('/plantillas')->getContent();
+
+    expect($html)->not->toContain('plt-card__destacada');
+});
+
 it('filtra por categoría y por búsqueda sin romper la página', function () {
     $salud = CatalogoPlantillas::filtrar('salud');
     $todas = CatalogoPlantillas::todas();
@@ -138,14 +166,35 @@ it('marca el formato de cada plantilla y lo pinta en la tarjeta', function () {
     // etiqueta cuando se agregue una plantilla nueva.
     expect(array_sum(array_column($tipos, 'total')))->toBe(count($plantillas));
 
+    // La tarjeta nombra los tres formatos igual que su hashtag, pero sin la
+    // almohadilla: Landing, SitioWeb y Tienda.
+    foreach ($tipos as $tipo) {
+        expect($tipo['etiqueta'])->toBe(ltrim($tipo['hashtag'], '#'));
+        expect($tipo['etiqueta'])->toBeIn(['Landing', 'SitioWeb', 'Tienda']);
+    }
+
     $html = $this->get('/plantillas')->getContent();
 
     // Una etiqueta de formato por tarjeta.
     expect(substr_count($html, 'plt-tipo'))->toBe(count($plantillas));
 
     foreach ($plantillas as $plantilla) {
-        expect($html)->toContain($plantilla['tipo_hashtag']);
+        expect($plantilla['tipo_etiqueta'])->toBe(ltrim($plantilla['tipo_hashtag'], '#'));
+
+        // En la tarjeta no se cuela la almohadilla del buscador.
+        expect($html)->not->toContain($plantilla['tipo_hashtag']);
     }
+
+    // Y los tres formatos se ven en el catálogo: la tienda no se disfraza de
+    // sitio web.
+    foreach (['Landing', 'SitioWeb', 'Tienda'] as $etiqueta) {
+        expect($html)->toContain('>'.$etiqueta.'</li>');
+    }
+
+    // Y la etiqueta va en la fila que está encima de los botones, no antes del
+    // nombre: el título abre el cuerpo de la tarjeta.
+    expect(strpos($html, 'plt-card__nombre'))->toBeLessThan(strpos($html, 'plt-card__etiquetas'));
+    expect($html)->not->toContain('plt-card__chips');
 });
 
 it('explica el formato en la ficha, no solo lo nombra', function () {
@@ -186,7 +235,11 @@ it('compila su hoja de estilos sin declarar clases del sitio', function () {
     // —misma especificidad y más al final— y rompe el comportamiento responsivo
     // del navbar y del pie: así desapareció el menú de escritorio cuando el
     // archivo reemitía `.hidden` y le ganaba al `.lg\:flex` corporativo.
-    preg_match_all('/([^{}]+)\{/', $css, $bloques);
+    // Los comentarios no son selectores: sus comas y comillas no cuentan (el
+    // texto explicativo de las reglas nuevas usa las dos cosas).
+    $sinComentarios = preg_replace('!/\*.*?\*/!s', '', $css);
+
+    preg_match_all('/([^{}]+)\{/', $sinComentarios, $bloques);
 
     $ajenas = [];
 

@@ -1,0 +1,3300 @@
+/* =============================================
+   ARACODE SMART SOLUTIONS — Website V2
+   Custom styles & animations
+   ============================================= */
+
+/* Google Fonts - Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* =============================================
+   Base & Reset
+   ============================================= */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    color: #1E293B;
+    background-color: #ffffff;
+}
+
+/* =============================================
+   Escala tipográfica compartida
+
+   Servicios es la referencia del sitio: título de sección 30/36/48 px según
+   el ancho (text-3xl / sm:text-4xl / lg:text-5xl), bajada 18 px, título de
+   tarjeta 20 px, texto 16 px y etiquetas 12 px. Las secciones que no se
+   maquetaron con Tailwind toman estos valores para no quedar más chicas que
+   el resto.
+   ============================================= */
+:root {
+    --ara-titulo-seccion: 1.875rem;   /* 30 px */
+    --ara-bajada: 1.125rem;           /* 18 px */
+    --ara-titulo-tarjeta: 1.25rem;    /* 20 px */
+    --ara-texto: 1rem;                /* 16 px */
+    --ara-etiqueta: 0.75rem;          /* 12 px */
+}
+
+@media (min-width: 640px) {
+    :root {
+        --ara-titulo-seccion: 2.25rem; /* 36 px */
+    }
+}
+
+@media (min-width: 1024px) {
+    :root {
+        --ara-titulo-seccion: 3rem;    /* 48 px */
+    }
+}
+
+/* =============================================
+   Scrollbar
+   ============================================= */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #060E2D;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #0188EE;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #016bc4;
+}
+
+/* =============================================
+   Selection
+   ============================================= */
+::selection {
+    background-color: #0188EE;
+    color: #ffffff;
+}
+
+/* =============================================
+   Animations - Intersection Observer
+   ============================================= */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-left.revealed {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-right.revealed {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.reveal-scale {
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-scale.revealed {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Staggered delays */
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-delay-5 { transition-delay: 0.5s; }
+.reveal-delay-6 { transition-delay: 0.6s; }
+.reveal-delay-7 { transition-delay: 0.7s; }
+
+/* =============================================
+   Navbar
+   ============================================= */
+.ara-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 1rem 0;
+    transition: all 0.3s ease;
+}
+
+.ara-nav.scrolled {
+    background: rgba(6, 14, 45, 0.95);
+    backdrop-filter: blur(12px);
+    padding: 0.75rem 0;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+}
+
+.ara-nav .nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.ara-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: #0188EE;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.ara-nav .nav-link:hover {
+    color: #ffffff;
+}
+
+.ara-nav .nav-link:hover::after {
+    width: 60%;
+}
+
+.ara-nav .nav-link.active {
+    color: #ffffff;
+    background: rgba(1, 136, 238, 0.15);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+}
+
+.ara-nav .nav-link.active::after {
+    width: 60%;
+    background: #0188EE;
+    height: 3px;
+}
+
+/* Mobile menu */
+.ara-mobile-menu {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    height: 100vh;
+    background: #060E2D;
+    z-index: 9999;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    padding: 5rem 2rem 2rem;
+}
+
+.ara-mobile-menu.active {
+    right: 0;
+}
+
+.ara-mobile-menu .nav-link {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.25rem;
+    font-weight: 500;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: block;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.ara-mobile-menu .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 1.5rem;
+    width: 0;
+    height: 3px;
+    background: #0188EE;
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+
+.ara-mobile-menu .nav-link:hover {
+    color: #0188EE;
+}
+
+.ara-mobile-menu .nav-link.active {
+    color: #ffffff;
+    background: rgba(1, 136, 238, 0.15);
+    border-radius: 0.5rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+.ara-mobile-menu .nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    background: #00b4d8;
+    border-radius: 2px;
+}
+
+/* =============================================
+   Hero
+   ============================================= */
+.ara-hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #060E2D 0%, #0c1a40 50%, #060E2D 100%);
+    overflow: hidden;
+}
+
+.ara-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(1, 136, 238, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.ara-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(78, 174, 51, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* Geometric grid pattern */
+.ara-hero-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(rgba(1, 136, 238, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(1, 136, 238, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+}
+
+/* Hero Particles Canvas */
+.ara-hero-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+
+/* Floating orbs */
+.ara-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+    animation: float 6s ease-in-out infinite;
+}
+
+.ara-orb-blue {
+    background: rgba(1, 136, 238, 0.2);
+}
+
+.ara-orb-green {
+    background: rgba(78, 174, 51, 0.15);
+    animation-delay: -3s;
+}
+
+/* =============================================
+   Buttons
+   ============================================= */
+.ara-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    gap: 0.5rem;
+}
+
+.ara-btn-primary {
+    background: #0188EE;
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(1, 136, 238, 0.3);
+}
+
+.ara-btn-primary:hover {
+    background: #016bc4;
+    box-shadow: 0 6px 20px rgba(1, 136, 238, 0.4);
+    transform: translateY(-2px);
+}
+
+.ara-btn-secondary {
+    background: transparent;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.ara-btn-secondary:hover {
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.ara-btn-ghost {
+    background: transparent;
+    color: #0188EE;
+    border: 1px solid #0188EE;
+}
+
+.ara-btn-ghost:hover {
+    background: #0188EE;
+    color: #ffffff;
+}
+
+.ara-btn-green {
+    background: #4EAE33;
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(78, 174, 51, 0.3);
+}
+
+.ara-btn-green:hover {
+    background: #3d8b29;
+    box-shadow: 0 6px 20px rgba(78, 174, 51, 0.4);
+    transform: translateY(-2px);
+}
+
+.ara-btn-lg {
+    padding: 1rem 2.5rem;
+    font-size: 1rem;
+}
+
+.ara-btn-sm {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+}
+
+/* =============================================
+   Cards
+   ============================================= */
+.ara-card {
+    background: #ffffff;
+    border-radius: 1rem;
+    padding: 2rem;
+    border: 1px solid #E8ECF1;
+    transition: all 0.3s ease;
+}
+
+.ara-card:hover {
+    border-color: #0188EE;
+    box-shadow: 0 10px 40px rgba(1, 136, 238, 0.1);
+    transform: translateY(-4px);
+}
+
+.ara-card-dark {
+    background: rgba(6, 14, 45, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ara-card-dark:hover {
+    border-color: rgba(1, 136, 238, 0.5);
+    background: rgba(6, 14, 45, 0.7);
+}
+
+/* =============================================
+   Product Cards (catálogo de /soluciones y home)
+   ---------------------------------------------------------------
+   La imagen diseñada de cada producto es lo primero que se ve: ocupa la
+   parte superior de la tarjeta, entera, con su proporción reservada y SIN
+   veladuras encima. Debajo, sobre el navy de la tarjeta, va el texto
+   escaneable (categoría, nombre, resumen y enlace).
+
+   Antes la imagen era el fondo de toda la tarjeta y dos degradados navy (uno
+   del 60 % al 92 % y otro del 55 %) la cubrían para que el texto se pudiera
+   leer: el diseño apenas se apreciaba y todo se leía mal.
+
+   El ALTO de la franja lo pone la imagen de cada producto: la tarjeta le pasa
+   su proporción en `--ara-product-media-ratio` (la mide ProporcionImagen, en
+   app/Support) y así la franja queda pegada al diseño, sin banda de relleno y
+   sin salto al cargarla. Esta variable es la que se usa cuando no hay imagen
+   —los servicios— o cuando la proporción no se puede medir.
+   ============================================= */
+.ara-product-card {
+    --ara-product-media-ratio: 4 / 3;
+
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    background: linear-gradient(160deg, #0A1740 0%, #060E2D 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 40px rgba(6, 14, 45, 0.25);
+    transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+.ara-product-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(1, 136, 238, 0.45);
+    box-shadow: 0 20px 55px rgba(1, 136, 238, 0.18);
+}
+
+/* --- Imagen del producto ---
+   El diseño se ve ENTERO. Los diseños del ecosistema no comparten proporción
+   —s1, s3 y s4 son cuadrados (1:1) y s2 es panorámico (2:1)—, así que una
+   franja de proporción fija solo puede enseñarlos todos recortando: con
+   `cover`, la franja 16/9 de antes se comía el 44 % del alto de los cuadrados y
+   los laterales del panorámico (ese recorte lo medía, en números,
+   storage/tmp/revisar-tarjetas-ecosistema.mjs). Con `contain` entra el diseño
+   completo, sin tocar el archivo; y las franjas que sobran las rellena el
+   propio diseño desenfocado (el `::before`), no un navy vacío.
+
+   Y el relleno tampoco es el caso normal: cuando la proporción se mide bien, la
+   franja mide exactamente la imagen y no sobra nada. El relleno está para el
+   respaldo (imagen que no se puede medir) y para las franjas de los servicios,
+   que ya llevan su degradado. */
+.ara-product-card .ara-product-media {
+    position: relative;
+    aspect-ratio: var(--ara-product-media-ratio);
+    overflow: hidden;
+    background: #081130;
+    flex-shrink: 0;
+}
+
+/* Relleno de las franjas sobrantes: el mismo diseño, ampliado y desenfocado,
+   detrás de la imagen. Solo se ve cuando la franja NO mide como su imagen (no
+   se pudo medir el archivo), y sin él ese hueco quedaría en navy liso, que se
+   leería como un descuadre. La URL entra por `--ara-product-media-bg`, que pone
+   la tarjeta; sin imagen (la variante de servicios) no llega y no se pinta. */
+.ara-product-card .ara-product-media::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--ara-product-media-bg, none);
+    background-size: cover;
+    background-position: center;
+    filter: blur(16px);
+    /* El desenfoque aclara los bordes: se amplía para que no asome el corte. */
+    transform: scale(1.12);
+    opacity: 0.55;
+    transition: opacity 0.4s ease;
+}
+
+.ara-product-card .ara-product-media img {
+    /* Por encima del relleno desenfocado. */
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    transition: filter 0.4s ease;
+}
+
+/* Foco al pasar el ratón. Antes la imagen se ampliaba (`scale`) y con `contain`
+   esa ampliación volvía a recortar el diseño por los cuatro lados —lo que se
+   acaba de corregir—. Ahora se ilumina, y el relleno gana presencia: se nota el
+   foco sin comerse un píxel del diseño. */
+.ara-product-card:hover .ara-product-media img {
+    filter: brightness(1.07) saturate(1.05);
+}
+
+.ara-product-card:hover .ara-product-media::before {
+    opacity: 0.75;
+}
+
+/* Categoría sobre la imagen. Fondo sólido a propósito: los .ara-badge son
+   traslúcidos (pensados para el navy de la página) y sobre un diseño con
+   colores propios no siempre se leerían. */
+.ara-product-card .ara-product-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 9999px;
+    background: rgba(6, 14, 45, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+.ara-product-card .ara-product-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4EAE33;
+}
+
+/* --- Texto --- */
+.ara-product-card .ara-product-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 1.75rem 1.75rem 2rem;
+}
+
+.ara-product-card .ara-product-title {
+    margin: 0 0 1.25rem;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.ara-product-card .ara-product-text {
+    margin: 0 0 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.ara-product-card .ara-product-features {
+    list-style: none;
+    margin: 0 0 1.75rem;
+    padding: 0;
+    display: grid;
+    gap: 0.65rem;
+}
+
+.ara-product-card .ara-product-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.ara-product-card .ara-product-features svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+    color: #4EAE33;
+}
+
+/* El enlace se ancla abajo: las tarjetas de una misma fila lo alinean aunque
+   unas listen más prestaciones que otras. */
+.ara-product-card .ara-product-cta {
+    margin-top: auto;
+    align-self: flex-start;
+}
+
+.ara-product-card .ara-product-cta svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* --- Variante compacta (home y /soluciones): tarjeta chica, pensada para
+       rejillas de tres por fila. El producto se resume con su frase corta en
+       vez de con la lista de prestaciones, que alargaba las tarjetas. --- */
+.ara-product-card--compacta .ara-product-content {
+    padding: 1.35rem 1.35rem 1.5rem;
+}
+
+.ara-product-card--compacta .ara-product-title {
+    margin-bottom: 0.7rem;
+    font-size: 1.3rem;
+}
+
+.ara-product-card--compacta .ara-product-text {
+    margin-bottom: 1.35rem;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+/* --- Variante sin imagen (servicios): la franja superior lleva un degradado
+       y el icono del servicio, para conservar la proporción y la alineación
+       de la fila de tarjetas. --- */
+.ara-product-card--plano .ara-product-media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Los servicios no llevan diseño que rellenar: la franja ya es el degradado. */
+.ara-product-card--plano .ara-product-media::before {
+    content: none;
+}
+
+.ara-product-card--plano .ara-product-media--azul {
+    background: linear-gradient(135deg, #0A1740 0%, #0188EE 100%);
+}
+
+.ara-product-card--plano .ara-product-media--verde {
+    background: linear-gradient(135deg, #0A1740 0%, #4EAE33 100%);
+}
+
+/* Morado: el tercer color de la casa (el mismo del bloque de Desarrollo a Medida
+   en /precios). Separa el servicio de publicación de plantillas de los otros dos
+   servicios, que ya tienen su degradado. */
+.ara-product-card--plano .ara-product-media--morado {
+    background: linear-gradient(135deg, #0A1740 0%, #7C3AED 100%);
+}
+
+.ara-product-card--plano .ara-product-media svg {
+    width: 4.5rem;
+    height: 4.5rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* =============================================
+   Service Icons
+   ============================================= */
+.ara-icon-box {
+    width: 64px;
+    height: 64px;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(1, 136, 238, 0.1);
+    color: #0188EE;
+    transition: all 0.3s ease;
+}
+
+.ara-icon-box:hover {
+    background: #0188EE;
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+.ara-icon-box-green {
+    background: rgba(78, 174, 51, 0.1);
+    color: #4EAE33;
+}
+
+.ara-icon-box-green:hover {
+    background: #4EAE33;
+    color: #ffffff;
+}
+
+/* =============================================
+   Stats Counter
+   ============================================= */
+.ara-stat {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.ara-stat-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #0188EE;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.ara-stat-label {
+    font-size: 0.9rem;
+    color: #64748B;
+    font-weight: 500;
+}
+
+/* =============================================
+   CTA Section
+   ============================================= */
+.ara-cta {
+    background: linear-gradient(135deg, #060E2D 0%, #0c1a40 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.ara-cta::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(1, 136, 238, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* =============================================
+   Footer
+   ============================================= */
+.ara-footer {
+    background: #060E2D;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.ara-footer a {
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.3s ease;
+    text-decoration: none;
+}
+
+.ara-footer a:hover {
+    color: #0188EE;
+}
+
+.ara-footer-link {
+    display: block;
+    padding: 0.375rem 0;
+    font-size: 0.9rem;
+}
+
+/* =============================================
+   Client Logos
+   ============================================= */
+.ara-clients-track {
+    display: flex;
+    animation: scroll 30s linear infinite;
+}
+
+.ara-client-logo {
+    filter: grayscale(100%);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.dark .ara-client-logo {
+    filter: brightness(0) invert(1);
+    opacity: 0.7;
+}
+
+.dark .ara-client-logo:hover {
+    filter: brightness(0) invert(1) drop-shadow(0 0 6px rgba(1, 136, 238, 0.3));
+    opacity: 1;
+}
+
+/* Dark: Empresa client cards */
+.dark #clientes .border {
+    border-color: #334155 !important;
+}
+
+.dark #clientes .border:hover {
+    border-color: rgba(1, 136, 238, 0.4) !important;
+}
+
+.ara-client-logo:hover {
+    filter: grayscale(0%);
+    opacity: 1;
+}
+
+@keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* =============================================
+   Feature Item
+   ============================================= */
+.ara-feature {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.ara-feature::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #0188EE;
+}
+
+/* =============================================
+   Form Styles
+   ============================================= */
+.ara-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 1px solid #CBD2DC;
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+}
+
+.ara-input:focus {
+    outline: none;
+    border-color: #0188EE;
+    box-shadow: 0 0 0 3px rgba(1, 136, 238, 0.1);
+}
+
+.ara-input::placeholder {
+    color: #9DA6B4;
+}
+
+.ara-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* =============================================
+   Trampa antispam
+   ---------------------------------------------------------------
+   El campo «website» del formulario de contacto (el modal de asesoría y la
+   página /contacto). Se saca de la pantalla en vez de usar display:none: hay
+   bots que ignoran los campos con type="hidden" y los que no se ven, pero
+   siguen rellenando los que están en el HTML. Nunca debe ser alcanzable con
+   el teclado (lleva tabindex="-1" en el HTML).
+   ============================================= */
+.ara-trampa {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* =============================================
+   Modal de asesoría
+   ---------------------------------------------------------------
+   El formulario de /contacto, pero sin salir de la página: los botones
+   «Solicitar Asesoría» (ver components/v2/asesoria-modal.blade.php) lo abren
+   encima del contenido. Los campos son los mismos .ara-input, así que el
+   formulario se ve igual dentro del modal que en su página, y el panel se
+   desplaza por dentro cuando no cabe en la pantalla.
+   ============================================= */
+.ara-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+/* El atributo `hidden` manda: sin esta regla lo taparía el display del modal y
+   quedaría siempre abierto. */
+.ara-modal[hidden] {
+    display: none;
+}
+
+.ara-modal-fondo {
+    position: absolute;
+    inset: 0;
+    background: rgba(6, 14, 45, 0.75);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+.ara-modal-ventana {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 32rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    padding: 2rem;
+    border-radius: 1.5rem;
+    background: #ffffff;
+    box-shadow: 0 30px 80px rgba(6, 14, 45, 0.45);
+    animation: ara-modal-entrada 0.25s ease;
+}
+
+@keyframes ara-modal-entrada {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ara-modal-cerrar {
+    position: absolute;
+    top: 0.9rem;
+    right: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    color: #64748B;
+    background: rgba(100, 116, 139, 0.1);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ara-modal-cerrar:hover {
+    color: #0F172A;
+    background: rgba(100, 116, 139, 0.2);
+}
+
+.ara-modal-cerrar svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.ara-modal-titulo {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    line-height: 1.25;
+    font-weight: 700;
+    color: #0A1740;
+}
+
+.ara-modal-ayuda {
+    margin: 0 0 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: #64748B;
+}
+
+.ara-modal-campos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.ara-modal-ancho {
+    grid-column: 1 / -1;
+}
+
+.ara-modal-etiqueta {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.ara-modal-error {
+    margin: 1rem 0 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid #FECACA;
+    border-radius: 0.75rem;
+    background: #FEF2F2;
+    color: #B91C1C;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.ara-modal-error[hidden] {
+    display: none;
+}
+
+.ara-modal-error p {
+    margin: 0.35rem 0 0;
+}
+
+.ara-modal-captcha {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.ara-modal-enviar {
+    width: 100%;
+    justify-content: center;
+    margin-top: 1.25rem;
+}
+
+.ara-modal-enviar-icono {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Salida rápida del modal: WhatsApp con el mensaje que ya está escrito en el
+   formulario. Va debajo del botón de enviar, en tono discreto para que no
+   compita con él. */
+.ara-modal-wa {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem 0.5rem;
+    margin: 1rem 0 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #64748B;
+}
+
+.ara-modal-wa__enlace {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    color: #128C4A;
+    text-decoration: none;
+}
+
+.ara-modal-wa__enlace:hover {
+    text-decoration: underline;
+}
+
+.ara-modal-wa__enlace svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+.dark .ara-modal-wa {
+    color: #94A3B8;
+}
+
+.dark .ara-modal-wa__enlace {
+    color: #4ADE80;
+}
+
+.ara-modal-exito {
+    padding-top: 1rem;
+    text-align: center;
+}
+
+.ara-modal-exito[hidden] {
+    display: none;
+}
+
+.ara-modal-exito svg {
+    width: 3.5rem;
+    height: 3.5rem;
+    margin: 0 auto 1rem;
+    color: #4EAE33;
+}
+
+.ara-modal-exito h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    color: #0A1740;
+}
+
+.ara-modal-exito p {
+    margin: 0 0 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: #64748B;
+}
+
+/* Modo oscuro: el panel sigue al tema del sitio. Los .ara-input ya traen su
+   propia versión oscura, así que aquí solo se oscurece el marco y los textos. */
+.dark .ara-modal-ventana {
+    background: #0F172A;
+}
+
+.dark .ara-modal-titulo,
+.dark .ara-modal-exito h3 {
+    color: #F1F5F9;
+}
+
+.dark .ara-modal-ayuda,
+.dark .ara-modal-exito p {
+    color: #94A3B8;
+}
+
+.dark .ara-modal-etiqueta {
+    color: #CBD5E1;
+}
+
+.dark .ara-modal-cerrar {
+    color: #CBD5E1;
+    background: rgba(148, 163, 184, 0.14);
+}
+
+.dark .ara-modal-cerrar:hover {
+    color: #FFFFFF;
+    background: rgba(148, 163, 184, 0.24);
+}
+
+.dark .ara-modal-error {
+    border-color: #7F1D1D;
+    background: rgba(127, 29, 29, 0.25);
+    color: #FCA5A5;
+}
+
+/* En pantallas estrechas los campos se apilan: el panel mide 32rem y dos
+   columnas dejarían los campos demasiado juntos. */
+@media (max-width: 640px) {
+    .ara-modal {
+        padding: 0.75rem;
+    }
+
+    .ara-modal-ventana {
+        padding: 1.5rem 1.25rem;
+        max-height: calc(100vh - 1.5rem);
+    }
+
+    .ara-modal-campos {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* =============================================
+   Badge
+   ============================================= */
+.ara-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ara-badge-blue {
+    background: rgba(1, 136, 238, 0.1);
+    color: #0188EE;
+}
+
+.ara-badge-green {
+    background: rgba(78, 174, 51, 0.1);
+    color: #4EAE33;
+}
+
+/* =============================================
+   Section Divider
+   ============================================= */
+.ara-divider {
+    width: 60px;
+    height: 3px;
+    background: #0188EE;
+    border-radius: 2px;
+    margin: 1rem 0;
+}
+
+.ara-divider-green {
+    background: #4EAE33;
+}
+
+/* =============================================
+   Responsive Adjustments
+   ============================================= */
+@media (max-width: 768px) {
+    .ara-hero {
+        min-height: auto;
+        padding-top: 6rem;
+        padding-bottom: 3rem;
+    }
+
+    .ara-stat-number {
+        font-size: 2rem;
+    }
+
+    /* En móvil la tarjeta es más estrecha: la imagen gana proporción para
+       que el diseño se siga apreciando. */
+    .ara-product-card {
+        --ara-product-media-ratio: 3 / 2;
+    }
+
+    .ara-product-card .ara-product-content {
+        padding: 1.5rem;
+    }
+
+    .ara-product-card .ara-product-title {
+        font-size: 1.5rem;
+    }
+}
+
+/* =============================================
+   Utility Classes
+   ============================================= */
+.text-gradient {
+    background: linear-gradient(135deg, #0188EE 0%, #4EAE33 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.bg-grid {
+    background-image: 
+        linear-gradient(rgba(1, 136, 238, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(1, 136, 238, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+/* =============================================
+   Dark Mode Toggle
+   ============================================= */
+.ara-theme-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.ara-theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    transform: rotate(15deg);
+}
+
+.ara-theme-toggle svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+}
+
+.ara-theme-toggle .icon-moon {
+    display: block;
+}
+
+.ara-theme-toggle .icon-sun {
+    display: none;
+}
+
+.dark .ara-theme-toggle .icon-moon {
+    display: none;
+}
+
+.dark .ara-theme-toggle .icon-sun {
+    display: block;
+}
+
+/* =============================================
+   Dark Mode Styles
+   ============================================= */
+.dark body,
+.dark {
+    color: #e2e8f0;
+    background-color: #0f172a;
+}
+
+/* Dark: Cards */
+.dark .ara-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.dark .ara-card:hover {
+    border-color: #0188EE;
+    box-shadow: 0 10px 40px rgba(1, 136, 238, 0.15);
+}
+
+/* Dark: Sections */
+.dark .bg-white {
+    background-color: #0f172a;
+}
+
+.dark .bg-ara-slate-50 {
+    background-color: #1e293b;
+}
+
+.dark .bg-ara-navy {
+    background-color: #020817;
+}
+
+/* Dark: Text */
+.dark .text-ara-slate-700 {
+    color: #f1f5f9;
+}
+
+.dark .text-ara-slate-500 {
+    color: #94a3b8;
+}
+
+.dark .text-ara-slate-400 {
+    color: #94a3b8;
+}
+
+.dark .text-ara-slate-300 {
+    color: #64748b;
+}
+
+/* Dark: Borders */
+.dark .border-ara-slate-100 {
+    border-color: #1e293b;
+}
+
+.dark .border-t.border-ara-slate-100 {
+    border-color: #1e293b;
+}
+
+/* Dark: Inputs */
+.dark .ara-input {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.dark .ara-input:focus {
+    border-color: #0188EE;
+    box-shadow: 0 0 0 3px rgba(1, 136, 238, 0.2);
+}
+
+.dark .ara-input::placeholder {
+    color: #64748b;
+}
+
+/* Dark: Badges */
+.dark .ara-badge-blue {
+    background: rgba(1, 136, 238, 0.2);
+    color: #38bdf8;
+}
+
+.dark .ara-badge-green {
+    background: rgba(78, 174, 51, 0.2);
+    color: #4ade80;
+}
+
+/* Dark: Hero orbs */
+.dark .ara-orb-blue {
+    background: rgba(1, 136, 238, 0.25);
+}
+
+.dark .ara-orb-green {
+    background: rgba(78, 174, 51, 0.2);
+}
+
+/* Dark: Clients section */
+.dark .bg-ara-slate-50.border-y.border-ara-slate-100 {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+/* Dark: Stats section */
+.dark .bg-white.border-y.border-ara-slate-100 {
+    background-color: #0f172a;
+    border-color: #1e293b;
+}
+
+/* Dark: Prose */
+.dark .prose {
+    color: #cbd5e1;
+}
+
+.dark .prose h1, .dark .prose h2, .dark .prose h3,
+.dark .prose h4, .dark .prose h5, .dark .prose h6 {
+    color: #f1f5f9;
+}
+
+.dark .prose a {
+    color: #38bdf8;
+}
+
+.dark .prose strong {
+    color: #f1f5f9;
+}
+
+.dark .prose img {
+    border-radius: 0.75rem;
+}
+
+/* Dark: Blog cards */
+.dark .ara-card .ara-badge {
+    background: rgba(1, 136, 238, 0.25);
+}
+
+/* Dark: Category filter */
+.dark .bg-white.border-b.border-ara-slate-100 {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+/* Blog category tabs */
+.blog-category-tabs a {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 9999px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.blog-category-tabs a:not(.active-tab) {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.blog-category-tabs a:not(.active-tab):hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.blog-category-tabs a.active-tab {
+    background: #0188EE;
+    color: #ffffff;
+}
+
+.dark .blog-category-tabs a:not(.active-tab) {
+    background: #334155;
+    color: #94a3b8;
+}
+
+.dark .blog-category-tabs a:not(.active-tab):hover {
+    background: #475569;
+    color: #f1f5f9;
+}
+
+/* Blog sidebar */
+.blog-cat-link {
+    text-decoration: none;
+}
+
+.dark .blog-cat-link {
+    color: #94a3b8;
+}
+
+.dark .blog-cat-link:hover {
+    background: #334155;
+    color: #f1f5f9;
+}
+
+.dark .blog-cat-link span.bg-ara-slate-100 {
+    background: #334155;
+}
+
+/* Dark: Sidebar cards */
+.dark .blog-sidebar-content .ara-card:not(.bg-gradient-to-br) {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+/* Dark: Search input */
+.dark .blog-sidebar-content input[type="text"] {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.dark .blog-sidebar-content input[type="text"]::placeholder {
+    color: #64748b;
+}
+
+.dark .blog-sidebar-content input[type="text"]:focus {
+    border-color: #0188EE;
+}
+
+/* Dark: Newsletter - keeps dark gradient in both modes */
+.ara-card-newsletter {
+    background: linear-gradient(135deg, #060E2D 0%, #0188EE 100%) !important;
+}
+
+/* Newsletter button - always visible */
+.ara-card-newsletter button[type="submit"],
+section form button[type="submit"] {
+    background-color: #ffffff !important;
+    color: #060E2D !important;
+}
+
+.ara-card-newsletter button[type="submit"]:hover,
+section form button[type="submit"]:hover {
+    background-color: #f1f5f9 !important;
+}
+
+/* Mobile sidebar toggle */
+.blog-sidebar-toggle {
+    display: none;
+}
+
+@media (max-width: 1023px) {
+    .blog-sidebar-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 1rem;
+        background: #ffffff;
+        border: 1px solid #E8ECF1;
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .blog-sidebar-toggle:hover {
+        border-color: #0188EE;
+    }
+    
+    .dark .blog-sidebar-toggle {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    
+    .blog-sidebar-content {
+        display: none;
+    }
+    
+    .blog-sidebar-content.active {
+        display: block;
+    }
+}
+
+.dark [class*="bg-ara-slate-50"] {
+    background-color: #1e293b !important;
+}
+
+.dark [class*="bg-white"] {
+    background-color: #0f172a !important;
+}
+
+.dark [class*="border-ara-slate-100"] {
+    border-color: #334155 !important;
+}
+
+.dark [class*="text-ara-slate-700"] {
+    color: #f1f5f9 !important;
+}
+
+.dark [class*="text-ara-slate-500"] {
+    color: #94a3b8 !important;
+}
+
+.dark [class*="text-ara-slate-400"] {
+    color: #94a3b8 !important;
+}
+
+/* Dark: Pricing cards */
+.dark .ring-2.ring-ara-blue {
+    box-shadow: 0 0 0 2px #0188EE, 0 10px 40px rgba(1, 136, 238, 0.2);
+}
+
+/* Dark: Sidebar */
+.dark aside .ara-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+/* Dark: Sidebar links */
+.dark aside .ara-card a span,
+.dark aside .ara-card h4 {
+    color: #e2e8f0;
+}
+
+.dark aside .ara-card .text-ara-slate-400 {
+    color: #94a3b8;
+}
+
+/* Dark: Mobile menu */
+.dark .ara-mobile-menu {
+    background: #020817;
+}
+
+/* Dark: Alert messages */
+.dark .bg-green-50 {
+    background-color: #052e16 !important;
+}
+
+.dark .border-green-200 {
+    border-color: #166534 !important;
+}
+
+.dark .text-green-700 {
+    color: #4ade80 !important;
+}
+
+.dark .bg-red-50 {
+    background-color: #450a0a !important;
+}
+
+.dark .border-red-200 {
+    border-color: #7f1d1d !important;
+}
+
+.dark .text-red-700 {
+    color: #fca5a5 !important;
+}
+
+.dark .text-red-600 {
+    color: #f87171 !important;
+}
+
+/* Dark: Navbar scrolled */
+.dark .ara-nav.scrolled {
+    background: rgba(2, 8, 23, 0.98);
+}
+
+/* Dark: Pagination */
+.dark nav .pagination .active span {
+    background: #0188EE;
+    color: #ffffff;
+}
+
+.dark nav .pagination a {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+.dark nav .pagination a:hover {
+    background: #334155;
+    color: #f1f5f9;
+}
+
+/* Dark: Select */
+.dark select.ara-input {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* =============================================
+   Article Content (Prose styles)
+   ============================================= */
+.prose {
+    color: #334155;
+    line-height: 1.75;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    color: #1e293b;
+    font-weight: 700;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    line-height: 1.3;
+}
+
+.prose h1 { font-size: 2em; }
+.prose h2 { font-size: 1.5em; }
+.prose h3 { font-size: 1.25em; }
+.prose h4 { font-size: 1.125em; }
+
+.prose p {
+    margin-top: 0;
+    margin-bottom: 1em;
+}
+
+.prose a {
+    color: #0188EE;
+    text-decoration: underline;
+}
+
+.prose a:hover {
+    color: #016bc4;
+}
+
+.prose strong {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.prose ul, .prose ol {
+    margin-top: 0.5em;
+    margin-bottom: 1em;
+    padding-left: 1.5em;
+}
+
+.prose ul { list-style-type: disc; }
+.prose ol { list-style-type: decimal; }
+
+.prose li {
+    margin-bottom: 0.5em;
+}
+
+.prose blockquote {
+    border-left: 4px solid #0188EE;
+    padding-left: 1em;
+    margin: 1.5em 0;
+    color: #64748b;
+    font-style: italic;
+}
+
+.prose img {
+    border-radius: 0.75rem;
+    margin: 1.5em 0;
+    max-width: 100%;
+    height: auto;
+}
+
+.prose pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 1em;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1.5em 0;
+}
+
+.prose code {
+    background: #f1f5f9;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+}
+
+.prose pre code {
+    background: transparent;
+    padding: 0;
+}
+
+.prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+}
+
+.prose th, .prose td {
+    border: 1px solid #e2e8f0;
+    padding: 0.75em 1em;
+    text-align: left;
+}
+
+.prose th {
+    background: #f8fafc;
+    font-weight: 600;
+}
+
+/* Dark mode prose */
+.dark .prose {
+    color: #cbd5e1;
+}
+
+.dark .prose h1, .dark .prose h2, .dark .prose h3,
+.dark .prose h4, .dark .prose h5, .dark .prose h6 {
+    color: #f1f5f9;
+}
+
+.dark .prose strong {
+    color: #f1f5f9;
+}
+
+.dark .prose a {
+    color: #38bdf8;
+}
+
+.dark .prose blockquote {
+    color: #94a3b8;
+    border-color: #0188EE;
+}
+
+.dark .prose code {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+.dark .prose pre {
+    background: #0f172a;
+}
+
+.dark .prose th {
+    background: #1e293b;
+}
+
+.dark .prose th, .dark .prose td {
+    border-color: #334155;
+}
+
+/* =============================================
+   Article Sidebar Dark Mode
+   ============================================= */
+
+/* Dark: Newsletter input */
+.dark aside input[type="email"] {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.dark aside input[type="email"]::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.dark aside input[type="email"]:focus {
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+/* Dark: Newsletter button */
+.dark aside .bg-white.text-ara-navy {
+    background: rgba(255, 255, 255, 0.95);
+    color: #060E2D;
+}
+
+.dark aside .bg-white.text-ara-navy:hover {
+    background: #ffffff;
+}
+
+/* Dark: CTA card */
+.dark aside .border-2.border-ara-blue\/20 {
+    background: #1e293b;
+    border-color: rgba(1, 136, 238, 0.3);
+}
+
+.dark aside .border-2.border-ara-blue\/20 .text-ara-slate-700 {
+    color: #f1f5f9;
+}
+
+.dark aside .border-2.border-ara-blue\/20 .text-ara-slate-400 {
+    color: #94a3b8;
+}
+
+/* Dark: Popular articles */
+.dark aside .bg-ara-slate-100 {
+    background: #334155;
+}
+
+.dark aside .line-clamp-2 {
+    color: #e2e8f0;
+}
+
+/* Dark: Categories list */
+.dark aside .hover\:bg-ara-slate-50:hover {
+    background: #334155;
+}
+
+.dark aside .bg-ara-slate-100.text-ara-slate-500 {
+    background: #334155;
+    color: #94a3b8;
+}
+
+/* Dark: Share buttons */
+.dark .bg-ara-slate-100 {
+    background: #334155;
+}
+
+.dark .text-ara-slate-500 {
+    color: #94a3b8;
+}
+
+.dark .hover\:bg-ara-blue:hover {
+    background: #0188EE;
+}
+
+/* Dark: Article meta */
+.dark .flex.items-center.gap-2.text-sm.text-white\/60 {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Dark: Breadcrumb */
+.dark nav.text-sm.text-white\/50 {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Dark: All remaining text fixes */
+.dark .text-ara-slate-600 {
+    color: #94a3b8;
+}
+
+.dark .text-ara-slate-500 {
+    color: #94a3b8;
+}
+
+.dark .bg-ara-slate-50 {
+    background-color: #1e293b;
+}
+
+/* Dark: Article section bg */
+.dark section.bg-white {
+    background-color: #0f172a;
+}
+
+/* Dark: Share section border */
+.dark .border-t.border-ara-slate-100 {
+    border-color: #334155;
+}
+
+
+/* =============================================
+   Scroll-to-Top Button
+   ============================================= */
+.ara-scroll-top {
+    position: fixed;
+    /* Va por encima del botón de WhatsApp, que ocupa la esquina inferior derecha.
+       Se suman los 20px que el botón se desplaza mientras está oculto. */
+    bottom: 7.5rem;
+    right: 2rem;
+    z-index: 999;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #0188EE;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(1, 136, 238, 0.3);
+    border: none;
+}
+.ara-scroll-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+.ara-scroll-top:hover {
+    background: #016bc4;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(1, 136, 238, 0.4);
+}
+.ara-scroll-top svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+}
+.ara-scroll-top:hover svg {
+    transform: rotate(180deg);
+}
+
+/* Scroll Progress Bar */
+.ara-scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0188EE, #4EAE33);
+    z-index: 10000;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+/* Boton flotante de contacto: telefono moderno con resplandor tipo radar */
+.ara-whatsapp-float {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 999;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(140deg, #34e07a 0%, #25D366 48%, #12b76a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(37, 211, 102, 0.35);
+    transition: transform 0.3s ease;
+    text-decoration: none;
+    border: none;
+    animation: ara-phone-glow 2.8s ease-out infinite;
+}
+
+/* Ondas que se expanden desde el boton (efecto radar) */
+.ara-phone-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(37, 211, 102, 0.8);
+    pointer-events: none;
+    animation: ara-radar 2.8s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+}
+.ara-phone-ring:nth-of-type(2) {
+    animation-delay: 1.4s;
+}
+
+/* Icono de telefono (trazo, no relleno) */
+.ara-phone-icon {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ara-whatsapp-float:hover {
+    transform: scale(1.08);
+}
+.ara-whatsapp-float:focus-visible {
+    outline: 3px solid rgba(37, 211, 102, 0.45);
+    outline-offset: 4px;
+}
+
+@keyframes ara-radar {
+    0% { transform: scale(1); opacity: 0.7; }
+    70% { transform: scale(1.9); opacity: 0; }
+    100% { transform: scale(1.9); opacity: 0; }
+}
+@keyframes ara-phone-glow {
+    0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.5), 0 6px 18px rgba(37, 211, 102, 0.35); }
+    70% { box-shadow: 0 0 0 14px rgba(37, 211, 102, 0), 0 6px 18px rgba(37, 211, 102, 0.35); }
+    100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0), 0 6px 18px rgba(37, 211, 102, 0.35); }
+}
+
+/* Accesibilidad: sin animacion si el usuario pide menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+    .ara-whatsapp-float,
+    .ara-phone-ring {
+        animation: none;
+    }
+}
+
+/* Dark mode - scroll buttons */
+.dark .ara-scroll-top {
+    background: rgba(1, 136, 238, 0.9);
+}
+.dark .ara-whatsapp-float {
+    background: linear-gradient(140deg, #34e07a 0%, #25D366 48%, #12b76a 100%);
+}
+
+/* Hide on small mobile if needed */
+@media (max-width: 480px) {
+    .ara-scroll-top {
+        /* Deja libre la esquina para el botón de WhatsApp (incluidos los 20px
+           que se desplaza mientras está oculto). */
+        bottom: 6rem;
+        right: 1rem;
+        width: 44px;
+        height: 44px;
+    }
+    .ara-whatsapp-float {
+        bottom: 1rem;
+        right: 1rem;
+        width: 50px;
+        height: 50px;
+    }
+    .ara-phone-icon {
+        width: 23px;
+        height: 23px;
+    }
+}
+
+/* --- Variante sobrepuesta (home): el diseño del producto ocupa toda la
+       tarjeta y el texto se apoya encima, sobre un velo navy que asegura la
+       lectura. El rubro va en píldora con borde claro y la acción en píldora
+       blanca con el texto en navy, como el botón de la referencia. --- */
+.ara-product-card--sobrepuesta {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    aspect-ratio: 4 / 3;
+    background: #071027;
+    border-color: rgba(6, 14, 45, 0.08);
+    box-shadow: 0 26px 50px -36px rgba(6, 14, 45, 0.55);
+}
+
+.ara-product-card--sobrepuesta:hover {
+    border-color: rgba(1, 136, 238, 0.35);
+    box-shadow: 0 34px 60px -34px rgba(6, 14, 45, 0.6);
+}
+
+.ara-product-card--sobrepuesta .ara-product-media {
+    position: absolute;
+    inset: 0;
+    aspect-ratio: auto;
+    background: #071027;
+}
+
+/* El diseño entra ENTERO: se ajusta dentro de la tarjeta (`contain`) y lo que
+   sobra arriba y abajo lo rellena el propio diseño desenfocado, así no se
+   recorta ningún borde del arte. */
+.ara-product-card--sobrepuesta .ara-product-media::before {
+    opacity: 0.7;
+}
+
+.ara-product-card--sobrepuesta .ara-product-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Pegado al borde superior: el aire que sobra cae abajo, donde lo tapa el
+       pie de texto. */
+    object-position: center top;
+}
+
+/* Velo: limpio arriba para no tapar el diseño, navy abajo para el texto.
+   Va por encima de la imagen (que lleva z-index 1) y por debajo del texto. */
+.ara-product-card--sobrepuesta::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    /* La mitad de arriba queda limpia —sin tinte— y el degradado arranca a la
+       mitad para cerrarse sólido detrás del pie de texto. */
+    background-color: transparent;
+    background-image: linear-gradient(180deg, rgba(6, 14, 45, 0) 48%, rgba(6, 14, 45, 0.5) 62%, rgba(6, 14, 45, 0.92) 80%, #060e2d 94%, #060e2d 100%);
+}
+
+.ara-product-card--sobrepuesta .ara-product-content {
+    position: relative;
+    z-index: 4;
+    flex: 0 0 auto;
+    align-items: flex-start;
+    padding: 1.1rem 1.25rem 1.35rem;
+}
+
+.ara-product-card--sobrepuesta .ara-product-chip {
+    display: inline-block;
+    margin-bottom: 0.6rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    /* Ahora el chip cae en la zona limpia del arte: se oscurece más para que el
+       rubro no dependa de la imagen que tenga detrás. */
+    background: rgba(6, 14, 45, 0.62);
+    color: #ffffff;
+    font-size: var(--ara-etiqueta);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+.ara-product-card--sobrepuesta .ara-product-title {
+    margin: 0 0 0.35rem;
+    font-size: var(--ara-titulo-tarjeta);
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+/* Texto y acción en la misma fila: el botón queda al costado, con el rótulo
+   siempre visible. La fila se reparte sola, así el rótulo puede ser más largo
+   («Solicitar asesoría») sin taparse con la frase. */
+.ara-product-card--sobrepuesta .ara-product-pie {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.ara-product-card--sobrepuesta .ara-product-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    max-width: 34ch;
+    font-size: var(--ara-texto);
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Píldora con el rótulo siempre visible, anclada al borde derecho de la
+   tarjeta. */
+.ara-product-card--sobrepuesta .ara-product-cta {
+    display: inline-flex;
+    align-items: center;
+    /* Un margen apenas negativo acerca la píldora al borde de la tarjeta sin
+       quedar pegada al redondeo. */
+    margin: 0 -0.2rem 0 0;
+    flex: 0 0 auto;
+    gap: 0.45rem;
+    height: 2.6rem;
+    padding: 0 0.85rem;
+    border-radius: 9999px;
+    background: #ffffff;
+    color: #0b1b3f;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.25s ease, gap 0.25s ease;
+}
+
+.ara-product-card--sobrepuesta .ara-product-cta:hover,
+.ara-product-card--sobrepuesta .ara-product-cta:focus-visible {
+    gap: 0.5rem;
+    background: #e8f1fb;
+}
+
+.ara-product-card--sobrepuesta .ara-product-cta svg {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+}
+
+
+/* En pantallas estrechas el botón vuelve a su sitio, debajo del texto: no hay
+   ancho para la píldora al costado. */
+@media (max-width: 640px) {
+    .ara-product-card--sobrepuesta .ara-product-pie {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .ara-product-card--sobrepuesta .ara-product-text {
+        max-width: none;
+    }
+
+    .ara-product-card--sobrepuesta .ara-product-cta {
+        margin: 0.9rem 0 0;
+    }
+}
+
+/* --- Propuesta de valor: ventajas en pestañas con panel visual -------------
+   Cuatro ventajas numeradas. La activa abre su descripción y cambia el panel
+   de la derecha (imagen, chip y contador). La lista es un `tablist` vertical
+   que se maneja con flechas, Inicio y Fin (public/js/aracode-evolucion.js).
+   Sin JavaScript queda abierta la primera ventaja. ------------------------- */
+/* El padding horizontal lo pone el container del marcado (`px-4 sm:px-6
+   lg:px-8`), igual que en servicios y productos: aquí solo va el vertical. */
+.ara-valor {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(3.5rem, 7vw, 6.5rem) 0;
+    background:
+        radial-gradient(120% 90% at 88% 0%, #0d2049 0%, rgba(6, 14, 45, 0) 58%),
+        linear-gradient(160deg, #060e2d 0%, #081231 55%, #060e2d 100%);
+    color: #fff;
+}
+
+/* Dos halos suaves: azul arriba a la derecha, verde abajo a la izquierda. */
+.ara-valor::before,
+.ara-valor::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    pointer-events: none;
+}
+
+.ara-valor::before {
+    width: 26rem;
+    height: 26rem;
+    top: -10rem;
+    right: -6rem;
+    background: rgba(1, 136, 238, 0.18);
+}
+
+.ara-valor::after {
+    width: 20rem;
+    height: 20rem;
+    bottom: -9rem;
+    left: -6rem;
+    background: rgba(37, 211, 102, 0.12);
+}
+
+.ara-valor__envoltura {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: center;
+}
+
+.ara-valor__ceja {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: var(--ara-etiqueta);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #5eb0ff;
+}
+
+.ara-valor__ceja::before {
+    content: '';
+    width: 28px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #0188ee, #25d366);
+}
+
+.ara-valor__titulo {
+    margin: 1.1rem 0 0.9rem;
+    font-size: var(--ara-titulo-seccion);
+    font-weight: 800;
+    line-height: 1.06;
+    letter-spacing: -0.03em;
+    color: #fff;
+}
+
+.ara-valor__bajada {
+    max-width: 34rem;
+    margin: 0 0 2.4rem;
+    font-size: var(--ara-bajada);
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.68);
+}
+
+.ara-valor__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.ara-valor__tab {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.95rem;
+    width: 100%;
+    padding: 0.95rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.ara-valor__tab:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.ara-valor__tab:focus-visible {
+    outline: 2px solid #5eb0ff;
+    outline-offset: 2px;
+}
+
+.ara-valor__tab[aria-selected='true'] {
+    align-items: start;
+    background: linear-gradient(90deg, rgba(1, 136, 238, 0.16), rgba(1, 136, 238, 0.02));
+    border-color: rgba(94, 176, 255, 0.28);
+    box-shadow: inset 2px 0 0 #0188ee;
+}
+
+/* Con la descripción abierta, número e icono acompañan al título arriba. */
+.ara-valor__tab[aria-selected='true'] .ara-valor__num,
+.ara-valor__tab[aria-selected='true'] .ara-valor__icono {
+    margin-top: 0.1rem;
+}
+
+.ara-valor__num {
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.35);
+    transition: color 0.25s ease;
+}
+
+.ara-valor__tab[aria-selected='true'] .ara-valor__num {
+    color: #5eb0ff;
+}
+
+.ara-valor__icono {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.68);
+    transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.ara-valor__icono svg {
+    width: 19px;
+    height: 19px;
+}
+
+.ara-valor__tab[aria-selected='true'] .ara-valor__icono {
+    border-color: rgba(94, 176, 255, 0.45);
+    background: rgba(1, 136, 238, 0.22);
+    color: #d6ecff;
+}
+
+.ara-valor__tab-texto {
+    min-width: 0;
+}
+
+.ara-valor__tab-titulo {
+    display: block;
+    font-size: var(--ara-titulo-tarjeta);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+/* Solo se lee la descripción de la ventaja activa; el resto sigue en el
+   documento para los lectores de pantalla. */
+.ara-valor__desc {
+    display: block;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    font-size: var(--ara-texto);
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.7);
+    transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.3s ease;
+}
+
+.ara-valor__tab[aria-selected='true'] .ara-valor__desc {
+    /* Holgura para el texto a 16 px: en móvil la descripción ocupa seis
+       líneas y con 9rem se recortaba la última. */
+    max-height: 16rem;
+    margin-top: 0.4rem;
+    opacity: 1;
+}
+
+.ara-valor__flecha {
+    width: 16px;
+    height: 16px;
+    color: rgba(255, 255, 255, 0.3);
+    transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.ara-valor__tab[aria-selected='true'] .ara-valor__flecha {
+    color: #5eb0ff;
+    transform: translateX(3px);
+}
+
+.ara-valor__panel {
+    position: relative;
+    aspect-ratio: 5 / 4;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid rgba(94, 176, 255, 0.22);
+    background: #071229;
+    box-shadow: 0 40px 80px -50px rgba(1, 8, 30, 0.9);
+}
+
+.ara-valor__panel img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transform: scale(1.03);
+    transition: opacity 0.5s ease, transform 6s ease;
+}
+
+.ara-valor__panel img.is-activa {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Velo inferior: el pie del panel se lee sobre cualquier imagen. */
+.ara-valor__panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(6, 14, 45, 0) 42%, rgba(6, 14, 45, 0.55) 68%, #060e2d 96%);
+}
+
+.ara-valor__pie {
+    position: absolute;
+    inset: auto 0 0 0;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.4rem 1.5rem;
+}
+
+.ara-valor__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.38rem 0.8rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(6, 14, 45, 0.55);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    font-size: var(--ara-etiqueta);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.ara-valor__chip b {
+    font-weight: 800;
+    color: #5eb0ff;
+}
+
+.ara-valor__contador {
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.14em;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+/* Tablet y móvil: panel arriba, lista debajo; los halos se achican. */
+@media (max-width: 900px) {
+    .ara-valor__envoltura {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ara-valor__panel {
+        order: -1;
+        aspect-ratio: 16 / 10;
+    }
+
+    .ara-valor__bajada {
+        margin-bottom: 1.75rem;
+    }
+
+    .ara-valor::before,
+    .ara-valor::after {
+        width: 18rem;
+        height: 18rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .ara-valor {
+        padding: 3rem 0 3.5rem;
+    }
+
+    .ara-valor__tab {
+        gap: 0.75rem;
+        padding: 0.85rem 0.75rem;
+    }
+
+    .ara-valor__panel {
+        border-radius: 18px;
+    }
+
+    .ara-valor__pie {
+        padding: 1rem 1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ara-valor__tab,
+    .ara-valor__desc,
+    .ara-valor__flecha,
+    .ara-valor__num,
+    .ara-valor__icono,
+    .ara-valor__panel img {
+        transition: none;
+    }
+}
+
+/* --- Cómo trabajamos: los cuatro pasos del proceso ------------------------
+   Reemplaza la franja de cifras. va sobre blanco para separar la sección de
+   valor (navy) del CTA final (navy): los pasos son tarjetas claras, unidas
+   por una línea fina, y el cierre lleva la única llamada a la acción, que
+   abre el modal de asesoría. --------------------------------------------- */
+/* Igual que `.ara-valor`: el ancho y el padding lateral los pone el container
+   de Tailwind del marcado (`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8`). */
+.ara-proceso {
+    padding: clamp(3.5rem, 7vw, 6rem) 0;
+    background: #fff;
+}
+
+.ara-proceso__ceja {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: var(--ara-etiqueta);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #0188ee;
+}
+
+.ara-proceso__ceja::before {
+    content: '';
+    width: 28px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #0188ee, #25d366);
+}
+
+.ara-proceso__titulo {
+    margin: 1.1rem 0 0.9rem;
+    font-size: var(--ara-titulo-seccion);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    color: #0b1b3f;
+}
+
+.ara-proceso__bajada {
+    max-width: 44rem;
+    margin: 0 0 2.5rem;
+    font-size: var(--ara-bajada);
+    line-height: 1.65;
+    color: #5b6b8c;
+}
+
+/* La línea que une los pasos la dibuja cada tarjeta por la derecha; la
+   última no la lleva. */
+.ara-proceso__pasos {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ara-proceso__paso {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 1.4rem 1.25rem 1.5rem;
+    border: 1px solid #e2e9f4;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 18px 40px -34px rgba(6, 14, 45, 0.5);
+}
+
+.ara-proceso__paso::after {
+    content: '';
+    position: absolute;
+    top: 2.9rem;
+    right: -1rem;
+    width: 1rem;
+    height: 2px;
+    background: #d6e2f2;
+}
+
+.ara-proceso__paso:last-child::after {
+    display: none;
+}
+
+.ara-proceso__num {
+    display: inline-grid;
+    place-items: center;
+    align-self: flex-start;
+    width: 34px;
+    height: 34px;
+    margin-bottom: 0.9rem;
+    border-radius: 11px;
+    background: rgba(1, 136, 238, 0.1);
+    color: #0188ee;
+    font-size: 0.78rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.ara-proceso__paso-titulo {
+    margin: 0 0 0.4rem;
+    font-size: var(--ara-titulo-tarjeta);
+    font-weight: 700;
+    line-height: 1.3;
+    color: #0b1b3f;
+}
+
+/* `flex: 1` empuja la etiqueta al pie: las cuatro quedan alineadas aunque
+   los textos midan distinto. */
+.ara-proceso__paso-texto {
+    flex: 1 1 auto;
+    margin: 0 0 0.9rem;
+    font-size: var(--ara-texto);
+    line-height: 1.55;
+    color: #5b6b8c;
+}
+
+.ara-proceso__chip {
+    align-self: flex-start;
+    padding: 0.28rem 0.65rem;
+    border-radius: 9999px;
+    background: #f1f6fd;
+    font-size: var(--ara-etiqueta);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #1d5f9e;
+}
+
+.ara-proceso__cierre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.9rem 1.5rem;
+    margin-top: 1.75rem;
+    padding: 1.1rem 1.35rem;
+    border: 1px solid #e2e9f4;
+    border-radius: 16px;
+    background: #f7faff;
+}
+
+.ara-proceso__cierre-texto {
+    margin: 0;
+    font-size: var(--ara-texto);
+    line-height: 1.5;
+    color: #5b6b8c;
+}
+
+.ara-proceso__cierre-texto strong {
+    color: #0b1b3f;
+}
+
+.ara-proceso__btn {
+    margin-left: auto;
+    padding: 0.8rem 1.4rem;
+    border-radius: 9999px;
+    background: linear-gradient(100deg, #0188ee, #0aa0ff);
+    font-size: 0.88rem;
+    font-weight: 700;
+    box-shadow: 0 14px 30px -18px rgba(1, 136, 238, 0.8);
+}
+
+.ara-proceso__btn:hover {
+    background: linear-gradient(100deg, #0aa0ff, #0188ee);
+    transform: translateY(-1px);
+}
+
+.ara-proceso__btn:focus-visible {
+    outline: 2px solid #0188ee;
+    outline-offset: 3px;
+}
+
+/* Tablet: dos por fila y sin conector, que a dos columnas no significa nada. */
+@media (max-width: 1024px) {
+    .ara-proceso__pasos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ara-proceso__paso::after {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .ara-proceso {
+        padding: 3rem 0 3.5rem;
+    }
+
+    .ara-proceso__pasos {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ara-proceso__btn {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ara-proceso__btn {
+        transition: none;
+    }
+}
+
+/* --- Sobre la empresa (/empresa) ------------------------------------------
+   Dos columnas que arrancan a la misma altura: el texto a la izquierda y la
+   foto recortada a un cuadrado a la derecha. Antes el bloque se centraba
+   contra una foto vertical y sobraba medio lienzo vacío; además el subtítulo
+   llevaba el margen de 64 px del componente de cabecera, que aquí solo abría
+   un hueco. ----------------------------------------------------------------- */
+.ara-about {
+    /* Si alguien llega por el ancla #nosotros, el titular no queda debajo de
+       la barra pegajosa. */
+    scroll-margin-top: 6rem;
+    padding: clamp(3.5rem, 6vw, 5.5rem) 0 clamp(3rem, 5vw, 4.5rem);
+    background: #fff;
+}
+
+.ara-about__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    gap: clamp(2rem, 4.5vw, 4rem);
+    /* Las dos columnas miden lo mismo: el dibujo no trae alto propio, lo toma
+       del contenido de la izquierda. */
+    align-items: stretch;
+}
+
+.ara-about__titulo {
+    max-width: 22ch;
+    margin: 0 0 1.1rem;
+    font-size: var(--ara-titulo-seccion);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: #0b1b3f;
+}
+
+.ara-about__lead {
+    max-width: 52ch;
+    margin: 0 0 1rem;
+    font-size: var(--ara-bajada);
+    line-height: 1.6;
+    color: #43536f;
+}
+
+.ara-about__parrafo {
+    max-width: 62ch;
+    margin: 0 0 2rem;
+    font-size: var(--ara-texto);
+    line-height: 1.7;
+    color: #5b6b8c;
+}
+
+/* Cuatro pilares en dos por dos: se leen como atributos de la empresa, no
+   como una lista de promesas en imperativo. */
+.ara-about__pilares {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 1.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ara-about__pilar {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.ara-about__pilar-icono {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(1, 136, 238, 0.09);
+    color: #0188ee;
+}
+
+.ara-about__pilar-icono svg {
+    width: 18px;
+    height: 18px;
+}
+
+.ara-about__pilar-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.ara-about__pilar-texto strong {
+    font-size: var(--ara-texto);
+    font-weight: 700;
+    line-height: 1.35;
+    color: #0b1b3f;
+}
+
+.ara-about__pilar-texto span {
+    font-size: var(--ara-texto);
+    line-height: 1.55;
+    color: #5b6b8c;
+}
+
+.ara-about__enlace {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 2rem;
+    font-size: var(--ara-texto);
+    font-weight: 600;
+    color: #0188ee;
+    text-decoration: none;
+    transition: gap 0.2s ease, color 0.2s ease;
+}
+
+.ara-about__enlace svg {
+    width: 18px;
+    height: 18px;
+}
+
+.ara-about__enlace:hover {
+    gap: 0.7rem;
+    color: #016bc4;
+}
+
+.ara-about__enlace:focus-visible {
+    outline: 2px solid #0188ee;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.ara-about__media {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+/* Lienzo del proceso: dibujo propio en lugar de la foto. Tres etapas
+   encadenadas —entra el dato, la IA lo clasifica, sale el documento— sobre un
+   navy plano con retícula tenue. Las etapas se encienden en orden desde
+   public/js/aracode-evolucion.js; el punto verde que viaja entre ellas y el
+   latido de la cabecera son CSS. El 4/5 iguala la altura de la columna de
+   texto. */
+.ara-flujo {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    /* Sin proporción fija: crece hasta la altura de la columna de texto. */
+    flex: 1 1 auto;
+    gap: 1.3rem;
+    width: 100%;
+    padding: 1.4rem 1.3rem 1.5rem;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid rgba(94, 176, 255, 0.18);
+    background: #081231;
+}
+
+.ara-flujo::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(148, 180, 255, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 180, 255, 0.055) 1px, transparent 1px);
+    background-size: 30px 30px;
+    pointer-events: none;
+}
+
+.ara-flujo > * {
+    position: relative;
+    z-index: 1;
+}
+
+.ara-flujo__cabecera {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--ara-etiqueta);
+    line-height: 1.4;
+    color: rgba(214, 234, 255, 0.6);
+}
+
+.ara-flujo__punto {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #25d366;
+    animation: araFlujoLatido 2.4s ease-in-out infinite;
+}
+
+.ara-flujo__titulo {
+    font-weight: 600;
+    color: rgba(226, 240, 255, 0.92);
+}
+
+.ara-flujo__marca {
+    margin-left: auto;
+    letter-spacing: 0.04em;
+    color: rgba(94, 176, 255, 0.85);
+}
+
+.ara-flujo__pasos {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    /* El hueco entre etapas deja sitio al conector y al punto que viaja; el
+       conector mide lo mismo que el hueco. */
+    gap: 2.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ara-flujo__paso {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.95rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #0e1f45;
+    transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+.ara-flujo__paso.is-activo {
+    border-color: rgba(94, 176, 255, 0.45);
+    background: #12294f;
+}
+
+/* Conector vertical entre etapas. */
+.ara-flujo__paso:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 1.95rem;
+    top: calc(100% + 2px);
+    width: 2px;
+    height: 2.1rem;
+    background: rgba(94, 176, 255, 0.28);
+}
+
+/* Punto que recorre el conector. */
+.ara-flujo__paso:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 1.6rem;
+    top: calc(100% + 2px);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #25d366;
+    animation: araFlujoViaje 2.4s ease-in-out infinite;
+}
+
+.ara-flujo__icono {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(214, 234, 255, 0.68);
+    transition: background 0.35s ease, color 0.35s ease;
+}
+
+.ara-flujo__icono svg {
+    width: 18px;
+    height: 18px;
+}
+
+.ara-flujo__paso.is-activo .ara-flujo__icono {
+    background: rgba(1, 136, 238, 0.28);
+    color: #c7e6ff;
+}
+
+.ara-flujo__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.ara-flujo__etapa {
+    font-size: var(--ara-etiqueta);
+    color: rgba(214, 234, 255, 0.55);
+}
+
+.ara-flujo__nombre {
+    font-size: var(--ara-texto);
+    font-weight: 700;
+    line-height: 1.3;
+    color: #fff;
+}
+
+.ara-flujo__nota {
+    /* Un respiro más respecto a la última etapa: pegada se leía como parte
+       de ella. */
+    margin: 0.4rem 0 0;
+    font-size: var(--ara-etiqueta);
+    line-height: 1.5;
+    color: rgba(214, 234, 255, 0.45);
+}
+
+@keyframes araFlujoLatido {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+}
+
+@keyframes araFlujoViaje {
+    0% { transform: translateY(0); opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(2.1rem); opacity: 0; }
+}
+
+.ara-about__pie {
+    margin-top: 0.85rem;
+    font-size: 0.875rem;
+    color: #5b6b8c;
+}
+
+@media (max-width: 1023px) {
+    .ara-about__grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* En una columna no hay hermano con el que igualar: el lienzo mide lo que
+       mide su contenido. */
+    .ara-flujo {
+        flex: 0 0 auto;
+    }
+}
+
+@media (max-width: 640px) {
+    .ara-about {
+        padding: 3rem 0 3.5rem;
+    }
+
+    .ara-about__pilares {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ara-flujo {
+        gap: 1.1rem;
+    }
+
+    .ara-flujo__pasos {
+        flex: 0 0 auto;
+        gap: 2.1rem;
+    }
+
+}
+
+/* En 360 la cabecera del diagrama quedaba al límite: el título y la marca se
+   tocaban. La marca es un adorno; el título, no. */
+@media (max-width: 420px) {
+    .ara-flujo__marca {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ara-about__enlace {
+        transition: none;
+    }
+
+    /* Sin movimiento, el diagrama queda quieto con la primera etapa marcada:
+       el recorrido se sigue leyendo en el texto. */
+    .ara-flujo__punto,
+    .ara-flujo__paso::before {
+        animation: none;
+    }
+
+    .ara-flujo__paso::before {
+        display: none;
+    }
+}
+
+/* --- Misión y visión (/empresa) -------------------------------------------
+   La sección no tenía titular: iba directo a dos tarjetas sobre gris. Ahora
+   abre con su cabecera, y las tarjetas toman la escala del sitio (título de
+   tarjeta 20 px, texto 16) con un icono de 44 px en vez de 64, que en móvil
+   dejaba la tarjeta innecesariamente alta. ---------------------------------- */
+.ara-mv {
+    /* Si alguien llega por el ancla #mision, el titular no queda debajo de la
+       barra pegajosa. */
+    scroll-margin-top: 6rem;
+    padding: clamp(3.5rem, 6vw, 5.5rem) 0;
+    background: #f5f7fa;
+}
+
+.ara-mv__titulo {
+    margin: 0 0 0.8rem;
+    font-size: var(--ara-titulo-seccion);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: #0b1b3f;
+}
+
+.ara-mv__lead {
+    max-width: 44rem;
+    margin: 0 0 clamp(2rem, 4vw, 2.75rem);
+    font-size: var(--ara-bajada);
+    line-height: 1.6;
+    color: #43536f;
+}
+
+.ara-mv__rejilla {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.25rem, 3vw, 2rem);
+}
+
+.ara-mv__tarjeta {
+    display: flex;
+    flex-direction: column;
+    padding: clamp(1.5rem, 3vw, 2rem);
+    border-radius: 20px;
+    border: 1px solid #e4eaf3;
+    background: #fff;
+}
+
+.ara-mv__icono {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 1.1rem;
+    border-radius: 12px;
+    background: rgba(1, 136, 238, 0.1);
+    color: #0188ee;
+}
+
+.ara-mv__icono--verde {
+    background: rgba(78, 174, 51, 0.12);
+    color: #3d8b29;
+}
+
+.ara-mv__icono svg {
+    width: 22px;
+    height: 22px;
+}
+
+.ara-mv__nombre {
+    margin: 0 0 0.6rem;
+    font-size: var(--ara-titulo-tarjeta);
+    font-weight: 700;
+    line-height: 1.3;
+    color: #0b1b3f;
+}
+
+.ara-mv__texto {
+    margin: 0;
+    font-size: var(--ara-texto);
+    line-height: 1.7;
+    color: #5b6b8c;
+}
+
+/* En móvil las tarjetas van una debajo de otra, con el texto en una columna
+   cómoda de leer. */
+@media (max-width: 767px) {
+    .ara-mv {
+        padding: 3rem 0 3.5rem;
+    }
+
+    .ara-mv__rejilla {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

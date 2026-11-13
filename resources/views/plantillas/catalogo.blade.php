@@ -103,33 +103,18 @@
             </div>
         </section>
 
-        {{-- ===================== CATEGORÍAS Y REJILLA ===================== --}}
-        <section class="py-12 lg:py-16 bg-white">
+        {{-- ===================== CATEGORÍAS Y REJILLA =====================
+             Orden: primero qué se está viendo (titular y recuento), después los
+             filtros y al final la rejilla. Antes los chips iban por delante del
+             titular y sin aire debajo: ocho píldoras seguidas, pegadas al h2,
+             se leían como un bloque amontonado y no se distinguía qué filtraba
+             de qué resultaba.
+        --}}
+        <section class="plt-catalogo">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {{-- Categorías: enlaces, no botones: son URLs compartibles --}}
-                <ul class="plt-categorias mb-10 reveal">
-                    <li>
-                        <a href="{{ route('plantillas.catalogo', array_filter(['q' => $busqueda])) }}"
-                           class="plt-chip {{ $categoria === '' ? 'is-activa' : '' }}">
-                            Todas
-                            <span class="plt-chip__num">{{ $total }}</span>
-                        </a>
-                    </li>
-
-                    @foreach ($categorias as $slug => $datos)
-                        <li>
-                            <a href="{{ route('plantillas.catalogo', array_filter(['categoria' => $slug, 'q' => $busqueda])) }}"
-                               class="plt-chip {{ $categoria === $slug ? 'is-activa' : '' }}">
-                                {{ $datos['nombre'] }}
-                                <span class="plt-chip__num">{{ $datos['total'] }}</span>
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-
                 {{-- Encabezado de resultados: dice qué se está viendo --}}
-                <div class="mb-8">
-                    <h2 class="text-2xl lg:text-3xl font-bold text-ara-slate-700">
+                <header class="plt-catalogo__cabecera reveal">
+                    <h2 class="plt-catalogo__titulo">
                         @if ($categoriaActual !== null)
                             Plantillas de {{ $categoriaActual['nombre'] }}
                         @elseif ($busqueda !== '')
@@ -139,7 +124,7 @@
                         @endif
                     </h2>
 
-                    <p class="mt-2 text-ara-slate-400">
+                    <p class="plt-catalogo__meta">
                         @if ($conteo === 1)
                             Una plantilla disponible
                         @else
@@ -148,14 +133,37 @@
                         @if ($categoriaActual !== null && $categoriaActual['descripcion'] !== '')
                             · {{ $categoriaActual['descripcion'] }}
                         @endif
+                        @if ($categoria !== '' || $busqueda !== '')
+                            · <a href="{{ route('plantillas.catalogo') }}" class="plt-catalogo__limpiar">Quitar los filtros</a>
+                        @endif
                     </p>
+                </header>
 
-                    @if ($categoria !== '' || $busqueda !== '')
-                        <a href="{{ route('plantillas.catalogo') }}"
-                           class="inline-block mt-3 text-sm font-semibold text-ara-blue hover:underline">
-                            Quitar los filtros
-                        </a>
-                    @endif
+                {{-- Categorías: enlaces, no botones: son URLs compartibles.
+                     En móvil la fila se desplaza en horizontal —una sola línea—
+                     en vez de apilarse en cuatro. --}}
+                <div class="plt-filtros reveal">
+                    <span class="plt-filtros__etiqueta" id="plt-filtros-etiqueta">Rubro</span>
+
+                    <ul class="plt-categorias" aria-labelledby="plt-filtros-etiqueta">
+                        <li>
+                            <a href="{{ route('plantillas.catalogo', array_filter(['q' => $busqueda])) }}"
+                               class="plt-chip {{ $categoria === '' ? 'is-activa' : '' }}">
+                                Todas
+                                <span class="plt-chip__num">{{ $total }}</span>
+                            </a>
+                        </li>
+
+                        @foreach ($categorias as $slug => $datos)
+                            <li>
+                                <a href="{{ route('plantillas.catalogo', array_filter(['categoria' => $slug, 'q' => $busqueda])) }}"
+                                   class="plt-chip {{ $categoria === $slug ? 'is-activa' : '' }}">
+                                    {{ $datos['nombre'] }}
+                                    <span class="plt-chip__num">{{ $datos['total'] }}</span>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
                 </div>
 
                 <div class="plt-rejilla">

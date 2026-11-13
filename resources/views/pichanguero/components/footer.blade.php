@@ -5,8 +5,9 @@
             {{-- Marca --}}
             <div class="lg:col-span-2">
                 <a href="{{ route('pichanguero.home') }}" class="inline-flex items-center">
+                    {{-- Al pie de la página: se carga al bajar, no con el hero. --}}
                     <img src="{{ asset('themes/pichanguero/images/Logo-vertical.png') }}" alt="Pichanguero"
-                         class="pg-brand-mark" width="260" height="48">
+                         class="pg-brand-mark" width="260" height="48" loading="lazy" decoding="async">
                 </a>
                 <p class="mt-5 max-w-md text-sm leading-relaxed text-pg-muted">
                     Plataforma para organizar campeonatos de fútbol: fixture automático, tabla de posiciones,

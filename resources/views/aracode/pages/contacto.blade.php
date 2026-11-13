@@ -95,6 +95,7 @@
                                 <option value="kapta" {{ old('service') == 'kapta' ? 'selected' : '' }}>KAPTA LMS</option>
                                 <option value="facturacion" {{ old('service') == 'facturacion' ? 'selected' : '' }}>Facturación Electrónica</option>
                                 <option value="desarrollo" {{ old('service') == 'desarrollo' ? 'selected' : '' }}>Desarrollo a Medida</option>
+                                <option value="web" {{ old('service') == 'web' ? 'selected' : '' }}>Páginas web y plantillas</option>
                                 <option value="automatizacion" {{ old('service') == 'automatizacion' ? 'selected' : '' }}>Automatización de Procesos</option>
                                 <option value="consultoria" {{ old('service') == 'consultoria' ? 'selected' : '' }}>Consultoría Tecnológica</option>
                                 <option value="otro" {{ old('service') == 'otro' ? 'selected' : '' }}>Otro</option>

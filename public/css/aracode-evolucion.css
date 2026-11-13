@@ -754,7 +754,7 @@
 .ara-hero p {
     max-width: 31rem;
     margin-bottom: 1.75rem;
-    font-size: 1rem;
+    font-size: var(--ara-bajada);
     line-height: 1.65;
     color: rgba(226, 236, 255, .72);
 }
@@ -951,7 +951,7 @@
     display: inline-flex;
     align-items: center;
     gap: .75rem;
-    font-size: .72rem;
+    font-size: var(--ara-etiqueta);
     font-weight: 600;
     letter-spacing: .18em;
     text-transform: uppercase;
@@ -967,7 +967,7 @@
 
 .ara-cta-auto__titulo {
     margin: 1rem 0 1rem;
-    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-size: var(--ara-titulo-seccion);
     font-weight: 800;
     line-height: 1.08;
     letter-spacing: -.03em;
@@ -984,7 +984,8 @@
 .ara-cta-auto__lead {
     max-width: 34rem;
     margin: 0 auto 2rem;
-    line-height: 1.6;
+    font-size: var(--ara-bajada);
+    line-height: 1.65;
     color: rgba(255, 255, 255, .72);
 }
 
