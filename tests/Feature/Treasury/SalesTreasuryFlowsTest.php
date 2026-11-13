@@ -2,9 +2,12 @@
 
 namespace Tests\Feature\Treasury;
 
+use App\Helpers\Invoice\Documents\LowCommunication;
 use App\Models\Bank;
 use App\Models\BankAccount;
+use App\Models\Expense;
 use App\Models\PaymentMethod;
+use App\Models\PettyCash;
 use App\Models\Sale;
 use App\Models\SaleDocument;
 use App\Models\SaleDocumentType;
@@ -13,10 +16,14 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Modules\Sales\Entities\SaleDocumentQuota;
+use Modules\Sales\Entities\SaleLowcoDetail;
+use Modules\Sales\Entities\SaleLowCommunication;
 use Modules\Sales\Entities\SalePaymentSchedule;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasurySourceMovement;
 use Modules\Treasury\Entities\TreasuryTransaction;
+use Modules\Treasury\Services\TreasuryCashService;
+use Modules\Treasury\Services\TreasuryHooks;
 use Modules\Treasury\Services\TreasuryLedgerService;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
@@ -67,6 +74,24 @@ class SalesTreasuryFlowsTest extends TestCase
         );
         $this->assertSame(118.0, $this->balance());
         $this->assertOnlyOneProcessedIncomeMovement('sale_income');
+    }
+
+    public function test_comprobante_al_contado_sin_medio_de_pago_es_rechazado(): void
+    {
+        $this->grantPermissions(['invo_documento_nuevo']);
+
+        $response = $this->postJson(route('saledocuments_store'), $this->documentPayload([
+            'total' => 118,
+            'forma_pago' => 'Contado',
+            'payments' => [['type' => null, 'amount' => 118, 'reference' => null]],
+        ]));
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['payments.0.type']);
+
+        // No se crea nada: sin medio de pago no hay venta ni movimiento.
+        $this->assertSame(0, SaleDocument::query()->count());
+        $this->assertSame(0, TreasuryTransaction::query()->count());
     }
 
     public function test_flujo_venta_al_credito_con_cuota_inicial_por_transferencia(): void
@@ -199,6 +224,322 @@ class SalesTreasuryFlowsTest extends TestCase
         $this->assertSame(TreasurySourceMovement::STATUS_PROCESSED, $bridge->status);
         $this->assertSame('installment_payment', $bridge->operation);
         $this->assertSame(TreasurySourceMovement::SOURCE_SALE_SCHEDULE_DESTINATION, $bridge->source_type);
+    }
+
+    public function test_anulacion_de_boleta_revierte_el_ingreso_y_registra_el_motivo(): void
+    {
+        $this->grantPermissions(['invo_documento_nuevo', 'invo_documento_anular']);
+        $this->ensureCompanyForInvoiceHelpers();
+
+        $this->postJson(route('saledocuments_store'), $this->documentPayload([
+            'total' => 118,
+            'forma_pago' => 'Contado',
+            'payments' => [['type' => $this->method->id, 'amount' => 118, 'reference' => 'TRF-ANUL']],
+        ]))->assertOk();
+
+        $document = SaleDocument::query()->orderByDesc('id')->firstOrFail();
+        $this->assertSame(118.0, $this->balance());
+
+        $this->postJson(route('saledocuments_cancel_document'), [
+            'id' => $document->id,
+            'type' => '03',
+            'reason' => 'Error en los datos del cliente',
+        ])->assertOk();
+
+        $this->assertSame('Anulada', $document->refresh()->invoice_status);
+        $this->assertSame('Error en los datos del cliente', $document->reason_cancellation);
+        $this->assertSame(0.0, $this->balance());
+        $this->assertSame(0, TreasuryTransaction::query()->active()->count());
+
+        $reversal = TreasurySourceMovement::query()
+            ->where('operation', 'sale_income_reversal')
+            ->firstOrFail();
+
+        $this->assertSame(TreasurySourceMovement::STATUS_PROCESSED, $reversal->status);
+        $this->assertStringContainsString('Anulación local (boleta no informada a SUNAT)', (string) $reversal->description);
+        $this->assertStringContainsString('Error en los datos del cliente', (string) $reversal->description);
+    }
+
+    public function test_baja_aceptada_por_sunat_revierte_el_ingreso_y_registra_el_motivo(): void
+    {
+        $this->grantPermissions(['invo_documento_nuevo']);
+        $this->ensureCompanyForInvoiceHelpers();
+
+        $this->postJson(route('saledocuments_store'), $this->documentPayload([
+            'total' => 118,
+            'forma_pago' => 'Contado',
+            'payments' => [['type' => $this->method->id, 'amount' => 118, 'reference' => 'TRF-BAJA']],
+        ]))->assertOk();
+
+        $document = SaleDocument::query()->orderByDesc('id')->firstOrFail();
+
+        $low = SaleLowCommunication::create([
+            'generation_date' => now()->toDateTimeString(),
+            'communication_date' => now()->toDateTimeString(),
+            'status' => 'registrado',
+            'user_id' => $this->user->id,
+        ]);
+
+        SaleLowcoDetail::create([
+            'document_id' => $document->id,
+            'lowco_id' => $low->id,
+            'model_name' => SaleDocument::class,
+            'invoice_type_doc' => $document->invoice_type_doc,
+            'invoice_serie' => $document->invoice_serie,
+            'invoice_document_name' => $document->invoice_serie.'-'.$document->number,
+            'invoice_correlative' => $document->invoice_correlative,
+            'invoice_description' => 'Error en el RUC del cliente',
+        ]);
+
+        $annulled = app(LowCommunication::class)->annulDocuments($low->id, 'baja-1', 'TICKET-1');
+
+        $this->assertSame(1, $annulled);
+        $this->assertSame('Anulada', $document->refresh()->invoice_status);
+        $this->assertSame('Error en el RUC del cliente', $document->reason_cancellation);
+        $this->assertSame(0.0, $this->balance());
+
+        $reversal = TreasurySourceMovement::query()
+            ->where('operation', 'sale_income_reversal')
+            ->firstOrFail();
+
+        $this->assertStringContainsString('Anulación por comunicación de baja', (string) $reversal->description);
+        $this->assertStringContainsString('Error en el RUC del cliente', (string) $reversal->description);
+    }
+
+    public function test_anular_dos_veces_el_mismo_comprobante_no_duplica_la_reversion(): void
+    {
+        $this->grantPermissions(['invo_documento_nuevo', 'invo_documento_anular']);
+        $this->ensureCompanyForInvoiceHelpers();
+
+        $this->postJson(route('saledocuments_store'), $this->documentPayload([
+            'total' => 118,
+            'forma_pago' => 'Contado',
+            'payments' => [['type' => $this->method->id, 'amount' => 118, 'reference' => 'TRF-2']],
+        ]))->assertOk();
+
+        $document = SaleDocument::query()->orderByDesc('id')->firstOrFail();
+
+        foreach (['Primer motivo', 'Segundo motivo'] as $reason) {
+            $this->postJson(route('saledocuments_cancel_document'), [
+                'id' => $document->id,
+                'type' => '03',
+                'reason' => $reason,
+            ])->assertOk();
+        }
+
+        $this->assertSame(1, TreasurySourceMovement::query()->where('operation', 'sale_income_reversal')->count());
+        $this->assertSame(0.0, $this->balance());
+    }
+
+    public function test_panel_de_efectivo_lista_ventas_en_efectivo_y_egresos(): void
+    {
+        $this->grantPermissions(['treasury_efectivo']);
+
+        $cash = $this->cashMethod();
+
+        $session = PettyCash::create([
+            'user_id' => $this->user->id,
+            'date_opening' => now()->toDateString(),
+            'time_opening' => '08:00:00',
+            'beginning_balance' => 50,
+            'state' => 1,
+            'local_sale_id' => 1,
+            'seller_name' => 'Cajero Prueba',
+        ]);
+
+        Sale::create([
+            'user_id' => $this->user->id,
+            'client_id' => 1,
+            'local_id' => 1,
+            'total' => 40,
+            'advancement' => 40,
+            'total_discount' => 0,
+            'payments' => [['type' => $cash->id, 'amount' => 40, 'reference' => null]],
+            'petty_cash_id' => $session->id,
+            'sale_date' => now()->toDateString(),
+            'physical' => 1,
+            'status' => 1,
+        ]);
+
+        // Venta en efectivo que no quedó asociada a ninguna caja abierta.
+        Sale::create([
+            'user_id' => $this->user->id,
+            'client_id' => 1,
+            'local_id' => 1,
+            'total' => 25,
+            'advancement' => 25,
+            'total_discount' => 0,
+            'payments' => [['type' => $cash->id, 'amount' => 25, 'reference' => null]],
+            'petty_cash_id' => null,
+            'sale_date' => now()->toDateString(),
+            'physical' => 1,
+            'status' => 1,
+        ]);
+
+        Expense::create([
+            'description' => 'Compra de útiles',
+            'document' => 'B001-1',
+            'amount' => 10,
+            'petty_cash_id' => $session->id,
+        ]);
+
+        $panel = app(TreasuryCashService::class)->build(now()->toDateString(), now()->toDateString());
+
+        $this->assertSame(65.0, $panel['totals']['sales']);
+        $this->assertSame(10.0, $panel['totals']['expenses']);
+        $this->assertSame(55.0, $panel['totals']['net']);
+        $this->assertSame(1, $panel['totals']['unsessioned_count']);
+        $this->assertSame(25.0, $panel['totals']['unsessioned']);
+        $this->assertCount(1, $panel['sessions']);
+        $this->assertSame(1, $panel['totals']['sessions']);
+        $this->assertSame(80.0, $panel['sessions'][0]['balance']);
+
+        $this->get(route('treasury_cash_index'))->assertOk();
+    }
+
+    public function test_vinculacion_de_comprobante_ignorado_mueve_el_saldo(): void
+    {
+        $this->grantPermissions(['treasury_cobros_vincular']);
+
+        [$sale, $document] = $this->makeCashSaleFixture(180, $this->cashMethod()->id);
+
+        // El enganche automático deja la fila puente ignorada por ser efectivo.
+        TreasuryHooks::recordSaleIncomes($sale);
+
+        $bridge = TreasurySourceMovement::query()->firstOrFail();
+        $this->assertSame(TreasurySourceMovement::STATUS_IGNORED, $bridge->status);
+
+        $this->post(route('treasury_collections_link'), [
+            'sale_document_id' => $document->id,
+            'treasury_account_id' => $this->account->id,
+            'payment_method_id' => $this->method->id,
+            'reference' => 'VINC-1',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame(TreasurySourceMovement::STATUS_PROCESSED, $bridge->refresh()->status);
+        $this->assertSame(180.0, $this->balance());
+    }
+
+    public function test_vinculacion_de_comprobante_sin_pagos_crea_movimiento_manual(): void
+    {
+        $this->grantPermissions(['treasury_cobros_vincular']);
+
+        [, $document] = $this->makeCashSaleFixture(250, $this->cashMethod()->id, false);
+
+        $this->post(route('treasury_collections_link'), [
+            'sale_document_id' => $document->id,
+            'treasury_account_id' => $this->account->id,
+            'payment_method_id' => $this->method->id,
+        ])->assertSessionHasNoErrors();
+
+        $bridge = TreasurySourceMovement::query()->firstOrFail();
+        $this->assertSame('manual_income', $bridge->operation);
+        $this->assertSame(TreasuryTransaction::SOURCE_MANUAL, $bridge->source);
+        $this->assertSame(250.0, $this->balance());
+    }
+
+    public function test_no_se_puede_vincular_un_comprobante_anulado(): void
+    {
+        $this->grantPermissions(['treasury_cobros_vincular']);
+
+        [, $document] = $this->makeCashSaleFixture(120, $this->cashMethod()->id, false);
+
+        $document->update(['status' => 3]);
+
+        $this->post(route('treasury_collections_link'), [
+            'sale_document_id' => $document->id,
+            'treasury_account_id' => $this->account->id,
+        ])->assertSessionHasErrors('sale_document_id');
+
+        $this->assertSame(0, TreasurySourceMovement::query()->count());
+        $this->assertSame(0.0, $this->balance());
+    }
+
+    public function test_vincular_dos_veces_no_duplica_el_movimiento(): void
+    {
+        $this->grantPermissions(['treasury_cobros_vincular']);
+
+        [, $document] = $this->makeCashSaleFixture(90, $this->cashMethod()->id, false);
+
+        $payload = [
+            'sale_document_id' => $document->id,
+            'treasury_account_id' => $this->account->id,
+            'payment_method_id' => $this->method->id,
+        ];
+
+        $this->post(route('treasury_collections_link'), $payload)->assertSessionHasNoErrors();
+        $this->post(route('treasury_collections_link'), $payload)->assertSessionHasErrors('sale_document_id');
+
+        $this->assertSame(1, TreasuryTransaction::query()->count());
+        $this->assertSame(90.0, $this->balance());
+    }
+
+    /**
+     * Método de pago de efectivo (excluido del libro por configuración).
+     */
+    private function cashMethod(): PaymentMethod
+    {
+        $method = PaymentMethod::query()->where('description', 'Efectivo')->first();
+
+        return $method ?: PaymentMethod::create(['description' => 'Efectivo']);
+    }
+
+    /**
+     * @return array{0: Sale, 1: SaleDocument}
+     */
+    private function makeCashSaleFixture(float $amount, int $methodId, bool $withPayments = true): array
+    {
+        $sale = Sale::create([
+            'user_id' => $this->user->id,
+            'client_id' => 1,
+            'local_id' => 1,
+            'total' => $amount,
+            'advancement' => $amount,
+            'total_discount' => 0,
+            'payments' => $withPayments ? [['type' => $methodId, 'amount' => $amount, 'reference' => null]] : null,
+            'sale_date' => now()->toDateString(),
+            'physical' => 2,
+            'status' => 1,
+        ]);
+
+        $document = SaleDocument::create([
+            'sale_id' => $sale->id,
+            'serie_id' => 1,
+            'number' => '1',
+            'invoice_serie' => 'B002',
+            'invoice_correlative' => '34',
+            'invoice_type_doc' => '03',
+            'invoice_type_currency' => 'PEN',
+            'invoice_broadcast_date' => now()->toDateString(),
+            'forma_pago' => 'Contado',
+            'status' => 1,
+            'invoice_status' => 'Aceptada',
+            'overall_total' => $amount,
+        ]);
+
+        return [$sale, $document];
+    }
+
+    /**
+     * Los helpers de Greenter (Util/Boleta) exigen una empresa con modo demo
+     * para poder construir el comprobante al anularlo.
+     */
+    private function ensureCompanyForInvoiceHelpers(): void
+    {
+        if (DB::table('companies')->exists()) {
+            return;
+        }
+
+        DB::table('companies')->insert([
+            'ruc' => '20000000001',
+            'name' => 'Empresa de prueba',
+            'business_name' => 'Empresa de prueba',
+            'tradename' => 'Prueba',
+            'fiscal_address' => '-',
+            'mode' => 'demo',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     /**

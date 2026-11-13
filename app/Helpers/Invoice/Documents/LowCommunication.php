@@ -13,6 +13,7 @@ use Greenter\Model\Voided\VoidedDetail;
 use Illuminate\Support\Facades\Schema;
 use Modules\Sales\Entities\SaleLowcoDetail;
 use Modules\Sales\Entities\SaleLowCommunication;
+use Modules\Treasury\Services\TreasuryHooks;
 use Throwable;
 
 /**
@@ -284,13 +285,26 @@ class LowCommunication
                 continue;
             }
 
-            SaleDocument::where('id', $documentId)
-                ->update([
-                    'invoice_status' => 'Anulada',
-                    'invoice_response_code' => 0,
-                    'invoice_response_description' => 'Comunicacion de baja '.$voided->communication_name.' Número ticket: '.$ticket,
-                    'reason_cancellation' => $document['invoice_description'] ?? null,
-                ]);
+            $saleDocument = SaleDocument::find($documentId);
+
+            if (! $saleDocument) {
+                continue;
+            }
+
+            $saleDocument->update([
+                'invoice_status' => 'Anulada',
+                'invoice_response_code' => 0,
+                'invoice_response_description' => 'Comunicacion de baja '.$voided->communication_name.' Número ticket: '.$ticket,
+                'reason_cancellation' => $document['invoice_description'] ?? null,
+            ]);
+
+            // Tesorería: la baja aceptada por SUNAT anula el comprobante y sus
+            // ingresos; el motivo queda en la reversión.
+            TreasuryHooks::voidDocumentIncomes(
+                $saleDocument,
+                $document['invoice_description'] ?? null,
+                'Anulación por comunicación de baja'
+            );
 
             $factura->updateStockSale($documentId);
         }

@@ -39,6 +39,8 @@ class PermissionsModuleSeeder extends Seeder
         'treasury_movimientos_eliminar',
         'treasury_conciliacion',
         'treasury_categorias',
+        'treasury_efectivo',
+        'treasury_cobros_vincular',
     ];
 
     /**

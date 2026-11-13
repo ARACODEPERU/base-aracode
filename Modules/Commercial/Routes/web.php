@@ -10,6 +10,7 @@ use Modules\Commercial\Http\Controllers\CommercialNegotiationController;
 use Modules\Commercial\Http\Controllers\CommercialNegotiationProcessController;
 use Modules\Commercial\Http\Controllers\CommercialNegotiationPublicController;
 use Modules\Commercial\Http\Controllers\CommercialNegotiationPaymentController;
+use Modules\Commercial\Http\Controllers\CommercialSaleDocumentController;
 use Modules\Commercial\Http\Controllers\CommercialSettingController;
 
 Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function () {
@@ -126,6 +127,25 @@ Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function ()
     Route::middleware(['middleware' => 'permission:comm_contratos_cronograma'])
         ->post('contracts/{id}/payments/store', [CommercialContractPaymentController::class, 'store'])
         ->name('comm_contracts_payments_store');
+
+    // Emision de facturas o boletas agrupando cuotas pendientes de uno o varios
+    // contratos del cliente. Usa el mismo registro de facturacion electronica.
+    Route::middleware(['middleware' => 'permission:comm_contratos_cronograma'])
+        ->get('documents/create', [CommercialSaleDocumentController::class, 'create'])
+        ->name('comm_sales_documents_create');
+
+    Route::middleware(['middleware' => 'permission:comm_contratos_cronograma'])
+        ->post('documents/clients/search', [CommercialSaleDocumentController::class, 'searchClients'])
+        ->name('comm_sales_documents_clients_search');
+
+    Route::middleware(['middleware' => 'permission:comm_contratos_cronograma'])
+        ->get('documents/clients/{id}/contracts', [CommercialSaleDocumentController::class, 'clientContracts'])
+        ->whereNumber('id')
+        ->name('comm_sales_documents_client_contracts');
+
+    Route::middleware(['middleware' => 'permission:comm_contratos_cronograma'])
+        ->post('documents/store', [CommercialSaleDocumentController::class, 'store'])
+        ->name('comm_sales_documents_store');
 });
 
 Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function () {

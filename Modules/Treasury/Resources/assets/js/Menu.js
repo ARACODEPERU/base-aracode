@@ -3,6 +3,8 @@ import {
     faGauge,
     faBuildingColumns,
     faMoneyCheckDollar,
+    faMoneyBillWave,
+    faLink,
     faScaleBalanced,
     faTags,
 } from "@fortawesome/free-solid-svg-icons";
@@ -34,6 +36,20 @@ const menuTreasury = {
             text: "Movimientos",
             permissions: "treasury_movimientos",
             icom: faMoneyCheckDollar,
+        },
+        {
+            route: route("treasury_cash_index"),
+            status: false,
+            text: "Efectivo",
+            permissions: "treasury_efectivo",
+            icom: faMoneyBillWave,
+        },
+        {
+            route: route("treasury_collections_index"),
+            status: false,
+            text: "Cobros sin cuenta",
+            permissions: "treasury_cobros_vincular",
+            icom: faLink,
         },
         {
             route: route("treasury_reconciliation_index"),

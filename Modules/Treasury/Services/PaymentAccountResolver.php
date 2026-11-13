@@ -70,6 +70,30 @@ class PaymentAccountResolver
     }
 
     /**
+     * Ids de los métodos que no entran al libro (efectivo). El panel de
+     * efectivo usa la misma definición para no divergir del libro.
+     *
+     * @return array<int, int>
+     */
+    public function excludedMethodIds(): array
+    {
+        if (empty($this->excluded)) {
+            return [];
+        }
+
+        return PaymentMethod::query()->get()
+            ->filter(fn (PaymentMethod $method) => in_array(
+                mb_strtolower(trim((string) $method->description)),
+                $this->excluded,
+                true
+            ))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+    }
+
+    /**
      * Cuenta de tesorería de una cuenta bancaria vinculada explícitamente.
      *
      * Exige que la cuenta bancaria exista y esté activa, que la cuenta de

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Sales\Entities\SaleDocumentQuota;
 use Modules\Sales\Entities\SalePaymentQuota;
 use Modules\Sales\Entities\SalePaymentScheduleDestination;
+use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasurySourceMovement;
 use Modules\Treasury\Entities\TreasuryTransaction;
 
@@ -259,6 +260,59 @@ class TreasuryHooks
     }
 
     /**
+     * Registra manualmente el cobro de un comprobante que no generó ninguna
+     * operación (venta creada sin medio de pago) contra una cuenta explícita.
+     *
+     * La cuenta se fija en el movimiento, así que no depende del mapeo del
+     * método de pago. Queda con source "manual" para distinguirlo del
+     * automático y se revierte igual al anular el comprobante.
+     */
+    public static function recordManualDocumentIncome(
+        SaleDocument $document,
+        TreasuryAccount $account,
+        ?int $paymentMethodId = null,
+        ?float $amount = null,
+        ?string $date = null,
+        ?string $reference = null,
+    ): ?TreasurySourceMovement {
+        if (! self::enabled()) {
+            return null;
+        }
+
+        $amount = $amount ?? (float) ($document->overall_total ?: $document->invoice_mto_imp_sale ?: 0);
+
+        if ($amount <= 0) {
+            return null;
+        }
+
+        [$currency, $rate] = app(TreasuryLedgerService::class)->resolveDocumentCurrency($document);
+
+        return self::dispatch(new FinancialMovement(
+            module: TreasurySourceMovement::MODULE_SALES,
+            sourceType: TreasurySourceMovement::SOURCE_SALE_DOCUMENT,
+            sourceId: (int) $document->id,
+            operation: 'manual_income',
+            type: TreasurySourceMovement::TYPE_INCOME,
+            amount: $amount,
+            date: $date ?: ($document->invoice_broadcast_date ?? now()),
+            sourceLine: 0,
+            paymentMethodId: $paymentMethodId,
+            currency: $currency,
+            exchangeRate: $rate,
+            reference: self::withExchangeRateNote($reference, $currency, $rate),
+            description: 'Cobro vinculado manualmente ' . trim((string) $document->invoice_serie . '-' . (string) $document->invoice_correlative),
+            treasuryAccountId: $account->id,
+            userId: auth()->id(),
+            meta: [
+                'sale_id' => $document->sale_id,
+                'document_id' => $document->id,
+                'manual_link' => true,
+            ],
+            source: TreasuryTransaction::SOURCE_MANUAL,
+        ));
+    }
+
+    /**
      * Anula los ingresos de tesorería de una venta anulada y de todo lo
      * cobrado a su nombre (cuotas, cronograma, cuota inicial, pago total).
      */
@@ -329,6 +383,95 @@ class TreasuryHooks
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Anula los ingresos de tesorería de un comprobante anulado (boleta o
+     * factura) y de lo cobrado a su nombre: cuota inicial, pago total y abonos
+     * de cuota. El mecanismo y el motivo quedan en la reversión para auditoría.
+     *
+     * Los cobros del cronograma no se tocan aquí: pertenecen a la venta y no al
+     * comprobante.
+     */
+    public static function voidDocumentIncomes(
+        SaleDocument $document,
+        ?string $reason,
+        string $mechanism = 'Anulación del comprobante',
+    ): void {
+        if (! self::enabled()) {
+            return;
+        }
+
+        try {
+            $service = app(TreasuryIntegrationService::class);
+            $userId = auth()->id();
+            $note = self::reversalReason($mechanism, $reason);
+
+            $service->reverseOrigin(
+                TreasurySourceMovement::MODULE_SALES,
+                TreasurySourceMovement::SOURCE_SALE_DOCUMENT,
+                (int) $document->id,
+                $note,
+                $userId
+            );
+
+            // El cobro al contado se registra contra la venta, no contra el
+            // comprobante: se revierte solo cuando este es el último
+            // comprobante de venta vigente de esa venta.
+            if ($document->sale_id && in_array((string) $document->invoice_type_doc, ['01', '03'], true)) {
+                $otroVigente = SaleDocument::query()
+                    ->where('sale_id', $document->sale_id)
+                    ->whereKeyNot($document->id)
+                    ->whereIn('invoice_type_doc', ['01', '03'])
+                    ->where('status', '!=', 3)
+                    ->exists();
+
+                if (! $otroVigente) {
+                    $service->reverseOrigin(
+                        TreasurySourceMovement::MODULE_SALES,
+                        TreasurySourceMovement::SOURCE_SALE,
+                        (int) $document->sale_id,
+                        $note,
+                        $userId
+                    );
+                }
+            }
+
+            $quotaIds = SaleDocumentQuota::query()
+                ->where('sale_document_id', $document->id)
+                ->pluck('id');
+
+            foreach ($quotaIds as $quotaId) {
+                $paymentIds = SalePaymentQuota::query()
+                    ->where('sale_document_quota_id', $quotaId)
+                    ->pluck('id');
+
+                foreach ($paymentIds as $paymentId) {
+                    $service->reverseOrigin(
+                        TreasurySourceMovement::MODULE_SALES,
+                        TreasurySourceMovement::SOURCE_SALE_PAYMENT_QUOTA,
+                        (int) $paymentId,
+                        $note,
+                        $userId
+                    );
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[Treasury] No se anularon los ingresos del comprobante', [
+                'document_id' => $document->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Motivo legible de la reversión: mecanismo + motivo del usuario.
+     */
+    private static function reversalReason(string $mechanism, ?string $reason): string
+    {
+        $detail = trim((string) $reason);
+
+        return mb_substr(trim($mechanism . ($detail !== '' ? ': ' . $detail : '')), 0, 200);
     }
 
     /**

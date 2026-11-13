@@ -8,7 +8,9 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Treasury\Http\Controllers\TreasuryAccountController;
+use Modules\Treasury\Http\Controllers\TreasuryCashController;
 use Modules\Treasury\Http\Controllers\TreasuryCategoryController;
+use Modules\Treasury\Http\Controllers\TreasuryCollectionLinkController;
 use Modules\Treasury\Http\Controllers\TreasuryDashboardController;
 use Modules\Treasury\Http\Controllers\TreasuryReconciliationController;
 use Modules\Treasury\Http\Controllers\TreasuryTransactionController;
@@ -40,6 +42,18 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('treasury')
         ->post('transactions/update/{id}', [TreasuryTransactionController::class, 'update'])->name('treasury_transactions_update');
     Route::middleware(['middleware' => 'permission:treasury_movimientos_eliminar'])
         ->delete('transactions/destroy/{id}', [TreasuryTransactionController::class, 'destroy'])->name('treasury_transactions_destroy');
+
+    // Efectivo (caja chica, solo lectura)
+    Route::middleware(['middleware' => 'permission:treasury_efectivo'])
+        ->get('cash', [TreasuryCashController::class, 'index'])->name('treasury_cash_index');
+
+    // Cobros sin cuenta: vinculación manual de comprobantes
+    Route::middleware(['middleware' => 'permission:treasury_cobros_vincular'])
+        ->get('collections', [TreasuryCollectionLinkController::class, 'index'])
+        ->name('treasury_collections_index');
+    Route::middleware(['middleware' => 'permission:treasury_cobros_vincular'])
+        ->post('collections/link', [TreasuryCollectionLinkController::class, 'store'])
+        ->name('treasury_collections_link');
 
     // Conciliación manual
     Route::middleware(['middleware' => 'permission:treasury_conciliacion'])

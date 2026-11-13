@@ -197,6 +197,42 @@ class TreasuryIntegrationService
     }
 
     /**
+     * Reasigna una cuenta explícita a una operación que quedó sin registrar
+     * (ignorada o fallida) y la reprocesa.
+     *
+     * Es el camino de la vinculación manual de cobros: el método de pago no
+     * tenía cuenta (efectivo, giro) y el usuario indica dónde entró el dinero.
+     * No duplica: la clave única de la fila puente ya existe. Nunca toca una
+     * operación ya procesada o revertida.
+     */
+    public function assignAccount(
+        TreasurySourceMovement $bridge,
+        TreasuryAccount $account,
+        ?int $userId = null,
+    ): TreasurySourceMovement {
+        if (in_array($bridge->status, [
+            TreasurySourceMovement::STATUS_PROCESSED,
+            TreasurySourceMovement::STATUS_REVERSED,
+        ], true)) {
+            return $bridge;
+        }
+
+        $meta = $bridge->meta ?: [];
+        $meta['assigned_by'] = $userId;
+        $meta['assigned_at'] = now()->toIso8601String();
+        $meta['assigned_from_status'] = $bridge->status;
+
+        $bridge->treasury_account_id = $account->id;
+        $bridge->status = TreasurySourceMovement::STATUS_PENDING;
+        $bridge->error_message = null;
+        $bridge->processed_at = null;
+        $bridge->meta = $meta;
+        $bridge->save();
+
+        return $this->process($bridge);
+    }
+
+    /**
      * Revierte el movimiento original: anula su fila del libro (se conserva con
      * voided_at) y deja una fila puente de reversión enlazada. No crea un
      * segundo ingreso ni permite revertir dos veces.

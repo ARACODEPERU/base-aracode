@@ -211,7 +211,10 @@ class SaleDocumentController extends Controller
             'date_end' => 'required',
             'sale_documenttype_id' => 'required',
             'total' => 'required|numeric|min:0|not_in:0',
-            'payments.*.type' => 'required',
+            // Venta al contado: todo cobro debe declarar un medio de pago real.
+            // Al crédito no se exige porque puede no haber dinero recibido aún.
+            'payments' => 'array',
+            'payments.*.type' => 'nullable|required_if:forma_pago,Contado|exists:payment_methods,id',
             'payments.*.amount' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
             'items.*.quantity' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
             'items.*.unit_price' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
@@ -223,6 +226,10 @@ class SaleDocumentController extends Controller
             'initial_payment.*.amount' => 'required_with:initial_payment|numeric|min:0.01',
             'initial_payment.*.reference' => 'nullable|string|max:255',
         ];
+
+        if ($request->get('forma_pago') === 'Contado') {
+            $rules['payments'] = ['required', 'array', 'min:1'];
+        }
 
         if ($request->get('forma_pago') == 'Credito') {
             $rules['quotas.amounts'] = [
@@ -239,6 +246,10 @@ class SaleDocumentController extends Controller
             'items.*.unit_price.numeric' => 'Solo Numeros',
             'items.*.quantity.numeric' => 'Solo Numeros',
             'items.*.total.required' => 'Ingrese total',
+            'payments.required_if' => 'Seleccione el medio de pago del cobro antes de generar el comprobante.',
+            'payments.min' => 'Seleccione el medio de pago del cobro antes de generar el comprobante.',
+            'payments.*.type.required_if' => 'Seleccione el medio de pago de cada cobro.',
+            'payments.*.type.exists' => 'El medio de pago seleccionado no existe.',
             // --- MENSAJES PERSONALIZADOS PARA LA NUEVA REGLA ---
             'quotas.amounts.required_if' => 'Debe configurar al menos una cuota de pago para la forma de pago "Crédito".',
             'quotas.amounts.min' => 'Debe configurar al menos una cuota de pago para la forma de pago "Crédito".',
@@ -258,7 +269,10 @@ class SaleDocumentController extends Controller
                 // /si no existe una caja abierta para el usuario logueado en la tienda donde inicio session
                 // /se crea una caja para poder hacer la venta
 
-                $local_id = Auth::user()->local_id;
+                // El controlador que invoca puede enviar el local explicito
+                // (por ejemplo un usuario sin local que emite desde Comercial
+                // usando el local de la serie).
+                $local_id = $request->get('local_id') ?: Auth::user()->local_id;
                 $petty_cash = PettyCash::firstOrCreate([
                     'user_id' => Auth::id(),
                     'state' => 1,
@@ -1021,7 +1035,10 @@ class SaleDocumentController extends Controller
                 // /si no existe una caja abierta para el usuario logueado en la tienda donde inicio session
                 // /se crea una caja para poder hacer la venta
 
-                $local_id = Auth::user()->local_id;
+                // El controlador que invoca puede enviar el local explicito
+                // (por ejemplo un usuario sin local que emite desde Comercial
+                // usando el local de la serie).
+                $local_id = $request->get('local_id') ?: Auth::user()->local_id;
                 $petty_cash = PettyCash::firstOrCreate([
                     'user_id' => Auth::id(),
                     'state' => 1,
@@ -1217,6 +1234,13 @@ class SaleDocumentController extends Controller
                 $document->invoice_status = 'Anulada';
                 $document->save();
 
+                // Tesorería: la boleta anulada deja de ser un ingreso.
+                TreasuryHooks::voidDocumentIncomes(
+                    $document,
+                    $request->get('reason'),
+                    'Anulación local (boleta no informada a SUNAT)'
+                );
+
                 $boleta = new Boleta;
                 $boleta->updateStockSale($document->id);
 
@@ -1228,6 +1252,13 @@ class SaleDocumentController extends Controller
 
             $document->invoice_status = 'Enviada Por Anular';
             $document->save();
+
+            // Tesorería: el comprobante marcado para anulación deja de sumar.
+            TreasuryHooks::voidDocumentIncomes(
+                $document,
+                $request->get('reason'),
+                'Anulación por resumen diario'
+            );
 
             $res = $this->createSumamry($document);
             $boleta = new Boleta;

@@ -28,6 +28,7 @@ use Modules\Sales\Database\Seeders\SalesDatabaseSeeder;
 use Modules\Security\Database\Seeders\SecurityDatabaseSeeder;
 use Modules\Socialevents\Database\Seeders\SocialeventsDatabaseSeeder;
 use Modules\Treasury\Database\Seeders\TreasuryDatabaseSeeder;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -290,6 +291,52 @@ class FreshInstallSeederTest extends TestCase
                     ->whereColumn('role_has_permissions.permission_id', 'permissions.id');
             })
             ->count();
+    }
+
+    /**
+     * Producción solo corre `migrate`: la migración de permisos de Tesorería
+     * debe crearlos y concederlos sin depender del seeder, y ser idempotente.
+     */
+    public function test_la_migracion_de_permisos_de_tesoreria_los_crea_y_los_concede(): void
+    {
+        Role::create(['name' => 'admin', 'guard_name' => 'web']);
+
+        /** @var \Illuminate\Database\Migrations\Migration $migration */
+        $migration = require base_path('Modules/Treasury/Database/Migrations/2026_11_09_000001_ensure_treasury_permissions.php');
+
+        $migration->up();
+        $migration->up();
+
+        $this->assertDatabaseHas('modulos', ['identifier' => 'M023', 'description' => 'Tesorería']);
+
+        $admin = Role::findByName('admin');
+
+        foreach (Permission::query()->where('name', 'like', 'treasury_%')->pluck('name') as $name) {
+            $this->assertTrue(
+                $admin->hasPermissionTo($name),
+                "El rol admin no recibió el permiso {$name}."
+            );
+        }
+
+        $this->assertSame(
+            11,
+            Permission::query()->where('name', 'like', 'treasury_%')->count(),
+            'La migración no creó los 11 permisos de Tesorería.'
+        );
+
+        $this->assertSame(
+            0,
+            DB::table('permissions')
+                ->where('name', 'like', 'treasury_%')
+                ->whereNotExists(function ($query) {
+                    $query->selectRaw('1')
+                        ->from('model_has_permissions')
+                        ->whereColumn('model_has_permissions.permission_id', 'permissions.id')
+                        ->where('model_has_permissions.model_type', \App\Models\Modulo::class);
+                })
+                ->count(),
+            'Los permisos de Tesorería quedaron sin enlazar a su módulo.'
+        );
     }
 
     /**

@@ -1,5 +1,14 @@
 # Permisos de Tesorería — diagnóstico del módulo Treasury
 
+> **Actualización 10/11/2026.** El módulo ya tiene **13 permisos** en la base:
+> los 11 originales (migración `2026_11_09_000001`) más `treasury_efectivo`
+> (panel de efectivo) y `treasury_cobros_vincular` (vinculación manual de
+> cobros), creados por la migración
+> `Modules/Treasury/Database/Migrations/2026_11_10_000001_add_treasury_cash_and_collection_permissions.php`.
+> Ambas migraciones corren con `php artisan migrate --force` y conceden los
+> permisos a `admin` y `Administrador`. La tabla de abajo es el diagnóstico
+> histórico del 05/11/2026 y se conserva como referencia.
+
 Generado: 05/11/2026 22:32  
 Base de datos: `base_app_aracode`
 
@@ -29,6 +38,8 @@ Base de datos: `base_app_aracode`
 | `treasury_movimientos_eliminar` | Anular movimiento | DELETE /treasury/transactions/destroy/{id} | ❌ FALTA | — | — |
 | `treasury_conciliacion` | Ver y conciliar | GET /treasury/reconciliation · POST /treasury/reconciliation/reconcile | ❌ FALTA | — | — |
 | `treasury_categorias` | CRUD de categorías (un solo permiso para todo) | GET /treasury/categories · POST store/update · DELETE destroy | ❌ FALTA | — | — |
+| `treasury_efectivo` | Ver el panel de efectivo (caja chica, solo lectura) | GET /treasury/cash | ✅ existe (migración 10/11/2026) | admin, Administrador | M023 |
+| `treasury_cobros_vincular` | Ver y vincular comprobantes sin cuenta | GET /treasury/collections · POST /treasury/collections/link | ✅ existe (migración 10/11/2026) | admin, Administrador | M023 |
 
 ## Permisos a crear
 
@@ -45,13 +56,23 @@ Base de datos: `base_app_aracode`
 
 ### Cómo crearlos
 
-El seeder del módulo ya declara los 11 permisos, crea el módulo `M023` y se los concede al rol `admin` (id 1):
+Hay dos caminos, ambos idempotentes.
+
+**Migración** `Modules/Treasury/Database/Migrations/2026_11_09_000001_ensure_treasury_permissions.php`
+(camino de producción: se aplica con el despliegue). Crea los 11 permisos, el
+módulo `M023` y los concede a `admin` y `Administrador`:
+
+```bash
+php artisan migrate --force
+```
+
+**Seeder del módulo** (mismo efecto, concede solo a `admin`):
 
 ```bash
 php artisan db:seed --class="Modules\Treasury\Database\Seeders\PermissionsModuleSeeder"
 ```
 
-Es idempotente (`firstOrCreate`), así que se puede reejecutar sobre esta base sin duplicar filas.
+Ambos usan `firstOrCreate` y no revocan nada: se pueden reejecutar sobre esta base sin duplicar filas. En producción el comando exige `--force`. Si el rol del usuario dueño no es `admin` ni `Administrador`, concédele los permisos desde el editor de roles.
 
 ### Permisos opcionales (si quieres granularidad en categorías)
 

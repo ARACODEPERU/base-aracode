@@ -29,6 +29,7 @@ use Modules\Socialevents\Http\Controllers\OrganizationTopUpController;
 use Modules\Socialevents\Http\Controllers\OrganizationTeamController;
 use Modules\Socialevents\Http\Controllers\OrganizationDocumentController;
 use Modules\Socialevents\Http\Controllers\TournamentLandingController;
+use Modules\Socialevents\Http\Controllers\TournamentSeasonReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -113,6 +114,11 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
     Route::middleware(['middleware' => 'permission:even_ediciones_listado'])->get('editions/{id}/landing-visits', [EventEditionLandingVisitController::class, 'show'])
         ->whereNumber('id')
         ->name('even_ediciones_landing_visits');
+    // Reporte de fin de temporada: vista con secciones y PDF configurable.
+    Route::middleware(['middleware' => 'permission:even_ediciones_listado'])->get('reports/season', [TournamentSeasonReportController::class, 'index'])
+        ->name('even_reportes_temporada');
+    Route::middleware(['middleware' => 'permission:even_ediciones_listado'])->post('reports/season/pdf', [TournamentSeasonReportController::class, 'pdf'])
+        ->name('even_reportes_temporada_pdf');
     Route::middleware(['middleware' => 'permission:even_ediciones_nuevo'])->get('editions/create', [EventEditionController::class, 'create'])->name('even_ediciones_nuevo');
     Route::middleware(['middleware' => 'permission:even_ediciones_nuevo'])->post('editions/store', [EventEditionController::class, 'store'])->name('even_ediciones_store');
     Route::middleware(['middleware' => 'permission:even_ediciones_editar'])->get('editions/{id}/edit', [EventEditionController::class, 'edit'])->name('even_ediciones_editar');
