@@ -6,7 +6,6 @@ import InputError from '@/Components/InputError.vue';
 import TextInput from '@/Components/TextInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
-import Swal from 'sweetalert2';
 
 const emit = defineEmits(['selected']);
 
@@ -84,13 +83,7 @@ const openModalForEdit = async (serviceId) => {
             fillModalFromService(data.service);
         }
     } catch {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'No se pudo cargar el servicio.',
-            padding: '2em',
-            customClass: 'sweet-alerts',
-        });
+        window.alertaSistema('Error', 'No se pudo cargar el servicio.', 'error');
     }
 };
 
@@ -158,13 +151,11 @@ const saveService = () => {
         .then((res) => {
             if (res.data.success && res.data.service) {
                 fillModalFromService(res.data.service);
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Guardado',
-                    text: res.data.message || 'Servicio guardado correctamente.',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
+                window.alertaSistema(
+                    'Guardado',
+                    res.data.message || 'Servicio guardado correctamente.',
+                    'success'
+                );
                 if (autoSelectAfterSave.value) {
                     selectService();
                 }
@@ -174,13 +165,11 @@ const saveService = () => {
             if (err.response?.data?.errors) {
                 errors.value = err.response.data.errors;
             } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: err.response?.data?.message || 'No se pudo guardar el servicio.',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
+                window.alertaSistema(
+                    'Error',
+                    err.response?.data?.message || 'No se pudo guardar el servicio.',
+                    'error'
+                );
             }
         })
         .finally(() => {
@@ -190,13 +179,11 @@ const saveService = () => {
 
 const selectService = () => {
     if (!savedService.value?.id) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Servicio incompleto',
-            text: 'Guarde el servicio antes de seleccionarlo.',
-            padding: '2em',
-            customClass: 'sweet-alerts',
-        });
+        window.alertaSistema(
+            'Servicio incompleto',
+            'Guarde el servicio antes de seleccionarlo.',
+            'warning'
+        );
         return;
     }
 
