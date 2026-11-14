@@ -88,8 +88,9 @@
         percentage_igv: 0,
         total: 0,
         total_taxed: 0, //operaciones gravadas
+        // Sin medio de pago preseleccionado: el cobro debe declararlo siempre.
         payments: [{
-            type:1,
+            type:null,
             reference: null,
             amount:0
         }],
@@ -379,7 +380,7 @@
         formDocument.total_igv = (parseFloat(formDocument.total_igv) - parseFloat(formDocument.items[key].m_igv)).toFixed(2);
 
         formDocument.payments.push({
-            type:1,
+            type:null,
             reference: null,
             amount: formDocument.total
         });
@@ -410,6 +411,18 @@
     const saveDocument = () => {
 
         formDocument.processing = true
+
+        // El comprobante al contado no puede emitirse sin decir por dónde entró
+        // el dinero: si falta el medio de pago, no llega al libro de tesorería.
+        if (formDocument.forma_pago !== 'Credito' && formDocument.payments.some((pago) => !pago.type)) {
+            window.alertaSistema(
+                'Falta el medio de pago',
+                'Selecciona el medio de pago de cada cobro antes de generar el comprobante.',
+                'warning'
+            );
+            formDocument.processing = false;
+            return;
+        }
 
         if(formDocument.serie){
             if(formDocument.client_dti != 6 && formDocument.sale_documenttype_id == 1){
@@ -462,7 +475,7 @@
                 formDocument.total = 0;
                 formDocument.total_taxed = 0;
                 formDocument.payments = [{
-                    type:1,
+                    type:null,
                     reference: null,
                     amount:0
                 }];
@@ -594,7 +607,7 @@
 
     const addPayment = () => {
         let ar = {
-            type:1,
+            type:null,
             reference: null,
             amount:0
         };
@@ -1074,6 +1087,7 @@
                                     </td>
                                     <td >
                                         <select v-model="row.type" class="form-select text-white-dark py-1.5 text-xs">
+                                            <option :value="null" disabled>Seleccione medio de pago</option>
                                             <template v-for="(payment) in payments">
                                                 <option :value="payment.id">{{ payment.description }}</option>
                                             </template>

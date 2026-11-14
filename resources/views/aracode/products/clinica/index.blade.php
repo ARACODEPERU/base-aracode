@@ -305,7 +305,9 @@
             </div>
 
             {{-- Cierre del bloque: lo que comparten los tres casos. --}}
-            <div class="mt-12 ara-card bg-ara-navy text-center reveal">
+            {{-- Sin `ara-card`: esa clase fija fondo blanco y gana sobre
+                 `bg-ara-navy`, así que el texto blanco quedaba invisible. --}}
+            <div class="mt-12 rounded-2xl bg-ara-navy border border-white/10 p-8 text-center reveal">
                 <h3 class="text-2xl font-bold text-white mb-3">Un solo sistema para todo el consultorio</h3>
                 <p class="text-white/70 mb-6 max-w-3xl mx-auto">
                     La agenda, la historia clínica, los cobros y los recordatorios comparten los mismos datos: lo que se registra al agendar la cita ya está disponible al atender y al cobrar.

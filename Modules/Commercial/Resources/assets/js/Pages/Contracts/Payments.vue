@@ -8,7 +8,6 @@ import ModalSmall from "@/Components/ModalSmall.vue";
 import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
 import { Head, Link, useForm } from "@inertiajs/vue3";
 import { computed, reactive, watch } from "vue";
-import Swal2 from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faBriefcase, faCalendarPlus, faChartLine, faCoins, faFileInvoiceDollar, faLink, faPlus, faReceipt, faSave, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 
@@ -93,24 +92,11 @@ const isLockedPayment = (payment) => payment.status === "paid";
 const statusLabel = (value) => props.paymentStatuses.find((item) => item.value === value)?.label || value;
 
 /**
- * Avisos del modulo: window.alertaSistema respeta la configuracion de Aracodito
- * del usuario. Con el asistente activo el mensaje sale con Aracodito y, si no,
- * cae en SweetAlert2 igual que el resto del sistema.
+ * Avisos del modulo: window.alertaSistema decide el canal segun la
+ * configuracion de Aracodito del usuario.
  */
-const showAlert = (title, text, type = "info", options = {}) => {
-    if (typeof window.alertaSistema === "function") {
-        return window.alertaSistema(title, text, type, options);
-    }
-
-    return Swal2.fire({
-        title,
-        text,
-        icon: type,
-        padding: "2em",
-        customClass: "sweet-alerts",
-        ...options,
-    });
-};
+const showAlert = (title, text, type = "info", options = {}) =>
+    window.alertaSistema(title, text, type, options);
 
 /**
  * Pregunta de confirmacion (Aracodito o Swal segun la configuracion del usuario).

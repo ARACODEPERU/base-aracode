@@ -73,6 +73,14 @@ const menuSocialevents = {
             icom: faBoltLightning,
         },
         {
+            // Reporte imprimible de la temporada: tabla, podio, historial y rankings.
+            route: route("even_reportes_temporada"),
+            status: false,
+            text: "Reporte de temporada",
+            permissions: "even_ediciones_listado",
+            icom: faFutbol,
+        },
+        {
             // Plan del organizador: espacios, usuarios, comprobantes y saldo.
             // Entra antes de que venza el acceso y es la misma vista que abre el
             // aviso al crear un partido (even_organizations.topup.index).

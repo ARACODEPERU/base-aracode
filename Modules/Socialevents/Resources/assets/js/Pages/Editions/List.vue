@@ -242,6 +242,7 @@ const finishEdition = async (editionId, event) => {
                             <Link v-can="'even_ediciones_fixtures'" :href="route('even_ediciones_fixtures', edition.id)" :class="accionClase('bg-sky-700 hover:bg-sky-800')">📅 Partidos</Link>
                             <Link v-can="'even_ediciones_sanciones'" :href="route('even_ediciones_pago_sanciones', edition.id)" :class="accionClase('bg-violet-700 hover:bg-violet-800')">📊 Sanciones</Link>
                             <Link v-can="'even_ediciones_actas'" :href="route('even_ediciones_actas_listado', edition.id)" :class="accionClase('bg-slate-700 hover:bg-slate-800')">📝 Actas</Link>
+                            <Link v-can="'even_ediciones_listado'" :href="route('even_reportes_temporada', { edition_id: edition.id })" :class="accionClase('bg-teal-700 hover:bg-teal-800')">📑 Reporte</Link>
                             <Link v-can="'even_ediciones_galeria'" :href="route('even_ediciones_galeria', edition.id)" :class="accionClase('bg-indigo-700 hover:bg-indigo-800')">📸 Galería</Link>
                             <Link v-can="'even_ediciones_diplomas'" :href="route('even_ediciones_diplomas', edition.id)" :class="accionClase('bg-amber-700 hover:bg-amber-800')">🎓 Diplomas</Link>
                             <Link v-can="'even_ediciones_editar'" :href="route('even_ediciones_editar', edition.id)" :class="accionClase('bg-gray-700 hover:bg-gray-800')">✏️ Editar</Link>

@@ -22,6 +22,7 @@ use App\Helpers\Invoice\QrCodeGenerator;
 use App\Models\District;
 use App\Models\Sale;
 use Illuminate\Support\Facades\DB;
+use Modules\Treasury\Services\TreasuryHooks;
 
 class NotaCredito
 {
@@ -80,6 +81,14 @@ class NotaCredito
                             Sale::find($invoice->sale_id)->update([
                                 'status' => 0
                             ]);
+
+                            // Tesorería: una nota de crédito total anula la
+                            // operación completa del comprobante afectado.
+                            TreasuryHooks::voidDocumentIncomes(
+                                $invoice,
+                                $document->reason_cancellation,
+                                'Anulación por nota de crédito '.$document->invoice_serie.'-'.$document->invoice_correlative
+                            );
                         }
                     });
                 } elseif ($cdr->getCode() == 2325) {

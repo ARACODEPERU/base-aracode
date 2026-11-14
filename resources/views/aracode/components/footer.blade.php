@@ -10,8 +10,10 @@
                             Perú
                         </div>
                         <div style="padding: 15px;">
+                            {{-- Pie de página del tema anterior: fuera de la primera
+                                 pantalla, así que se descarga al bajar. --}}
                             <img style="width: 280px;" src="{{ asset('themes/webpage/images/logo.png') }}" class="w-150px"
-                                alt=""><br>
+                                alt="" loading="lazy" decoding="async"><br>
                             <div class="social-icons mb-sm-30 mt-4">
                                 <a href="https://www.facebook.com/aracodeperu" target="_blank"><i
                                         class="fa-brands fa-facebook-f"></i></a>

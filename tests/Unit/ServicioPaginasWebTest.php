@@ -178,8 +178,30 @@ it('presenta el servicio en el ecosistema de /soluciones, con su precio de entra
 
     expect($tarjeta)->not->toBeNull();
     expect($tarjeta)->toContain(ServicioWeb::url());
+
+    // Lo que la tarjeta no puede prometer: el panel de autogestión del cliente
+    // mientras no exista (docs/SERVICIO_PAGINAS_WEB.md). La comprobación recorre
+    // la tarjeta entera, así que también cubre el texto alternativo de la
+    // imagen.
+    //
+    // Antes esta prueba exigía que la tarjeta no llevara imagen: cualquier
+    // imagen se leía como una captura del producto que todavía no existe. Hoy
+    // la tarjeta tiene su diseño propio, así que lo que se vigila es que ese
+    // diseño sea real —un archivo del sitio, descrito y diferido— y que no
+    // anuncie lo que no hay.
     expect(stripos($tarjeta, 'panel'))->toBeFalse();
-    expect($tarjeta)->not->toContain('<img');
+
+    preg_match('#<img[^>]*src="([^"]+)"[^>]*>#s', $tarjeta, $imagen);
+
+    expect($imagen)->not->toBeEmpty();
+
+    // Una ruta rota, una foto de banco o un archivo vacío fallan aquí.
+    $archivo = public_path(ltrim((string) parse_url($imagen[1], PHP_URL_PATH), '/'));
+
+    expect(is_file($archivo))->toBeTrue()
+        ->and(filesize($archivo))->toBeGreaterThan(0)
+        ->and($imagen[0])->toMatch('#\balt="[^"]+"#')
+        ->and($imagen[0])->toContain('loading="lazy"');
 
     // El precio de entrada lo pone App\Support\ServicioWeb::precioDesde(): el
     // plan más barato de los publicados, no uno escrito en la vista.

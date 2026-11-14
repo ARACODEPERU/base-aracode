@@ -113,6 +113,21 @@ createInertiaApp({
             const token = page?.props?.csrf_token;
             setCsrfToken(token);
 
+            // Aracodito: la preferencia viaja en auth.user, así que se refresca
+            // en cada navegación. Sin esto, window.USER_CONFIG quedaba con el
+            // valor del primer documento y los avisos seguían saliendo con
+            // Swal aunque el asistente estuviera activo en la cuenta.
+            const usuario = page?.props?.auth?.user;
+
+            if (usuario) {
+                window.USER_CONFIG = {
+                    ...(window.USER_CONFIG || {}),
+                    aracodito_enabled: Boolean(Number(usuario.aracodito_enabled)),
+                    aracodito_audio_enabled: Boolean(Number(usuario.aracodito_audio_enabled)),
+                    aracodito_ia_enabled: Boolean(Number(usuario.aracodito_ia_enabled)),
+                };
+            }
+
             // Segundo punto de sincronización del Modo Super Editor: se ejecuta
             // justo después de actualizar la página y antes de que Vue repinte,
             // así que las directivas que se vuelvan a montar ya ven el modo.

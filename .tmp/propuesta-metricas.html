@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propuesta · sección de cifras del home</title>
+<base href="http://base-aracode.test/">
+<link rel="stylesheet" href="http://base-aracode.test/css/website-public.css">
+<style>
+    :root {
+        --pm-navy: #060e2d;
+        --pm-blue: #0188ee;
+        --pm-blue-soft: #5eb0ff;
+        --pm-green: #25d366;
+        --pm-slate: #5b6b8c;
+    }
+
+    body {
+        margin: 0;
+        background: #f4f7fb;
+        color: #0b1b3f;
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+    }
+
+    /* ------------------------------------------------ barra de selección */
+    .pm-barra {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem 1rem;
+        align-items: center;
+        justify-content: space-between;
+        padding: .75rem 1.25rem;
+        background: #0b1b3f;
+        color: #fff;
+        box-shadow: 0 10px 30px -20px rgba(0, 0, 0, .8);
+    }
+
+    .pm-barra strong {
+        font-size: .72rem;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+    }
+
+    .pm-botones {
+        display: flex;
+        gap: .4rem;
+    }
+
+    .pm-botones button {
+        padding: .5rem .9rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 255, 255, .22);
+        background: transparent;
+        color: rgba(255, 255, 255, .75);
+        font: inherit;
+        font-size: .78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .2s ease, color .2s ease, border-color .2s ease;
+    }
+
+    .pm-botones button[aria-pressed="true"] {
+        border-color: transparent;
+        background: linear-gradient(100deg, var(--pm-blue), #0aa0ff);
+        color: #fff;
+    }
+
+    /* ------------------------------------------------------- secciones */
+    .pm-opcion[hidden] {
+        display: none;
+    }
+
+    .pm-seccion {
+        padding: clamp(3rem, 6vw, 4.5rem) 1.5rem;
+        background: #fff;
+    }
+
+    .pm-envoltura {
+        max-width: 1160px;
+        margin: 0 auto;
+    }
+
+    .pm-ceja {
+        display: inline-flex;
+        align-items: center;
+        gap: .6rem;
+        font-size: .68rem;
+        font-weight: 700;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+        color: var(--pm-blue);
+    }
+
+    .pm-ceja::before {
+        content: "";
+        width: 24px;
+        height: 2px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, var(--pm-blue), var(--pm-green));
+    }
+
+    .pm-titulo {
+        margin: .85rem 0 .55rem;
+        font-size: clamp(1.6rem, 3vw, 2.3rem);
+        font-weight: 800;
+        letter-spacing: -.02em;
+        line-height: 1.15;
+    }
+
+    .pm-bajada {
+        max-width: 42rem;
+        margin: 0;
+        color: var(--pm-slate);
+        line-height: 1.6;
+    }
+
+    /* --------------------------------------------------- opción A */
+    .pm-panel {
+        position: relative;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: clamp(1.5rem, 4vw, 3rem);
+        align-items: center;
+        margin-top: 2rem;
+        padding: clamp(1.75rem, 4vw, 2.75rem);
+        border-radius: 24px;
+        background:
+            radial-gradient(120% 120% at 90% 0%, #123161 0%, rgba(6, 14, 45, 0) 60%),
+            linear-gradient(140deg, #060e2d, #081231 60%, #060e2d);
+        color: #fff;
+    }
+
+    .pm-panel::after {
+        content: "";
+        position: absolute;
+        inset: auto -4rem -6rem auto;
+        width: 16rem;
+        height: 16rem;
+        border-radius: 50%;
+        background: rgba(37, 211, 102, .14);
+        filter: blur(60px);
+        pointer-events: none;
+    }
+
+    .pm-grandes {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem 2rem;
+    }
+
+    .pm-dato strong {
+        display: block;
+        font-size: clamp(2.2rem, 4.4vw, 3.2rem);
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -.03em;
+    }
+
+    .pm-dato span {
+        display: block;
+        margin-top: .45rem;
+        font-size: .92rem;
+        color: rgba(255, 255, 255, .68);
+    }
+
+    .pm-dato em {
+        display: block;
+        margin-top: .3rem;
+        font-size: .74rem;
+        font-style: normal;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, .38);
+    }
+
+    .pm-ficha {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: .75rem;
+        padding: 1.25rem 1.35rem;
+        border-radius: 18px;
+        border: 1px solid rgba(94, 176, 255, .25);
+        background: rgba(255, 255, 255, .04);
+    }
+
+    .pm-ficha h3 {
+        margin: 0 0 .15rem;
+        font-size: .72rem;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: var(--pm-blue-soft);
+    }
+
+    .pm-fila {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-bottom: .6rem;
+        border-bottom: 1px dashed rgba(255, 255, 255, .12);
+        font-size: .9rem;
+        color: rgba(255, 255, 255, .72);
+    }
+
+    .pm-fila:last-child {
+        padding-bottom: 0;
+        border-bottom: 0;
+    }
+
+    .pm-fila b {
+        font-size: 1.05rem;
+        color: #fff;
+    }
+
+    /* --------------------------------------------------- opción B */
+    .pm-pasos {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 2.25rem;
+    }
+
+    .pm-paso {
+        position: relative;
+        padding: 1.4rem 1.25rem 1.5rem;
+        border-radius: 18px;
+        border: 1px solid #e2e9f4;
+        background: #fff;
+        box-shadow: 0 18px 40px -34px rgba(6, 14, 45, .5);
+    }
+
+    .pm-paso::before {
+        content: "";
+        position: absolute;
+        top: 2.35rem;
+        right: -1rem;
+        width: 1rem;
+        height: 2px;
+        background: #d6e2f2;
+    }
+
+    .pm-paso:last-child::before {
+        display: none;
+    }
+
+    .pm-paso-num {
+        display: inline-grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        margin-bottom: .9rem;
+        border-radius: 11px;
+        background: rgba(1, 136, 238, .1);
+        color: var(--pm-blue);
+        font-size: .78rem;
+        font-weight: 800;
+    }
+
+    .pm-paso h3 {
+        margin: 0 0 .4rem;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .pm-paso p {
+        margin: 0;
+        font-size: .88rem;
+        line-height: 1.55;
+        color: var(--pm-slate);
+    }
+
+    .pm-paso small {
+        display: inline-block;
+        margin-top: .7rem;
+        padding: .25rem .6rem;
+        border-radius: 9999px;
+        background: #f1f6fd;
+        color: #1d5f9e;
+        font-size: .7rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+    }
+
+    .pm-cierre {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .75rem 1.25rem;
+        margin-top: 1.75rem;
+        padding: 1rem 1.25rem;
+        border-radius: 16px;
+        border: 1px solid #e2e9f4;
+        background: #f7faff;
+        font-size: .9rem;
+        color: var(--pm-slate);
+    }
+
+    .pm-cierre strong {
+        color: #0b1b3f;
+    }
+
+    .pm-boton {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .8rem 1.3rem;
+        border-radius: 9999px;
+        background: linear-gradient(100deg, var(--pm-blue), #0aa0ff);
+        color: #fff;
+        font-size: .88rem;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: 0 14px 30px -18px rgba(1, 136, 238, .8);
+    }
+
+    /* --------------------------------------------------- opción C */
+    .pm-hibrido {
+        display: grid;
+        grid-template-columns: 1.25fr .85fr;
+        gap: clamp(1.5rem, 4vw, 3rem);
+        align-items: start;
+        margin-top: 2rem;
+    }
+
+    .pm-lista-pasos {
+        display: flex;
+        flex-direction: column;
+        gap: .85rem;
+    }
+
+    .pm-paso-fila {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-radius: 16px;
+        border: 1px solid #e4ebf6;
+        background: #fff;
+    }
+
+    .pm-paso-fila .pm-paso-num {
+        margin: 0;
+    }
+
+    .pm-paso-fila h3 {
+        margin: 0 0 .25rem;
+        font-size: .98rem;
+        font-weight: 700;
+    }
+
+    .pm-paso-fila p {
+        margin: 0;
+        font-size: .87rem;
+        line-height: 1.55;
+        color: var(--pm-slate);
+    }
+
+    .pm-datos-caja {
+        padding: 1.4rem 1.5rem;
+        border-radius: 20px;
+        background: linear-gradient(150deg, #060e2d, #0a1a3f);
+        color: #fff;
+    }
+
+    .pm-datos-caja h3 {
+        margin: 0 0 1rem;
+        font-size: .72rem;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: var(--pm-blue-soft);
+    }
+
+    .pm-datos-caja .pm-fila {
+        padding: .7rem 0;
+    }
+
+    .pm-datos-caja .pm-fila:first-of-type {
+        border-top: 1px dashed rgba(255, 255, 255, .12);
+    }
+
+    /* ------------------------------------------------------- notas */
+    .pm-notas {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 1.5rem 1.5rem 3.5rem;
+    }
+
+    .pm-notas h2 {
+        margin: 0 0 .9rem;
+        font-size: .72rem;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        color: #6b7a99;
+    }
+
+    .pm-notas ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: .9rem;
+    }
+
+    .pm-notas li {
+        padding: .9rem 1.1rem;
+        border-radius: 14px;
+        border: 1px solid #dbe4f2;
+        background: #fff;
+        font-size: .86rem;
+        line-height: 1.5;
+        color: #43536f;
+    }
+
+    .pm-notas li strong {
+        display: block;
+        margin-bottom: .2rem;
+        color: #0b1b3f;
+        font-size: .9rem;
+    }
+
+    @media (max-width: 980px) {
+        .pm-panel,
+        .pm-hibrido {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .pm-pasos {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .pm-paso::before {
+            display: none;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .pm-grandes {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .pm-pasos {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .pm-boton {
+            margin-left: 0;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="pm-barra">
+    <strong>Vista previa · sección de cifras</strong>
+    <div class="pm-botones" role="group" aria-label="Elegir propuesta">
+        <button type="button" data-opcion="A" aria-pressed="true">A · Cifras con contexto</button>
+        <button type="button" data-opcion="B" aria-pressed="false">B · Cómo trabajamos</button>
+        <button type="button" data-opcion="C" aria-pressed="false">C · Híbrido</button>
+    </div>
+</div>
+
+<!-- ============================================================ OPCIÓN A -->
+<div class="pm-opcion" id="pm-opcion-A">
+    <section class="pm-seccion">
+        <div class="pm-envoltura">
+            <span class="pm-ceja">Dónde estamos</span>
+            <h2 class="pm-titulo">Cifras que se pueden comprobar</h2>
+            <p class="pm-bajada">Lo que hay detrás de cada número: empresas que ya operan con nuestros sistemas, usuarios activos y el soporte que sostiene la operación.</p>
+
+            <div class="pm-panel">
+                <div class="pm-grandes">
+                    <div class="pm-dato">
+                        <strong>100+</strong>
+                        <span>Empresas atendidas</span>
+                        <em>En Perú y la región</em>
+                    </div>
+                    <div class="pm-dato">
+                        <strong>500+</strong>
+                        <span>Usuarios activos</span>
+                        <em>Usando el ecosistema cada día</em>
+                    </div>
+                </div>
+
+                <div class="pm-ficha">
+                    <h3>La operación, en corto</h3>
+                    <div class="pm-fila"><span>Años de experiencia</span><b>5+</b></div>
+                    <div class="pm-fila"><span>Disponibilidad de la plataforma</span><b>99%</b></div>
+                    <div class="pm-fila"><span>Soporte</span><b>Equipo local</b></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="pm-notas">
+        <h2>Qué cambia en la opción A</h2>
+        <ul>
+            <li><strong>Dos cifras mandan</strong> Empresas y usuarios pasan a ser el titular; años y uptime bajan a una ficha de apoyo.</li>
+            <li><strong>Cada número con contexto</strong> Una línea explica a qué se refiere, en vez de dejar el dato suelto.</li>
+            <li><strong>Mismo contenido</strong> No hay que inventar datos: son los cuatro que ya publicas.</li>
+            <li><strong>Riesgo</strong> Sigue siendo una franja de números: si no se actualizan, envejece.</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ============================================================ OPCIÓN B -->
+<div class="pm-opcion" id="pm-opcion-B" hidden>
+    <section class="pm-seccion">
+        <div class="pm-envoltura">
+            <span class="pm-ceja">Cómo trabajamos</span>
+            <h2 class="pm-titulo">De la conversación al sistema en marcha</h2>
+            <p class="pm-bajada">Cuatro pasos, siempre los mismos. Sabes qué recibes en cada uno antes de firmar nada.</p>
+
+            <div class="pm-pasos">
+                <article class="pm-paso">
+                    <span class="pm-paso-num">01</span>
+                    <h3>Diagnóstico</h3>
+                    <p>Revisamos tus procesos y detectamos dónde se pierde tiempo o dinero.</p>
+                    <small>Reunión de 45 min</small>
+                </article>
+
+                <article class="pm-paso">
+                    <span class="pm-paso-num">02</span>
+                    <h3>Propuesta</h3>
+                    <p>Alcance, tiempos y precio por escrito. Sin sorpresas ni extras ocultos.</p>
+                    <small>Propuesta cerrada</small>
+                </article>
+
+                <article class="pm-paso">
+                    <span class="pm-paso-num">03</span>
+                    <h3>Implementación</h3>
+                    <p>Entregamos por etapas y probamos con tu equipo desde la primera semana.</p>
+                    <small>Avances semanales</small>
+                </article>
+
+                <article class="pm-paso">
+                    <span class="pm-paso-num">04</span>
+                    <h3>Acompañamiento</h3>
+                    <p>Capacitación, soporte y mejoras continuas después de la puesta en marcha.</p>
+                    <small>Soporte continuo</small>
+                </article>
+            </div>
+
+            <div class="pm-cierre">
+                <span><strong>¿Empezamos por el diagnóstico?</strong> Te decimos qué automatizar primero.</span>
+                <a href="http://base-aracode.test/contacto" class="pm-boton">Solicitar asesoría
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <div class="pm-notas">
+        <h2>Qué cambia en la opción B</h2>
+        <ul>
+            <li><strong>Reemplaza los números</strong> La franja de cifras desaparece; en su lugar va lo que pasa si te contactan.</li>
+            <li><strong>Baja la fricción</strong> Responde la duda real del visitante: «¿y después qué?».</li>
+            <li><strong>Un CTA con sentido</strong> El botón cierra el proceso y abre el formulario de asesoría.</li>
+            <li><strong>Cuidado</strong> Los tiempos («reunión de 45 min», «avances semanales») hay que confirmarlos con tu operación.</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ============================================================ OPCIÓN C -->
+<div class="pm-opcion" id="pm-opcion-C" hidden>
+    <section class="pm-seccion">
+        <div class="pm-envoltura">
+            <span class="pm-ceja">Cómo trabajamos</span>
+            <h2 class="pm-titulo">Un proceso claro, con la experiencia a la vista</h2>
+            <p class="pm-bajada">Los pasos de siempre a la izquierda; a la derecha, la trayectoria que los respalda.</p>
+
+            <div class="pm-hibrido">
+                <div class="pm-lista-pasos">
+                    <article class="pm-paso-fila">
+                        <span class="pm-paso-num">01</span>
+                        <div>
+                            <h3>Diagnóstico</h3>
+                            <p>Revisamos tus procesos y detectamos dónde se pierde tiempo o dinero.</p>
+                        </div>
+                    </article>
+                    <article class="pm-paso-fila">
+                        <span class="pm-paso-num">02</span>
+                        <div>
+                            <h3>Propuesta</h3>
+                            <p>Alcance, tiempos y precio por escrito, con entregables definidos.</p>
+                        </div>
+                    </article>
+                    <article class="pm-paso-fila">
+                        <span class="pm-paso-num">03</span>
+                        <div>
+                            <h3>Implementación y acompañamiento</h3>
+                            <p>Entrega por etapas, capacitación y soporte después de la puesta en marcha.</p>
+                        </div>
+                    </article>
+
+                    <div class="pm-cierre">
+                        <span><strong>Sin compromiso:</strong> la primera conversación es para entender tu caso.</span>
+                        <a href="http://base-aracode.test/contacto" class="pm-boton">Solicitar asesoría
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <aside class="pm-datos-caja">
+                    <h3>La trayectoria</h3>
+                    <div class="pm-fila"><span>Empresas atendidas</span><b>100+</b></div>
+                    <div class="pm-fila"><span>Usuarios activos</span><b>500+</b></div>
+                    <div class="pm-fila"><span>Años de experiencia</span><b>5+</b></div>
+                    <div class="pm-fila"><span>Disponibilidad</span><b>99%</b></div>
+                </aside>
+            </div>
+        </div>
+    </section>
+
+    <div class="pm-notas">
+        <h2>Qué cambia en la opción C</h2>
+        <ul>
+            <li><strong>Proceso + respaldo</strong> Los números no desaparecen, pero dejan de ser el centro.</li>
+            <li><strong>Menos altura</strong> Tres pasos compactos en vez de una franja de cuatro columnas.</li>
+            <li><strong>Un solo CTA</strong> El botón queda junto al último paso, donde nace la duda.</li>
+            <li><strong>Equilibrio</strong> Es la opción intermedia si te sirven los datos pero no quieres una sección solo de cifras.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+(function () {
+    var botones = Array.prototype.slice.call(document.querySelectorAll('.pm-botones button'));
+    var bloques = {
+        A: document.getElementById('pm-opcion-A'),
+        B: document.getElementById('pm-opcion-B'),
+        C: document.getElementById('pm-opcion-C')
+    };
+
+    function mostrar(opcion) {
+        if (!bloques[opcion]) {
+            opcion = 'A';
+        }
+
+        Object.keys(bloques).forEach(function (clave) {
+            bloques[clave].hidden = clave !== opcion;
+        });
+
+        botones.forEach(function (boton) {
+            boton.setAttribute('aria-pressed', boton.dataset.opcion === opcion ? 'true' : 'false');
+        });
+    }
+
+    botones.forEach(function (boton) {
+        boton.addEventListener('click', function () {
+            mostrar(boton.dataset.opcion);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    });
+
+    // ?opcion=B permite abrir la vista previa directamente en una propuesta.
+    var pedida = (new URLSearchParams(window.location.search).get('opcion') || 'A').toUpperCase();
+    mostrar(pedida);
+})();
+</script>
+</body>
+</html>

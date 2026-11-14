@@ -22,6 +22,8 @@ assets de ARACODE). Está pensado para copiarse a su propio dominio junto con to
 | `/site/pichanguero/contacto` | `pichanguero.pages.contacto` |
 
 El prefijo `site/pichanguero` existe solo para convivir con el sitio ARACODE en este repositorio.
+Ojo: `/pichanguero` **no** es este sitio, sino la ficha del producto en el corporativo
+(`resources/views/aracode/products/pichanguero`), que explica qué es y desde ahí enlaza a su web oficial.
 
 ## Descargas de la app y botón «Crear cuenta»
 

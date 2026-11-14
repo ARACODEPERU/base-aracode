@@ -216,8 +216,8 @@ creó ninguna migración nueva: la vinculación se apoya en esa columna existent
 - **Filas de relleno de `storePayFull`** (`sale_payment_quotas.estado = false`):
   documentan el saldo cancelado, no dinero recibido.
 - **Efectivo:** excluido del libro bancario.
-- **Nota de crédito o baja del comprobante:** no existe hook hacia tesorería;
-  emitir una NC no devuelve dinero por sí sola.
+- **Nota de crédito parcial (motivos 04, 05, 07-12):** no revierte el ingreso;
+  solo la NC total (01, 02, 03 y 06 por el total) anula la operación.
 
 ---
 
@@ -236,6 +236,14 @@ tocar el libro. Esto protege contra el doble clic y contra reintentos.
 La anulación de una venta revierte, en la misma transacción, todo lo cobrado a
 su nombre: pagos del JSON, cuota inicial, pago total, abonos de cuota y cobros
 del cronograma.
+
+La anulación del **comprobante** también revierte: boleta anulada
+(`SaleDocumentController@cancelDocument`), baja aceptada por SUNAT
+(`LowCommunication::markDocumentsAsAnnulled`) y nota de crédito total
+(`NotaCredito`). `TreasuryHooks::voidDocumentIncomes()` anula cuota inicial, pago
+total y abonos de cuota del documento y, si es el último comprobante de venta
+vigente, el cobro al contado de la venta. La reversión guarda el mecanismo y el
+motivo, por ejemplo `Anulación por comunicación de baja: Error en el RUC`.
 
 **Devolución real de dinero:** `registerRefund()` registra un **egreso**
 (asType expense) con su propio origen. Es distinto de revertir una anulación.
@@ -335,7 +343,15 @@ pruebas, 30 aserciones. Ambas se ejecutan con
 | 25 | Clave única rechaza el duplicado en base de datos | Automática |
 | — | Venta al contado mediante transferencia bancaria | Automática (`PaymentMethodBankAccountTest`) |
 | — | Método vinculado a cuenta inexistente, inactiva o de otra moneda | Automática |
-| — | NC/baja no revierte ingresos | Verificado en código: `SaleCreditNotesController`, `SaleLowCommunicationController` y `SaleDocumentController@cancelDocument` (estado 3) no invocan tesorería |
+| — | Anulación de boleta revierte el ingreso y registra el motivo | Automática (`test_anulacion_de_boleta_revierte_el_ingreso_y_registra_el_motivo`) |
+| — | Baja aceptada por SUNAT revierte el ingreso | Automática (`test_baja_aceptada_por_sunat_revierte_el_ingreso_y_registra_el_motivo`) |
+| — | Doble anulación → una sola reversión | Automática (`test_anular_dos_veces_el_mismo_comprobante_no_duplica_la_reversion`) |
+| — | Panel de efectivo: ventas en efectivo, egresos de caja y ventas sin sesión | Automática (`test_panel_de_efectivo_lista_ventas_en_efectivo_y_egresos`) |
+| — | Vincular comprobante ignorado → reprocesa y mueve el saldo | Automática (`test_vinculacion_de_comprobante_ignorado_mueve_el_saldo`) |
+| — | Vincular comprobante sin pagos → movimiento manual | Automática (`test_vinculacion_de_comprobante_sin_pagos_crea_movimiento_manual`) |
+| — | Comprobante anulado no se puede vincular | Automática (`test_no_se_puede_vincular_un_comprobante_anulado`) |
+| — | Doble vinculación → sin duplicado | Automática (`test_vincular_dos_veces_no_duplica_el_movimiento`) |
+| — | Comprobante al contado sin medio de pago → 422, sin venta ni movimiento | Automática (`test_comprobante_al_contado_sin_medio_de_pago_es_rechazado`) |
 
 Las pruebas usan sqlite en memoria (`phpunit.xml`), con claves foráneas
 desactivadas; por eso los orígenes se crean con las columnas mínimas reales.
@@ -363,11 +379,10 @@ tipos y la categoría se resuelve por operación.
    `SaleDocumentController@store` (validado contra el total), pero la pantalla
    `Documents/Create.vue` todavía no lo envía. Mientras no se envíe, el
    comportamiento es el actual: crédito sin cuota inicial.
-2. **Reversión en Ventas:** solo se dispara al anular la venta o al eliminar un
-   abono. La emisión de una nota de crédito o la baja del comprobante no
-   revierten tesorería (correcto: no implican salida de dinero). Si se quiere
-   reflejar una devolución, debe usarse `registerRefund()` desde el flujo que
-   realmente devuelve el dinero.
+2. **Reversión en Ventas:** se dispara al anular la venta, al eliminar un abono
+   y al anular el comprobante (boleta, baja aceptada por SUNAT y NC total), con
+   el motivo en la reversión. Una NC parcial no revierte. La devolución efectiva
+   de dinero sigue siendo `registerRefund()` desde el flujo que devuelve el dinero.
 3. **`QuickSaleService`:** registra los ingresos al final de su operación, que
    no está envuelta en una transacción propia. Un fallo queda como `failed` en
    la puente (recuperable), pero la venta y el movimiento no son atómicos.
@@ -391,8 +406,7 @@ tipos y la categoría se resuelve por operación.
 
 ## 16. Verificación end-to-end de los flujos de Sales
 
-Pruebas en `tests/Feature/Treasury/SalesTreasuryFlowsTest.php` (5 pruebas, 45
-aserciones). Entran por la ruta HTTP del módulo, con permisos Spatie reales, y
+Pruebas en `tests/Feature/Treasury/SalesTreasuryFlowsTest.php` (14 pruebas). Entran por la ruta HTTP del módulo, con permisos Spatie reales, y
 terminan comprobando `treasury_source_movements` y `treasury_transactions`.
 
 | Flujo | Controlador | Invocación a la integración | Resultado | Prueba |
@@ -427,3 +441,90 @@ protege contra un doble envío del formulario de abono: cada POST crea un nuevo
 legítimo a ojos de la capa. Para cerrarlo haría falta una clave de idempotencia
 de solicitud enviada por el cliente (o un control de referencia duplicada), que
 no existe hoy.
+
+---
+
+## 17. Panel de efectivo (Tesorería → Efectivo)
+
+El efectivo **no entra al libro de bancos**. El panel (`treasury_cash_index`, permiso
+`treasury_efectivo`) es de solo lectura y se alimenta de caja chica, no de
+`treasury_transactions`, para no duplicar el mismo dinero en dos saldos.
+
+`TreasuryCashService::build($from, $to)` devuelve:
+
+| Bloque | Origen | Regla |
+|---|---|---|
+| Ventas en efectivo | `sales.payments` (JSON normalizado por `TreasuryLedgerService`) | método incluido en `config('treasury.excluded_payment_methods')` (efectivo) |
+| Abonos de cuota en efectivo | `sale_payment_quotas` + `sale_document_quotas` + `sale_documents` | mismo criterio de método excluido |
+| Egresos de caja | `expenses` (filtrado por `created_at`; la tabla no tiene fecha propia) | todos los egresos del rango |
+| Sesiones | `petty_cashes` (rango de apertura, más las abiertas) | saldo = apertura + ventas + abonos − egresos |
+| Efectivo sin sesión | ventas en efectivo con `sales.petty_cash_id` nulo | aviso operativo: el dinero existe pero no está en ninguna caja |
+
+Solo suma soles: una venta cuyo comprobante está en USD se omite del saldo de caja
+(la caja chica se lleva en moneda nacional). La definición de "efectivo" es la
+misma del libro (`PaymentAccountResolver::excludedMethodIds()`), así que panel y
+libro no pueden divergir por una lista distinta.
+
+---
+
+## 18. Vinculación manual de cobros (Tesorería → Cobros sin cuenta)
+
+Resuelve el caso real: la venta se registró sin medio de pago o con un método sin
+cuenta asignada (efectivo, giro), el dinero ingresó a un banco y el libro no lo
+refleja. Rutas `treasury_collections_index` (GET) y `treasury_collections_link`
+(POST), permiso `treasury_cobros_vincular`.
+
+### Listado
+
+Muestra comprobantes `01`/`03` no anulados ni rechazados del rango (por
+`created_at`) cuyo origen **no** tiene ninguna fila puente procesada. Para cada
+uno resume el estado:
+
+| Estado | Significado |
+|---|---|
+| `sin_registro` | no existe fila puente (venta creada sin `payments`) |
+| `ignorado` | hay fila puente `ignored` (método excluido o sin mapeo) |
+| `fallido` | hay fila puente `failed` (error al escribir el libro) |
+
+### Vinculación
+
+1. **Con fila puente** (`TreasuryIntegrationService::assignAccount`): fija
+   `treasury_account_id`, limpia el error, vuelve a `pending` y reprocesa. La
+   cuenta explícita tiene prioridad sobre el método de pago en `resolveAccount()`.
+   Guarda en `meta` quién vinculó, cuándo y desde qué estado.
+2. **Sin fila puente** (`TreasuryHooks::recordManualDocumentIncome`): crea el
+   movimiento por el total del comprobante con `operation = manual_income` y
+   `source = manual`; `source_type = sale_document` para que la reversión por
+   anulación lo alcance.
+
+Reglas y garantías:
+
+- **No se modifica `sales.payments`**: el JSON es el dato del comprobante y su
+  XML ya pudo enviarse. La cuenta vive en la fila puente.
+- **Idempotente:** la clave única de la puente impide duplicar; el listado
+excluye lo ya procesado y el `store` lo rechaza con error de validación.
+- **Anulado/rechazado:** no se puede vincular.
+- **Moneda:** cuenta PEN acepta comprobante en soles o con tipo de cambio
+  registrado; una cuenta en otra moneda exige coincidencia exacta.
+- **Anulación posterior:** el movimiento manual se revierte con
+  `voidDocumentIncomes` como cualquier cobro del comprobante.
+
+### Permisos
+
+`treasury_efectivo` y `treasury_cobros_vincular` se crean en la migración
+`2026_11_10_000001_add_treasury_cash_and_collection_permissions.php` (idempotente,
+módulo M023, concede a `admin` y `Administrador`), para que producción los reciba
+solo con `php artisan migrate --force`.
+
+### Medio de pago obligatorio en el comprobante (Fase 3)
+
+`SaleDocumentController@store` exige medio de pago en las ventas al contado:
+`payments` es obligatorio (`required_if:forma_pago,Contado`, al menos un cobro) y
+cada `payments.*.type` debe existir en `payment_methods`. Al crédito no se exige,
+porque puede no haber dinero recibido todavía.
+
+La pantalla `Documents/Create.vue` ya no preselecciona Efectivo: el selector
+arranca vacío ("Seleccione medio de pago") y `saveDocument()` corta el envío con
+un aviso de `window.alertaSistema` si algún cobro quedó sin método. Los flujos por
+ticket (`storeFromTicket`) no cambian: el ticket ya trae sus pagos, y vincular un
+comprobante histórico sigue disponible en esta pantalla de Tesorería.

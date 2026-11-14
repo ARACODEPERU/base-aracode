@@ -1,0 +1,1132 @@
+/* ============================================================
+   ARACODE · Evolución UX/UI — Fase 1
+   Capa independiente: navbar de vidrio, hero y microinteracciones.
+   Se carga después de webpage-v2.css para poder revertirla sola.
+   ============================================================ */
+
+:root {
+    --ara-navy: #060E2D;
+    --ara-blue: #0188EE;
+    --ara-blue-soft: #5EB0FF;
+    --ara-green: #25D366;
+    --ara-glass-line: rgba(255, 255, 255, .12);
+    --ara-ease: cubic-bezier(.16, 1, .3, 1);
+}
+
+/* ============================================================
+   Navbar de vidrio
+   ============================================================ */
+.ara-nav {
+    background: linear-gradient(180deg, rgba(6, 14, 45, .62), rgba(6, 14, 45, .30));
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
+    transition: background .45s var(--ara-ease), box-shadow .45s var(--ara-ease),
+        border-color .45s var(--ara-ease), padding .35s var(--ara-ease);
+}
+
+.ara-nav.scrolled {
+    background: rgba(6, 14, 45, .88);
+    border-bottom-color: rgba(94, 176, 255, .18);
+    box-shadow: 0 18px 44px -28px rgba(0, 0, 0, .85);
+}
+
+/* Enlace activo: subrayado azul → verde */
+.ara-nav .nav-link::after {
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--ara-blue), var(--ara-green));
+}
+
+.ara-nav .nav-link:hover::after {
+    width: 55%;
+}
+
+.ara-nav .nav-link.active {
+    background: rgba(255, 255, 255, .07);
+    border-radius: .6rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+
+.ara-nav .nav-link.active::after {
+    width: 55%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--ara-blue), var(--ara-green));
+}
+
+.ara-nav .ara-theme-toggle {
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid var(--ara-glass-line);
+    border-radius: .6rem;
+}
+
+/* CTA del navbar con brillo interior */
+.ara-nav .ara-btn-primary {
+    background: linear-gradient(180deg, #12A0F8, var(--ara-blue));
+    box-shadow: 0 10px 24px -12px rgba(1, 136, 238, .9),
+        inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+
+.ara-nav .ara-btn-primary:hover {
+    background: linear-gradient(180deg, #22ABFF, #0A90F2);
+    box-shadow: 0 14px 30px -12px rgba(1, 136, 238, 1),
+        inset 0 1px 0 rgba(255, 255, 255, .45);
+}
+
+/* Panel móvil: mismo vidrio oscuro */
+.ara-mobile-menu {
+    background: rgba(6, 14, 45, .94);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    backdrop-filter: blur(20px) saturate(150%);
+}
+
+/* ============================================================
+   Hero
+   ============================================================ */
+.ara-hero-grid {
+    -webkit-mask-image: radial-gradient(75% 70% at 50% 32%, #000 30%, transparent 88%);
+    mask-image: radial-gradient(75% 70% at 50% 32%, #000 30%, transparent 88%);
+}
+
+.ara-hero .ara-orb {
+    animation-duration: 16s;
+}
+
+/* Badge con vidrio y punto verde de estado */
+.ara-hero .ara-hero-badge {
+    background: rgba(255, 255, 255, .055);
+    border-color: var(--ara-glass-line);
+    border-radius: 999px;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
+}
+
+.ara-hero .ara-dot {
+    box-shadow: 0 0 0 4px rgba(37, 211, 102, .16);
+}
+
+/* Titular: entrada palabra por palabra (la aplica el JS) */
+.ara-hero h1 .ara-w {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    padding-bottom: .12em;
+    margin-bottom: -.12em;
+}
+
+.ara-hero h1 .ara-w > i {
+    display: inline-block;
+    font-style: normal;
+    transform: translateY(110%);
+    transition: transform .95s var(--ara-ease);
+    transition-delay: calc(var(--i) * 45ms);
+}
+
+.ara-hero h1.ara-split.is-ready .ara-w > i {
+    transform: translateY(0);
+}
+
+/* El tramo con degradado no se parte: el degradado se recorta al texto */
+.ara-hero h1 .ara-grad {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity .9s var(--ara-ease) .3s, transform .9s var(--ara-ease) .3s;
+}
+
+.ara-hero h1.ara-split.is-ready .ara-grad {
+    opacity: 1;
+    transform: none;
+}
+
+/* Botones del hero */
+.ara-hero .ara-btn-primary {
+    background: linear-gradient(180deg, #12A0F8, var(--ara-blue));
+    box-shadow: 0 16px 34px -16px rgba(1, 136, 238, .95),
+        inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+
+.ara-hero .ara-btn-primary:hover {
+    background: linear-gradient(180deg, #22ABFF, #0A90F2);
+    box-shadow: 0 20px 42px -16px rgba(1, 136, 238, 1),
+        inset 0 1px 0 rgba(255, 255, 255, .45);
+}
+
+.ara-hero .ara-btn-secondary {
+    background: rgba(255, 255, 255, .04);
+    border-color: rgba(255, 255, 255, .18);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+.ara-hero .ara-btn-secondary:hover {
+    background: rgba(255, 255, 255, .09);
+    border-color: rgba(255, 255, 255, .32);
+}
+
+/* Estadísticas en chips de vidrio */
+.ara-hero-stats .grid {
+    gap: .75rem;
+}
+
+.ara-hero .ara-hero-stat {
+    position: relative;
+    border-radius: 16px;
+    padding: 1rem .6rem;
+    background: linear-gradient(160deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .025));
+    border: 1px solid rgba(255, 255, 255, .1);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
+    transition: transform .5s var(--ara-ease), border-color .5s var(--ara-ease),
+        box-shadow .5s var(--ara-ease);
+}
+
+.ara-hero .ara-hero-stat::after {
+    content: "";
+    position: absolute;
+    left: 18%;
+    right: 18%;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(37, 211, 102, .55), transparent);
+    transform: scaleX(0);
+    transition: transform .55s var(--ara-ease);
+}
+
+.ara-hero .ara-hero-stat:hover {
+    transform: translateY(-3px);
+    border-color: rgba(94, 176, 255, .32);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12),
+        0 18px 34px -26px rgba(0, 0, 0, .9);
+}
+
+.ara-hero .ara-hero-stat:hover::after {
+    transform: scaleX(1);
+}
+
+/* ============================================================
+   Accesibilidad: con movimiento reducido no hay desplazamientos
+   (el atributo html.ara-motion fuerza la vista completa para revisión)
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    html:not(.ara-motion) .ara-hero .ara-orb {
+        animation: none;
+    }
+
+    html:not(.ara-motion) .ara-hero h1 .ara-w > i {
+        transform: none;
+        transition: none;
+    }
+
+    html:not(.ara-motion) .ara-hero h1 .ara-grad {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    html:not(.ara-motion) .ara-hero .ara-hero-stat {
+        transition: none;
+    }
+}
+
+/* ============================================================
+   Fase 2 · Cinta de logos, tarjetas y panel de estadísticas
+   ============================================================ */
+
+/* Cinta continua de logos */
+.ara-marquee {
+    position: relative;
+    overflow: hidden;
+    padding: .35rem 0;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+
+.ara-marquee-track {
+    display: flex;
+    width: max-content;
+    animation: ara-marquee 80s linear infinite;
+}
+
+.ara-marquee:hover .ara-marquee-track {
+    animation-play-state: paused;
+}
+
+.ara-marquee-group {
+    display: flex;
+    align-items: center;
+    gap: 2.75rem;
+    padding-right: 2.75rem;
+    flex: 0 0 auto;
+}
+
+.ara-marquee img {
+    height: 3rem;
+    width: auto;
+    max-width: none;
+    object-fit: contain;
+}
+
+@keyframes ara-marquee {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* Texto solo para lectores de pantalla */
+.ara-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* La cinta de clientes va arriba, sin antetítulo: poco aire arriba y algo
+   más abajo para separarla de la sección siguiente. */
+.ara-clients {
+    padding: 1.5rem 0 2rem;
+}
+
+/* Fondo tenue para que el vidrio de las tarjetas tenga algo que leer */
+.ara-services {
+    background:
+        radial-gradient(55% 45% at 10% 0%, #EAF4FF 0%, rgba(234, 244, 255, 0) 62%),
+        radial-gradient(45% 40% at 100% 100%, #EAFBF1 0%, rgba(234, 251, 241, 0) 60%),
+        #ffffff;
+}
+
+.dark .ara-services {
+    background:
+        radial-gradient(55% 45% at 10% 0%, rgba(1, 136, 238, .16), transparent 62%),
+        radial-gradient(45% 40% at 100% 100%, rgba(37, 211, 102, .12), transparent 60%),
+        #0f172a;
+}
+
+/* Tarjetas de servicio: vidrio, halo que sigue al cursor y acento verde */
+.ara-service-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(160deg, rgba(255, 255, 255, .94), rgba(246, 251, 255, .78));
+    border-color: #E3EDF9;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 14px 34px -30px rgba(10, 23, 64, .45), inset 0 1px 0 rgba(255, 255, 255, .8);
+    transition: transform .2s ease-out, box-shadow .45s var(--ara-ease),
+        border-color .45s var(--ara-ease);
+}
+
+.ara-service-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(240px 180px at var(--mx, 50%) var(--my, 0%),
+            rgba(94, 176, 255, .16), transparent 70%);
+    opacity: 0;
+    transition: opacity .4s var(--ara-ease);
+    pointer-events: none;
+}
+
+.ara-service-card::after {
+    content: "";
+    position: absolute;
+    left: 2rem;
+    right: 2rem;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(37, 211, 102, .6), transparent);
+    transform: scaleX(0);
+    transition: transform .55s var(--ara-ease);
+}
+
+.ara-service-card:hover {
+    transform: translateY(-4px);
+    border-color: #CFE4FB;
+    box-shadow: 0 28px 55px -38px rgba(10, 23, 64, .55), inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+
+.ara-service-card:hover::before {
+    opacity: 1;
+}
+
+.ara-service-card:hover::after {
+    transform: scaleX(1);
+}
+
+.ara-service-card .ara-icon-box {
+    transition: background .4s var(--ara-ease), color .4s var(--ara-ease),
+        box-shadow .4s var(--ara-ease), transform .4s var(--ara-ease);
+}
+
+.ara-service-card:hover .ara-icon-box {
+    background: rgba(37, 211, 102, .12);
+    color: #1F9D55;
+    box-shadow: 0 0 0 6px rgba(37, 211, 102, .07);
+    transform: translateY(-2px);
+}
+
+.ara-service-card a svg {
+    transition: transform .35s var(--ara-ease);
+}
+
+.ara-service-card:hover a svg {
+    transform: translateX(4px);
+}
+
+.dark .ara-service-card {
+    background: linear-gradient(160deg, rgba(30, 41, 59, .88), rgba(15, 23, 42, .78));
+    border-color: #334155;
+}
+
+.dark .ara-service-card:hover {
+    border-color: rgba(94, 176, 255, .45);
+}
+
+/* Fondo de la sección de productos y vida en la tarjeta */
+.ara-products {
+    background: linear-gradient(180deg, #F7FAFE, #EDF4FB);
+}
+
+.dark .ara-products {
+    background: #101b31;
+}
+
+.ara-product-card .ara-product-media img {
+    transition: transform 1s var(--ara-ease);
+}
+
+.ara-product-card:hover .ara-product-media img {
+    transform: scale(1.035);
+}
+
+.ara-product-card:hover {
+    box-shadow: 0 30px 60px -34px rgba(6, 14, 45, .7), 0 0 0 1px rgba(94, 176, 255, .18);
+}
+
+.ara-product-card .ara-product-cta svg {
+    transition: transform .35s var(--ara-ease);
+}
+
+.ara-product-card:hover .ara-product-cta svg {
+    transform: translateX(4px);
+}
+
+/* Panel de estadísticas */
+.ara-stats-section {
+    background: #ffffff;
+}
+
+.dark .ara-stats-section {
+    background: #0f172a;
+}
+
+.ara-stats-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    padding: 2.25rem 1rem;
+    background: linear-gradient(160deg, #0A1740, #060E2D 68%);
+    border: 1px solid rgba(94, 176, 255, .16);
+    box-shadow: 0 32px 64px -44px rgba(6, 14, 45, .9),
+        inset 0 1px 0 rgba(255, 255, 255, .07);
+}
+
+.ara-stats-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(45% 70% at 10% 0%, rgba(1, 136, 238, .22), transparent 62%),
+        radial-gradient(40% 60% at 92% 100%, rgba(37, 211, 102, .14), transparent 62%);
+}
+
+.ara-stats-panel::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--ara-blue), var(--ara-green));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 1.5s var(--ara-ease);
+}
+
+.ara-stats-panel.is-in::after {
+    transform: scaleX(1);
+}
+
+.ara-stats-panel .ara-stat {
+    position: relative;
+    z-index: 1;
+    padding: 1.15rem .6rem;
+}
+
+.ara-stats-panel .ara-stat-number {
+    color: #ffffff;
+}
+
+.ara-stats-panel .ara-stat-label {
+    color: #A7BADA;
+}
+
+@media (min-width: 768px) {
+    .ara-stats-panel .ara-stat {
+        border-left: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .ara-stats-panel .ara-stat:first-child {
+        border-left: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .ara-marquee-group {
+        gap: 1.75rem;
+        padding-right: 1.75rem;
+    }
+
+    .ara-marquee img {
+        height: 2.25rem;
+    }
+
+    .ara-stats-panel {
+        padding: 1.5rem .5rem;
+        border-radius: 20px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* La cinta de clientes se mantiene siempre en movimiento (es la firma
+       visual de la sección); solo se detiene al pasar el cursor por encima. */
+    html:not(.ara-motion) .ara-stats-panel::after {
+        transition: none;
+    }
+}
+
+/* ============================================================
+   Fase 3 · CTA final, footer, foco visible y contraste
+   ============================================================ */
+
+/* Anillo luminoso que gira muy despacio detrás del panel */
+.ara-cta-evo::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 900px;
+    height: 900px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg,
+            rgba(1, 136, 238, 0) 0deg,
+            rgba(1, 136, 238, .30) 90deg,
+            rgba(37, 211, 102, .22) 190deg,
+            rgba(1, 136, 238, 0) 300deg);
+    filter: blur(50px);
+    transform: translate(-50%, -50%) rotate(0deg);
+    animation: ara-cta-spin 30s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes ara-cta-spin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.ara-cta-evo .cta-panel {
+    border-radius: 28px;
+    padding: 3rem 1.5rem;
+    background: linear-gradient(160deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .025));
+    border: 1px solid rgba(255, 255, 255, .12);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 40px 80px -60px #000;
+}
+
+.ara-cta-evo .ara-cta-title {
+    background: linear-gradient(100deg, #8FCBFF 0%, #5EB0FF 42%, #25D366 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+.ara-cta-evo .ara-btn-primary {
+    background: linear-gradient(180deg, #12A0F8, var(--ara-blue));
+    box-shadow: 0 18px 38px -18px rgba(1, 136, 238, .95),
+        inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+
+.ara-cta-evo .ara-btn-primary:hover {
+    background: linear-gradient(180deg, #22ABFF, #0A90F2);
+    box-shadow: 0 22px 46px -18px rgba(1, 136, 238, 1),
+        inset 0 1px 0 rgba(255, 255, 255, .45);
+}
+
+.ara-cta-evo .ara-btn-secondary {
+    background: rgba(255, 255, 255, .04);
+    border-color: rgba(255, 255, 255, .18);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+.ara-cta-evo .ara-btn-secondary:hover {
+    background: rgba(255, 255, 255, .09);
+    border-color: rgba(255, 255, 255, .32);
+}
+
+@media (min-width: 640px) {
+    .ara-cta-evo .cta-panel {
+        padding: 3.5rem 2.5rem;
+    }
+}
+
+/* Footer: retícula tenue, línea superior y enlaces con subrayado animado */
+.ara-footer {
+    position: relative;
+    overflow: hidden;
+}
+
+.ara-footer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .035) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(80% 60% at 50% 0%, #000, transparent 72%);
+    mask-image: radial-gradient(80% 60% at 50% 0%, #000, transparent 72%);
+}
+
+.ara-footer::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(94, 176, 255, .5), rgba(37, 211, 102, .4), transparent);
+}
+
+.ara-footer > * {
+    position: relative;
+    z-index: 1;
+}
+
+.ara-footer .ara-footer-link {
+    display: inline-block;
+    background-image: linear-gradient(90deg, var(--ara-blue), var(--ara-green));
+    background-size: 0% 1px;
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    transition: background-size .4s var(--ara-ease), color .3s ease;
+}
+
+.ara-footer .ara-footer-link:hover {
+    background-size: 100% 1px;
+    color: #ffffff;
+}
+
+/* Foco visible en todo el sitio: se ve sobre claro y sobre navy */
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--ara-blue);
+    outline-offset: 3px;
+    border-radius: 6px;
+    box-shadow: 0 0 0 5px rgba(94, 176, 255, .22);
+}
+
+/* Contraste AA: los grises muy claros no llegaban a 4.5:1 sobre blanco */
+.ara-service-card p {
+    color: #52627A;
+}
+
+.ara-clients p {
+    color: #5A6A80;
+}
+
+.ara-footer p,
+.ara-footer .text-white\/60 {
+    color: rgba(255, 255, 255, .78);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html:not(.ara-motion) .ara-cta-evo::after {
+        animation: none;
+    }
+
+    html:not(.ara-motion) .ara-footer .ara-footer-link {
+        transition: color .3s ease;
+    }
+}
+
+/* ============================================================
+   Fase 4 · Ajuste a la referencia visual
+   Hero compacto de tres líneas y métricas como cuatro tarjetas
+   con el sufijo en verde. La barra de navegación se mantiene con
+   el formato de banda de vidrio de la Fase 1.
+   ============================================================ */
+
+/* --- Hero compacto --- */
+.ara-hero {
+    min-height: auto;
+    background:
+        radial-gradient(70% 60% at 50% -12%, #16437F 0%, rgba(6, 14, 45, 0) 62%),
+        linear-gradient(180deg, #071330 0%, #050B22 100%);
+}
+
+.ara-hero-grid {
+    background-image:
+        linear-gradient(rgba(94, 176, 255, .06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94, 176, 255, .06) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(72% 80% at 50% 18%, #000 25%, transparent 82%);
+    mask-image: radial-gradient(72% 80% at 50% 18%, #000 25%, transparent 82%);
+}
+
+.ara-hero-inner {
+    /* Más aire bajo la barra: el contenido del hero no arranca pegado al menú */
+    padding-top: 9rem;
+    padding-bottom: 3rem;
+}
+
+/* El titular manda: contenedor más ancho y tipografía más grande para que
+   las tres frases entren en tres líneas. */
+.ara-hero-copy {
+    max-width: 72rem;
+}
+
+.ara-hero h1 {
+    /* En em para que los cortes de línea se mantengan al crecer la tipografía */
+    max-width: 16em;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: clamp(2.15rem, 4.6vw, 4.6rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -.035em;
+}
+
+/* La barra se funde con el hero: sin borde ni desenfoque en reposo,
+   el fondo se desvanece hacia abajo. Al hacer scroll vuelve a ser sólida. */
+.ara-nav {
+    background: linear-gradient(180deg, rgba(6, 14, 45, .78) 0%, rgba(6, 14, 45, .45) 58%, rgba(6, 14, 45, 0) 100%);
+    border-bottom-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+.ara-nav.scrolled {
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
+}
+
+/* Barra de navegación un poco más recogida que el ancho completo */
+.ara-nav > div {
+    max-width: 1100px;
+}
+
+.ara-nav .nav-link {
+    padding: .5rem .85rem;
+    font-size: .86rem;
+}
+
+.ara-hero .text-gradient {
+    background: linear-gradient(100deg, #5EB0FF 0%, #25D366 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.ara-hero .ara-hero-badge {
+    padding: .45rem .9rem;
+    margin-bottom: 1.6rem;
+    font-size: .8rem;
+}
+
+.ara-hero p {
+    max-width: 31rem;
+    margin-bottom: 1.75rem;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: rgba(226, 236, 255, .72);
+}
+
+.ara-hero .ara-btn-lg {
+    padding: .78rem 1.4rem;
+    font-size: .9rem;
+    border-radius: 10px;
+}
+
+.ara-hero .ara-btn-secondary {
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .16);
+    color: #fff;
+}
+
+/* --- Métricas: cuatro tarjetas, sufijo en verde --- */
+.ara-hero-stats {
+    max-width: 66rem;
+    margin: 2.2rem auto 0;
+    padding-top: 1.4rem;
+    border-top-color: transparent;
+}
+
+/* El resplandor verde del fondo se atenúa para no teñir las tarjetas */
+.ara-hero .ara-orb-green {
+    opacity: .45;
+}
+
+.ara-hero-stats .grid {
+    gap: .8rem;
+}
+
+.ara-hero .ara-hero-stat {
+    padding: 1rem .9rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, .1);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .03));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
+    transition: transform .35s var(--ara-ease), border-color .35s var(--ara-ease);
+}
+
+.ara-hero .ara-hero-stat:hover {
+    transform: translateY(-2px);
+    border-color: rgba(37, 211, 102, .3);
+}
+
+.ara-hero .ara-stat-value {
+    margin-bottom: .4rem;
+    /* +2 px sobre los 1.35rem originales */
+    font-size: calc(1.35rem + 2px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -.02em;
+    color: #fff;
+}
+
+.ara-hero .ara-suf {
+    font-style: normal;
+    color: var(--ara-green);
+}
+
+.ara-hero .ara-stat-caption {
+    /* +2 px sobre los .72rem originales */
+    font-size: calc(.72rem + 2px);
+    color: #93A6C4;
+}
+
+@media (max-width: 640px) {
+    .ara-hero-inner {
+        padding-top: 7.25rem;
+    }
+
+    .ara-hero h1 {
+        max-width: 100%;
+    }
+
+    .ara-hero-stats .grid {
+        gap: .6rem;
+    }
+
+    .ara-hero .ara-hero-stat {
+        padding: .85rem .5rem;
+    }
+}
+
+/* ============================================================
+   Barra de progreso de lectura (encima de la barra de navegación)
+   ============================================================ */
+.ara-scroll-progress {
+    height: 3px;
+    border-radius: 0 3px 3px 0;
+    background: linear-gradient(90deg, var(--ara-blue), var(--ara-green));
+    box-shadow: 0 0 14px rgba(1, 136, 238, .55), 0 0 6px rgba(37, 211, 102, .35);
+    opacity: 0;
+    /* Solo se anima el ancho: la aparición es inmediata y no depende de
+       transiciones que puedan quedar congeladas en segundo plano. */
+    transition: width .08s linear;
+    pointer-events: none;
+}
+
+.ara-scroll-progress.is-active {
+    opacity: 1;
+}
+
+/* ============================================================
+   Continuidad barra → hero
+   La barra termina en un gris azulado tenue y su sombra continúa
+   unos píxeles sobre el hero, así no hay corte ni escalón.
+   ============================================================ */
+.ara-nav {
+    background: linear-gradient(180deg, rgba(6, 14, 45, .78) 0%, rgba(6, 14, 45, .45) 58%, rgba(6, 14, 45, .26) 100%);
+}
+
+.ara-nav::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 96px;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(6, 14, 45, .26) 0%, rgba(6, 14, 45, .12) 55%, rgba(6, 14, 45, 0) 100%);
+}
+
+/* Con el scroll la barra es sólida y con borde: no necesita el degradado extra */
+.ara-nav.scrolled::after {
+    display: none;
+}
+
+/* ============================================================
+   Contenedor a sangre
+   Los wrappers de página dejan de limitarse a 1280 px: ocupan el
+   90 % del ancho (centrados con mx-auto) y el header y el footer van
+   un poco más afuera, al 98 %.
+   ============================================================ */
+.max-w-7xl {
+    width: 90%;
+    max-width: 90%;
+}
+
+/* La barra y el pie van al 98 %: más anchos que el contenido */
+.ara-nav > div,
+.ara-footer .max-w-7xl {
+    width: 98%;
+    max-width: 98%;
+}
+
+/* Las métricas del hero ocupan el ancho del contenedor */
+.ara-hero-stats {
+    max-width: none;
+}
+
+/* ============================================================
+   CTA de portada · «Cuéntanos qué quieres automatizar»
+   Tarjeta de vidrio con un degradado cónico girando en el fondo,
+   titular con la última palabra en degradado y formulario de correo.
+   ============================================================ */
+.ara-cta-auto {
+    position: relative;
+    padding: 4.5rem 0 6rem;
+    background: linear-gradient(135deg, #060E2D 0%, #0C1A40 100%);
+}
+
+.ara-cta-auto__panel {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(2rem, 6vw, 4.5rem);
+    border-radius: 32px;
+    border: 1px solid rgba(94, 176, 255, .28);
+    background: #06102A;
+    text-align: center;
+}
+
+/* El degradado del fondo gira despacio; el contenido va por encima */
+.ara-cta-auto__panel::before {
+    content: "";
+    position: absolute;
+    inset: -40%;
+    background: conic-gradient(from 0deg, transparent, rgba(1, 136, 238, .4), transparent 35%, rgba(37, 211, 102, .35), transparent 70%);
+    filter: blur(30px);
+    animation: ara-cta-auto-giro 14s linear infinite;
+}
+
+.ara-cta-auto__panel > * {
+    position: relative;
+}
+
+@keyframes ara-cta-auto-giro {
+    to { transform: rotate(1turn); }
+}
+
+.ara-cta-auto__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .75rem;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .62);
+}
+
+.ara-cta-auto__eyebrow::before {
+    content: "";
+    width: 26px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--ara-blue), var(--ara-green));
+}
+
+.ara-cta-auto__titulo {
+    margin: 1rem 0 1rem;
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -.03em;
+    color: #fff;
+}
+
+.ara-cta-auto__titulo .text-gradient {
+    background: linear-gradient(100deg, #5EB0FF, #25D366 70%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.ara-cta-auto__lead {
+    max-width: 34rem;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, .72);
+}
+
+.ara-cta-auto__form {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .6rem;
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.ara-cta-auto__input {
+    flex: 1 1 240px;
+    min-width: 0;
+    padding: 1rem 1.3rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .05);
+    color: #fff;
+    font: inherit;
+    outline: none;
+    transition: border-color .3s ease, background .3s ease;
+}
+
+.ara-cta-auto__input::placeholder {
+    color: rgba(255, 255, 255, .45);
+}
+
+.ara-cta-auto__input:focus {
+    border-color: var(--ara-blue);
+    background: rgba(1, 136, 238, .1);
+}
+
+.ara-cta-auto__btn {
+    flex: 0 0 auto;
+    padding: .95rem 1.6rem;
+    border-radius: 999px;
+    font-size: .92rem;
+    background: linear-gradient(100deg, var(--ara-blue), #0AA0FF);
+    box-shadow: 0 12px 36px rgba(1, 136, 238, .35);
+}
+
+@media (max-width: 640px) {
+    .ara-cta-auto {
+        padding: 3rem 0 4rem;
+    }
+
+    .ara-cta-auto__panel {
+        border-radius: 24px;
+    }
+}
+
+/* ============================================================
+   Hero de páginas internas (mismo formato que el del catálogo)
+   ============================================================ */
+.ara-ph {
+    position: relative;
+    overflow: hidden;
+    padding: 8.5rem 0 3.5rem;
+    background: radial-gradient(circle at 15% 0, #12294F 0, #060E2D 55%, #04091E 100%);
+    color: #fff;
+}
+
+.ara-ph__halo {
+    position: absolute;
+    top: -8rem;
+    right: -6rem;
+    width: 26rem;
+    height: 26rem;
+    border-radius: 50%;
+    pointer-events: none;
+    background: rgba(1, 136, 238, .22);
+    filter: blur(90px);
+}
+
+.ara-ph__texto {
+    max-width: 46rem;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.ara-ph__badge {
+    display: inline-block;
+    margin-bottom: 1.15rem;
+}
+
+.ara-ph__titulo {
+    margin: 0 0 .95rem;
+    font-size: clamp(2rem, 5vw, 2.6rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -.02em;
+}
+
+.ara-ph__lead {
+    margin: 0 auto;
+    max-width: 34rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, .72);
+}
+
+.ara-ph__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .6rem;
+    margin-top: 1.6rem;
+}
+
+.ara-ph__extra {
+    max-width: 34rem;
+    margin: 1.4rem auto 0;
+    text-align: left;
+    font-size: .875rem;
+    color: rgba(255, 255, 255, .72);
+}
+
+.ara-ph__extra ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: .45rem;
+}
+
+@media (min-width: 1024px) {
+    .ara-ph {
+        min-height: 440px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 3rem 0;
+    }
+
+    .ara-ph__titulo {
+        font-size: clamp(1.95rem, 2.4vw, 2.375rem);
+    }
+
+    .ara-ph__lead {
+        font-size: .95rem;
+        line-height: 1.55;
+    }
+}

@@ -1,5 +1,5 @@
 <script setup>
-    import { computed } from 'vue';
+    import { computed, watch } from 'vue';
     import { useForm, usePage } from '@inertiajs/vue3';
 
     const props = defineProps({
@@ -32,6 +32,21 @@
         }
         return '¡Hola! Soy Aracodito. Te muestro los avisos en texto.';
     });
+
+    // El interruptor manda de inmediato: los avisos de la vista usan el mismo
+    // valor que se ve en pantalla, sin esperar a guardar ni recargar.
+    watch(
+        () => [settings.aracodito_enabled, settings.aracodito_audio_enabled, settings.aracodito_ia_enabled],
+        ([enabled, audio, ia]) => {
+            window.USER_CONFIG = {
+                ...(window.USER_CONFIG || {}),
+                aracodito_enabled: Boolean(enabled),
+                aracodito_audio_enabled: Boolean(audio),
+                aracodito_ia_enabled: Boolean(ia),
+            };
+        },
+        { immediate: true }
+    );
 
     // Vistas previas reales: no guardan nada y no reproducen audio.
     const previews = [
@@ -118,16 +133,6 @@
         settings.put(route('profile.aracodito.update'), {
             preserveScroll: true,
             onSuccess: () => {
-                // La configuración global se inyecta desde Blade solo al cargar
-                // la página; tras guardar hay que reflejarla para que
-                // window.alertaSistema decida de inmediato entre Aracodito y Swal.
-                window.USER_CONFIG = {
-                    ...(window.USER_CONFIG || {}),
-                    aracodito_enabled: settings.aracodito_enabled,
-                    aracodito_audio_enabled: settings.aracodito_audio_enabled,
-                    aracodito_ia_enabled: settings.aracodito_ia_enabled,
-                };
-
                 if (typeof window.alertaSistema === 'function') {
                     window.alertaSistema(
                         'Configuración guardada',

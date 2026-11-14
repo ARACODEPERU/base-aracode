@@ -130,7 +130,10 @@
                         <img class="material-viewer__frame" data-material-image src="" alt="" hidden>
 
                         {{-- PDF y contenido integrado --}}
-                        <iframe class="material-viewer__frame" data-material-frame title="Vista previa del material" hidden></iframe>
+                        {{-- El visor solo se abre al pulsar «Ver»: la carga se difiere
+                             hasta ese momento (el src lo pone el script). --}}
+                        <iframe class="material-viewer__frame" data-material-frame title="Vista previa del material"
+                                loading="lazy" hidden></iframe>
 
                         {{-- Otros archivos o enlaces: se ofrecen para descargar o abrir --}}
                         <div class="material-viewer__fallback" data-material-fallback hidden>

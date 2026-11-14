@@ -111,7 +111,8 @@
                                             @if($latest->course?->image)
                                                 <img src="{{ asset('storage/' . $latest->course->image) }}"
                                                     class="card-img-top" alt="{{ $latest->course->description }}"
-                                                    style="height: 160px; object-fit: cover;">
+                                                    style="height: 160px; object-fit: cover;"
+                                                    loading="lazy" decoding="async">
                                             @endif
                                             <div class="card-body">
                                                 <h3 class="h6 fw-bold">{{ $latest->course?->description }}</h3>

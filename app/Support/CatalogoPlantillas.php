@@ -60,7 +60,7 @@ class CatalogoPlantillas
      * config con datoTipo(): encadenarlo con un método que volviera a llamar a
      * todas() sería la recursión infinita que ya tuvo nombreCategoria().
      *
-     * @return array<string, array{nombre: string, hashtag: string, descripcion: string, total: int}>
+     * @return array<string, array{nombre: string, hashtag: string, etiqueta: string, descripcion: string, total: int}>
      */
     public static function tipos(): array
     {
@@ -73,6 +73,7 @@ class CatalogoPlantillas
             $tipos[$clave] = [
                 'nombre' => self::datoTipo($clave, 'nombre'),
                 'hashtag' => self::datoTipo($clave, 'hashtag'),
+                'etiqueta' => self::datoTipo($clave, 'etiqueta') ?: self::datoTipo($clave, 'nombre'),
                 'descripcion' => self::datoTipo($clave, 'descripcion'),
                 'total' => count(array_filter(
                     $plantillas,
@@ -316,6 +317,9 @@ class CatalogoPlantillas
             'tipo' => $tipo,
             'tipo_nombre' => self::datoTipo($tipo, 'nombre'),
             'tipo_hashtag' => self::datoTipo($tipo, 'hashtag'),
+            // Lo que se ve en la tarjeta: «Landing», «SitioWeb» o «Tienda».
+            // Si la config no trae `etiqueta` se usa el nombre del formato.
+            'tipo_etiqueta' => self::datoTipo($tipo, 'etiqueta') ?: self::datoTipo($tipo, 'nombre'),
             'tipo_descripcion' => self::datoTipo($tipo, 'descripcion'),
             'etiquetas' => array_values((array) ($datos['etiquetas'] ?? [])),
             'resumen' => (string) ($datos['resumen'] ?? ''),

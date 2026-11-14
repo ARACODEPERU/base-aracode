@@ -86,7 +86,8 @@
                                                                         @if($item->course?->image)
                                                                         <img class="w-100 mb-3"
                                                                             src="{{ asset('storage/' . $item->course->image) }}"
-                                                                            alt="{{ $item->course->name ?? 'Imagen' }}">
+                                                                            alt="{{ $item->course->name ?? 'Imagen' }}"
+                                                                            loading="lazy" decoding="async">
                                                                     @endif
                                                                     </a>
                                                                     <br>
@@ -158,7 +159,8 @@
                                                                             {{-- Si hay imagen, la mostramos --}}
                                                                             <img class="w-100 mb-3"
                                                                                  src="{{ asset('storage/' . $item->course->image) }}"
-                                                                                 alt="{{ $item->course->name }}">
+                                                                                 alt="{{ $item->course->name }}"
+                                                                                 loading="lazy" decoding="async">
                                                                         @else
                                                                             {{-- Si NO hay imagen (o no hay curso), mandamos el log para investigar --}}
                                                                             <script>

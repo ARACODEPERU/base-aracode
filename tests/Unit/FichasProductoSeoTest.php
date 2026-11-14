@@ -10,8 +10,9 @@ use Tests\TestCase;
 |
 | Las dos fichas se MANTIENEN como ficha de producto del sitio corporativo (no
 | se retiran ni se redirigen): la decisión y su porqué están en
-| docs/SEO_ECOSISTEMA_PRODUCTOS.md. /pichanguero, en cambio, ya tiene su propio
-| sitio y su URL antigua redirige allí con 301. Estas pruebas fijan lo que esa decisión
+| docs/SEO_ECOSISTEMA_PRODUCTOS.md. /pichanguero también es una ficha del
+| corporativo, no la web del producto: explica qué es y enlaza a su sitio oficial.
+| Estas pruebas fijan lo que esa decisión
 | promete para que un cambio posterior no la deshaga sin darse cuenta: cada
 | ficha responde 200, se declara canónica de sí misma, publica un solo
 | SoftwareApplication que apunta al sitio del producto, no publica importes y
@@ -140,15 +141,18 @@ it('enlaza al sitio oficial y a su página de planes o descargas', function (str
     expect($html)->not->toContain('rel="nofollow"');
 })->with(['kapta', 'kirafact']);
 
-it('redirige /pichanguero a su sitio oficial con 301', function () {
+it('publica la ficha de Pichanguero con canónica propia y enlace a su sitio oficial', function () {
     $respuesta = $this->get('/pichanguero');
 
-    $respuesta->assertStatus(301);
+    // La tarjeta del ecosistema abre esta ficha, que explica el producto; el
+    // visitante sale al sitio oficial desde el botón de la ficha, no al pulsar
+    // la tarjeta.
+    $respuesta->assertOk();
 
-    // El destino puede llegar con o sin la barra final: las dos formas son la
-    // raíz del sitio oficial.
-    expect(rtrim($respuesta->headers->get('Location'), '/'))
-        ->toBe(rtrim(SitiosProducto::url('pichanguero'), '/'));
+    $html = $respuesta->getContent();
+
+    expect($html)->toContain('<link rel="canonical" href="'.url('/pichanguero').'">');
+    expect($html)->toContain('href="'.SitiosProducto::url('pichanguero').'"');
 });
 
 it('sigue redirigiendo con 301 las URLs antiguas que apuntan a cada ficha', function (string $antigua, string $destino) {

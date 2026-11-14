@@ -47,6 +47,13 @@
     'nuevaPestana' => false,
     'etiqueta' => 'Conocer Más',
     'compacta' => false,
+    // El botón de la variante `sobrepuesta` abre el formulario de asesoría en
+    // lugar de navegar, igual que los demás botones marcados en el sitio.
+    'asesoria' => false,
+    // Variante visual. `sobrepuesta` = el diseño ocupa toda la tarjeta y el
+    // rubro, el nombre, la frase y el botón blanco van encima, sobre un velo
+    // navy (la usa el home). Sin variante se pinta la tarjeta navy de siempre.
+    'variante' => null,
 ])
 
 @php
@@ -68,6 +75,47 @@
         ? "--ara-product-media-bg: url('{$image}')".($proporcionFranja ? "; --ara-product-media-ratio: {$proporcionFranja}" : '')
         : null;
 @endphp
+
+@if ($variante === 'sobrepuesta')
+    {{-- Tarjeta con el diseño a sangre y el texto encima, sobre un velo navy
+         que garantiza la lectura: rubro, nombre, frase y botón blanco. --}}
+    <article class="ara-product-card ara-product-card--sobrepuesta reveal reveal-delay-{{ $delay }}"
+             @if ($estiloFranja) style="{{ $estiloFranja }}" @endif>
+        @if ($image)
+            <div class="ara-product-media">
+                <img src="{{ $image }}" alt="{{ $textoAlternativo }}" loading="lazy" decoding="async">
+            </div>
+        @endif
+
+        <div class="ara-product-content">
+            @if ($badge)
+                <span class="ara-product-chip">{{ $badge }}</span>
+            @endif
+
+            <h3 class="ara-product-title">{{ $title }}</h3>
+
+            <div class="ara-product-pie">
+                @if ($description)
+                    <p class="ara-product-text">{{ $description }}</p>
+                @endif
+
+                {{-- El botón va al costado del texto, con el rótulo siempre
+                     visible y anclado al borde derecho de la tarjeta. --}}
+                <a href="{{ $href }}" class="ara-product-cta"
+                   @if ($asesoria) data-asesoria @endif
+                   @if ($nuevaPestana) target="_blank" rel="noopener" @endif>
+                    <span class="ara-product-cta-texto">{{ $etiqueta }}</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                    @if ($nuevaPestana)
+                        <span class="sr-only">(se abre en una pestaña nueva)</span>
+                    @endif
+                </a>
+            </div>
+        </div>
+    </article>
+@else
 
 <article class="ara-product-card {{ $compacta ? 'ara-product-card--compacta' : '' }} reveal reveal-delay-{{ $delay }}">
     @if ($image)
@@ -122,3 +170,5 @@
         </a>
     </div>
 </article>
+
+@endif

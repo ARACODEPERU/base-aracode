@@ -1,0 +1,165 @@
+{{--
+    Tarjeta de producto del catálogo (/soluciones y home)
+    ---------------------------------------------------------------------------
+    La imagen diseñada del producto es lo que se ve primero: va arriba, ENTERA,
+    con su proporción reservada por CSS (sin saltos al cargar) y sin ningún velo
+    encima. Debajo, sobre el navy de la tarjeta, va la información escaneable:
+    categoría, nombre, el resumen y el enlace.
+
+    "Entera" es literal: los diseños del ecosistema no comparten proporción
+    (cuadrados y uno panorámico) y la franja no recorta ninguno —`object-fit:
+    contain`—. Lo que sobra de franja lo rellena el propio diseño desenfocado,
+    que es la URL que viaja en `--ara-product-media-bg`.
+
+    Antes la imagen era el fondo de TODA la tarjeta y dos degradados navy la
+    cubrían para que el texto se leyera: el diseño apenas se apreciaba.
+
+    El resumen de la tarjeta se cuenta por UNA sola vía: la frase corta de
+    `description`, que además es el texto alternativo de la imagen cuando no se
+    pasa `imageAlt`. La lista de prestaciones sigue disponible para tarjetas que
+    la necesiten, pero la variante compacta la ignora a propósito: las dos a la
+    vez repetían lo mismo y alargaban la tarjeta.
+
+    Propiedades:
+    - `image`: URL de la imagen diseñada del producto. La proporción de la franja
+      la fija `.ara-product-card` en webpage-v2.css (4/3; 3/2 en móvil), pero el
+      diseño que llega no se recorta: se ajusta dentro (`contain`).
+    - `description`: frase corta del producto. Se pinta como párrafo en la
+      tarjeta compacta y es el texto alternativo de la imagen cuando no se pasa
+      `imageAlt`.
+    - `compacta`: tarjeta chica, para rejillas de tres por fila —la que usan
+      el home y /soluciones—. Ignora `features` y muestra la frase corta.
+    - `imageAlt`: texto alternativo explícito, para cuando el diseño de la
+      imagen necesite una descripción distinta de la frase comercial.
+    - `nuevaPestana`: el destino es el sitio del producto (otra web). Se avisa
+      con texto solo para lectores de pantalla: quien navega con lector no
+      debería descubrir que cambió de pestaña al perder la página anterior.
+--}}
+@props([
+    'title',
+    'description' => null,
+    'imageAlt' => null,
+    'href' => '#',
+    'image' => null,
+    'badge' => null,
+    'features' => [],
+    'delay' => 0,
+    'nuevaPestana' => false,
+    'etiqueta' => 'Conocer Más',
+    'compacta' => false,
+    // Variante visual. `sobrepuesta` = el diseño ocupa toda la tarjeta y el
+    // rubro, el nombre, la frase y el botón blanco van encima, sobre un velo
+    // navy (la usa el home). Sin variante se pinta la tarjeta navy de siempre.
+    'variante' => null,
+])
+
+@php
+    $textoAlternativo = $imageAlt ?? $description ?? $title;
+
+    // La tarjeta compacta resume con la frase corta, no con la lista: si se
+    // pasaran las dos cosas se pintarían dos veces lo mismo.
+    $features = $compacta ? [] : $features;
+
+    // El alto de la franja sale del archivo: la tarjeta reserva exactamente la
+    // proporción de su imagen, así que la franja queda pegada al diseño —sin
+    // banda de relleno— y sin salto al cargarla. Si no se puede medir (una URL
+    // externa, o un archivo que no está en esta copia), la franja se queda con
+    // la proporción por defecto de la hoja y `object-fit: contain` evita el
+    // recorte; ahí sí asoma el relleno desenfocado.
+    $proporcionFranja = $image ? \App\Support\ProporcionImagen::de($image) : null;
+
+    $estiloFranja = $image
+        ? "--ara-product-media-bg: url('{$image}')".($proporcionFranja ? "; --ara-product-media-ratio: {$proporcionFranja}" : '')
+        : null;
+@endphp
+
+@if ($variante === 'sobrepuesta')
+    {{-- Tarjeta con el diseño a sangre y el texto encima, sobre un velo navy
+         que garantiza la lectura: rubro, nombre, frase y botón blanco. --}}
+    <article class="ara-product-card ara-product-card--sobrepuesta reveal reveal-delay-{{ $delay }}">
+        @if ($image)
+            <div class="ara-product-media">
+                <img src="{{ $image }}" alt="{{ $textoAlternativo }}" loading="lazy" decoding="async">
+            </div>
+        @endif
+
+        <div class="ara-product-content">
+            @if ($badge)
+                <span class="ara-product-chip">{{ $badge }}</span>
+            @endif
+
+            <h3 class="ara-product-title">{{ $title }}</h3>
+
+            @if ($description)
+                <p class="ara-product-text">{{ $description }}</p>
+            @endif
+
+            <a href="{{ $href }}" class="ara-product-cta"
+               @if ($nuevaPestana) target="_blank" rel="noopener" @endif>
+                {{ $etiqueta }}
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+                @if ($nuevaPestana)
+                    <span class="sr-only">(se abre en una pestaña nueva)</span>
+                @endif
+            </a>
+        </div>
+    </article>
+@else
+
+<article class="ara-product-card {{ $compacta ? 'ara-product-card--compacta' : '' }} reveal reveal-delay-{{ $delay }}">
+    @if ($image)
+        {{-- La franja se ve entera (`object-fit: contain` en webpage-v2.css) y
+             mide lo que mide el diseño: la proporción viaja en
+             `--ara-product-media-ratio` y la URL, para el relleno de respaldo,
+             en `--ara-product-media-bg`. --}}
+        <div class="ara-product-media" @if ($estiloFranja) style="{{ $estiloFranja }}" @endif>
+            <img src="{{ $image }}" alt="{{ $textoAlternativo }}" loading="lazy" decoding="async">
+
+            @if ($badge)
+                <span class="ara-product-badge">{{ $badge }}</span>
+            @endif
+        </div>
+    @endif
+
+    <div class="ara-product-content">
+        {{-- Sin imagen no hay dónde superponer la categoría: se muestra como
+             distintivo normal, sobre el fondo de la tarjeta. --}}
+        @if ($badge && ! $image)
+            <span class="ara-badge ara-badge-green mb-3 inline-block">{{ $badge }}</span>
+        @endif
+
+        <h3 class="ara-product-title">{{ $title }}</h3>
+
+        @if ($compacta && $description)
+            <p class="ara-product-text">{{ $description }}</p>
+        @endif
+
+        @if (count($features) > 0)
+            <ul class="ara-product-features">
+                @foreach ($features as $feature)
+                    <li>
+                        <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>{{ $feature }}</span>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+
+        <a href="{{ $href }}" class="ara-btn ara-btn-primary ara-product-cta"
+           @if ($nuevaPestana) target="_blank" rel="noopener" @endif>
+            {{ $etiqueta }}
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+            </svg>
+            @if ($nuevaPestana)
+                <span class="sr-only">(se abre en una pestaña nueva)</span>
+            @endif
+        </a>
+    </div>
+</article>
+
+@endif

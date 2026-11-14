@@ -121,6 +121,9 @@ const destroy = (contract) => {
                                 <Link v-can="'comm_contratos_nuevo'" :href="route('comm_contracts_create')" class="btn btn-primary">
                                     Nuevo
                                 </Link>
+                                <Link v-can="'comm_contratos_cronograma'" :href="route('comm_sales_documents_create')" class="btn btn-success">
+                                    Facturar cuotas
+                                </Link>
                             </template>
                         </Keypad>
                     </div>
