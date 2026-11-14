@@ -16,6 +16,14 @@ import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
         tiny_api_key: {
             type: String,
             default: null,
+        },
+        can_upload_pdf: {
+            type: Boolean,
+            default: false,
+        },
+        pdf_url: {
+            type: String,
+            default: null,
         }
     });
 </script>
@@ -31,7 +39,7 @@ import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
             </li>
         </Navigation>
         <div class="mt-5">
-            <editForm :tiny_api_key="tiny_api_key" :article="article" :categories="categories"></editForm>
+            <editForm :tiny_api_key="tiny_api_key" :article="article" :categories="categories" :can_upload_pdf="can_upload_pdf" :pdf_url="pdf_url"></editForm>
         </div>
     </AppLayout>
 </template>

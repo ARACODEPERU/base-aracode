@@ -20,6 +20,11 @@ import BlogAiAssistant from '@/Components/BlogAiAssistant.vue';
         tiny_api_key: {
             type: String,
             default: null,
+        },
+        // El campo PDF solo lo ve quien tiene rol Administrador o admin.
+        can_upload_pdf: {
+            type: Boolean,
+            default: false,
         }
     });
 
@@ -30,11 +35,14 @@ import BlogAiAssistant from '@/Components/BlogAiAssistant.vue';
         description:'',
         status: true,
         file: '',
+        pdf: null,
         keywords: []
     });
 
     const photoPreview = ref(null);
     const photoInput = ref(null);
+    const pdfInput = ref(null);
+    const pdfName = ref('');
 
     const createArticle = () => {
         if (photoInput.value) {
@@ -93,6 +101,16 @@ import BlogAiAssistant from '@/Components/BlogAiAssistant.vue';
 
     const selectNewPhoto = () => {
         photoInput.value.click();
+    };
+
+    const selectPdf = () => {
+        pdfInput.value.click();
+    };
+
+    const updatePdf = () => {
+        const pdf = pdfInput.value.files[0];
+        form.pdf = pdf || null;
+        pdfName.value = pdf ? pdf.name : '';
     };
 
     const updatePhotoPreview = () => {
@@ -218,6 +236,24 @@ import BlogAiAssistant from '@/Components/BlogAiAssistant.vue';
 
                     <InputError :message="form.errors.file" class="mt-2" />
                 </div>
+            </div>
+            <div v-if="can_upload_pdf" class="col-span-6 sm:col-span-6">
+                <InputLabel for="pdf" value="PDF adjunto (opcional)" />
+                <input
+                    ref="pdfInput"
+                    type="file"
+                    accept="application/pdf"
+                    class="hidden"
+                    @change="updatePdf"
+                >
+                <div class="flex flex-wrap items-center gap-2 mt-1">
+                    <SecondaryButton type="button" @click.prevent="selectPdf">
+                        Seleccionar PDF
+                    </SecondaryButton>
+                    <span v-if="pdfName" class="text-sm">{{ pdfName }}</span>
+                    <span v-else class="text-xs text-gray-500">Solo PDF, máximo 10 MB.</span>
+                </div>
+                <InputError :message="form.errors.pdf" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-3">
                 <InputLabel for="category_id" value="Categoría *" />

@@ -50,6 +50,10 @@ const baseChannels = [
     // TikTok
     { id: 'tiktok_video', label: 'TikTok Video', icon: 'fa-brands fa-tiktok', color: '#000000', utm_source: 'tiktok', utm_medium: 'video', origen: 'Social' },
     { id: 'tiktok_live', label: 'TikTok Live', icon: 'fa-brands fa-tiktok', color: '#000000', utm_source: 'tiktok', utm_medium: 'live', origen: 'Social' },
+    // Spotify
+    { id: 'spotify_bio', label: 'Spotify Bio', icon: 'fa-brands fa-spotify', color: '#1DB954', utm_source: 'spotify', utm_medium: 'social', origen: 'Social' },
+    { id: 'spotify_playlist', label: 'Spotify Playlist', icon: 'fa-brands fa-spotify', color: '#1DB954', utm_source: 'spotify', utm_medium: 'referral', origen: 'Social' },
+    { id: 'spotify_ads', label: 'Spotify Ads', icon: 'fa-brands fa-spotify', color: '#1DB954', utm_source: 'spotify', utm_medium: 'cpc', origen: 'Spotify' },
     // Email
     { id: 'email_marketing', label: 'Email Marketing', icon: 'fa-solid fa-envelope', color: '#EA4335', utm_source: 'email', utm_medium: 'email', origen: 'Email' },
 ];

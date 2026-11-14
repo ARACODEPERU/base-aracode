@@ -4,6 +4,11 @@
     $company = \App\Models\Company::first();
 @endphp
 <head>
+    @php
+        $gtm = \App\Support\PageSnippet::parts();
+    @endphp
+    {{-- Google Tag Manager / scripts (parametro P000022) --}}
+    {!! $gtm['head'] !!}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -43,9 +48,14 @@
             z-index: 99999999 !important;
         }
     </style>
+    {{-- Atribución de primer toque: las landings y el checkout Inertia leen
+         traffic_tracking desde localStorage. --}}
+    <script src="{{ asset('js/traffic-tracking.js') }}?v={{ filemtime(public_path('js/traffic-tracking.js')) }}"></script>
 </head>
 
 <body>
+    {{-- Google Tag Manager (noscript) --}}
+    {!! $gtm['body'] !!}
     @inertia
     <script>
         window.assetUrl = @json(asset(''));

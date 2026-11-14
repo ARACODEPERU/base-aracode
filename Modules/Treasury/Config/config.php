@@ -11,8 +11,8 @@ return [
     'auto_income' => env('TREASURY_AUTO_INCOME', true),
 
     /*
-    | Métodos de pago excluidos del libro de tesorería por descripción.
-    | El efectivo se maneja en caja chica (PettyCash), no en bancos.
+    | Métodos de pago que se registran en la cuenta de Efectivo/Caja (tipo cash)
+    | en lugar de una cuenta bancaria o billetera.
     */
     'excluded_payment_methods' => ['efectivo'],
 

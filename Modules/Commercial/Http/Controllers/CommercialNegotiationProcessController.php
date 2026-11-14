@@ -3,6 +3,7 @@
 namespace Modules\Commercial\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\CompanyBilletera;
 use App\Models\IdentityDocumentType;
 use App\Models\Person;
 use App\Models\Sale;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCourse;
@@ -31,6 +33,9 @@ use Modules\Commercial\Support\NegotiationWebhookPayload;
 use Modules\Integrationhub\Entities\IntegrationError;
 use Modules\Integrationhub\Http\Controllers\IntegrationhubController;
 use Modules\Sales\Entities\SalePaymentSchedule;
+use Modules\Treasury\Entities\TreasuryAccount;
+use Modules\Treasury\Services\TreasuryAccountSyncService;
+use Modules\Treasury\Services\TreasuryHooks;
 
 class CommercialNegotiationProcessController extends Controller
 {
@@ -902,6 +907,11 @@ class CommercialNegotiationProcessController extends Controller
                     'sale_document_id' => $data['document']['id'],
                 ]);
 
+                // Tesoreria: el dinero ya entro por el medio acordado, asi que se registra
+                // el ingreso en la cuenta que corresponde junto con el comprobante. En cuotas
+                // el ingreso es la primera cuota (pago inicial); en pago unico, el total.
+                $this->registerTreasuryIncome($negotiation, $sale, (int) $data['document']['id'], (float) $documentTotal);
+
                 // En cuotas vinculamos el comprobante a la primera cuota (ya pagada).
                 if ($isInstallments) {
                     $firstSchedule = SalePaymentSchedule::where('sale_id', $sale->id)
@@ -1215,6 +1225,220 @@ class CommercialNegotiationProcessController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Registra en tesoreria el dinero recibido de la negociacion. Es best-effort: si no
+     * hay una cuenta configurada, el proceso sigue y queda el aviso en el log.
+     */
+    private function registerTreasuryIncome(
+        CommercialNegotiation $negotiation,
+        Sale $sale,
+        int $documentId,
+        float $amount,
+    ): void {
+        try {
+            if (! $this->treasuryAvailable()) {
+                return;
+            }
+
+            $account = $this->treasuryAccountFor($negotiation);
+
+            if (! $account) {
+                Log::warning('[Commercial] Sin cuenta de tesoreria para el ingreso de la negociacion '.$negotiation->id, [
+                    'payment_method' => $negotiation->payment_method,
+                ]);
+
+                return;
+            }
+
+            TreasuryHooks::recordSaleIncomeInAccount(
+                $sale,
+                $amount,
+                $account,
+                $negotiation->payment_link,
+                $documentId,
+            );
+        } catch (\Throwable $e) {
+            Log::warning('[Commercial] No se registro el ingreso de la negociacion '.$negotiation->id.' en tesoreria: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Tesoreria es opcional: sin el modulo, sin sus tablas o con el registro automatico
+     * apagado, la aprobacion sigue su curso y no se intenta escribir en el libro.
+     */
+    private function treasuryAvailable(): bool
+    {
+        if (! class_exists(TreasuryHooks::class) || ! class_exists(TreasuryAccount::class)) {
+            return false;
+        }
+
+        // Respeta el interruptor del modulo (TREASURY_AUTO_INCOME / config treasury).
+        if (! TreasuryHooks::enabled()) {
+            return false;
+        }
+
+        foreach (['treasury_accounts', 'treasury_source_movements', 'treasury_transactions'] as $table) {
+            if (! Schema::hasTable($table)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Cuenta de tesoreria donde entro el dinero segun el medio acordado. La negociacion
+     * no guarda un metodo de pago de ventas, asi que se deduce de la configuracion de la
+     * empresa; cuando la eleccion no es inequivoca no se registra y se avisa en el log.
+     */
+    private function treasuryAccountFor(CommercialNegotiation $negotiation): ?TreasuryAccount
+    {
+        return match ($negotiation->payment_method) {
+            'billetera_digital' => $this->negotiationWalletAccount($negotiation),
+            'enlace' => $this->walletAccountForLink($negotiation),
+            'mercadopago' => $this->mercadoPagoAccount(),
+            'transferencia' => $this->bankAccountForNegotiation($negotiation),
+            'efectivo' => TreasuryAccount::query()->active()->cash()->first(),
+            default => null,
+        };
+    }
+
+    /**
+     * Cuenta de la billetera elegida en la negociacion. Si se marcaron varias, se
+     * usa la que ofrece enlace de pago (por ahi entro el dinero); si no hay una
+     * sola clara, no se registra para no atribuirlo a la cuenta equivocada.
+     */
+    private function negotiationWalletAccount(CommercialNegotiation $negotiation): ?TreasuryAccount
+    {
+        $billeteras = $negotiation->companyBilleteras;
+
+        if ($billeteras->isEmpty()) {
+            return $this->walletAccountForLink($negotiation);
+        }
+
+        $conEnlace = $billeteras->filter(fn (CompanyBilletera $billetera) => (bool) $billetera->has_payment_link);
+
+        $elegida = match (true) {
+            $conEnlace->count() === 1 => $conEnlace->first(),
+            $billeteras->count() === 1 => $billeteras->first(),
+            default => null,
+        };
+
+        if (! $elegida) {
+            return null;
+        }
+
+        $account = TreasuryAccount::query()
+            ->active()
+            ->wallets()
+            ->where('company_billetera_id', $elegida->id)
+            ->first();
+
+        if ($account) {
+            return $account;
+        }
+
+        try {
+            return app(TreasuryAccountSyncService::class)->ensureForWallet($elegida);
+        } catch (\Throwable $e) {
+            Log::warning('[Commercial] No se pudo crear la cuenta de tesoreria de la billetera '.$elegida->id.': '.$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * Cuenta de un enlace de pago: si la URL delata la pasarela (MercadoPago,
+     * Culqi, Yape, Plin) se usa esa billetera; si no, la unica con enlace.
+     */
+    private function walletAccountForLink(CommercialNegotiation $negotiation): ?TreasuryAccount
+    {
+        $link = mb_strtolower(trim((string) $negotiation->payment_link));
+
+        $pasarela = match (true) {
+            str_contains($link, 'mercadopago'),
+            str_contains($link, 'mpago') => 'MERCADOPAGO',
+            str_contains($link, 'culqi') => 'CULQI',
+            str_contains($link, 'yape') => 'YAPE',
+            str_contains($link, 'plin') => 'PLIN',
+            default => null,
+        };
+
+        if (! $pasarela) {
+            return $this->walletAccountWithPaymentLink();
+        }
+
+        return $this->walletAccountByName($pasarela) ?? $this->walletAccountWithPaymentLink();
+    }
+
+    /** Cuenta de la unica billetera que ofrece enlace de pago: por ahi se cobro. */
+    private function walletAccountWithPaymentLink(): ?TreasuryAccount
+    {
+        $billeteras = CompanyBilletera::query()
+            ->where('status', true)
+            ->where('has_payment_link', true)
+            ->get();
+
+        if ($billeteras->count() !== 1) {
+            return null;
+        }
+
+        return TreasuryAccount::query()
+            ->active()
+            ->wallets()
+            ->where('company_billetera_id', $billeteras->first()->id)
+            ->first();
+    }
+
+    /**
+     * Cuenta de MercadoPago. Si el libro aún no la tiene, se crea a partir del
+     * catálogo de billeteras: es la pasarela con la que trabaja el sistema.
+     */
+    private function mercadoPagoAccount(): ?TreasuryAccount
+    {
+        $account = $this->walletAccountByName('MERCADOPAGO');
+
+        if ($account) {
+            return $account;
+        }
+
+        try {
+            return app(TreasuryAccountSyncService::class)->ensureMercadoPago();
+        } catch (\Throwable $e) {
+            Log::warning('[Commercial] No se pudo crear la cuenta de MercadoPago: '.$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /** Cuenta de una billetera por su nombre corto (por ejemplo MERCADOPAGO). */
+    private function walletAccountByName(string $shortName): ?TreasuryAccount
+    {
+        return TreasuryAccount::query()
+            ->active()
+            ->wallets()
+            ->whereHas('companyBilletera.billetera', function ($query) use ($shortName) {
+                $query->where('short_name', $shortName);
+            })
+            ->first();
+    }
+
+    /** Cuenta bancaria de la transferencia: la recomendada o la unica de la empresa. */
+    private function bankAccountForNegotiation(CommercialNegotiation $negotiation): ?TreasuryAccount
+    {
+        if ($negotiation->recommended_bank_account_id) {
+            return TreasuryAccount::query()
+                ->active()
+                ->banks()
+                ->where('bank_account_id', (int) $negotiation->recommended_bank_account_id)
+                ->first();
+        }
+
+        $accounts = TreasuryAccount::query()->active()->banks()->get();
+
+        return $accounts->count() === 1 ? $accounts->first() : null;
     }
 
     /**

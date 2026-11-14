@@ -43,7 +43,26 @@
                 
                 {{-- Sidebar - Categories (1/4) --}}
                 <aside id="blog-sidebar" class="lg:col-span-1 lg:sticky lg:top-24 lg:self-start blog-sidebar-content lg:!block space-y-6">
-                    
+
+                    @guest
+                        {{-- Alta de lectores: abre el modal de registro. Solo se
+                             muestra a quien todavía no tiene sesión. --}}
+                        <div class="ara-card p-5">
+                            <h3 class="text-sm font-bold text-ara-slate-700 mb-2 flex items-center gap-2 uppercase tracking-wide">
+                                <svg class="w-4 h-4 text-ara-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                                Cuenta gratuita
+                            </h3>
+                            <p class="text-sm text-ara-slate-500 mb-4">
+                                Crea tu cuenta para descargar el material de los artículos y recibir contenido de valor.
+                            </p>
+                            <button type="button" data-blog-register class="ara-btn ara-btn-primary w-full">
+                                Crear cuenta
+                            </button>
+                        </div>
+                    @endguest
+
                     {{-- Search --}}
                     <div class="ara-card p-5">
                         <form action="{{ route('blog_principal') }}" method="GET" class="relative">
@@ -300,6 +319,10 @@
         subtitle="Nuestro equipo está listo para ayudarte a encontrar la solución ideal para tu empresa."
         buttonText="Contactar Ahora"
     />
+
+    @guest
+        @include('aracode.components.v2.blog-register-modal')
+    @endguest
 
     @include('aracode.components.v2.footer')
 @push('scripts')

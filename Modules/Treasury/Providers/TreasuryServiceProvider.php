@@ -5,6 +5,7 @@ namespace Modules\Treasury\Providers;
 use Illuminate\Support\ServiceProvider;
 use Modules\Treasury\Console\BackfillTreasuryCommand;
 use Modules\Treasury\Console\RetryTreasuryIntegrationCommand;
+use Modules\Treasury\Console\RunTreasuryScheduledCharges;
 use Modules\Treasury\Services\PaymentAccountResolver;
 use Modules\Treasury\Services\TreasuryIntegrationService;
 use Modules\Treasury\Services\TreasuryLedgerService;
@@ -37,8 +38,17 @@ class TreasuryServiceProvider extends ServiceProvider
             $this->commands([
                 BackfillTreasuryCommand::class,
                 RetryTreasuryIntegrationCommand::class,
+                RunTreasuryScheduledCharges::class,
             ]);
         }
+
+        // Cada minuto se encolan los cobros programados que correspondan a esa hora
+        $this->app->booted(function () {
+            $this->app->make(\Illuminate\Console\Scheduling\Schedule::class)
+                ->command('treasury:run-scheduled')
+                ->everyMinute()
+                ->withoutOverlapping();
+        });
     }
 
     /**

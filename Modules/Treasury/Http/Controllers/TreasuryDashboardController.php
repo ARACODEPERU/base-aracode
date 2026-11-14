@@ -81,6 +81,7 @@ class TreasuryDashboardController extends Controller
                 'type' => $item['account']->type,
                 'currency' => $item['account']->currency_type_id,
                 'balance' => $item['balance'],
+                'hides_balance' => $this->ledger->hidesBalance($item['account']),
             ])->values()->all(),
             'totalBalance' => round($balances->sum('balance'), 2),
             'monthIncomes' => round((float) ($monthTotals->incomes ?? 0), 2),

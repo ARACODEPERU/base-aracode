@@ -12,6 +12,7 @@ use Modules\Treasury\Http\Controllers\TreasuryCategoryController;
 use Modules\Treasury\Http\Controllers\TreasuryDashboardController;
 use Modules\Treasury\Http\Controllers\TreasuryReconciliationController;
 use Modules\Treasury\Http\Controllers\TreasuryTransactionController;
+use Modules\Treasury\Http\Controllers\TreasuryTransferController;
 
 Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('treasury')->group(function () {
     Route::middleware(['middleware' => 'permission:treasury_dashboard'])
@@ -25,11 +26,21 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('treasury')
         ->post('accounts/store', [TreasuryAccountController::class, 'store'])->name('treasury_accounts_store');
     Route::middleware(['middleware' => 'permission:treasury_cuentas_editar'])
         ->post('accounts/update/{id}', [TreasuryAccountController::class, 'update'])->name('treasury_accounts_update');
+    Route::middleware(['middleware' => 'permission:treasury_cuentas_nuevo'])
+        ->post('accounts/sync', [TreasuryAccountController::class, 'sync'])->name('treasury_accounts_sync');
     Route::middleware(['middleware' => 'permission:treasury_cuentas_eliminar'])
         ->delete('accounts/destroy/{id}', [TreasuryAccountController::class, 'destroy'])->name('treasury_accounts_destroy');
     Route::middleware(['middleware' => 'permission:treasury_cuentas_editar'])
         ->post('accounts/assign-payment-method', [TreasuryAccountController::class, 'assignPaymentMethod'])
         ->name('treasury_accounts_assign_payment_method');
+
+    // Transferencias entre cuentas (con comisiones e ITF)
+    Route::middleware(['middleware' => 'permission:treasury_cuentas'])
+        ->get('transfers', [TreasuryTransferController::class, 'index'])->name('treasury_transfers_index');
+    Route::middleware(['middleware' => 'permission:treasury_cuentas'])
+        ->get('transfers/profile', [TreasuryTransferController::class, 'profile'])->name('treasury_transfers_profile');
+    Route::middleware(['middleware' => 'permission:treasury_cuentas_nuevo'])
+        ->post('transfers/store', [TreasuryTransferController::class, 'store'])->name('treasury_transfers_store');
 
     // Libro de bancos (movimientos)
     Route::middleware(['middleware' => 'permission:treasury_movimientos'])

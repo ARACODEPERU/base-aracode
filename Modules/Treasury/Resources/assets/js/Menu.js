@@ -5,6 +5,7 @@ import {
     faMoneyCheckDollar,
     faScaleBalanced,
     faTags,
+    faArrowRightArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuTreasury = {
@@ -27,6 +28,13 @@ const menuTreasury = {
             text: "Cuentas",
             permissions: "treasury_cuentas",
             icom: faBuildingColumns,
+        },
+        {
+            route: route("treasury_transfers_index"),
+            status: false,
+            text: "Transferencias",
+            permissions: "treasury_cuentas",
+            icom: faArrowRightArrowLeft,
         },
         {
             route: route("treasury_transactions_index"),

@@ -62,7 +62,9 @@ function iconosImportados(codigo) {
 
 /** Iconos usados como valor en objetos de menú (`icom:` / `icon:`). */
 function iconosUsados(codigo) {
-    return [...codigo.matchAll(/\b(?:icom|icon)\s*:\s*(fa[A-Za-z0-9_]+)/g)].map((coincidencia) => coincidencia[1]);
+    // Los iconos de FontAwesome empiezan con "fa" y siguen con mayúscula (faBox);
+    // así no se confunde con variables como `fallback` que empiezan igual.
+    return [...codigo.matchAll(/\b(?:icom|icon)\s*:\s*(fa[A-Z][A-Za-z0-9_]*)/g)].map((coincidencia) => coincidencia[1]);
 }
 
 const raizProyecto = RAIZ.replace(/[\\/]$/, '');

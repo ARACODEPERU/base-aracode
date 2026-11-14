@@ -10,6 +10,7 @@ use Modules\Sales\Entities\SalePaymentQuota;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasuryCategory;
 use Modules\Treasury\Entities\TreasuryTransaction;
+use Modules\Treasury\Services\FeeCalculator;
 
 /**
  * Servicio central del libro de bancos.
@@ -43,8 +44,9 @@ class TreasuryLedgerService
         string $source = TreasuryTransaction::SOURCE_MANUAL,
         ?int $userId = null,
         bool $checkSignature = true,
+        ?int $sourceWalletAccountId = null,
     ): ?TreasuryTransaction {
-        return $this->register(
+        $income = $this->register(
             $account,
             TreasuryTransaction::TYPE_INCOME,
             $date,
@@ -57,8 +59,75 @@ class TreasuryLedgerService
             $paymentMethodId,
             $source,
             $userId,
-            $checkSignature
+            $checkSignature,
+            $sourceWalletAccountId,
         );
+
+        // Si la cuenta cobra comisiones, se registra su egreso (comisión + IGV) en la misma cuenta.
+        // El ingreso queda por el total de la compra.
+        if ($income) {
+            $this->registerCommissionForIncome($account, $income, $date, $userId, $sourceWalletAccountId);
+        }
+
+        return $income;
+    }
+
+    /**
+     * Registra el egreso de comisión (comisión + IGV) de un ingreso ya creado.
+     * Nunca lanza: si falla, el ingreso ya registrado se mantiene.
+     */
+    private function registerCommissionForIncome(
+        ?TreasuryAccount $account,
+        TreasuryTransaction $income,
+        string|Carbon $date,
+        ?int $userId,
+        ?int $sourceWalletAccountId = null,
+    ): void {
+        try {
+            // La comisión la cobra el medio que recibió el dinero: si entró por una
+            // billetera vinculada y cayó en el banco, se usan las tarifas de la billetera.
+            $feeAccount = $sourceWalletAccountId
+                ? (TreasuryAccount::find($sourceWalletAccountId) ?? $account)
+                : $account;
+
+            $sinComision = (float) $feeAccount?->fixed_fee + (float) $feeAccount?->percent_fee <= 0
+                && blank($feeAccount?->commission_formula);
+
+            if (! $account || ! $feeAccount || $sinComision) {
+                return;
+            }
+
+            $calc = app(FeeCalculator::class)->commission(
+                (float) $income->amount,
+                (float) $feeAccount->fixed_fee,
+                (float) $feeAccount->percent_fee,
+                (bool) $feeAccount->igv_applies,
+                $feeAccount->commission_formula,
+            );
+
+            if ($calc['total'] <= 0) {
+                return;
+            }
+
+            TreasuryTransaction::create([
+                'treasury_account_id' => $account->id,
+                'transaction_date' => $income->transaction_date,
+                'type' => TreasuryTransaction::TYPE_EXPENSE,
+                'origin_type' => 'treasury_commission',
+                'origin_id' => $income->id,
+                'amount' => $calc['total'],
+                'fee_amount' => $calc['comision'],
+                'igv_amount' => $calc['igv'],
+                'description' => 'Comisión por ingreso #' . $income->id,
+                'source' => TreasuryTransaction::SOURCE_AUTO,
+                'user_id' => $userId,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('[Treasury] No se pudo registrar la comisión del ingreso', [
+                'income_id' => $income->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -77,6 +146,7 @@ class TreasuryLedgerService
         string $source = TreasuryTransaction::SOURCE_MANUAL,
         ?int $userId = null,
         bool $checkSignature = true,
+        ?int $sourceWalletAccountId = null,
     ): ?TreasuryTransaction {
         return $this->register(
             $account,
@@ -91,7 +161,8 @@ class TreasuryLedgerService
             $paymentMethodId,
             $source,
             $userId,
-            $checkSignature
+            $checkSignature,
+            $sourceWalletAccountId,
         );
     }
 
@@ -118,6 +189,7 @@ class TreasuryLedgerService
         string $source = TreasuryTransaction::SOURCE_MANUAL,
         ?int $userId = null,
         bool $checkSignature = true,
+        ?int $sourceWalletAccountId = null,
     ): ?TreasuryTransaction {
         try {
             if (! $account || ! $account->status) {
@@ -158,6 +230,7 @@ class TreasuryLedgerService
                 'payment_method_id' => $paymentMethodId,
                 'source' => $source,
                 'user_id' => $userId,
+                'source_wallet_account_id' => $sourceWalletAccountId,
             ]);
         } catch (\Throwable $e) {
             Log::warning('[Treasury] No se pudo registrar el movimiento', [
@@ -263,12 +336,80 @@ class TreasuryLedgerService
             return [];
         }
 
+        // Una billetera con banco vinculado no tiene saldo propio (su dinero vive en el
+        // banco) y el banco suma el saldo de sus billeteras: se usa el saldo visible.
         $totals = $accounts->map(fn (TreasuryAccount $account) => [
             'account' => $account,
-            'balance' => $this->accountBalance($account, $untilDate),
+            'balance' => $this->displayBalance($account, $untilDate),
         ])->all();
 
         return $totals;
+    }
+
+    /**
+     * Saldo que se muestra de una cuenta.
+     *
+     * Una billetera con banco vinculado no guarda saldo propio: su dinero vive en el
+     * banco, así que su saldo visible es 0 y la cuenta bancaria suma los saldos de sus
+     * billeteras vinculadas. Así el banco muestra todo lo que llegó por ellas (Yape,
+     * Culqi...) sin contarlo dos veces en el total.
+     */
+    public function displayBalance(TreasuryAccount $account, ?string $untilDate = null): float
+    {
+        if ($account->type === TreasuryAccount::TYPE_WALLET) {
+            return $this->bankForWallet($account) ? 0.0 : $this->accountBalance($account, $untilDate);
+        }
+
+        if ($account->type !== TreasuryAccount::TYPE_BANK) {
+            return $this->accountBalance($account, $untilDate);
+        }
+
+        $total = $this->accountBalance($account, $untilDate);
+
+        foreach ($this->walletsLinkedTo($account) as $wallet) {
+            $total += $this->accountBalance($wallet, $untilDate);
+        }
+
+        return round($total, 2);
+    }
+
+    /** La billetera no muestra saldo porque su banco vinculado tiene cuenta de tesorería. */
+    public function hidesBalance(TreasuryAccount $account): bool
+    {
+        return $account->type === TreasuryAccount::TYPE_WALLET
+            && $this->bankForWallet($account) !== null;
+    }
+
+    /** Cuenta de tesorería del banco vinculado a la billetera. */
+    private function bankForWallet(TreasuryAccount $wallet): ?TreasuryAccount
+    {
+        $bankAccountId = $wallet->companyBilletera?->bank_account_id;
+
+        if (! $bankAccountId) {
+            return null;
+        }
+
+        return TreasuryAccount::query()
+            ->active()
+            ->banks()
+            ->where('bank_account_id', (int) $bankAccountId)
+            ->first();
+    }
+
+    /** Billeteras activas cuyo banco vinculado es esta cuenta bancaria. */
+    private function walletsLinkedTo(TreasuryAccount $bank): \Illuminate\Support\Collection
+    {
+        if (! $bank->bank_account_id) {
+            return collect();
+        }
+
+        return TreasuryAccount::query()
+            ->active()
+            ->wallets()
+            ->whereHas('companyBilletera', function ($query) use ($bank) {
+                $query->where('bank_account_id', (int) $bank->bank_account_id);
+            })
+            ->get();
     }
 
     /**

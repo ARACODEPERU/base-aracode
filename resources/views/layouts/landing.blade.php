@@ -2,6 +2,11 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
+    @php
+        $gtm = \App\Support\PageSnippet::parts();
+    @endphp
+    {{-- Google Tag Manager / scripts (parametro P000022) --}}
+    {!! $gtm['head'] !!}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -29,6 +34,8 @@
 </head>
 
 <body class="overflow-x-hidden">
+    {{-- Google Tag Manager (noscript) --}}
+    {!! $gtm['body'] !!}
     @inertia
     <script>
         window.assetUrl = @json(asset(''));

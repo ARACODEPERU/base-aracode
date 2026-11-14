@@ -150,7 +150,7 @@ class SaleDocumentController extends Controller
      */
     public function create()
     {
-        $payments = PaymentMethod::all();
+        $payments = $this->paymentMethodsForDocument();
         $company = Company::first();
 
         $healthBillingDraft = session()->pull('health_billing_draft');
@@ -897,9 +897,48 @@ class SaleDocumentController extends Controller
         return response()->download($res['filePath'], $res['fileName'], ['content-type' => $content_type]);
     }
 
+    /**
+     * Medios de pago que se ofrecen en factura/boleta: MercadoPago, efectivo,
+     * billeteras digitales existentes y cuentas bancarias existentes.
+     * Cualquier otro medio (p. ej. Tarjeta, Transferencia genérica) se oculta.
+     * Los datos históricos no se borran; solo se filtra el selector.
+     */
+    private function paymentMethodsForDocument()
+    {
+        // Nombres de billeteras registradas (Yape, Plin, MercadoPago...) en minúsculas
+        $nombresBilleteras = \App\Models\CompanyBilletera::query()
+            ->with('billetera')
+            ->get()
+            ->flatMap(fn ($cb) => [
+                mb_strtolower(trim((string) $cb->billetera?->short_name)),
+                mb_strtolower(trim((string) $cb->billetera?->full_name)),
+            ])
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        return PaymentMethod::all()->filter(function (PaymentMethod $method) use ($nombresBilleteras) {
+            $descripcion = mb_strtolower(trim((string) $method->description));
+
+            // Efectivo y MercadoPago siempre se ofrecen
+            if ($descripcion === 'efectivo' || $descripcion === 'mercadopago') {
+                return true;
+            }
+
+            // Cuenta bancaria existente vinculada al método
+            if (filled($method->bank_account_id)) {
+                return true;
+            }
+
+            // Billetera digital existente (coincidencia por nombre)
+            return in_array($descripcion, $nombresBilleteras, true);
+        })->values();
+    }
+
     public function createFromFicket($id)
     {
-        $payments = PaymentMethod::all();
+        $payments = $this->paymentMethodsForDocument();
         $company = Company::first();
         $sale = Sale::with('saleProduct')
             ->where('id', $id)->first();

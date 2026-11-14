@@ -349,8 +349,27 @@ class TreasuryIntegrationService
         TreasuryAccount $account,
         float $amount,
     ): ?TreasuryTransaction {
+        // Billetera con banco vinculado: el ingreso cae en la cuenta bancaria y
+        // se conserva la billetera de origen (ej. Yape -> banco).
+        $walletAccount = null;
+        $destination = $account;
+
+        if ($account->type === TreasuryAccount::TYPE_WALLET && $account->companyBilletera?->bank_account_id) {
+            $bankAccount = TreasuryAccount::query()
+                ->active()
+                ->banks()
+                ->where('bank_account_id', $account->companyBilletera->bank_account_id)
+                ->first();
+
+            // Si el banco vinculado no tiene cuenta de tesorería, se mantiene la billetera.
+            if ($bankAccount) {
+                $walletAccount = $account;
+                $destination = $bankAccount;
+            }
+        }
+
         $arguments = [
-            $account,
+            $destination,
             $bridge->movement_date->toDateString(),
             $amount,
             $this->categoryId($bridge),
@@ -362,6 +381,7 @@ class TreasuryIntegrationService
             $bridge->source,
             $bridge->user_id,
             false, // sin firma: la clave única de la puente ya evita duplicados
+            $walletAccount?->id,
         ];
 
         return $bridge->type === TreasurySourceMovement::TYPE_INCOME

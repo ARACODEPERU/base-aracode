@@ -113,6 +113,35 @@
                         {!! $article->content_text !!}
                     </div>
 
+                    {{-- PDF adjunto: solo se ofrece a usuarios con sesión y
+                         cuando la entrada tiene archivo. La ruta de descarga
+                         vuelve a comprobar la autenticación. --}}
+                    @auth
+                        @if($article->pdf_path)
+                            <div class="mt-8 p-5 rounded-xl border-2 border-ara-blue/20 bg-white dark:bg-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-11 h-11 rounded-lg bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6M9 17h4"/>
+                                        </svg>
+                                    </span>
+                                    <div>
+                                        <p class="text-sm font-bold text-ara-slate-700 dark:text-white">Material del artículo</p>
+                                        <p class="text-xs text-ara-slate-400">Descarga el PDF adjunto a esta entrada.</p>
+                                    </div>
+                                </div>
+                                <a href="{{ route('blog_article_pdf', $article->url) }}"
+                                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-ara-blue text-white text-sm font-semibold hover:bg-ara-blue/90 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                    Descargar PDF
+                                </a>
+                            </div>
+                        @endif
+                    @endauth
+
                     {{-- Share --}}
                     <div class="mt-12 pt-8 border-t border-ara-slate-100">
                         <h4 class="text-sm font-semibold text-ara-slate-700 mb-4 uppercase tracking-wide">Compartir artículo</h4>
@@ -147,7 +176,25 @@
 
                 {{-- Sidebar (1/4) --}}
                 <aside class="lg:col-span-1 lg:sticky lg:top-24 lg:self-start space-y-6">
-                    
+
+                    @guest
+                        {{-- Alta de lectores desde el artículo. --}}
+                        <div class="ara-card p-5">
+                            <h3 class="text-sm font-bold text-ara-slate-700 mb-2 flex items-center gap-2 uppercase tracking-wide">
+                                <svg class="w-4 h-4 text-ara-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                                Cuenta gratuita
+                            </h3>
+                            <p class="text-sm text-ara-slate-500 mb-4">
+                                Regístrate para descargar el material de este artículo y recibir contenido de valor.
+                            </p>
+                            <button type="button" data-blog-register class="ara-btn ara-btn-primary w-full">
+                                Crear cuenta
+                            </button>
+                        </div>
+                    @endguest
+
                     {{-- Newsletter --}}
                     @if(session('success'))
                         <div class="p-3 rounded-lg bg-green-500/20 border border-green-400/30 text-green-100 text-xs mb-4">
@@ -284,6 +331,10 @@
 
     {{-- CTA --}}
     <x-v2.cta-section />
+
+    @guest
+        @include('aracode.components.v2.blog-register-modal')
+    @endguest
 
     @include('aracode.components.v2.footer')
 @push('scripts')

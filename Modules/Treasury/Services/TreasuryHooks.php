@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Sales\Entities\SaleDocumentQuota;
 use Modules\Sales\Entities\SalePaymentQuota;
 use Modules\Sales\Entities\SalePaymentScheduleDestination;
+use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasurySourceMovement;
 use Modules\Treasury\Entities\TreasuryTransaction;
 
@@ -168,6 +169,55 @@ class TreasuryHooks
         }
 
         return self::dispatchAll(self::saleIncomeMovements($sale));
+    }
+
+    /**
+     * Ingreso de una venta cobrada en una cuenta de tesorería concreta.
+     *
+     * Las negociaciones comerciales no eligen un método de pago de ventas: el
+     * medio acordado (billetera con enlace, banco o caja) es el que dice dónde
+     * entró el dinero, así que el movimiento se registra contra esa cuenta.
+     */
+    public static function recordSaleIncomeInAccount(
+        Sale $sale,
+        float $amount,
+        TreasuryAccount $account,
+        ?string $reference = null,
+        ?int $documentId = null,
+    ): ?TreasuryTransaction {
+        if (! self::enabled() || $amount <= 0) {
+            return null;
+        }
+
+        $ledger = app(TreasuryLedgerService::class);
+        $document = $documentId
+            ? SaleDocument::find($documentId)
+            : $sale->documents()->orderByDesc('id')->first();
+
+        [$currency, $rate] = $ledger->resolveDocumentCurrency($document);
+
+        return self::dispatch(new FinancialMovement(
+            module: TreasurySourceMovement::MODULE_SALES,
+            sourceType: TreasurySourceMovement::SOURCE_SALE,
+            sourceId: (int) $sale->id,
+            operation: 'sale_income',
+            type: TreasurySourceMovement::TYPE_INCOME,
+            amount: $amount,
+            date: $sale->sale_date ?? now(),
+            sourceLine: 0,
+            paymentMethodId: null,
+            currency: $currency,
+            exchangeRate: $rate,
+            reference: self::withExchangeRateNote($reference, $currency, $rate),
+            description: 'Cobro de venta',
+            treasuryAccountId: (int) $account->id,
+            userId: $sale->user_id ? (int) $sale->user_id : null,
+            meta: [
+                'sale_id' => $sale->id,
+                'document_id' => $document?->id,
+            ],
+            source: TreasuryTransaction::SOURCE_AUTO,
+        ));
     }
 
     /**

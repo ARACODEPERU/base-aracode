@@ -15,6 +15,7 @@ class CompanyBilletera extends Model
         'account_name',
         'account_number',
         'qr_image',
+        'has_payment_link',
         'bank_account_id',
         'status',
     ];

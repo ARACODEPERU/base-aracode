@@ -18,6 +18,7 @@ class TreasuryAccount extends Model
 
     public const TYPE_BANK = 'bank';
     public const TYPE_WALLET = 'wallet';
+    public const TYPE_CASH = 'cash';
 
     protected $fillable = [
         'type',
@@ -28,12 +29,26 @@ class TreasuryAccount extends Model
         'opening_balance',
         'opening_balance_date',
         'status',
+        'fixed_fee',
+        'percent_fee',
+        'igv_applies',
+        'commission_formula',
+        'schedule_enabled',
+        'schedule_day',
+        'schedule_time',
+        'schedule_amount',
+        'schedule_concept',
     ];
 
     protected $casts = [
         'opening_balance' => 'decimal:2',
         'opening_balance_date' => 'date',
         'status' => 'boolean',
+        'fixed_fee' => 'decimal:2',
+        'percent_fee' => 'decimal:4',
+        'igv_applies' => 'boolean',
+        'schedule_enabled' => 'boolean',
+        'schedule_amount' => 'decimal:2',
     ];
 
     /**
@@ -77,7 +92,14 @@ class TreasuryAccount extends Model
             }
         }
 
-        if (! in_array($this->type, [self::TYPE_BANK, self::TYPE_WALLET], true)) {
+        // La caja (efectivo) no lleva cuenta bancaria ni billetera vinculada
+        if ($this->type === self::TYPE_CASH && (filled($this->bank_account_id) || filled($this->company_billetera_id))) {
+            throw ValidationException::withMessages([
+                'type' => 'La cuenta de efectivo no puede tener cuentas vinculadas.',
+            ]);
+        }
+
+        if (! in_array($this->type, [self::TYPE_BANK, self::TYPE_WALLET, self::TYPE_CASH], true)) {
             throw ValidationException::withMessages([
                 'type' => 'Tipo de cuenta inválido.',
             ]);
@@ -115,6 +137,10 @@ class TreasuryAccount extends Model
                 . ($this->bankAccount?->description ?? $this->bankAccount?->number ?? 'Cuenta bancaria'));
         }
 
+        if ($this->type === self::TYPE_CASH) {
+            return 'Efectivo/Caja';
+        }
+
         $billetera = $this->companyBilletera?->billetera;
 
         return trim(($billetera?->short_name ? $billetera->short_name . ' ' : '')
@@ -143,6 +169,14 @@ class TreasuryAccount extends Model
     public function scopeWallets(Builder $query): Builder
     {
         return $query->where('type', self::TYPE_WALLET);
+    }
+
+    /**
+     * Cuentas de tipo efectivo/caja.
+     */
+    public function scopeCash(Builder $query): Builder
+    {
+        return $query->where('type', self::TYPE_CASH);
     }
 
     /**

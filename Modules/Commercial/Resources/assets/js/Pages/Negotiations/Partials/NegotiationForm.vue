@@ -24,6 +24,7 @@ const props = defineProps({
     paymentMethods: { type: Array, default: () => [] },
     contactChannels: { type: Array, default: () => [] },
     companyBilleteras: { type: Array, default: () => [] },
+    bankAccounts: { type: Array, default: () => [] },
     // Combo de moneda visible solo con PTM0004 activo; TC vigente para la conversion.
     multiCurrencyEnabled: { type: Boolean, default: false },
     exchangeRate: { type: Number, default: null },
@@ -58,6 +59,7 @@ const form = useForm({
     payment_method: (props.negotiation?.payment_method === "yape" ? "billetera_digital" : props.negotiation?.payment_method) ?? "billetera_digital",
     payment_link: props.negotiation?.payment_link ?? null,
     company_billetera_ids: props.negotiation?.company_billeteras?.map((item) => item.id) ?? [],
+    recommended_bank_account_id: props.negotiation?.recommended_bank_account_id ?? null,
     course_ids: props.negotiation?.items?.filter((item) => item.item_type === "course").map((item) => item.item_id) ?? [],
     subscription_ids: props.negotiation?.items?.filter((item) => item.item_type === "subscription").map((item) => item.item_id) ?? [],
     items: [],
@@ -85,6 +87,7 @@ watch(isFree, (gratis) => {
         form.schedule = [];
         form.company_billetera_ids = [];
         form.payment_link = null;
+        form.recommended_bank_account_id = null;
         form.single_payment_days = null;
 
         return;
@@ -140,6 +143,17 @@ const equivalentPenSchedule = computed(() => {
 const billeteraOptions = computed(() => props.companyBilleteras.map((item) => ({
     value: item.id,
     label: `${item.nombre || 'Billetera'} - ${item.titular || ''}`.trim(),
+})));
+
+// Hay al menos una billetera elegida que permite pago mediante enlace.
+const billeteraConEnlace = computed(() => props.companyBilleteras.some(
+    (item) => item.tiene_enlace_pago && (form.company_billetera_ids || []).includes(item.id)
+));
+
+// Cuentas bancarias para elegir la recomendada: banco, descripcion, numero y CCI.
+const bankAccountOptions = computed(() => props.bankAccounts.map((item) => ({
+    value: item.id,
+    label: `${item.banco || 'Banco'} - ${item.descripcion || ''} (${item.numero || ''})`.trim(),
 })));
 
 const contactChannelOptions = computed(() => props.contactChannels.map((item) => ({
@@ -610,17 +624,38 @@ const submit = async () => {
                     :filter-option="filterOption"
                     show-search
                     allow-clear
-                    placeholder="Selecciona las billeteras digitales (con QR)"
+                    placeholder="Selecciona las billeteras digitales"
                     style="width: 100%"
                 />
                 <InputError :message="form.errors.company_billetera_ids" class="mt-2" />
-                <p class="text-xs text-gray-500 mt-1">En la confirmacion del cliente se mostrara el titular y el codigo QR de cada billetera seleccionada.</p>
+                <p class="text-xs text-gray-500 mt-1">En la confirmacion del cliente se mostrara el titular de cada billetera seleccionada, y su codigo QR si la tiene.</p>
             </div>
 
-            <div v-if="!isFree && form.payment_method !== 'billetera_digital'" class="col-span-6 sm:col-span-3">
+            <div v-if="!isFree && form.payment_method === 'billetera_digital' && billeteraConEnlace" class="col-span-6 sm:col-span-3">
+                <InputLabel for="payment_link_billetera" value="Enlace de pago de la billetera" />
+                <TextInput id="payment_link_billetera" v-model="form.payment_link" type="url" placeholder="https://..." />
+                <p class="text-xs text-gray-500 mt-1">Enlace propio de esta negociacion; el cliente lo vera junto al QR o titular de la billetera.</p>
+                <InputError :message="form.errors.payment_link" class="mt-2" />
+            </div>
+
+            <div v-if="!isFree && form.payment_method === 'transferencia'" class="col-span-6">
+                <InputLabel value="Cuenta bancaria recomendada *" />
+                <Select
+                    v-model:value="form.recommended_bank_account_id"
+                    :options="bankAccountOptions"
+                    :filter-option="filterOption"
+                    show-search
+                    placeholder="Elige la cuenta que se mostrara como Recomendada"
+                    style="width: 100%"
+                />
+                <InputError :message="form.errors.recommended_bank_account_id" class="mt-2" />
+                <p class="text-xs text-gray-500 mt-1">Al cliente se le mostraran todas las cuentas de la empresa; esta aparecera destacada como Recomendada.</p>
+            </div>
+
+            <div v-if="!isFree && form.payment_method !== 'billetera_digital' && form.payment_method !== 'transferencia'" class="col-span-6 sm:col-span-3">
                 <div class="pt-5 text-xs text-gray-500">
-                    <template v-if="form.payment_method === 'transferencia'">
-                        Se mostraran las cuentas bancarias de la empresa al cliente.
+                    <template v-if="form.payment_method === 'efectivo'">
+                        El cliente pagara en efectivo; el asesor registrara el cobro.
                     </template>
                     <template v-else-if="form.payment_method === 'mercadopago'">
                         El cliente pagara con su tarjeta (Mercado Pago) directamente en la confirmacion.

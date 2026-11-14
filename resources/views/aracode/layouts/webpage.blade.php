@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="es" x-data x-init="$store.theme.init()" :class="$store.theme.dark ? 'dark' : ''">
 <head>
+    @php
+        $gtm = \App\Support\PageSnippet::parts();
+    @endphp
+    {{-- Google Tag Manager / scripts (parametro P000022) --}}
+    {!! $gtm['head'] !!}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
@@ -93,7 +98,9 @@
     @stack('head')
 </head>
 <body class="font-ara-sans antialiased" x-data>
-    
+    {{-- Google Tag Manager (noscript) --}}
+    {!! $gtm['body'] !!}
+
     @yield('content')
     
     {{-- Scroll Reveal Script --}}
@@ -258,6 +265,9 @@
 
     {{-- Evolución UX/UI · Fase 1: entrada del titular, botones magnéticos y chips --}}
     <script src="{{ asset('js/aracode-evolucion.js') }}?v={{ filemtime(public_path('js/aracode-evolucion.js')) }}" defer></script>
+
+    {{-- Atribución de primer toque (utm_source/utm_medium -> traffic_source en localStorage) --}}
+    <script src="{{ asset('js/traffic-tracking.js') }}?v={{ filemtime(public_path('js/traffic-tracking.js')) }}"></script>
 
     @stack('scripts')
 </body>

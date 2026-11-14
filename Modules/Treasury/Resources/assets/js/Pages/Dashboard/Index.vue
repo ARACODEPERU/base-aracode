@@ -101,7 +101,11 @@
                                     <p class="text-xs text-gray-500">{{ account.currency }}</p>
                                 </div>
                             </div>
+                            <p v-if="account.hides_balance" class="text-right text-xs text-gray-400">
+                                Saldo en su banco vinculado
+                            </p>
                             <p
+                                v-else
                                 class="font-bold"
                                 :class="account.balance >= 0 ? 'text-gray-800 dark:text-gray-100' : 'text-danger'"
                             >

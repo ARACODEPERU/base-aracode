@@ -17,8 +17,10 @@ import Swal2 from "sweetalert2";
  * @param {Function} options.normalizeNumber  Deja solo digitos en el numero de documento.
  * @param {Function} [options.numberLength]   Longitud esperada del documento (por defecto 8).
  * @param {object}   options.locks            Campos ya verificados (useVerifiedIdentityLocks).
+ * @param {Function} [options.requestPrivacyConsent] Pide la aceptacion de la politica en un modal;
+ *                                            resuelve true si el cliente la acepta.
  */
-export function useDniReniecCheck({ form, token, isDni, normalizeNumber, numberLength, locks }) {
+export function useDniReniecCheck({ form, token, isDni, normalizeNumber, numberLength, locks, requestPrivacyConsent }) {
     const dniLoading = ref(false);
     // La consulta devolvio datos: los nombres quedaron bloqueados por RENIEC.
     const dniValidated = ref(false);
@@ -109,14 +111,29 @@ export function useDniReniecCheck({ form, token, isDni, normalizeNumber, numberL
         return filled.filter((field, index) => filled.indexOf(field) === index);
     };
 
-    // Consulta el DNI del cliente principal en la API.
-    const validateDni = () => {
+    /**
+     * Consulta el DNI del cliente principal en la API.
+     *
+     * `promptConsent` abre el modal de aceptaciones cuando falta la politica. La consulta
+     * automatica (al completar los digitos) lo desactiva: ahi solo queda el aviso bajo el
+     * campo, para no abrir un dialogo mientras el cliente escribe.
+     */
+    const validateDni = (promptConsent = true) => {
         if (dniLoading.value) return;
 
         // El numero de documento no sale del navegador hasta que el titular acepta
-        // la politica de privacidad: consultarlo en RENIEC ya es tratar su dato.
+        // la politica de privacidad: consultarlo en RENIEC ya es tratar su dato. La
+        // aceptacion se pide en un modal (sus casillas estan al final del formulario) y,
+        // al aceptarla, la consulta sigue sola.
         if (! form.accepted_privacidad) {
             dniHint.value = "Acepta la Política de Privacidad para verificar tu documento.";
+
+            if (promptConsent) {
+                Promise.resolve(requestPrivacyConsent?.()).then((accepted) => {
+                    if (accepted) validateDni();
+                });
+            }
+
             return;
         }
 
@@ -200,7 +217,7 @@ export function useDniReniecCheck({ form, token, isDni, normalizeNumber, numberL
         if (dni.length !== expectedLength()) return;
 
         dniHint.value = "Consultando RENIEC...";
-        validateDni();
+        validateDni(false);
     };
 
     return {

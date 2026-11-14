@@ -63,6 +63,8 @@ class NegotiationFreeTest extends TestCase
         // La boleta a nombre de una tercera persona viaja en el mismo envio del formulario
         // publico, asi que la tabla de comprobantes necesita esas columnas.
         'Modules/Commercial/Database/Migrations/2026_09_15_000002_add_boleta_third_party_to_commercial_negotiation_invoices_table.php',
+        // La confirmacion del cliente guarda el banco de origen de la transferencia.
+        'Modules/Commercial/Database/Migrations/2026_11_14_000003_add_bank_transfer_fields_to_commercial_negotiations_table.php',
     ];
 
     protected function setUp(): void

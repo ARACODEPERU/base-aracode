@@ -29,7 +29,7 @@ class BankAccountController extends Controller
                 'invoice_show'          => $request->get('invoice_show') ? true : false,
             ]);
         } else {
-            BankAccount::create([
+            $bankAccount = BankAccount::create([
                 'bank_id'               => $request->get('bank_id'),
                 'description'           => $request->get('description'),
                 'number'                => $request->get('number'),
@@ -38,6 +38,13 @@ class BankAccountController extends Controller
                 'status'                => true,
                 'invoice_show'          => $request->get('invoice_show') ? true : false,
             ]);
+
+            // Crea su cuenta de Tesorería; si falla, la cuenta bancaria igual queda creada
+            try {
+                app(\Modules\Treasury\Services\TreasuryAccountSyncService::class)->ensureForBankAccount($bankAccount);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('[Treasury] No se pudo crear la cuenta de tesorería del banco', ['error' => $e->getMessage()]);
+            }
         }
     }
 

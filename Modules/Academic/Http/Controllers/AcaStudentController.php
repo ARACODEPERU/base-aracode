@@ -10,6 +10,7 @@ use App\Models\PaymentMethod;
 use App\Models\Person;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\PersonProfileData;
 use App\Support\PersonUserPersistenceVerifier;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Renderable;
@@ -203,96 +204,100 @@ class AcaStudentController extends Controller
             );
         }
 
-        $path = null;
-        $destination = 'uploads/students';
-        $file = $request->file('image');
-        //dd($request->get('industry_id'));
-        $per = Person::updateOrCreate(
-            [
-                'document_type_id'      => $request->get('document_type_id'),
-                'number'                => $request->get('number'),
-            ],
-            [
-                'short_name'            => $request->get('names'),
-                'full_name'             => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
-                'description'           => $request->get('description'),
-                'telephone'             => $request->get('telephone'),
-                'email'                 => $request->get('email'),
-                'image'                 => $path,
-                'address'               => $request->get('address'),
-                'is_provider'           => false,
-                'is_client'             => true,
-                'ubigeo'                => $request->get('ubigeo'),
-                'ubigeo_description'    => $request->get('ubigeo_description'),
-                'birthdate'             => $request->get('birthdate'),
-                'names'                 => trim($request->get('names')),
-                'father_lastname'       => trim($request->get('father_lastname')),
-                'mother_lastname'       => trim($request->get('mother_lastname')),
-                'gender'                => $request->get('gender') ?? 'M',
-                'industry_id'           => $request->get('industry_id') ? $request->get('industry_id')['id'] : null,
-                'profession_id'         => $request->get('profession_id') ? $request->get('profession_id')['id'] : null,
-                'occupation_id'         => $request->get('occupation_id') ? $request->get('occupation_id')['id'] : null,
-                'ocupacion'             => $request->get('occupation_id') ? $request->get('occupation_id')['description'] : null,
-                'profession'            => $request->get('profession_id') ? $request->get('profession_id')['description'] : null,
-                'industry'              => $request->get('industry_id') ? $request->get('industry_id')['description'] : null,
-                'country_id'            => $request->get('country_id') ?? 1,
-            ]
+        $newImage = PersonProfileData::storeNewImage(
+            $request,
+            'image',
+            'uploads/students',
+            (string) $request->get('number')
         );
 
-        if ($file) {
-            $original_name = strtolower(trim($file->getClientOriginalName()));
-            $original_name = str_replace(" ", "_", $original_name);
-            $extension = $file->getClientOriginalExtension();
-            $file_name = trim($request->get('number')) . '.' . $extension;
-            $path = $request->file('image')->storeAs(
-                $destination,
-                $file_name,
-                'public'
-            );
+        // Solo se escriben las claves que el formulario trae con valor: sin foto
+        // nueva se conserva people.image, y description/catalogos/pais/genero no
+        // se borran por no venir. is_provider/is_client no se tocan.
+        $personData = [
+            'document_type_id'      => $request->get('document_type_id'),
+            'short_name'            => $request->get('names'),
+            'full_name'             => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
+            'number'                => $request->get('number'),
+            'telephone'             => $request->get('telephone'),
+            'email'                 => $request->get('email'),
+            'address'               => $request->get('address'),
+            'ubigeo'                => $request->get('ubigeo'),
+            'ubigeo_description'    => $request->get('ubigeo_description'),
+            'birthdate'             => $request->get('birthdate'),
+            'names'                 => trim($request->get('names')),
+            'father_lastname'       => trim($request->get('father_lastname')),
+            'mother_lastname'       => trim($request->get('mother_lastname')),
+        ];
 
-            $per->image = $path;
-            $per->save();
+        if ($newImage) {
+            $personData['image'] = $newImage;
         }
 
+        $personData = array_merge($personData, PersonProfileData::onlyFilled($request, [
+            'description' => 'description',
+            'gender'      => 'gender',
+            'country_id'  => 'country_id',
+        ]));
 
-        $user = User::updateOrCreate(
-            [
-                'email'         => trim($request->get('email')),
-                'person_id'     => $per->id
-            ],
-            [
-                'name'          => trim($request->get('names')),
-                'password'      => Hash::make(trim($request->get('number'))),
-                'information'   => $request->get('description'),
-                'avatar'        => $path,
-                'person_id'     => $per->id,
-                'local_id'      => 1,
-                'tour_completed'=> false
-            ]
-        );
+        foreach ([
+            ['input' => 'industry_id', 'idField' => 'industry_id', 'textField' => 'industry'],
+            ['input' => 'profession_id', 'idField' => 'profession_id', 'textField' => 'profession'],
+            ['input' => 'occupation_id', 'idField' => 'occupation_id', 'textField' => 'ocupacion'],
+        ] as $catalogo) {
+            if (! $request->exists($catalogo['input'])) {
+                continue;
+            }
 
-        $user->assignRole('Alumno');
+            $value = $request->input($catalogo['input']);
+            $personData[$catalogo['idField']] = is_array($value) ? ($value['id'] ?? null) : $value;
+            $personData[$catalogo['textField']] = is_array($value) ? ($value['description'] ?? null) : null;
+        }
 
-        $expectedPersonData = [
-            'document_type_id' => $request->get('document_type_id'),
-            'number' => $request->get('number'),
-            'names' => trim($request->get('names')),
-            'father_lastname' => trim($request->get('father_lastname')),
-            'mother_lastname' => trim($request->get('mother_lastname')),
-            'full_name' => trim($request->get('father_lastname') . ' ' . $request->get('mother_lastname') . ' ' . $request->get('names')),
-            'telephone' => $request->get('telephone'),
-            'email' => $request->get('email'),
-            'address' => $request->get('address'),
-            'ubigeo' => $request->get('ubigeo'),
-            'ubigeo_description' => $request->get('ubigeo_description'),
-        ];
-        $expectedUserData = [
-            'name' => trim($request->get('names')),
-            'email' => trim($request->get('email')),
-            'information' => $request->get('description'),
-            'avatar' => $path,
+        $per = Person::firstOrNew([
+            'document_type_id'      => $request->get('document_type_id'),
+            'number'                => $request->get('number'),
+        ]);
+
+        $isNewPerson = ! $per->exists;
+        $per->fill($personData);
+
+        // Solo al crear la ficha se marca como cliente/alumno; una ficha existente
+        // conserva sus marcas de proveedor/cliente.
+        if ($isNewPerson) {
+            $per->is_client = true;
+            $per->is_provider = false;
+        }
+
+        $per->save();
+
+        // A un alumno existente no se le resetea la contrasena ni se le borra el
+        // avatar: la contrasena inicial solo se asigna al crear el usuario.
+        $user = User::firstOrNew(['email' => trim($request->get('email'))]);
+
+        $userData = [
+            'name'      => trim($request->get('names')),
+            'email'     => trim($request->get('email')),
             'person_id' => $per->id,
         ];
+
+        if ($request->exists('description') && PersonProfileData::hasValue($request->input('description'))) {
+            $userData['information'] = $request->get('description');
+        }
+
+        if ($newImage) {
+            $userData['avatar'] = $newImage;
+        }
+
+        if (! $user->exists) {
+            $userData['password'] = Hash::make(trim($request->get('number')));
+            $userData['local_id'] = 1;
+            $userData['tour_completed'] = false;
+        }
+
+        $user->fill($userData)->save();
+
+        $user->assignRole('Alumno');
 
         AcaStudent::updateOrCreate(
             [
@@ -303,7 +308,21 @@ class AcaStudentController extends Controller
             ]
         );
 
-        PersonUserPersistenceVerifier::verify($per, $user, $expectedPersonData, $expectedUserData);
+        // El verificador compara contra la fila persistida: se le pasan solo los
+        // campos estables (tour_completed booleano no compara con el 0 de MySQL).
+        $expectedUserData = [
+            'name' => $userData['name'],
+            'email' => $userData['email'],
+            'person_id' => $per->id,
+        ];
+
+        foreach (['information', 'avatar'] as $field) {
+            if (array_key_exists($field, $userData)) {
+                $expectedUserData[$field] = $userData[$field];
+            }
+        }
+
+        PersonUserPersistenceVerifier::verify($per, $user, $personData, $expectedUserData);
 
         return redirect()->route('aca_students_list')
             ->with('message', __('Estudiante creado con éxito'));
@@ -424,63 +443,80 @@ class AcaStudentController extends Controller
 
         $person = Person::find($person_id);
 
-        $person->update([
+        if (! $person) {
+            return redirect()->route('aca_students_list')
+                ->with('errorMessage', __('El estudiante no tiene una ficha de persona vinculada.'));
+        }
+
+        $newImage = PersonProfileData::storeNewImage(
+            $request,
+            'image',
+            'uploads/students',
+            (string) $request->get('number')
+        );
+
+        // Actualizacion selectiva: sin foto nueva se conserva people.image y los
+        // campos opcionales ausentes no se sobrescriben. is_provider/is_client no
+        // se tocan.
+        $personData = [
             'document_type_id'      => $request->get('document_type_id'),
             'short_name'            => trim($request->get('names')),
             'full_name'             => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
-            'description'           => $request->get('description'),
             'number'                => trim($request->get('number')),
             'telephone'             => $request->get('telephone'),
             'email'                 => trim($request->get('email')),
             'address'               => $request->get('address'),
-            'is_provider'           => false,
-            'is_client'             => true,
             'ubigeo'                => $request->get('ubigeo'),
             'ubigeo_description'    => $request->get('ubigeo_description'),
             'birthdate'             => $request->get('birthdate'),
             'names'                 => trim($request->get('names')),
             'father_lastname'       => trim($request->get('father_lastname')),
             'mother_lastname'       => trim($request->get('mother_lastname')),
-            'gender'                => $request->get('gender') ?? 'M',
-            'industry_id'           => $request->get('industry_id') ? $request->get('industry_id')['id'] : null,
-            'profession_id'         => $request->get('profession_id') ? $request->get('profession_id')['id'] : null,
-            'occupation_id'         => $request->get('occupation_id') ? $request->get('occupation_id')['id'] : null,
-            'ocupacion'             => $request->get('occupation_id') ? $request->get('occupation_id')['description'] : null,
-            'profession'            => $request->get('profession_id') ? $request->get('profession_id')['description'] : null,
-            'industry'              => $request->get('industry_id') ? $request->get('industry_id')['description'] : null,
-            'country_id'            => $request->get('country_id') ?? 1,
-        ]);
+        ];
 
-        if($user){
-            $user->update([
-                'name'          => $request->get('names'),
-                'email'         => $request->get('email'),
-                //'password'      => Hash::make($request->get('number')),
-                'information'   => $request->get('description'),
-            ]);
+        if ($newImage) {
+            $personData['image'] = $newImage;
         }
 
-        $path = null;
-        $destination = 'uploads/students';
-        $file = $request->file('image');
-        if ($file) {
+        $personData = array_merge($personData, PersonProfileData::onlyFilled($request, [
+            'description' => 'description',
+            'gender'      => 'gender',
+            'country_id'  => 'country_id',
+        ]));
 
-            $original_name = strtolower(trim($file->getClientOriginalName()));
-            $original_name = str_replace(" ", "_", $original_name);
-            $extension = $file->getClientOriginalExtension();
-            $file_name = trim($request->get('number')) . '.' . $extension;
-            $path = $request->file('image')->storeAs(
-                $destination,
-                $file_name,
-                'public'
-            );
-            $person->image = $path;
-            $person->save();
-
-            if($user){
-                $user->avatar = $path;
-                $user->save();
+        foreach ([
+            ['input' => 'industry_id', 'idField' => 'industry_id', 'textField' => 'industry'],
+            ['input' => 'profession_id', 'idField' => 'profession_id', 'textField' => 'profession'],
+            ['input' => 'occupation_id', 'idField' => 'occupation_id', 'textField' => 'ocupacion'],
+        ] as $catalogo) {
+            if (! $request->exists($catalogo['input'])) {
+                continue;
             }
+
+            $value = $request->input($catalogo['input']);
+            $personData[$catalogo['idField']] = is_array($value) ? ($value['id'] ?? null) : $value;
+            $personData[$catalogo['textField']] = is_array($value) ? ($value['description'] ?? null) : null;
+        }
+
+        $person->update($personData);
+
+        if ($user) {
+            $userData = [
+                'name'  => $request->get('names'),
+                'email' => $request->get('email'),
+            ];
+
+            if ($request->exists('description') && PersonProfileData::hasValue($request->input('description'))) {
+                $userData['information'] = $request->get('description');
+            }
+
+            if ($newImage) {
+                $userData['avatar'] = $newImage;
+            }
+
+            $user->update($userData);
+
+            PersonUserPersistenceVerifier::verify($person, $user, $personData, $userData);
         }
 
         AcaStudent::where('person_id', $person_id)->update([
@@ -1310,12 +1346,17 @@ class AcaStudentController extends Controller
 
                 $userData = [
                     'name' => trim($row[0]),
-                    'password' => Hash::make(trim($row[1])),
                     'local_id' => 1,
                     'person_id' => $person->id,
                     'status' => true,
                 ];
-                $user = User::updateOrCreate(['email' => trim($row[4])], $userData);
+
+                // Solo se asigna la contrasena inicial si el usuario es nuevo.
+                $user = User::firstOrNew(['email' => trim($row[4])]);
+                if (! $user->exists) {
+                    $userData['password'] = Hash::make(trim($row[1]));
+                }
+                $user->fill($userData)->save();
 
                 $expectedPersonData = [
                     'document_type_id' => 1,
@@ -1460,14 +1501,17 @@ class AcaStudentController extends Controller
                     'birthdate' => $fechaMysql,
                     'telephone' => $student[3],
                     'email' => trim($student[4]),
-                    'company' => $student[5] == "-" ? null : $student[5],
-                    'industry' => $student[6] == "-" ? null : $student[6],
-                    'ocupacion' => $student[7] == "-" ? null : $student[7],
-                    'profession' => $student[8] == "-" ? null : $student[8],
-                    'gender' => $student[9] == "-" ? null : $student[9],
-                    'is_provider' => false,
-                    'is_client' => true
                 ];
+
+            // Las columnas opcionales vacias ('-') no se escriben: una reimportacion
+            // no borra empresa, industria, ocupacion, profesion ni genero ya guardados.
+            foreach (['company' => 5, 'industry' => 6, 'ocupacion' => 7, 'profession' => 8, 'gender' => 9] as $column => $index) {
+                $value = $student[$index] ?? null;
+                if ($value !== null && trim($value) !== '' && trim($value) !== '-') {
+                    $personData[$column] = trim($value);
+                }
+            }
+
             $person = Person::updateOrCreate(
                 [
                     'document_type_id' => 1,
@@ -1479,12 +1523,18 @@ class AcaStudentController extends Controller
             $userData = [
                 'name' => trim($student[0]),
                 'email' => trim($student[4]),
-                'password' => Hash::make(trim($student[1])),
                 'local_id' => 1,
                 'person_id' => $person->id,
                 'status' => true,
             ];
-            $user = User::updateOrCreate(['email' => trim($student[4])], $userData);
+
+            // La contrasena inicial solo se asigna al crear el usuario; una
+            // reimportacion no debe resetearla.
+            $user = User::firstOrNew(['email' => trim($student[4])]);
+            if (! $user->exists) {
+                $userData['password'] = Hash::make(trim($student[1]));
+            }
+            $user->fill($userData)->save();
 
             $student = AcaStudent::firstOrCreate(
                 [

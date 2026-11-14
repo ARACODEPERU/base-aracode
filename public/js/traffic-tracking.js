@@ -46,7 +46,7 @@
         trafficSource = 'facebook_ads';
     } else if (gclid || (isGoogle && isPaidMedium)) {
         trafficSource = 'google_ads';
-    } else if (isFacebook || /(instagram|tiktok|youtube|linkedin|twitter|threads|whatsapp|^x$)/.test(src)) {
+    } else if (isFacebook || /(instagram|tiktok|youtube|linkedin|twitter|threads|whatsapp|^x$)/.test(src) || (src === 'spotify' && !isPaidMedium)) {
         trafficSource = 'social';
     } else if (isGoogle) {
         trafficSource = 'organic';

@@ -12,6 +12,10 @@ const props = defineProps({
     tiny_api_key: {
         type: String,
         default: null,
+    },
+    can_upload_pdf: {
+        type: Boolean,
+        default: false,
     }
 });
 </script>
@@ -27,7 +31,7 @@ const props = defineProps({
             </li>
         </Navigation>
         <div class="mt-5">
-            <CreateForm :tiny_api_key="tiny_api_key" :categories="categories"></CreateForm>
+            <CreateForm :tiny_api_key="tiny_api_key" :categories="categories" :can_upload_pdf="can_upload_pdf"></CreateForm>
         </div>
     </AppLayout>
 </template>

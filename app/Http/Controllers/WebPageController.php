@@ -40,6 +40,8 @@ use App\Models\Parameter;
 use App\Support\PaginaPrincipal;
 use App\Support\PersonUserPersistenceVerifier;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
 
@@ -419,6 +421,10 @@ class WebPageController extends Controller
          // Schema markup del curso, con su valoracion agregada y resenas cuando las tiene.
          $courseSchema = $this->publicCourseSchema($landing, $courseTestimonials);
 
+         // TODO: la landing publica por slug espera la vista `pages.course-landing`,
+         // es decir resources/views/pages/course-landing.blade.php. Esa vista aun
+         // no existe en este proyecto (se creara despues); hasta entonces
+         // /curso/{slug} no puede renderizar la landing.
          return view ('pages.course-landing', [
              'landing' => $landing,
              'teachers_premium' => $teachersPremium,
@@ -497,6 +503,8 @@ class WebPageController extends Controller
             $onliItem = OnliItem::where('item_id', $landing->course->id)->first();
         }
 
+        // TODO: el preview del panel usa la misma vista `pages.course-landing`;
+        // debe existir en resources/views/pages/course-landing.blade.php.
         return view ('pages.course-landing', [
             'landing' => $landing,
             'teachers_premium' => $teachersPremium,
@@ -800,6 +808,9 @@ class WebPageController extends Controller
             return response()->json(['error' => 'No se pudo registrar la venta aprobada.'], 500);
         }
 
+        // Ingreso a Tesorería solo tras la aprobación de MercadoPago; si falla, la venta no se afecta.
+        $this->registerCartTreasuryIncome($sale);
+
         return response()->json([
             'status' => $payment->status,
             'message' => $payment->status_detail,
@@ -811,6 +822,51 @@ class WebPageController extends Controller
                 'document_number' => $sale->identification_number,
             ],
         ]);
+    }
+
+    /**
+     * Registra en Tesorería el cobro de un carrito aprobado por MercadoPago.
+     * Va a la cuenta tipo billetera de MercadoPago. Es best-effort: si el módulo
+     * está desactivado, no existe la cuenta o algo falla, no interrumpe la venta.
+     */
+    private function registerCartTreasuryIncome(OnliSale $sale): void
+    {
+        try {
+            if (! \Modules\Treasury\Services\TreasuryHooks::enabled()) {
+                return;
+            }
+
+            $account = app(\Modules\Treasury\Services\PaymentAccountResolver::class)->walletForName('MercadoPago');
+
+            if (! $account) {
+                return;
+            }
+
+            $sale->refresh();
+
+            $movement = new \Modules\Treasury\Services\FinancialMovement(
+                module: \Modules\Treasury\Entities\TreasurySourceMovement::MODULE_SALES,
+                sourceType: 'onli_sale',
+                sourceId: (int) $sale->id,
+                operation: 'cart_income',
+                type: \Modules\Treasury\Entities\TreasurySourceMovement::TYPE_INCOME,
+                amount: (float) $sale->total,
+                date: $sale->response_date_approved ?: now(),
+                currency: $sale->currency ?: 'PEN',
+                exchangeRate: $sale->exchange_rate ? (float) $sale->exchange_rate : null,
+                reference: $sale->mercado_payment_id ? 'MercadoPago #' . $sale->mercado_payment_id : null,
+                description: 'Venta online - Carrito #' . $sale->id,
+                treasuryAccountId: (int) $account->id,
+                meta: ['onli_sale_id' => $sale->id],
+            );
+
+            app(\Modules\Treasury\Services\TreasuryIntegrationService::class)->register($movement);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[Treasury] No se registró el ingreso del carrito', [
+                'onli_sale_id' => $sale->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function cartFinalize(Request $request)
@@ -1493,6 +1549,8 @@ class WebPageController extends Controller
             'articles' => $articles,
             'popular_articles' => $popular_articles,
             'search' => $search ?? null,
+            // Paises del selector del modal de registro de lectores.
+            'countries' => Country::where('status', true)->orderBy('description')->get(),
         ]);
     }
 
@@ -1602,7 +1660,37 @@ class WebPageController extends Controller
             'latest_articles' => $latest_articles,
             'popular_articles' => $popular_articles,
             'articlesByCategory' => $articlesByCategory,
+            // Paises del selector del modal de registro de lectores.
+            'countries' => Country::where('status', true)->orderBy('description')->get(),
         ]);
+    }
+
+    /**
+     * Descarga el PDF adjunto de una entrada del blog.
+     *
+     * La ruta exige sesion (middleware auth). El archivo se sirve desde el
+     * disco publico con el nombre del articulo, sin exponer la ruta interna.
+     */
+    public function blog_article_pdf($url)
+    {
+        $article = \Modules\Blog\Entities\BlogArticle::where('url', $url)
+            ->where('status', true)
+            ->first();
+
+        if (! $article || ! $article->pdf_path) {
+            abort(404);
+        }
+
+        $disk = Storage::disk('public');
+
+        if (! $disk->exists($article->pdf_path)) {
+            abort(404);
+        }
+
+        return $disk->download(
+            $article->pdf_path,
+            Str::slug($article->title).'.pdf'
+        );
     }
 
     /**

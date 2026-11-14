@@ -23,12 +23,17 @@ class TreasuryTransaction extends Model
 
     protected $fillable = [
         'treasury_account_id',
+        'source_wallet_account_id',
         'transaction_date',
         'type',
         'treasury_category_id',
         'origin_type',
         'origin_id',
+        'transfer_id',
         'amount',
+        'fee_amount',
+        'igv_amount',
+        'itf_amount',
         'reference',
         'description',
         'attachment_path',
@@ -42,6 +47,9 @@ class TreasuryTransaction extends Model
     protected $casts = [
         'transaction_date' => 'date',
         'amount' => 'decimal:2',
+        'fee_amount' => 'decimal:2',
+        'igv_amount' => 'decimal:2',
+        'itf_amount' => 'decimal:2',
         'reconciled_at' => 'datetime',
         'voided_at' => 'datetime',
     ];

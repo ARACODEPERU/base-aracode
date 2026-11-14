@@ -31,6 +31,22 @@
         customClass: { container: 'toast' },
     });
 
+    // Crea en Tesorería las cuentas de bancos y billeteras que aún no existan
+    // Muestra el resultado de la sincronización usando el flash de la respuesta
+    const syncAccounts = () => {
+        router.post(route('treasury_accounts_sync'), {}, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                const flash = page.props.flash || {};
+                if (flash.success) {
+                    window.alertaSistema('Cuentas sincronizadas', flash.success, 'success');
+                } else if (flash.error) {
+                    window.alertaSistema('No se pudo sincronizar', flash.error, 'error');
+                }
+            },
+        });
+    };
+
     const showModal = ref(false);
     const editingId = ref(null);
 
@@ -49,6 +65,10 @@
         currency_type_id: 'PEN',
         opening_balance: 0,
         opening_balance_date: null,
+        fixed_fee: 0,
+        percent_fee: 0,
+        igv_applies: false,
+        commission_formula: '',
         status: true,
     });
 
@@ -70,6 +90,10 @@
         form.currency_type_id = account.currency || 'PEN';
         form.opening_balance = account.opening_balance;
         form.opening_balance_date = account.opening_balance_date;
+        form.fixed_fee = account.fixed_fee ?? 0;
+        form.percent_fee = account.percent_fee ?? 0;
+        form.igv_applies = !!account.igv_applies;
+        form.commission_formula = account.commission_formula ?? '';
         form.status = account.status;
         showModal.value = true;
     };
@@ -138,6 +162,7 @@
     const sourceLabels = {
         bank: 'Banco',
         wallet: 'Billetera',
+        cash: 'Efectivo/Caja',
     };
 </script>
 
@@ -161,7 +186,10 @@
                         Bancos y billeteras digitales que componen el libro de tesorería
                     </p>
                 </div>
-                <button type="button" class="btn btn-primary" @click="openCreate">Nueva cuenta</button>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-primary" @click="syncAccounts">Crear cuentas según parámetros</button>
+                    <button type="button" class="btn btn-primary" @click="openCreate">Nueva cuenta</button>
+                </div>
             </div>
 
             <div class="panel overflow-hidden p-0">
@@ -229,6 +257,14 @@
                                     </p>
                                 </td>
                                 <td
+                                    v-if="account.hides_balance"
+                                    class="text-right"
+                                >
+                                    <p class="font-bold text-success">+{{ currency(account.period_income) }}</p>
+                                    <p class="text-xs text-gray-400">Movimientos del periodo (el saldo está en su banco)</p>
+                                </td>
+                                <td
+                                    v-else
                                     class="text-right font-bold"
                                     :class="account.balance >= 0 ? 'text-gray-800 dark:text-gray-100' : 'text-danger'"
                                 >
@@ -399,6 +435,38 @@
                 <p class="text-xs text-gray-500">
                     El saldo inicial es el dinero que había en la cuenta antes de empezar a registrar movimientos en el sistema.
                 </p>
+
+                <!-- Comisiones del medio: se registran como egreso por cada ingreso -->
+                <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">Comisión por cobro (opcional)</p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Si el medio cobra por recibir dinero, cada ingreso que pase por esta cuenta deja un egreso por la comisión. Ejemplo: Culqi cobra 3.49 % + IGV.
+                    </p>
+                    <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div>
+                            <InputLabel value="Comisión fija (S/)" class="mb-1.5" />
+                            <input v-model="form.fixed_fee" type="number" min="0" step="0.01" class="form-input w-full" />
+                            <InputError :message="form.errors.fixed_fee" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel value="Comisión (%) del monto" class="mb-1.5" />
+                            <input v-model="form.percent_fee" type="number" min="0" max="100" step="0.001" class="form-input w-full" />
+                            <InputError :message="form.errors.percent_fee" class="mt-2" />
+                        </div>
+                        <label class="flex cursor-pointer items-center gap-2 sm:mt-7">
+                            <input v-model="form.igv_applies" type="checkbox" class="form-checkbox" />
+                            <span class="text-sm">Sumar IGV (18 %)</span>
+                        </label>
+                    </div>
+                    <div class="mt-3">
+                        <InputLabel value="Fórmula personalizada (opcional)" class="mb-1.5" />
+                        <input v-model="form.commission_formula" type="text" class="form-input w-full" placeholder="Ej: fijo + monto * porcentaje / 100" />
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Si la escribes, reemplaza al cálculo fijo + porcentaje. Variables permitidas: monto, fijo, porcentaje, igv.
+                        </p>
+                        <InputError :message="form.errors.commission_formula" class="mt-2" />
+                    </div>
+                </div>
 
                 <label class="flex cursor-pointer items-center gap-2">
                     <input v-model="form.status" type="checkbox" class="form-checkbox" />

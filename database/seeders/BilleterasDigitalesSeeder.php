@@ -26,6 +26,7 @@ class BilleterasDigitalesSeeder extends Seeder
             ['short_name' => 'BITEL WALLET', 'full_name' => 'Bitel Wallet'],
             ['short_name' => 'BIM', 'full_name' => 'BIM'],
             ['short_name' => 'PAGO EFECTIVO', 'full_name' => 'PagoEfectivo'],
+            ['short_name' => 'CULQI', 'full_name' => 'Culqi'],
         ];
 
         foreach ($billeteras as $billetera) {
