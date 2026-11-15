@@ -61,7 +61,7 @@ class TreasuryTransferController extends Controller
                 'itf_applies' => (bool) $transfer->itf_applies,
             ]);
 
-        return Inertia::render('Treasury/Transfers/Index', [
+        return Inertia::render('Treasury::Transfers/Index', [
             'accounts' => $accounts,
             'transfers' => $transfers,
             'itfThreshold' => (float) config('treasury.itf_threshold', 1000),
