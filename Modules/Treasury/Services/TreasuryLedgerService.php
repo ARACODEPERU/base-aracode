@@ -10,6 +10,7 @@ use Modules\Sales\Entities\SalePaymentQuota;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasuryCategory;
 use Modules\Treasury\Entities\TreasuryTransaction;
+use Modules\Treasury\Exceptions\TreasuryOperationException;
 use Modules\Treasury\Services\FeeCalculator;
 
 /**
@@ -23,8 +24,10 @@ use Modules\Treasury\Services\FeeCalculator;
  */
 class TreasuryLedgerService
 {
-    public function __construct(private PaymentAccountResolver $resolver)
-    {
+    public function __construct(
+        private PaymentAccountResolver $resolver,
+        private TreasurySettingsService $settings,
+    ) {
     }
 
     /**
@@ -45,6 +48,9 @@ class TreasuryLedgerService
         ?int $userId = null,
         bool $checkSignature = true,
         ?int $sourceWalletAccountId = null,
+        ?string $currency = null,
+        ?float $exchangeRate = null,
+        ?int $costCenterId = null,
     ): ?TreasuryTransaction {
         $income = $this->register(
             $account,
@@ -61,6 +67,9 @@ class TreasuryLedgerService
             $userId,
             $checkSignature,
             $sourceWalletAccountId,
+            $currency,
+            $exchangeRate,
+            $costCenterId,
         );
 
         // Si la cuenta cobra comisiones, se registra su egreso (comisión + IGV) en la misma cuenta.
@@ -147,6 +156,9 @@ class TreasuryLedgerService
         ?int $userId = null,
         bool $checkSignature = true,
         ?int $sourceWalletAccountId = null,
+        ?string $currency = null,
+        ?float $exchangeRate = null,
+        ?int $costCenterId = null,
     ): ?TreasuryTransaction {
         return $this->register(
             $account,
@@ -163,6 +175,9 @@ class TreasuryLedgerService
             $userId,
             $checkSignature,
             $sourceWalletAccountId,
+            $currency,
+            $exchangeRate,
+            $costCenterId,
         );
     }
 
@@ -190,6 +205,9 @@ class TreasuryLedgerService
         ?int $userId = null,
         bool $checkSignature = true,
         ?int $sourceWalletAccountId = null,
+        ?string $currency = null,
+        ?float $exchangeRate = null,
+        ?int $costCenterId = null,
     ): ?TreasuryTransaction {
         try {
             if (! $account || ! $account->status) {
@@ -203,6 +221,31 @@ class TreasuryLedgerService
             }
 
             $dateValue = $date instanceof Carbon ? $date->copy() : Carbon::parse($date);
+
+            if (! config('treasury.allow_future_dates', false) && $dateValue->isAfter(now()->startOfDay())) {
+                throw new TreasuryOperationException('No se permiten movimientos con fecha futura.');
+            }
+
+            // Periodo cerrado: ni altas, ni ajustes retroactivos.
+            app(TreasuryPeriodService::class)->ensureDateIsOpen($dateValue->toDateString());
+
+            // Sobregiro: solo se controla en movimientos manuales de bancos y billeteras.
+            if ($source === TreasuryTransaction::SOURCE_MANUAL
+                && $type === TreasuryTransaction::TYPE_EXPENSE
+                && $account->type !== TreasuryAccount::TYPE_CASH
+                && config('treasury.block_negative_balance', true)) {
+                $available = $this->accountBalance($account, $dateValue->toDateString());
+
+                if (round($available - $amount, 2) < 0) {
+                    throw TreasuryOperationException::negativeBalance($account->displayName(), round($available - $amount, 2));
+                }
+            }
+
+            $resolvedCurrency = app(TreasuryCurrencyService::class)->normalize($currency ?? $account->currency_type_id);
+            $resolvedRate = $resolvedCurrency === 'PEN' ? null : $exchangeRate;
+            $amountBase = $resolvedCurrency === 'PEN'
+                ? $amount
+                : (($resolvedRate !== null && $resolvedRate > 0) ? round($amount * $resolvedRate, 2) : null);
 
             // Idempotencia: si ya existe el mismo movimiento del mismo origen, no duplicar
             if ($checkSignature && $originType && $originId) {
@@ -225,6 +268,10 @@ class TreasuryLedgerService
                 'origin_type' => $originType,
                 'origin_id' => $originId,
                 'amount' => $amount,
+                'currency' => $resolvedCurrency,
+                'exchange_rate' => $resolvedRate,
+                'amount_base' => $amountBase,
+                'cost_center_id' => $costCenterId,
                 'reference' => $reference,
                 'description' => $description,
                 'payment_method_id' => $paymentMethodId,
@@ -232,6 +279,9 @@ class TreasuryLedgerService
                 'user_id' => $userId,
                 'source_wallet_account_id' => $sourceWalletAccountId,
             ]);
+        } catch (TreasuryOperationException $e) {
+            // Bloqueos de periodo, sobregiro o moneda: el llamador decide qué hacer.
+            throw $e;
         } catch (\Throwable $e) {
             Log::warning('[Treasury] No se pudo registrar el movimiento', [
                 'account_id' => $account?->id,
@@ -311,6 +361,9 @@ class TreasuryLedgerService
     {
         $query = $account->transactions()->active();
 
+        // Antes de la fecha de inicio del módulo no hay saldo que contar.
+        $this->settings->applyCutoff($query);
+
         if ($untilDate) {
             $query->whereDate('transaction_date', '<=', $untilDate);
         }
@@ -321,6 +374,22 @@ class TreasuryLedgerService
         ")->first();
 
         return round((float) $account->opening_balance + (float) $totals->incomes - (float) $totals->expenses, 2);
+    }
+
+    /**
+     * Saldos por cuenta más el consolidado por moneda. Es lo que usa el
+     * dashboard para no sumar soles con dólares.
+     *
+     * @return array{balances: array<int, array<string, mixed>>, consolidation: array<string, mixed>}
+     */
+    public function consolidatedBalances(?string $untilDate = null): array
+    {
+        $balances = $this->balancesByAccount($untilDate);
+
+        return [
+            'balances' => $balances,
+            'consolidation' => app(TreasuryCurrencyService::class)->consolidate($balances, $untilDate),
+        ];
     }
 
     /**
@@ -425,9 +494,12 @@ class TreasuryLedgerService
 
         $query = $account->transactions()
             ->active()
-            ->with(['category', 'paymentMethod'])
+            ->with(['category', 'paymentMethod', 'costCenter'])
             ->orderBy('transaction_date')
             ->orderBy('id');
+
+        // El libro arranca en la fecha de inicio del módulo.
+        $this->settings->applyCutoff($query);
 
         if ($fromDate) {
             $query->whereDate('transaction_date', '>=', $fromDate);
@@ -449,7 +521,11 @@ class TreasuryLedgerService
                 'type' => $tx->type,
                 'category' => $tx->category?->name,
                 'category_color' => $tx->category?->color,
+                'cost_center_id' => $tx->cost_center_id,
+                'cost_center' => $tx->costCenter?->name,
                 'amount' => (float) $tx->amount,
+                'currency' => $tx->currency ?: 'PEN',
+                'amount_base' => $tx->amount_base !== null ? (float) $tx->amount_base : null,
                 'running_balance' => round($balance, 2),
                 'reference' => $tx->reference,
                 'description' => $tx->description,
@@ -457,6 +533,7 @@ class TreasuryLedgerService
                 'origin_id' => $tx->origin_id,
                 'source' => $tx->source,
                 'reconciled' => $tx->reconciled_at !== null,
+                'locked' => $tx->treasury_reconciliation_id !== null,
                 'voided' => $tx->voided_at !== null,
             ];
         })->all();

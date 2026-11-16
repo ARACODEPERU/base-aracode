@@ -28,6 +28,8 @@
     // Una cuenta con rol de panel entra al panel aunque también tenga el rol
     // 'Alumno'; el campus del alumno se muestra solo cuando es su único rol.
     import { esModoAlumno } from '@/utils/modoAlumno';
+    // Guía de Aracodito por pestaña de Tesorería (solo actúa en /treasury).
+    import TreasuryGuide from 'Modules/Treasury/Resources/assets/js/Components/TreasuryGuide.vue';
 
     const store = useAppStore();
     const page = usePage();
@@ -222,6 +224,7 @@
                 </div>
             </div>
         </div>
+        <TreasuryGuide />
         <ChatBox />
         <ForcePinChange />
         <OrganizationAccessAlert />

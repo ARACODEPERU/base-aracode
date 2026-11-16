@@ -131,6 +131,10 @@ class SaleDocumentController extends Controller
                 'sale_documents.invoice_notes',
                 'sale_documents.invoice_type_operation',
                 'sale_documents.invoice_type_currency',
+                'sale_documents.detraccion',
+                'sale_documents.detraccion_auto',
+                'sale_documents.detraccion_percent',
+                'sale_documents.detraccion_amount',
                 'sale_documents.created_at AS created_date'
             )
             ->whereIn('series.document_type_id', [1, 2])
@@ -352,6 +356,9 @@ class SaleDocumentController extends Controller
                     'overall_total' => $request->get('total'),
 
                 ]);
+
+                // Marca la factura con su estado de detracción (12 % desde S/ 700).
+                app(\Modules\Treasury\Services\TreasuryDetractionService::class)->syncDocument($document);
 
                 // /obtenemos los productos o servicios para insertar en los
                 // /detalles de la venta y el documento
@@ -1013,8 +1020,9 @@ class SaleDocumentController extends Controller
             'type_operation' => 'required',
         ]);
         // dd($request->get('invoice_status'));
-        SaleDocument::find($request->get('id'))
-            ->update([
+        $document = SaleDocument::findOrFail($request->get('id'));
+
+        $document->update([
                 'invoice_type_operation' => $request->get('type_operation'),
                 'client_number' => $request->get('client_number'),
                 'client_rzn_social' => $request->get('client_rzn_social'),
@@ -1027,6 +1035,26 @@ class SaleDocumentController extends Controller
                 'invoice_due_date' => $request->get('invoice_due_date'),
                 'invoice_status' => $request->get('invoice_status'),
             ]);
+
+        // Detracción: el usuario puede aceptarla, cambiar el % o activar la
+        // auto-detracción (cobrar todo y trasladar el importe).
+        if (\Illuminate\Support\Facades\Schema::hasColumn('sale_documents', 'detraccion')) {
+            if ($request->boolean('detraccion')) {
+                $document->detraccion_auto = $request->boolean('detraccion_auto');
+                if ($request->filled('detraccion_percent')) {
+                    $document->detraccion_percent = (float) $request->get('detraccion_percent');
+                }
+                $document->save();
+                app(\Modules\Treasury\Services\TreasuryDetractionService::class)->syncDocument($document, true);
+            } else {
+                $document->forceFill([
+                    'detraccion' => false,
+                    'detraccion_auto' => false,
+                    'detraccion_percent' => null,
+                    'detraccion_amount' => null,
+                ])->save();
+            }
+        }
 
         // Person::find($request->get('client_id'))
         //     ->update([

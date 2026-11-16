@@ -5,12 +5,13 @@ namespace Modules\Treasury\Http\Controllers;
 use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasuryCategory;
+use Modules\Treasury\Entities\TreasuryCostCenter;
 use Modules\Treasury\Entities\TreasurySourceMovement;
 use Modules\Treasury\Entities\TreasuryTransaction;
+use Modules\Treasury\Exceptions\TreasuryOperationException;
 use Modules\Treasury\Services\TreasuryIntegrationService;
 use Modules\Treasury\Services\TreasuryLedgerService;
 use Modules\Treasury\Services\TreasuryTransactionOriginService;
@@ -38,7 +39,7 @@ class TreasuryTransactionController extends Controller
                 'id' => $account->id,
                 'label' => $account->displayName(),
                 'type' => $account->type,
-                'currency' => $account->currency_type_id,
+                'currency' => strtoupper((string) ($account->currency_type_id ?: 'PEN')) ?: 'PEN',
             ]);
 
         $account = $accountId ? TreasuryAccount::findOrFail($accountId) : ($accounts->first() ? TreasuryAccount::find($accounts->first()['id']) : null);
@@ -65,8 +66,10 @@ class TreasuryTransactionController extends Controller
         return Inertia::render('Treasury::Transactions/Index', [
             'categories' => TreasuryCategory::query()->orderBy('name')->get(['id', 'name', 'applies_to', 'color']),
             'paymentMethods' => PaymentMethod::query()->orderBy('description')->get(['id', 'description']),
+            'costCenters' => TreasuryCostCenter::query()->where('status', true)->orderBy('name')->get(['id', 'name']),
             'accounts' => $accounts,
             'selectedAccountId' => $account?->id,
+            'accountCurrency' => $account ? (strtoupper((string) ($account->currency_type_id ?: 'PEN')) ?: 'PEN') : 'PEN',
             'from' => $from,
             'to' => $to,
             'transactions' => $transactions->values()->all(),
@@ -84,38 +87,55 @@ class TreasuryTransactionController extends Controller
 
         $account = TreasuryAccount::findOrFail($data['treasury_account_id']);
 
-        $service = $this->ledger;
+        // La cuenta de detracción solo se mueve desde su pantalla (IGV, liberación o ajuste crítico).
+        if ($account->isDetraction()) {
+            return back()->with('error', 'La cuenta de detracción no admite movimientos manuales: usa su pantalla y la contraseña.');
+        }
 
-        $transaction = $data['type'] === TreasuryTransaction::TYPE_INCOME
-            ? $service->registerIncome(
-                $account,
-                $data['transaction_date'],
-                (float) $data['amount'],
-                $data['treasury_category_id'] ?? null,
-                null,
-                null,
-                $data['reference'] ?? null,
-                $data['description'] ?? null,
-                $data['payment_method_id'] ?? null,
-                TreasuryTransaction::SOURCE_MANUAL,
-                auth()->id(),
-            )
-            : $service->registerExpense(
-                $account,
-                $data['transaction_date'],
-                (float) $data['amount'],
-                $data['treasury_category_id'] ?? null,
-                null,
-                null,
-                $data['reference'] ?? null,
-                $data['description'] ?? null,
-                $data['payment_method_id'] ?? null,
-                TreasuryTransaction::SOURCE_MANUAL,
-                auth()->id(),
-            );
+        try {
+            $transaction = $data['type'] === TreasuryTransaction::TYPE_INCOME
+                ? $this->ledger->registerIncome(
+                    $account,
+                    $data['transaction_date'],
+                    (float) $data['amount'],
+                    $data['treasury_category_id'] ?? null,
+                    null,
+                    null,
+                    $data['reference'] ?? null,
+                    $data['description'] ?? null,
+                    $data['payment_method_id'] ?? null,
+                    TreasuryTransaction::SOURCE_MANUAL,
+                    auth()->id(),
+                    true,
+                    null,
+                    $data['currency'] ?? null,
+                    null,
+                    $data['cost_center_id'] ?? null,
+                )
+                : $this->ledger->registerExpense(
+                    $account,
+                    $data['transaction_date'],
+                    (float) $data['amount'],
+                    $data['treasury_category_id'] ?? null,
+                    null,
+                    null,
+                    $data['reference'] ?? null,
+                    $data['description'] ?? null,
+                    $data['payment_method_id'] ?? null,
+                    TreasuryTransaction::SOURCE_MANUAL,
+                    auth()->id(),
+                    true,
+                    null,
+                    $data['currency'] ?? null,
+                    null,
+                    $data['cost_center_id'] ?? null,
+                );
+        } catch (TreasuryOperationException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         if (! $transaction) {
-            return back()->with('error', 'No se pudo registrar el movimiento (monto inválido o cuenta inactiva).');
+            return back()->with('error', 'No se pudo registrar el movimiento (monto inválido, cuenta inactiva o duplicado).');
         }
 
         if ($request->hasFile('attachment')) {
@@ -137,21 +157,31 @@ class TreasuryTransactionController extends Controller
             return back()->with('error', 'No se puede editar un movimiento anulado.');
         }
 
+        if ($transaction->isLocked()) {
+            return back()->with('error', 'El movimiento pertenece a una conciliación cerrada: no se puede editar.');
+        }
+
         if ($transaction->source !== TreasuryTransaction::SOURCE_MANUAL) {
             return back()->with('error', 'Solo los movimientos manuales pueden editarse.');
         }
 
         $data = $this->validated($request);
 
-        $transaction->fill([
-            'transaction_date' => $data['transaction_date'],
-            'type' => $data['type'],
-            'treasury_category_id' => $data['treasury_category_id'] ?? null,
-            'amount' => round((float) $data['amount'], 2),
-            'reference' => $data['reference'] ?? null,
-            'description' => $data['description'] ?? null,
-            'payment_method_id' => $data['payment_method_id'] ?? null,
-        ])->save();
+        try {
+            $transaction->fill([
+                'transaction_date' => $data['transaction_date'],
+                'type' => $data['type'],
+                'treasury_category_id' => $data['treasury_category_id'] ?? null,
+                'cost_center_id' => $data['cost_center_id'] ?? null,
+                'amount' => round((float) $data['amount'], 2),
+                'currency' => strtoupper($data['currency'] ?? $transaction->currency ?: 'PEN') ?: 'PEN',
+                'reference' => $data['reference'] ?? null,
+                'description' => $data['description'] ?? null,
+                'payment_method_id' => $data['payment_method_id'] ?? null,
+            ])->save();
+        } catch (TreasuryOperationException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return back()->with('success', 'Movimiento actualizado.');
     }
@@ -165,6 +195,10 @@ class TreasuryTransactionController extends Controller
 
         $transaction = TreasuryTransaction::findOrFail($id);
 
+        if ($transaction->isLocked()) {
+            return back()->with('error', 'El movimiento pertenece a una conciliación cerrada: no se puede anular.');
+        }
+
         // Si el movimiento viene de la integración, se revierte también la
         // operación de origen para que la tabla puente no quede "processed"
         // sin respaldo en el libro.
@@ -173,14 +207,18 @@ class TreasuryTransactionController extends Controller
             ->whereNull('reversal_of_id')
             ->first();
 
-        if ($bridge) {
-            app(TreasuryIntegrationService::class)->reverse(
-                $bridge,
-                'Anulación manual desde tesorería',
-                auth()->id()
-            );
-        } else {
-            $this->ledger->voidTransaction($transaction, auth()->id());
+        try {
+            if ($bridge) {
+                app(TreasuryIntegrationService::class)->reverse(
+                    $bridge,
+                    'Anulación manual desde tesorería',
+                    auth()->id()
+                );
+            } else {
+                $this->ledger->voidTransaction($transaction, auth()->id());
+            }
+        } catch (TreasuryOperationException $e) {
+            return back()->with('error', $e->getMessage());
         }
 
         return back()->with('success', 'Movimiento anulado.');
@@ -193,6 +231,8 @@ class TreasuryTransactionController extends Controller
             'transaction_date' => ['required', 'date'],
             'type' => ['required', 'in:income,expense'],
             'treasury_category_id' => ['nullable', 'integer', 'exists:treasury_categories,id'],
+            'cost_center_id' => ['nullable', 'integer', 'exists:treasury_cost_centers,id'],
+            'currency' => ['nullable', 'string', 'size:3'],
             'amount' => ['required', 'numeric', 'gt:0', 'max:9999999999'],
             'reference' => ['nullable', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:500'],

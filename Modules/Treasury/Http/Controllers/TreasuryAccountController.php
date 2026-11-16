@@ -96,7 +96,8 @@ class TreasuryAccountController extends Controller
                 $query->where('treasury_account_id', $account->id)
                     ->orWhere('source_wallet_account_id', $account->id);
             })
-            ->whereBetween('transaction_date', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])
+            ->whereDate('transaction_date', '>=', now()->startOfMonth()->toDateString())
+            ->whereDate('transaction_date', '<=', now()->endOfMonth()->toDateString())
             ->sum('amount'), 2);
     }
 
@@ -116,7 +117,14 @@ class TreasuryAccountController extends Controller
         $this->authorizePermission('treasury_cuentas_editar');
 
         $account = TreasuryAccount::findOrFail($id);
-        $account->fill($this->validated($request, $account->id))->save();
+        $data = $this->validated($request, $account->id);
+
+        // El saldo de detracción solo se mueve desde su pantalla crítica.
+        if ($account->isDetraction()) {
+            unset($data['opening_balance'], $data['opening_balance_date']);
+        }
+
+        $account->fill($data)->save();
 
         return back()->with('success', 'Cuenta de tesorería actualizada.');
     }
@@ -141,6 +149,10 @@ class TreasuryAccountController extends Controller
         $this->authorizePermission('treasury_cuentas_eliminar');
 
         $account = TreasuryAccount::findOrFail($id);
+
+        if ($account->isDetraction()) {
+            return back()->with('error', 'La cuenta de detracción es del sistema: no se puede eliminar ni desactivar.');
+        }
 
         if ($account->transactions()->exists()) {
             // Con movimientos no se borra: se desactiva para preservar el historial

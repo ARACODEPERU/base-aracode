@@ -8,32 +8,33 @@ use Inertia\Inertia;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasuryTransfer;
 use Modules\Treasury\Entities\TreasuryTransferProfile;
+use Modules\Treasury\Exceptions\TreasuryOperationException;
+use Modules\Treasury\Services\TreasuryCurrencyService;
 use Modules\Treasury\Services\TreasuryTransferService;
 
 /**
  * Transferencias entre cuentas de tesorería (bancos y billeteras).
  *
- * La comisión del destino siempre se cobra; la del origen solo entre cuentas
- * propias (siempre lo son aquí) y el usuario la elige. El check de ITF libre
- * para cuentas propias se guarda por par de cuentas.
+ * Si las cuentas tienen monedas distintas se exige tipo de cambio SUNAT: la
+ * pantalla muestra el monto realmente acreditado en el destino.
  */
 class TreasuryTransferController extends Controller
 {
     use ValidatesTreasuryRequests;
 
-    public function __construct(private TreasuryTransferService $transfers)
-    {
+    public function __construct(
+        private TreasuryTransferService $transfers,
+        private TreasuryCurrencyService $currency,
+    ) {
     }
 
-    /**
-     * Lista las transferencias y muestra el formulario con el perfil guardado del par elegido.
-     */
     public function index(Request $request)
     {
         $this->authorizePermission('treasury_cuentas');
 
         $accounts = TreasuryAccount::query()
             ->active()
+            ->where('type', '<>', TreasuryAccount::TYPE_DETRACTION)
             ->with(['bankAccount.bank', 'companyBilletera.billetera'])
             ->orderBy('type')
             ->orderBy('id')
@@ -42,7 +43,7 @@ class TreasuryTransferController extends Controller
                 'id' => $account->id,
                 'label' => $account->displayName(),
                 'type' => $account->type,
-                'currency' => $account->currency_type_id,
+                'currency' => $this->currency->accountCurrency($account),
             ]);
 
         $transfers = TreasuryTransfer::query()
@@ -57,14 +58,41 @@ class TreasuryTransferController extends Controller
                 'from' => $transfer->fromAccount?->displayName(),
                 'to' => $transfer->toAccount?->displayName(),
                 'amount' => (float) $transfer->amount,
+                'from_currency' => $transfer->from_currency ?: 'PEN',
+                'to_currency' => $transfer->to_currency ?: 'PEN',
+                'exchange_rate' => $transfer->exchange_rate !== null ? (float) $transfer->exchange_rate : null,
+                'amount_destination' => $transfer->amount_destination !== null
+                    ? (float) $transfer->amount_destination
+                    : (float) $transfer->net_received,
                 'itf_amount' => (float) $transfer->itf_amount,
                 'itf_applies' => (bool) $transfer->itf_applies,
+                'from_fee_amount' => (float) $transfer->from_fee_amount,
+                'from_fee_igv' => (float) $transfer->from_fee_igv,
+                'to_fee_amount' => (float) $transfer->to_fee_amount,
+                'to_fee_igv' => (float) $transfer->to_fee_igv,
+                'total_fees' => round((float) $transfer->from_fee_amount + (float) $transfer->from_fee_igv
+                    + (float) $transfer->to_fee_amount + (float) $transfer->to_fee_igv
+                    + (float) $transfer->itf_amount, 2),
+                'voided' => $transfer->isVoided(),
             ]);
+
+        // Tipos de cambio vigentes para las monedas distintas de la base.
+        $rates = [];
+
+        foreach ($accounts->pluck('currency')->unique()->filter(fn ($code) => $code !== 'PEN') as $code) {
+            $rate = $this->currency->rate($code);
+
+            if ($rate) {
+                $rates[$code] = $rate;
+            }
+        }
 
         return Inertia::render('Treasury::Transfers/Index', [
             'accounts' => $accounts,
             'transfers' => $transfers,
+            'rates' => (object) $rates,
             'itfThreshold' => (float) config('treasury.itf_threshold', 1000),
+            'canVoid' => auth()->user()?->hasPermissionTo('treasury_cuentas_editar'),
         ]);
     }
 
@@ -107,6 +135,7 @@ class TreasuryTransferController extends Controller
             'from_fixed_fee' => ['nullable', 'numeric', 'min:0'],
             'from_percent_fee' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'own_account_itf_free' => ['nullable', 'boolean'],
+            'exchange_rate' => ['nullable', 'numeric', 'gt:0'],
         ]);
 
         $from = TreasuryAccount::query()->active()->findOrFail($data['from_account_id']);
@@ -125,15 +154,33 @@ class TreasuryTransferController extends Controller
                     'to_percent_fee' => (float) ($data['to_percent_fee'] ?? 0),
                     'own_account_itf_free' => (bool) ($data['own_account_itf_free'] ?? false),
                     'charge_origin_fee' => (bool) ($data['charge_origin_fee'] ?? false),
+                    'exchange_rate' => isset($data['exchange_rate']) ? (float) $data['exchange_rate'] : null,
                 ],
                 $data['reference'] ?? null,
                 auth()->id(),
             );
+        } catch (TreasuryOperationException $e) {
+            return back()->with('error', $e->getMessage());
         } catch (\InvalidArgumentException $e) {
             return back()->withErrors(['amount' => $e->getMessage()]);
         }
 
-        // Se queda en la misma pantalla; el mensaje lo muestra la vista con alertaSistema
-        return back();
+        return back()->with('success', 'Transferencia registrada.');
+    }
+
+    /**
+     * Anula la transferencia completa (sus dos movimientos).
+     */
+    public function destroy(int $id)
+    {
+        $this->authorizePermission('treasury_cuentas_editar');
+
+        try {
+            $this->transfers->void(TreasuryTransfer::findOrFail($id), auth()->id());
+        } catch (TreasuryOperationException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', 'Transferencia anulada. Los movimientos se conservan como anulados.');
     }
 }

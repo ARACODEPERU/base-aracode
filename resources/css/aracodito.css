@@ -279,6 +279,8 @@
     flex-direction: column;
     gap: 6px;
     min-width: 0;
+    /* Respeta los saltos de línea de las guías y mensajes largos. */
+    white-space: pre-line;
 }
 
 .aracodito__text {

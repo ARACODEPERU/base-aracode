@@ -2,23 +2,49 @@
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import { Head } from '@inertiajs/vue3';
-    import { faWallet, faLandmark, faArrowTrendUp, faArrowTrendDown } from '@fortawesome/free-solid-svg-icons';
+    import { computed } from 'vue';
+    import { faWallet, faLandmark, faArrowTrendUp, faArrowTrendDown, faFileInvoiceDollar, faTriangleExclamation, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 
     const props = defineProps({
         accounts: { type: Array, default: () => [] },
-        totalBalance: { type: Number, default: 0 },
+        groups: { type: Array, default: () => [] },
+        consolidated: { type: Number, default: 0 },
+        rates: { type: Array, default: () => [] },
+        ratesIncomplete: { type: Boolean, default: false },
+        baseCurrency: { type: String, default: 'PEN' },
         monthIncomes: { type: Number, default: 0 },
         monthExpenses: { type: Number, default: 0 },
+        monthByCurrency: { type: Array, default: () => [] },
         byCategory: { type: Array, default: () => [] },
         recent: { type: Array, default: () => [] },
+        pendingOrders: { type: Object, default: () => ({ count: 0, total_base: 0 }) },
+        settings: { type: Object, default: () => ({ enabled: true, starts_on: null }) },
     });
 
-    const currency = (value) =>
-        new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value || 0);
+    // Fecha de corte del módulo en formato dd/mm/aaaa.
+    const fechaCorte = (value) => {
+        if (!value) return null;
+        const [year, month, day] = String(value).split('-');
+        return year && month && day ? `${day}/${month}/${year}` : value;
+    };
+
+    // Si la fecha de inicio está en el futuro, el módulo aún no muestra saldos.
+    const corteFuturo = computed(() => {
+        const hoy = new Date().toISOString().slice(0, 10);
+        return Boolean(props.settings.starts_on) && props.settings.starts_on > hoy;
+    });
+
+    const money = (value, currency = 'PEN') => {
+        try {
+            return new Intl.NumberFormat('es-PE', { style: 'currency', currency }).format(value || 0);
+        } catch (e) {
+            return `${currency} ${Number(value || 0).toFixed(2)}`;
+        }
+    };
 
     const accountIcon = (type) => (type === 'bank' ? faLandmark : faWallet);
 
-    const maxCategoryTotal = Math.max(...props.byCategory.map((c) => Math.abs(c.total)), 1);
+    const maxCategoryTotal = Math.max(...props.byCategory.map((c) => Math.abs(c.total_base)), 1);
 
     const sourceLabels = {
         auto: 'Automático',
@@ -29,7 +55,9 @@
 
 <template>
     <AppLayout title="Tesorería">
-        <Head title="Tesorería" />
+        <Head title="Tesorería">
+            <meta name="aracodito-view" content="new" />
+        </Head>
         <Navigation>
             <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
                 <span>Tesorería</span>
@@ -40,13 +68,27 @@
         </Navigation>
 
         <div class="mt-5 space-y-5">
+            <!-- Desde cuándo cuenta Tesorería -->
+            <div v-if="fechaCorte(settings.starts_on)" class="panel border-l-4 border-info p-4 text-sm text-gray-600 dark:text-gray-300">
+                <font-awesome-icon :icon="faCircleInfo" class="mr-1 text-info" />
+                <template v-if="corteFuturo">
+                    Tesorería empezará a contar el <strong>{{ fechaCorte(settings.starts_on) }}</strong>:
+                    hasta ese día no se muestran saldos ni movimientos.
+                </template>
+                <template v-else>
+                    Tesorería cuenta desde el <strong>{{ fechaCorte(settings.starts_on) }}</strong>: los movimientos anteriores
+                    no suman en saldos, proyecciones ni reportes.
+                </template>
+            </div>
+
             <!-- Resumen principal -->
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                 <div class="panel bg-gradient-to-br from-primary to-primary-dark text-white">
                     <div class="flex items-start justify-between p-5">
                         <div>
-                            <p class="text-sm opacity-80">Saldo total en cuentas</p>
-                            <p class="mt-2 text-3xl font-bold">{{ currency(totalBalance) }}</p>
+                            <p class="text-sm opacity-80">Consolidado en {{ baseCurrency }}</p>
+                            <p class="mt-2 text-3xl font-bold">{{ money(consolidated, baseCurrency) }}</p>
+                            <p v-if="ratesIncomplete" class="mt-1 text-xs text-warning">Faltan tipos de cambio</p>
                         </div>
                         <div class="rounded-full bg-white/20 p-3">
                             <font-awesome-icon :icon="faWallet" class="text-xl" />
@@ -57,8 +99,8 @@
                 <div class="panel">
                     <div class="flex items-start justify-between p-5">
                         <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Ingresos del mes</p>
-                            <p class="mt-2 text-2xl font-bold text-success">{{ currency(monthIncomes) }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Ingresos del mes (S/)</p>
+                            <p class="mt-2 text-2xl font-bold text-success">{{ money(monthIncomes, baseCurrency) }}</p>
                         </div>
                         <div class="rounded-full bg-success/10 p-3 text-success">
                             <font-awesome-icon :icon="faArrowTrendUp" class="text-xl" />
@@ -69,13 +111,35 @@
                 <div class="panel">
                     <div class="flex items-start justify-between p-5">
                         <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Egresos del mes</p>
-                            <p class="mt-2 text-2xl font-bold text-danger">{{ currency(monthExpenses) }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Egresos del mes (S/)</p>
+                            <p class="mt-2 text-2xl font-bold text-danger">{{ money(monthExpenses, baseCurrency) }}</p>
                         </div>
                         <div class="rounded-full bg-danger/10 p-3 text-danger">
                             <font-awesome-icon :icon="faArrowTrendDown" class="text-xl" />
                         </div>
                     </div>
+                </div>
+
+                <div class="panel">
+                    <div class="flex items-start justify-between p-5">
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Aprobadas por pagar</p>
+                            <p class="mt-2 text-2xl font-bold text-gray-800 dark:text-gray-100">{{ pendingOrders.count }}</p>
+                            <p class="mt-1 text-xs text-gray-500">{{ money(pendingOrders.total_base, baseCurrency) }}</p>
+                        </div>
+                        <div class="rounded-full bg-primary/10 p-3 text-primary">
+                            <font-awesome-icon :icon="faFileInvoiceDollar" class="text-xl" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Saldos por moneda -->
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                <div v-for="group in groups" :key="group.currency" class="panel p-5">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Saldo en {{ group.currency }}</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-800 dark:text-gray-100">{{ money(group.total, group.currency) }}</p>
+                    <p class="mt-1 text-xs text-gray-500">{{ group.accounts }} cuenta(s)</p>
                 </div>
             </div>
 
@@ -109,45 +173,57 @@
                                 class="font-bold"
                                 :class="account.balance >= 0 ? 'text-gray-800 dark:text-gray-100' : 'text-danger'"
                             >
-                                {{ currency(account.balance) }}
+                                {{ money(account.balance, account.currency) }}
                             </p>
                         </li>
                     </ul>
+
+                    <div v-if="rates.length" class="mt-4 border-t border-gray-200 pt-3 text-xs text-gray-500 dark:border-gray-700">
+                        <p v-for="rate in rates" :key="rate.currency" class="flex items-center gap-1">
+                            <font-awesome-icon v-if="rate.is_stale" :icon="faTriangleExclamation" class="text-warning" />
+                            TC {{ rate.currency }}: {{ rate.rate }} ({{ rate.date }})
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Movimientos por categoría -->
                 <div class="panel p-5">
                     <h2 class="mb-4 text-lg font-semibold text-gray-800 dark:text-white">Movimientos del mes por categoría</h2>
+
                     <div v-if="byCategory.length === 0" class="py-8 text-center text-sm text-gray-500">
                         Sin movimientos este mes.
                     </div>
-                    <ul v-else class="space-y-3">
-                        <li v-for="cat in byCategory" :key="`${cat.type}-${cat.name}`">
+
+                    <ul v-else class="space-y-4">
+                        <li v-for="category in byCategory" :key="category.name + category.type">
                             <div class="mb-1 flex items-center justify-between text-sm">
-                                <span class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                                    <span class="h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: cat.color || '#94a3b8' }"></span>
-                                    {{ cat.name }}
+                                <span class="flex items-center gap-2">
+                                    <span class="inline-block h-3 w-3 rounded-full" :style="{ backgroundColor: category.color || '#94a3b8' }"></span>
+                                    {{ category.name }}
+                                    <span class="text-xs text-gray-400">{{ category.currency }}</span>
                                 </span>
-                                <span :class="cat.type === 'income' ? 'text-success' : 'text-danger'">
-                                    {{ cat.type === 'income' ? '+' : '−' }} {{ currency(Math.abs(cat.total)) }}
+                                <span :class="category.type === 'income' ? 'text-success' : 'text-danger'">
+                                    {{ money(category.total, category.currency) }}
                                 </span>
                             </div>
-                            <div class="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+                            <div class="h-2 w-full rounded bg-gray-100 dark:bg-gray-700">
                                 <div
-                                    class="h-full rounded-full"
-                                    :style="{
-                                        width: `${(Math.abs(cat.total) / maxCategoryTotal) * 100}%`,
-                                        backgroundColor: cat.color || '#94a3b8',
-                                    }"
+                                    class="h-2 rounded"
+                                    :class="category.type === 'income' ? 'bg-success' : 'bg-danger'"
+                                    :style="{ width: Math.round((Math.abs(category.total_base) / maxCategoryTotal) * 100) + '%' }"
                                 ></div>
                             </div>
                         </li>
                     </ul>
+
+                    <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                        Las barras comparan el equivalente en {{ baseCurrency }}; el importe se muestra en su moneda.
+                    </p>
                 </div>
             </div>
 
             <!-- Últimos movimientos -->
-            <div class="panel p-0">
+            <div class="panel overflow-hidden p-0">
                 <div class="border-b border-gray-200 p-5 dark:border-gray-700">
                     <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Últimos movimientos</h2>
                 </div>
@@ -155,45 +231,32 @@
                     <table class="min-w-full">
                         <thead>
                             <tr class="bg-gray-50 dark:bg-gray-800/60">
-                                <th class="w-32">Fecha</th>
-                                <th class="min-w-[220px]">Descripción</th>
-                                <th class="min-w-[160px]">Categoría</th>
-                                <th class="min-w-[180px]">Cuenta</th>
-                                <th class="w-32">Origen</th>
-                                <th class="w-36 text-right">Monto</th>
+                                <th>Fecha</th>
+                                <th>Descripción</th>
+                                <th>Categoría</th>
+                                <th>Cuenta</th>
+                                <th>Origen</th>
+                                <th class="text-right">Monto</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-if="recent.length === 0">
                                 <td colspan="6" class="py-8 text-center text-sm text-gray-500">Sin movimientos registrados.</td>
                             </tr>
-                            <tr
-                                v-for="tx in recent"
-                                :key="tx.id"
-                                class="hover:bg-gray-50/70 dark:hover:bg-gray-800/30"
-                            >
-                                <td class="text-gray-600 dark:text-gray-400">{{ tx.date }}</td>
-                                <td class="text-gray-800 dark:text-gray-100">{{ tx.description || '—' }}</td>
-                                <td>
-                                    <span
-                                        class="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs"
-                                        :style="{ backgroundColor: (tx.category_color || '#94a3b8') + '20', color: tx.category_color || '#64748b' }"
-                                    >
-                                        <span class="h-2 w-2 rounded-full" :style="{ backgroundColor: tx.category_color || '#94a3b8' }"></span>
-                                        {{ tx.category || 'Sin categoría' }}
+                            <tr v-for="tx in recent" :key="tx.id">
+                                <td class="whitespace-nowrap text-sm">{{ tx.date }}</td>
+                                <td class="text-sm">{{ tx.description || '—' }}</td>
+                                <td class="text-sm">
+                                    <span v-if="tx.category" class="inline-flex items-center gap-1">
+                                        <span class="inline-block h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: tx.category_color || '#94a3b8' }"></span>
+                                        {{ tx.category }}
                                     </span>
+                                    <span v-else class="text-gray-400">—</span>
                                 </td>
-                                <td class="text-gray-600 dark:text-gray-400">{{ tx.account || '—' }}</td>
-                                <td>
-                                    <span class="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                                        {{ sourceLabels[tx.source] || tx.source }}
-                                    </span>
-                                </td>
-                                <td
-                                    class="text-right font-semibold"
-                                    :class="tx.type === 'income' ? 'text-success' : 'text-danger'"
-                                >
-                                    {{ tx.type === 'income' ? '+' : '−' }} {{ currency(tx.amount) }}
+                                <td class="text-sm">{{ tx.account }}</td>
+                                <td class="text-xs text-gray-500">{{ sourceLabels[tx.source] || tx.source }}</td>
+                                <td class="text-right font-semibold" :class="tx.type === 'income' ? 'text-success' : 'text-danger'">
+                                    {{ tx.type === 'income' ? '+' : '−' }} {{ money(tx.amount, tx.currency) }}
                                 </td>
                             </tr>
                         </tbody>

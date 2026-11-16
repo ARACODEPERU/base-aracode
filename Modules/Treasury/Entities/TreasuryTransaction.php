@@ -5,15 +5,19 @@ namespace Modules\Treasury\Entities;
 use App\Models\PaymentMethod;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
+use Modules\Treasury\Exceptions\TreasuryOperationException;
 
+/**
+ * Movimiento del libro de bancos.
+ *
+ * `currency` es la moneda del movimiento y `amount_base` su equivalente en
+ * soles congelado al registrar. Un movimiento con `treasury_reconciliation_id`
+ * pertenece a un acta cerrada: es inmutable (no se edita, anula ni borra).
+ */
 class TreasuryTransaction extends Model
 {
-    use HasFactory;
-
     public const TYPE_INCOME = 'income';
     public const TYPE_EXPENSE = 'expense';
 
@@ -27,10 +31,14 @@ class TreasuryTransaction extends Model
         'transaction_date',
         'type',
         'treasury_category_id',
+        'cost_center_id',
         'origin_type',
         'origin_id',
         'transfer_id',
         'amount',
+        'currency',
+        'exchange_rate',
+        'amount_base',
         'fee_amount',
         'igv_amount',
         'itf_amount',
@@ -39,6 +47,7 @@ class TreasuryTransaction extends Model
         'attachment_path',
         'payment_method_id',
         'source',
+        'treasury_reconciliation_id',
         'reconciled_at',
         'voided_at',
         'user_id',
@@ -47,12 +56,30 @@ class TreasuryTransaction extends Model
     protected $casts = [
         'transaction_date' => 'date',
         'amount' => 'decimal:2',
+        'exchange_rate' => 'decimal:4',
+        'amount_base' => 'decimal:2',
         'fee_amount' => 'decimal:2',
         'igv_amount' => 'decimal:2',
         'itf_amount' => 'decimal:2',
         'reconciled_at' => 'datetime',
         'voided_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // El movimiento conciliado no se toca: es la evidencia del acta.
+        static::updating(function (TreasuryTransaction $transaction) {
+            if ($transaction->getOriginal('treasury_reconciliation_id')) {
+                throw TreasuryOperationException::reconciled();
+            }
+        });
+
+        static::deleting(function (TreasuryTransaction $transaction) {
+            if ($transaction->treasury_reconciliation_id) {
+                throw TreasuryOperationException::reconciled();
+            }
+        });
+    }
 
     public function account(): BelongsTo
     {
@@ -62,6 +89,16 @@ class TreasuryTransaction extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(TreasuryCategory::class, 'treasury_category_id');
+    }
+
+    public function costCenter(): BelongsTo
+    {
+        return $this->belongsTo(TreasuryCostCenter::class, 'cost_center_id');
+    }
+
+    public function reconciliation(): BelongsTo
+    {
+        return $this->belongsTo(TreasuryReconciliation::class, 'treasury_reconciliation_id');
     }
 
     public function paymentMethod(): BelongsTo
@@ -116,6 +153,19 @@ class TreasuryTransaction extends Model
         return $query->whereNull('reconciled_at');
     }
 
+    public function scopeInCurrency(Builder $query, ?string $currency): Builder
+    {
+        return $currency ? $query->where('currency', strtoupper($currency)) : $query;
+    }
+
+    /**
+     * Un movimiento conciliado no se modifica nunca más.
+     */
+    public function isLocked(): bool
+    {
+        return $this->treasury_reconciliation_id !== null;
+    }
+
     /**
      * Firma única lógica de un movimiento automático/backfill, para evitar duplicados.
      */
@@ -129,7 +179,7 @@ class TreasuryTransaction extends Model
      */
     public static function signatureExists(string $originType, int $originId, string $type, string $date, float $amount): bool
     {
-        $dateValue = Carbon::parse($date)->toDateString();
+        $dateValue = \Illuminate\Support\Carbon::parse($date)->toDateString();
 
         return static::query()
             ->active()
@@ -143,10 +193,16 @@ class TreasuryTransaction extends Model
 
     /**
      * Anula el movimiento conservando el registro (trazabilidad).
+     * Lanza si el movimiento está conciliado.
      */
     public function void(?int $userId = null): bool
     {
-        $this->voided_at = $this->voided_at ?? Carbon::now();
+        if ($this->isLocked()) {
+            throw TreasuryOperationException::reconciled();
+        }
+
+        $this->voided_at = $this->voided_at ?? now();
+
         if ($userId) {
             $this->user_id = $this->user_id ?? $userId;
         }

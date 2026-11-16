@@ -84,6 +84,18 @@ class SaleDocument extends Model
         'sunat_next_retry_at',
         'sunat_last_error',
         'sunat_response_kind',
+        // Detracción del IGV (facturas desde el umbral configurado)
+        'detraccion',
+        'detraccion_auto',
+        'detraccion_percent',
+        'detraccion_amount',
+    ];
+
+    protected $casts = [
+        'detraccion' => 'boolean',
+        'detraccion_auto' => 'boolean',
+        'detraccion_percent' => 'decimal:2',
+        'detraccion_amount' => 'decimal:2',
     ];
 
     public function items(): HasMany

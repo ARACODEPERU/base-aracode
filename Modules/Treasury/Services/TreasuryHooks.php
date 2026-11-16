@@ -193,7 +193,27 @@ class TreasuryHooks
             return 0;
         }
 
-        return self::dispatchAll(self::saleIncomeMovements($sale));
+        $document = $sale->documents()->orderByDesc('id')->first();
+        $movements = self::saleIncomeMovements($sale);
+
+        // Factura con detracción: el cliente solo paga la parte no detraída.
+        if ($document && $movements !== []) {
+            $movements = self::applyDetractionToMovements($document, $movements);
+        }
+
+        $count = self::dispatchAll($movements);
+
+        if ($document && $count > 0) {
+            $income = TreasuryTransaction::query()
+                ->where('origin_type', TreasurySourceMovement::SOURCE_SALE)
+                ->where('origin_id', (int) $sale->id)
+                ->latest('id')
+                ->first();
+
+            self::registerDetractionAfter($income, $document);
+        }
+
+        return $count;
     }
 
     /**
@@ -221,7 +241,12 @@ class TreasuryHooks
 
         [$currency, $rate] = $ledger->resolveDocumentCurrency($document);
 
-        return self::dispatch(new FinancialMovement(
+        // Factura con detracción: entra a la cuenta solo la parte no detraída.
+        if ($document) {
+            $amount = app(TreasuryDetractionService::class)->splitForPayment($document, $amount)['net'];
+        }
+
+        $income = self::dispatch(new FinancialMovement(
             module: TreasurySourceMovement::MODULE_SALES,
             sourceType: TreasurySourceMovement::SOURCE_SALE,
             sourceId: (int) $sale->id,
@@ -243,6 +268,12 @@ class TreasuryHooks
             ],
             source: TreasuryTransaction::SOURCE_AUTO,
         ));
+
+        if ($document) {
+            self::registerDetractionAfter($income, $document, $sale->user_id ? (int) $sale->user_id : null);
+        }
+
+        return $income;
     }
 
     /**
@@ -254,7 +285,18 @@ class TreasuryHooks
             return null;
         }
 
-        return self::dispatch(self::quotaPaymentMovements($payment, $document)[0]);
+        $movement = self::applyDetractionToMovements($document, self::quotaPaymentMovements($payment, $document))[0]
+            ?? null;
+
+        if (! $movement) {
+            return null;
+        }
+
+        $income = self::dispatch($movement);
+
+        self::registerDetractionAfter($income, $document);
+
+        return $income;
     }
 
     /**
@@ -266,7 +308,24 @@ class TreasuryHooks
             return null;
         }
 
-        return self::dispatch(self::scheduleDestinationMovements($destination)[0]);
+        $document = $destination->document_id ? SaleDocument::find($destination->document_id) : null;
+        $movements = self::scheduleDestinationMovements($destination);
+
+        if ($document) {
+            $movements = self::applyDetractionToMovements($document, $movements);
+        }
+
+        if ($movements === []) {
+            return null;
+        }
+
+        $income = self::dispatch($movements[0]);
+
+        if ($document) {
+            self::registerDetractionAfter($income, $document);
+        }
+
+        return $income;
     }
 
     /**
@@ -315,7 +374,14 @@ class TreasuryHooks
 
         [$currency, $rate] = app(TreasuryLedgerService::class)->resolveDocumentCurrency($document);
 
-        return self::dispatch(new FinancialMovement(
+        // Con detracción solo entra a la cuenta la parte no detraída.
+        $amount = app(TreasuryDetractionService::class)->splitForPayment($document, $amount)['net'];
+
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $income = self::dispatch(new FinancialMovement(
             module: TreasurySourceMovement::MODULE_SALES,
             sourceType: TreasurySourceMovement::SOURCE_SALE_DOCUMENT,
             sourceId: (int) $document->id,
@@ -331,6 +397,10 @@ class TreasuryHooks
             userId: auth()->id(),
             meta: ['sale_id' => $document->sale_id, 'document_id' => $document->id],
         ));
+
+        self::registerDetractionAfter($income, $document);
+
+        return $income;
     }
 
     /**
@@ -361,7 +431,14 @@ class TreasuryHooks
 
         [$currency, $rate] = app(TreasuryLedgerService::class)->resolveDocumentCurrency($document);
 
-        return self::dispatch(new FinancialMovement(
+        // Factura con detracción: a la cuenta entra el neto y el resto va a detracción.
+        $amount = app(TreasuryDetractionService::class)->splitForPayment($document, $amount)['net'];
+
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $bridge = self::dispatchBridge(new FinancialMovement(
             module: TreasurySourceMovement::MODULE_SALES,
             sourceType: TreasurySourceMovement::SOURCE_SALE_DOCUMENT,
             sourceId: (int) $document->id,
@@ -384,6 +461,12 @@ class TreasuryHooks
             ],
             source: TreasuryTransaction::SOURCE_MANUAL,
         ));
+
+        if ($bridge) {
+            self::registerDetractionAfter($bridge->treasuryTransaction, $document);
+        }
+
+        return $bridge;
     }
 
     /**
@@ -408,14 +491,19 @@ class TreasuryHooks
                 $userId
             );
 
-            foreach ($sale->documents()->pluck('id') as $documentId) {
+            foreach ($sale->documents()->get() as $documentModel) {
+                $documentId = (int) $documentModel->id;
+
                 $service->reverseOrigin(
                     TreasurySourceMovement::MODULE_SALES,
                     TreasurySourceMovement::SOURCE_SALE_DOCUMENT,
-                    (int) $documentId,
+                    $documentId,
                     'Venta anulada',
                     $userId
                 );
+
+                // La detracción del comprobante vuelve a su estado previo.
+                self::voidDocumentDetraction($documentModel, $userId);
 
                 $quotaIds = SaleDocumentQuota::query()
                     ->where('sale_document_id', $documentId)
@@ -489,6 +577,9 @@ class TreasuryHooks
                 $userId
             );
 
+            // Lo detraído de esta factura sale de la cuenta de detracción.
+            self::voidDocumentDetraction($document, $userId);
+
             // El cobro al contado se registra contra la venta, no contra el
             // comprobante: se revierte solo cuando este es el último
             // comprobante de venta vigente de esa venta.
@@ -532,6 +623,22 @@ class TreasuryHooks
             }
         } catch (\Throwable $e) {
             Log::warning('[Treasury] No se anularon los ingresos del comprobante', [
+                'document_id' => $document->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Anula la detracción de un comprobante. Best-effort: si falla, la
+     * anulación del comprobante sigue su curso y queda en el log.
+     */
+    private static function voidDocumentDetraction(SaleDocument $document, ?int $userId): void
+    {
+        try {
+            app(TreasuryDetractionService::class)->voidDocument($document, $userId);
+        } catch (\Throwable $e) {
+            Log::warning('[Treasury] No se anuló la detracción del comprobante', [
                 'document_id' => $document->id,
                 'error' => $e->getMessage(),
             ]);
@@ -601,6 +708,90 @@ class TreasuryHooks
     /**
      * @param  array<int, FinancialMovement>  $movements
      */
+    /**
+     * Reduce los movimientos de cobro cuando la factura tiene detracción: a la
+     * cuenta entra el neto y la detracción se registra en su propia cuenta.
+     *
+     * @param  array<int, FinancialMovement>  $movements
+     * @return array<int, FinancialMovement>
+     */
+    private static function applyDetractionToMovements(SaleDocument $document, array $movements): array
+    {
+        if ($movements === []) {
+            return [];
+        }
+
+        $total = array_sum(array_map(fn (FinancialMovement $movement) => (float) $movement->amount, $movements));
+        $split = app(TreasuryDetractionService::class)->splitForPayment($document, $total);
+
+        if ($split['detraction'] <= 0) {
+            return $movements;
+        }
+
+        $restante = $split['net'];
+        $resultado = [];
+
+        foreach ($movements as $movement) {
+            $monto = round(min((float) $movement->amount, max(0, $restante)), 2);
+            $restante = round($restante - $monto, 2);
+
+            if ($monto <= 0) {
+                continue;
+            }
+
+            $resultado[] = new FinancialMovement(
+                module: $movement->module,
+                sourceType: $movement->sourceType,
+                sourceId: $movement->sourceId,
+                operation: $movement->operation,
+                type: $movement->type,
+                amount: $monto,
+                date: $movement->date,
+                sourceLine: $movement->sourceLine,
+                paymentMethodId: $movement->paymentMethodId,
+                currency: $movement->currency,
+                exchangeRate: $movement->exchangeRate,
+                reference: $movement->reference,
+                description: $movement->description,
+                treasuryAccountId: $movement->treasuryAccountId,
+                userId: $movement->userId,
+                meta: $movement->meta,
+                source: $movement->source,
+                reversalOfId: $movement->reversalOfId,
+            );
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Después de registrar un cobro, deja la detracción de la factura en su
+     * cuenta. Best-effort: un fallo aquí no rompe el cobro ya registrado.
+     */
+    private static function registerDetractionAfter(
+        ?TreasuryTransaction $income,
+        SaleDocument $document,
+        ?int $userId = null,
+    ): void {
+        if (! $income) {
+            return;
+        }
+
+        try {
+            app(TreasuryDetractionService::class)->afterPayment(
+                $document,
+                $income->account,
+                $income->transaction_date ?? now(),
+                $userId ?? auth()->id(),
+            );
+        } catch (\Throwable $e) {
+            Log::warning('[Treasury] No se registró la detracción del comprobante', [
+                'document_id' => $document->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     private static function dispatchAll(array $movements): int
     {
         $count = 0;
@@ -612,6 +803,21 @@ class TreasuryHooks
         }
 
         return $count;
+    }
+
+    private static function dispatchBridge(FinancialMovement $movement): ?TreasurySourceMovement
+    {
+        try {
+            return app(TreasuryIntegrationService::class)->register($movement);
+        } catch (\Throwable $e) {
+            Log::warning('[Treasury] No se registró el movimiento financiero', [
+                'origin' => $movement->sourceType . '#' . $movement->sourceId,
+                'operation' => $movement->operation,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     private static function dispatch(FinancialMovement $movement): ?TreasuryTransaction
