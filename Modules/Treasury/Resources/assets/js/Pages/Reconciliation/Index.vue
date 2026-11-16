@@ -4,7 +4,8 @@
     import { Head, router } from '@inertiajs/vue3';
     import Swal2 from 'sweetalert2';
     import { ref } from 'vue';
-    import { faCircleCheck, faFilter } from '@fortawesome/free-solid-svg-icons';
+    import { faCircleCheck, faFilter, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+    import OriginDetailModal from '../../Components/OriginDetailModal.vue';
 
     const props = defineProps({
         accounts: { type: Array, default: () => [] },
@@ -83,6 +84,17 @@
                 },
             }
         );
+    };
+
+    // Detalle del origen (comprobante, cuota, curso)
+    const detailModal = ref({ show: false, detail: null });
+
+    const openDetail = (tx) => {
+        detailModal.value = { show: true, detail: tx.detail };
+    };
+
+    const closeDetail = () => {
+        detailModal.value = { show: false, detail: null };
     };
 
     const sourceLabels = {
@@ -239,6 +251,14 @@
                                 <td>
                                     <p class="text-gray-800 dark:text-gray-100">{{ tx.description || '—' }}</p>
                                     <p v-if="tx.reference" class="text-xs text-gray-400">Ref: {{ tx.reference }}</p>
+                                    <button
+                                        v-if="tx.detail"
+                                        type="button"
+                                        class="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                                        @click.stop="openDetail(tx)"
+                                    >
+                                        <font-awesome-icon :icon="faCircleInfo" /> Ver detalle
+                                    </button>
                                 </td>
                                 <td>
                                     <span
@@ -265,5 +285,8 @@
                 </div>
             </div>
         </div>
+
+        <!-- Detalle del origen del movimiento -->
+        <OriginDetailModal :show="detailModal.show" :detail="detailModal.detail" :on-close="closeDetail" />
     </AppLayout>
 </template>

@@ -5,11 +5,12 @@
     import { Dropdown, Menu, MenuItem } from 'ant-design-vue';
     import Swal2 from 'sweetalert2';
     import ModalLarge from '@/Components/ModalLarge.vue';
+    import OriginDetailModal from '../../Components/OriginDetailModal.vue';
     import InputLabel from '@/Components/InputLabel.vue';
     import InputError from '@/Components/InputError.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import { ref, computed } from 'vue';
-    import { faPlus, faFileArrowUp, faFilter } from '@fortawesome/free-solid-svg-icons';
+    import { faPlus, faFileArrowUp, faFilter, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 
     const props = defineProps({
         accounts: { type: Array, default: () => [] },
@@ -149,6 +150,17 @@
 
     const canEdit = (tx) => tx.source === 'manual' && !tx.voided;
 
+    // Detalle del origen (comprobante, cuota, curso)
+    const detailModal = ref({ show: false, detail: null });
+
+    const openDetail = (tx) => {
+        detailModal.value = { show: true, detail: tx.detail };
+    };
+
+    const closeDetail = () => {
+        detailModal.value = { show: false, detail: null };
+    };
+
     const sourceLabels = {
         auto: 'Automático',
         manual: 'Manual',
@@ -227,7 +239,7 @@
                     <table class="min-w-full">
                         <thead>
                             <tr class="bg-gray-50 dark:bg-gray-800/60">
-                                <th class="w-16 text-center">Acciones</th>
+                                <th class="w-24 text-center">Acciones</th>
                                 <th class="w-28">Fecha</th>
                                 <th class="min-w-[240px]">Descripción</th>
                                 <th class="min-w-[160px]">Categoría</th>
@@ -250,6 +262,15 @@
                                 :class="tx.voided ? 'opacity-40' : ''"
                             >
                                 <td class="text-center">
+                                    <button
+                                        v-if="tx.detail"
+                                        type="button"
+                                        class="mr-1 inline-flex h-9 w-9 items-center justify-center rounded-lg border text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                                        title="Ver detalle del origen"
+                                        @click="openDetail(tx)"
+                                    >
+                                        <font-awesome-icon :icon="faCircleInfo" />
+                                    </button>
                                     <Dropdown v-if="!tx.voided" placement="bottomLeft" arrow>
                                         <button
                                             class="inline-flex h-9 w-9 items-center justify-center rounded-lg border text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
@@ -402,5 +423,8 @@
                 </PrimaryButton>
             </template>
         </ModalLarge>
+
+        <!-- Detalle del origen del movimiento -->
+        <OriginDetailModal :show="detailModal.show" :detail="detailModal.detail" :on-close="closeDetail" />
     </AppLayout>
 </template>

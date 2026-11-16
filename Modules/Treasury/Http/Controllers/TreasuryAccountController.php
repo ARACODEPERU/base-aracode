@@ -11,6 +11,7 @@ use Inertia\Inertia;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasuryTransaction;
 use Modules\Treasury\Services\FeeCalculator;
+use Modules\Treasury\Services\PaymentMethodCatalogService;
 use Modules\Treasury\Services\TreasuryAccountSyncService;
 use Modules\Treasury\Services\TreasuryLedgerService;
 
@@ -22,13 +23,17 @@ class TreasuryAccountController extends Controller
     {
     }
 
-    public function index(TreasuryAccountSyncService $sync)
+    public function index(TreasuryAccountSyncService $sync, PaymentMethodCatalogService $catalog)
     {
         $this->authorizePermission('treasury_cuentas');
 
         // MercadoPago es la pasarela con la que trabaja el sistema: su cuenta tiene
         // que existir siempre en el libro, aunque nadie la haya creado a mano.
         $sync->ensureMercadoPago();
+
+        // Las cuentas bancarias y billeteras activas también se ofrecen como
+        // método de pago en ventas, cuotas y tesorería.
+        $catalog->ensureForAccounts();
 
         $accounts = TreasuryAccount::query()
             ->with(['bankAccount.bank', 'companyBilletera.billetera'])

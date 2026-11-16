@@ -149,6 +149,9 @@ class TreasuryAccountSyncService
             }
         });
 
+        // Cada cuenta bancaria y billetera activa se ofrece también como método de pago.
+        app(PaymentMethodCatalogService::class)->ensureForAccounts();
+
         return $created;
     }
 }

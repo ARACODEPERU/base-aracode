@@ -2068,6 +2068,98 @@ section form button[type="submit"]:hover {
     outline-offset: 4px;
 }
 
+/* Acceso flotante al PDF del articulo del blog.
+   Va en la esquina inferior izquierda para no chocar con el boton de WhatsApp
+   ni con el de volver arriba, que ocupan la derecha. Se muestra cuando el
+   lector ha visto al menos la mitad del articulo (lo decide blog-articulo). */
+.ara-pdf-flotante {
+    position: fixed;
+    left: 2rem;
+    bottom: 2rem;
+    z-index: 990;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    background: #060E2D;
+    color: #ffffff;
+    text-decoration: none;
+    box-shadow: 0 16px 40px rgba(6, 14, 45, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    opacity: 0;
+    transform: translateY(8px);
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.2s ease;
+}
+
+.ara-pdf-flotante.is-visible {
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.ara-pdf-flotante:hover {
+    background: #0188EE;
+}
+
+.ara-pdf-flotante:focus-visible {
+    outline: 3px solid rgba(1, 136, 238, 0.45);
+    outline-offset: 3px;
+}
+
+.ara-pdf-flotante__icono {
+    width: 36px;
+    height: 36px;
+    border-radius: 0.5rem;
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ara-pdf-flotante__icono svg {
+    width: 20px;
+    height: 20px;
+}
+
+.ara-pdf-flotante__texto {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.ara-pdf-flotante__rotulo {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.ara-pdf-flotante__accion {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+@media (max-width: 480px) {
+    .ara-pdf-flotante {
+        /* El hueco de la derecha deja libre el boton de WhatsApp. */
+        left: 1rem;
+        right: 5rem;
+        bottom: 1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ara-pdf-flotante {
+        transition: none;
+    }
+}
+
 @keyframes ara-radar {
     0% { transform: scale(1); opacity: 0.7; }
     70% { transform: scale(1.9); opacity: 0; }

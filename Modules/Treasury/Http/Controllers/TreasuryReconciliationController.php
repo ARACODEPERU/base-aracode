@@ -9,13 +9,16 @@ use Inertia\Inertia;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasuryTransaction;
 use Modules\Treasury\Services\TreasuryLedgerService;
+use Modules\Treasury\Services\TreasuryTransactionOriginService;
 
 class TreasuryReconciliationController extends Controller
 {
     use ValidatesTreasuryRequests;
 
-    public function __construct(private TreasuryLedgerService $ledger)
-    {
+    public function __construct(
+        private TreasuryLedgerService $ledger,
+        private TreasuryTransactionOriginService $origins,
+    ) {
     }
 
     public function index(Request $request)
@@ -41,7 +44,7 @@ class TreasuryReconciliationController extends Controller
 
         $unreconciled = collect();
         if ($account) {
-            $unreconciled = TreasuryTransaction::query()
+            $rows = TreasuryTransaction::query()
                 ->active()
                 ->where('treasury_account_id', $account->id)
                 ->whereDate('transaction_date', '<=', $until)
@@ -49,17 +52,22 @@ class TreasuryReconciliationController extends Controller
                 ->with(['category'])
                 ->orderBy('transaction_date')
                 ->orderBy('id')
-                ->get()
-                ->map(fn (TreasuryTransaction $tx) => [
-                    'id' => $tx->id,
-                    'date' => $tx->transaction_date->format('d/m/Y'),
-                    'type' => $tx->type,
-                    'amount' => (float) $tx->amount,
-                    'reference' => $tx->reference,
-                    'description' => $tx->description,
-                    'category' => $tx->category?->name,
-                    'source' => $tx->source,
-                ]);
+                ->get();
+
+            // Detalle del origen (comprobante, cuota, curso) para revisar qué es cada línea.
+            $details = $this->origins->detailsFor($rows->pluck('id')->all());
+
+            $unreconciled = $rows->map(fn (TreasuryTransaction $tx) => [
+                'id' => $tx->id,
+                'date' => $tx->transaction_date->format('d/m/Y'),
+                'type' => $tx->type,
+                'amount' => (float) $tx->amount,
+                'reference' => $tx->reference,
+                'description' => $tx->description,
+                'category' => $tx->category?->name,
+                'source' => $tx->source,
+                'detail' => $details[$tx->id] ?? null,
+            ]);
         }
 
         return Inertia::render('Treasury::Reconciliation/Index', [

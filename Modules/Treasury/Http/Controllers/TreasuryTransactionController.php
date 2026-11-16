@@ -13,13 +13,16 @@ use Modules\Treasury\Entities\TreasurySourceMovement;
 use Modules\Treasury\Entities\TreasuryTransaction;
 use Modules\Treasury\Services\TreasuryIntegrationService;
 use Modules\Treasury\Services\TreasuryLedgerService;
+use Modules\Treasury\Services\TreasuryTransactionOriginService;
 
 class TreasuryTransactionController extends Controller
 {
     use ValidatesTreasuryRequests;
 
-    public function __construct(private TreasuryLedgerService $ledger)
-    {
+    public function __construct(
+        private TreasuryLedgerService $ledger,
+        private TreasuryTransactionOriginService $origins,
+    ) {
     }
 
     public function index(Request $request)
@@ -45,7 +48,16 @@ class TreasuryTransactionController extends Controller
 
         if ($account) {
             $statement = collect($this->ledger->statement($account, $from, $to));
-            $transactions = $statement;
+
+            // Detalle del origen (comprobante, cuota, curso) de cada movimiento.
+            $details = $this->origins->detailsFor($statement->pluck('id')->all());
+
+            $transactions = $statement->map(function (array $row) use ($details) {
+                $row['detail'] = $details[(int) $row['id']] ?? null;
+
+                return $row;
+            });
+
             $runningBalance = $account->opening_balance
                 + $statement->sum(fn ($row) => $row['type'] === 'income' ? $row['amount'] : -$row['amount']);
         }

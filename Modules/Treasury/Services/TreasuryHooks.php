@@ -7,6 +7,7 @@ use App\Models\SaleDocument;
 use Illuminate\Support\Facades\Log;
 use Modules\Sales\Entities\SaleDocumentQuota;
 use Modules\Sales\Entities\SalePaymentQuota;
+use Modules\Sales\Entities\SalePaymentSchedule;
 use Modules\Sales\Entities\SalePaymentScheduleDestination;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasurySourceMovement;
@@ -95,6 +96,14 @@ class TreasuryHooks
     ): array {
         [$currency, $rate] = app(TreasuryLedgerService::class)->resolveDocumentCurrency($document);
 
+        // La cuota a la que se aplicó el abono da el "5 de 10" de la descripción.
+        $quota = $payment->sale_document_quota_id
+            ? SaleDocumentQuota::find($payment->sale_document_quota_id)
+            : null;
+        $totalQuotas = $quota
+            ? SaleDocumentQuota::where('sale_document_id', $quota->sale_document_id)->count()
+            : null;
+
         return [new FinancialMovement(
             module: TreasurySourceMovement::MODULE_SALES,
             sourceType: TreasurySourceMovement::SOURCE_SALE_PAYMENT_QUOTA,
@@ -107,12 +116,16 @@ class TreasuryHooks
             currency: $currency,
             exchangeRate: $rate,
             reference: self::withExchangeRateNote($payment->reference, $currency, $rate),
-            description: 'Abono de cuota' . ($document->sale_id ? ' - Venta #' . $document->sale_id : ''),
+            description: self::installmentDescription($document, $quota?->quota_number, $totalQuotas, 'Abono de cuota'),
             userId: auth()->id(),
             meta: [
                 'sale_id' => $document->sale_id,
                 'document_id' => $document->id,
                 'quota_id' => $payment->sale_document_quota_id,
+                'quota_number' => $quota?->quota_number,
+                'total_quotas' => $totalQuotas,
+                'due_date' => $quota?->due_date ? substr((string) $quota->due_date, 0, 10) : null,
+                'document_number' => self::documentNumber($document),
             ],
             source: $source,
         )];
@@ -136,6 +149,14 @@ class TreasuryHooks
 
         [$currency, $rate] = app(TreasuryLedgerService::class)->resolveDocumentCurrency($document);
 
+        // Número de cuota del cronograma y total de cuotas de la venta.
+        $schedule = $destination->schedule_id
+            ? SalePaymentSchedule::find($destination->schedule_id)
+            : null;
+        $totalInstallments = $schedule
+            ? SalePaymentSchedule::where('sale_id', $schedule->sale_id)->count()
+            : null;
+
         return [new FinancialMovement(
             module: TreasurySourceMovement::MODULE_SALES,
             sourceType: TreasurySourceMovement::SOURCE_SALE_SCHEDULE_DESTINATION,
@@ -148,12 +169,16 @@ class TreasuryHooks
             currency: $currency,
             exchangeRate: $rate,
             reference: self::withExchangeRateNote($destination->reference, $currency, $rate),
-            description: 'Cobro de cronograma' . ($destination->sale_id ? ' - Venta #' . $destination->sale_id : ''),
+            description: self::installmentDescription($document, $schedule?->installment_number, $totalInstallments, 'Cobro de cronograma'),
             userId: $destination->user_id ? (int) $destination->user_id : auth()->id(),
             meta: [
                 'sale_id' => $destination->sale_id,
                 'document_id' => $destination->document_id,
                 'schedule_id' => $destination->schedule_id,
+                'installment_number' => $schedule?->installment_number,
+                'total_installments' => $totalInstallments,
+                'due_date' => $schedule?->payment_date ? substr((string) $schedule->payment_date, 0, 10) : null,
+                'document_number' => self::documentNumber($document),
             ],
             source: $source,
         )];
@@ -618,5 +643,73 @@ class TreasuryHooks
         $formatted = rtrim(rtrim(number_format($rate, 4, '.', ''), '0'), '.');
 
         return ($clean !== '' ? $clean . ' · ' : '') . sprintf('TC %s %s', strtoupper($currency), $formatted);
+    }
+
+    /**
+     * Descripción visible de un cobro de cuota: "Cuota 5 de 10 · B001-123 · Curso".
+     * Sin número de cuota (pago inicial) se usa el texto de respaldo.
+     */
+    private static function installmentDescription(
+        ?SaleDocument $document,
+        ?int $number,
+        ?int $total,
+        string $fallback,
+    ): string {
+        $parts = [];
+
+        if ($number !== null && $number > 0) {
+            $parts[] = 'Cuota ' . $number . ($total ? ' de ' . $total : '');
+        } else {
+            $parts[] = $fallback;
+        }
+
+        if ($documentNumber = self::documentNumber($document)) {
+            $parts[] = $documentNumber;
+        }
+
+        if ($concept = self::documentConcept($document)) {
+            $parts[] = $concept;
+        }
+
+        // La columna description del libro es de 255 caracteres.
+        return mb_substr(implode(' · ', $parts), 0, 250);
+    }
+
+    /** Número visible del comprobante (serie-correlativo). */
+    private static function documentNumber(?SaleDocument $document): ?string
+    {
+        if (! $document) {
+            return null;
+        }
+
+        $serie = trim((string) $document->invoice_serie);
+        $correlativo = trim((string) $document->invoice_correlative);
+
+        return $serie !== '' && $correlativo !== '' ? $serie . '-' . $correlativo : null;
+    }
+
+    /** Curso o suscripción que se paga, según los ítems del comprobante. */
+    private static function documentConcept(?SaleDocument $document): ?string
+    {
+        if (! $document) {
+            return null;
+        }
+
+        $names = $document->items
+            ->pluck('decription_product')
+            ->filter()
+            // Las descripciones de los ítems traen saltos de línea.
+            ->map(fn ($name) => trim(preg_replace('/\s+/u', ' ', (string) $name)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($names->isEmpty()) {
+            return null;
+        }
+
+        return $names->count() > 2
+            ? $names->count() . ' items'
+            : mb_substr($names->implode(', '), 0, 120);
     }
 }
