@@ -67,6 +67,13 @@ class Kernel extends ConsoleKernel
                     ->withoutOverlapping()
                     ->timezone('America/Lima');
 
+        // Rendimiento: avisa de imágenes nuevas y pesadas y purga las copias de
+        // seguridad que superan la retención del módulo.
+        $schedule->command('performance:audit')
+                    ->dailyAt('06:10')
+                    ->withoutOverlapping()
+                    ->timezone('America/Lima');
+
         // Tipo de cambio SUNAT (vía Migo) para ventas y facturación en dólares.
         // Corre 1 vez al día (después de las 06:00 cuando Migo ya tiene el dato
         // del día actualizado) y el valor queda activo todo el día.

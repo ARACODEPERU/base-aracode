@@ -47,6 +47,7 @@ class CommercialNegotiationPublicController extends Controller
 
         return Inertia::render('Commercial::Negotiations/Public/Show', [
             'negotiation' => $this->negotiationPayload($negotiation),
+            'recommendedBankAccountId' => $negotiation->recommended_bank_account_id,
             // Equivalente en soles para el cliente cuando la negociacion esta en USD.
             'multiCurrencyEnabled' => app(\Modules\Sales\Services\ExchangeRateService::class)->isMultiCurrencyEnabled(),
             'exchangeRate' => (function () {
@@ -109,6 +110,8 @@ class CommercialNegotiationPublicController extends Controller
             // Mercado Pago: 'card' (pago con tarjeta) o 'evidence' (el cliente ya pago
             // por fuera y adjunta la captura). En los otros medios no se envia.
             'payment_option' => ['nullable', Rule::in(['card', 'evidence'])],
+            // Banco desde el que el cliente hizo la transferencia (debe coincidir con su voucher).
+            'transfer_origin_bank' => [Rule::requiredIf(fn () => $negotiation->payment_method === 'transferencia'), 'nullable', 'string', 'max:100'],
             'invoice_type' => ['required', Rule::in(['boleta', 'factura'])],
             'document_type_id' => ['required', 'string', 'exists:identity_document_type,id'],
             'number' => ['required', 'string', 'max:20'],
@@ -270,6 +273,9 @@ class CommercialNegotiationPublicController extends Controller
 
             $negotiation->update([
                 'status' => 'confirmada',
+                'transfer_origin_bank' => $negotiation->payment_method === 'transferencia'
+                    ? trim((string) ($data['transfer_origin_bank'] ?? ''))
+                    : $negotiation->transfer_origin_bank,
                 'client_id' => $clientId,
                 'client_data' => array_merge($personPayload, [
                     'full_name' => $fullName ?: ($data['full_name'] ?? null),
@@ -701,6 +707,7 @@ class CommercialNegotiationPublicController extends Controller
                     'titular' => $cb->account_name,
                     'numero' => $cb->account_number,
                     'qr_url' => $cb->qr_image ? asset('storage/' . $cb->qr_image) : null,
+                    'tiene_enlace_pago' => (bool) $cb->has_payment_link,
                 ])
                 ->values(),
         ];

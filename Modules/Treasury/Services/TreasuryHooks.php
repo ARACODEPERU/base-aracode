@@ -7,6 +7,7 @@ use App\Models\SaleDocument;
 use Illuminate\Support\Facades\Log;
 use Modules\Sales\Entities\SaleDocumentQuota;
 use Modules\Sales\Entities\SalePaymentQuota;
+use Modules\Sales\Entities\SalePaymentSchedule;
 use Modules\Sales\Entities\SalePaymentScheduleDestination;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasurySourceMovement;
@@ -95,6 +96,14 @@ class TreasuryHooks
     ): array {
         [$currency, $rate] = app(TreasuryLedgerService::class)->resolveDocumentCurrency($document);
 
+        // La cuota a la que se aplicó el abono da el "5 de 10" de la descripción.
+        $quota = $payment->sale_document_quota_id
+            ? SaleDocumentQuota::find($payment->sale_document_quota_id)
+            : null;
+        $totalQuotas = $quota
+            ? SaleDocumentQuota::where('sale_document_id', $quota->sale_document_id)->count()
+            : null;
+
         return [new FinancialMovement(
             module: TreasurySourceMovement::MODULE_SALES,
             sourceType: TreasurySourceMovement::SOURCE_SALE_PAYMENT_QUOTA,
@@ -107,12 +116,16 @@ class TreasuryHooks
             currency: $currency,
             exchangeRate: $rate,
             reference: self::withExchangeRateNote($payment->reference, $currency, $rate),
-            description: 'Abono de cuota' . ($document->sale_id ? ' - Venta #' . $document->sale_id : ''),
+            description: self::installmentDescription($document, $quota?->quota_number, $totalQuotas, 'Abono de cuota'),
             userId: auth()->id(),
             meta: [
                 'sale_id' => $document->sale_id,
                 'document_id' => $document->id,
                 'quota_id' => $payment->sale_document_quota_id,
+                'quota_number' => $quota?->quota_number,
+                'total_quotas' => $totalQuotas,
+                'due_date' => $quota?->due_date ? substr((string) $quota->due_date, 0, 10) : null,
+                'document_number' => self::documentNumber($document),
             ],
             source: $source,
         )];
@@ -136,6 +149,14 @@ class TreasuryHooks
 
         [$currency, $rate] = app(TreasuryLedgerService::class)->resolveDocumentCurrency($document);
 
+        // Número de cuota del cronograma y total de cuotas de la venta.
+        $schedule = $destination->schedule_id
+            ? SalePaymentSchedule::find($destination->schedule_id)
+            : null;
+        $totalInstallments = $schedule
+            ? SalePaymentSchedule::where('sale_id', $schedule->sale_id)->count()
+            : null;
+
         return [new FinancialMovement(
             module: TreasurySourceMovement::MODULE_SALES,
             sourceType: TreasurySourceMovement::SOURCE_SALE_SCHEDULE_DESTINATION,
@@ -148,12 +169,16 @@ class TreasuryHooks
             currency: $currency,
             exchangeRate: $rate,
             reference: self::withExchangeRateNote($destination->reference, $currency, $rate),
-            description: 'Cobro de cronograma' . ($destination->sale_id ? ' - Venta #' . $destination->sale_id : ''),
+            description: self::installmentDescription($document, $schedule?->installment_number, $totalInstallments, 'Cobro de cronograma'),
             userId: $destination->user_id ? (int) $destination->user_id : auth()->id(),
             meta: [
                 'sale_id' => $destination->sale_id,
                 'document_id' => $destination->document_id,
                 'schedule_id' => $destination->schedule_id,
+                'installment_number' => $schedule?->installment_number,
+                'total_installments' => $totalInstallments,
+                'due_date' => $schedule?->payment_date ? substr((string) $schedule->payment_date, 0, 10) : null,
+                'document_number' => self::documentNumber($document),
             ],
             source: $source,
         )];
@@ -168,7 +193,87 @@ class TreasuryHooks
             return 0;
         }
 
-        return self::dispatchAll(self::saleIncomeMovements($sale));
+        $document = $sale->documents()->orderByDesc('id')->first();
+        $movements = self::saleIncomeMovements($sale);
+
+        // Factura con detracción: el cliente solo paga la parte no detraída.
+        if ($document && $movements !== []) {
+            $movements = self::applyDetractionToMovements($document, $movements);
+        }
+
+        $count = self::dispatchAll($movements);
+
+        if ($document && $count > 0) {
+            $income = TreasuryTransaction::query()
+                ->where('origin_type', TreasurySourceMovement::SOURCE_SALE)
+                ->where('origin_id', (int) $sale->id)
+                ->latest('id')
+                ->first();
+
+            self::registerDetractionAfter($income, $document);
+        }
+
+        return $count;
+    }
+
+    /**
+     * Ingreso de una venta cobrada en una cuenta de tesorería concreta.
+     *
+     * Las negociaciones comerciales no eligen un método de pago de ventas: el
+     * medio acordado (billetera con enlace, banco o caja) es el que dice dónde
+     * entró el dinero, así que el movimiento se registra contra esa cuenta.
+     */
+    public static function recordSaleIncomeInAccount(
+        Sale $sale,
+        float $amount,
+        TreasuryAccount $account,
+        ?string $reference = null,
+        ?int $documentId = null,
+    ): ?TreasuryTransaction {
+        if (! self::enabled() || $amount <= 0) {
+            return null;
+        }
+
+        $ledger = app(TreasuryLedgerService::class);
+        $document = $documentId
+            ? SaleDocument::find($documentId)
+            : $sale->documents()->orderByDesc('id')->first();
+
+        [$currency, $rate] = $ledger->resolveDocumentCurrency($document);
+
+        // Factura con detracción: entra a la cuenta solo la parte no detraída.
+        if ($document) {
+            $amount = app(TreasuryDetractionService::class)->splitForPayment($document, $amount)['net'];
+        }
+
+        $income = self::dispatch(new FinancialMovement(
+            module: TreasurySourceMovement::MODULE_SALES,
+            sourceType: TreasurySourceMovement::SOURCE_SALE,
+            sourceId: (int) $sale->id,
+            operation: 'sale_income',
+            type: TreasurySourceMovement::TYPE_INCOME,
+            amount: $amount,
+            date: $sale->sale_date ?? now(),
+            sourceLine: 0,
+            paymentMethodId: null,
+            currency: $currency,
+            exchangeRate: $rate,
+            reference: self::withExchangeRateNote($reference, $currency, $rate),
+            description: 'Cobro de venta',
+            treasuryAccountId: (int) $account->id,
+            userId: $sale->user_id ? (int) $sale->user_id : null,
+            meta: [
+                'sale_id' => $sale->id,
+                'document_id' => $document?->id,
+            ],
+            source: TreasuryTransaction::SOURCE_AUTO,
+        ));
+
+        if ($document) {
+            self::registerDetractionAfter($income, $document, $sale->user_id ? (int) $sale->user_id : null);
+        }
+
+        return $income;
     }
 
     /**
@@ -180,7 +285,20 @@ class TreasuryHooks
             return null;
         }
 
-        return self::dispatch(self::quotaPaymentMovements($payment, $document)[0])?->treasuryTransaction;
+
+        $movement = self::applyDetractionToMovements($document, self::quotaPaymentMovements($payment, $document))[0]
+            ?? null;
+
+        if (! $movement) {
+            return null;
+        }
+
+        $income = self::dispatch($movement);
+
+        self::registerDetractionAfter($income, $document);
+
+        return $income;
+
     }
 
     /**
@@ -192,7 +310,26 @@ class TreasuryHooks
             return null;
         }
 
-        return self::dispatch(self::scheduleDestinationMovements($destination)[0])?->treasuryTransaction;
+
+        $document = $destination->document_id ? SaleDocument::find($destination->document_id) : null;
+        $movements = self::scheduleDestinationMovements($destination);
+
+        if ($document) {
+            $movements = self::applyDetractionToMovements($document, $movements);
+        }
+
+        if ($movements === []) {
+            return null;
+        }
+
+        $income = self::dispatch($movements[0]);
+
+        if ($document) {
+            self::registerDetractionAfter($income, $document);
+        }
+
+        return $income;
+
     }
 
     /**
@@ -241,7 +378,14 @@ class TreasuryHooks
 
         [$currency, $rate] = app(TreasuryLedgerService::class)->resolveDocumentCurrency($document);
 
-        return self::dispatch(new FinancialMovement(
+        // Con detracción solo entra a la cuenta la parte no detraída.
+        $amount = app(TreasuryDetractionService::class)->splitForPayment($document, $amount)['net'];
+
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $income = self::dispatch(new FinancialMovement(
             module: TreasurySourceMovement::MODULE_SALES,
             sourceType: TreasurySourceMovement::SOURCE_SALE_DOCUMENT,
             sourceId: (int) $document->id,
@@ -256,7 +400,13 @@ class TreasuryHooks
             description: 'Pago total de deuda' . ($document->sale_id ? ' - Venta #' . $document->sale_id : ''),
             userId: auth()->id(),
             meta: ['sale_id' => $document->sale_id, 'document_id' => $document->id],
-        ))?->treasuryTransaction;
+
+        ));
+
+        self::registerDetractionAfter($income, $document);
+
+        return $income;
+
     }
 
     /**
@@ -290,7 +440,14 @@ class TreasuryHooks
 
         [$currency, $rate] = app(TreasuryLedgerService::class)->resolveDocumentCurrency($document);
 
-        return self::dispatch(new FinancialMovement(
+        // Factura con detracción: a la cuenta entra el neto y el resto va a detracción.
+        $amount = app(TreasuryDetractionService::class)->splitForPayment($document, $amount)['net'];
+
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $bridge = self::dispatchBridge(new FinancialMovement(
             module: TreasurySourceMovement::MODULE_SALES,
             sourceType: TreasurySourceMovement::SOURCE_SALE_DOCUMENT,
             sourceId: (int) $document->id,
@@ -313,6 +470,12 @@ class TreasuryHooks
             ],
             source: TreasuryTransaction::SOURCE_MANUAL,
         ));
+
+        if ($bridge) {
+            self::registerDetractionAfter($bridge->treasuryTransaction, $document);
+        }
+
+        return $bridge;
     }
 
     /**
@@ -337,14 +500,19 @@ class TreasuryHooks
                 $userId
             );
 
-            foreach ($sale->documents()->pluck('id') as $documentId) {
+            foreach ($sale->documents()->get() as $documentModel) {
+                $documentId = (int) $documentModel->id;
+
                 $service->reverseOrigin(
                     TreasurySourceMovement::MODULE_SALES,
                     TreasurySourceMovement::SOURCE_SALE_DOCUMENT,
-                    (int) $documentId,
+                    $documentId,
                     'Venta anulada',
                     $userId
                 );
+
+                // La detracción del comprobante vuelve a su estado previo.
+                self::voidDocumentDetraction($documentModel, $userId);
 
                 $quotaIds = SaleDocumentQuota::query()
                     ->where('sale_document_id', $documentId)
@@ -418,6 +586,9 @@ class TreasuryHooks
                 $userId
             );
 
+            // Lo detraído de esta factura sale de la cuenta de detracción.
+            self::voidDocumentDetraction($document, $userId);
+
             // El cobro al contado se registra contra la venta, no contra el
             // comprobante: se revierte solo cuando este es el último
             // comprobante de venta vigente de esa venta.
@@ -461,6 +632,22 @@ class TreasuryHooks
             }
         } catch (\Throwable $e) {
             Log::warning('[Treasury] No se anularon los ingresos del comprobante', [
+                'document_id' => $document->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Anula la detracción de un comprobante. Best-effort: si falla, la
+     * anulación del comprobante sigue su curso y queda en el log.
+     */
+    private static function voidDocumentDetraction(SaleDocument $document, ?int $userId): void
+    {
+        try {
+            app(TreasuryDetractionService::class)->voidDocument($document, $userId);
+        } catch (\Throwable $e) {
+            Log::warning('[Treasury] No se anuló la detracción del comprobante', [
                 'document_id' => $document->id,
                 'error' => $e->getMessage(),
             ]);
@@ -530,6 +717,90 @@ class TreasuryHooks
     /**
      * @param  array<int, FinancialMovement>  $movements
      */
+    /**
+     * Reduce los movimientos de cobro cuando la factura tiene detracción: a la
+     * cuenta entra el neto y la detracción se registra en su propia cuenta.
+     *
+     * @param  array<int, FinancialMovement>  $movements
+     * @return array<int, FinancialMovement>
+     */
+    private static function applyDetractionToMovements(SaleDocument $document, array $movements): array
+    {
+        if ($movements === []) {
+            return [];
+        }
+
+        $total = array_sum(array_map(fn (FinancialMovement $movement) => (float) $movement->amount, $movements));
+        $split = app(TreasuryDetractionService::class)->splitForPayment($document, $total);
+
+        if ($split['detraction'] <= 0) {
+            return $movements;
+        }
+
+        $restante = $split['net'];
+        $resultado = [];
+
+        foreach ($movements as $movement) {
+            $monto = round(min((float) $movement->amount, max(0, $restante)), 2);
+            $restante = round($restante - $monto, 2);
+
+            if ($monto <= 0) {
+                continue;
+            }
+
+            $resultado[] = new FinancialMovement(
+                module: $movement->module,
+                sourceType: $movement->sourceType,
+                sourceId: $movement->sourceId,
+                operation: $movement->operation,
+                type: $movement->type,
+                amount: $monto,
+                date: $movement->date,
+                sourceLine: $movement->sourceLine,
+                paymentMethodId: $movement->paymentMethodId,
+                currency: $movement->currency,
+                exchangeRate: $movement->exchangeRate,
+                reference: $movement->reference,
+                description: $movement->description,
+                treasuryAccountId: $movement->treasuryAccountId,
+                userId: $movement->userId,
+                meta: $movement->meta,
+                source: $movement->source,
+                reversalOfId: $movement->reversalOfId,
+            );
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Después de registrar un cobro, deja la detracción de la factura en su
+     * cuenta. Best-effort: un fallo aquí no rompe el cobro ya registrado.
+     */
+    private static function registerDetractionAfter(
+        ?TreasuryTransaction $income,
+        SaleDocument $document,
+        ?int $userId = null,
+    ): void {
+        if (! $income) {
+            return;
+        }
+
+        try {
+            app(TreasuryDetractionService::class)->afterPayment(
+                $document,
+                $income->account,
+                $income->transaction_date ?? now(),
+                $userId ?? auth()->id(),
+            );
+        } catch (\Throwable $e) {
+            Log::warning('[Treasury] No se registró la detracción del comprobante', [
+                'document_id' => $document->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     private static function dispatchAll(array $movements): int
     {
         $count = 0;
@@ -543,12 +814,24 @@ class TreasuryHooks
         return $count;
     }
 
-    /**
-     * Registra el movimiento y devuelve su fila puente, que es la que informa
-     * si quedó procesado, fallido o ignorado. Los hooks que necesitan la
-     * transacción del libro leen `?->treasuryTransaction` de este resultado.
-     */
-    private static function dispatch(FinancialMovement $movement): ?TreasurySourceMovement
+
+    private static function dispatchBridge(FinancialMovement $movement): ?TreasurySourceMovement
+    {
+        try {
+            return app(TreasuryIntegrationService::class)->register($movement);
+        } catch (\Throwable $e) {
+            Log::warning('[Treasury] No se registró el movimiento financiero', [
+                'origin' => $movement->sourceType . '#' . $movement->sourceId,
+                'operation' => $movement->operation,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    private static function dispatch(FinancialMovement $movement): ?TreasuryTransaction
+
     {
         try {
             return app(TreasuryIntegrationService::class)->register($movement);
@@ -577,5 +860,73 @@ class TreasuryHooks
         $formatted = rtrim(rtrim(number_format($rate, 4, '.', ''), '0'), '.');
 
         return ($clean !== '' ? $clean . ' · ' : '') . sprintf('TC %s %s', strtoupper($currency), $formatted);
+    }
+
+    /**
+     * Descripción visible de un cobro de cuota: "Cuota 5 de 10 · B001-123 · Curso".
+     * Sin número de cuota (pago inicial) se usa el texto de respaldo.
+     */
+    private static function installmentDescription(
+        ?SaleDocument $document,
+        ?int $number,
+        ?int $total,
+        string $fallback,
+    ): string {
+        $parts = [];
+
+        if ($number !== null && $number > 0) {
+            $parts[] = 'Cuota ' . $number . ($total ? ' de ' . $total : '');
+        } else {
+            $parts[] = $fallback;
+        }
+
+        if ($documentNumber = self::documentNumber($document)) {
+            $parts[] = $documentNumber;
+        }
+
+        if ($concept = self::documentConcept($document)) {
+            $parts[] = $concept;
+        }
+
+        // La columna description del libro es de 255 caracteres.
+        return mb_substr(implode(' · ', $parts), 0, 250);
+    }
+
+    /** Número visible del comprobante (serie-correlativo). */
+    private static function documentNumber(?SaleDocument $document): ?string
+    {
+        if (! $document) {
+            return null;
+        }
+
+        $serie = trim((string) $document->invoice_serie);
+        $correlativo = trim((string) $document->invoice_correlative);
+
+        return $serie !== '' && $correlativo !== '' ? $serie . '-' . $correlativo : null;
+    }
+
+    /** Curso o suscripción que se paga, según los ítems del comprobante. */
+    private static function documentConcept(?SaleDocument $document): ?string
+    {
+        if (! $document) {
+            return null;
+        }
+
+        $names = $document->items
+            ->pluck('decription_product')
+            ->filter()
+            // Las descripciones de los ítems traen saltos de línea.
+            ->map(fn ($name) => trim(preg_replace('/\s+/u', ' ', (string) $name)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($names->isEmpty()) {
+            return null;
+        }
+
+        return $names->count() > 2
+            ? $names->count() . ' items'
+            : mb_substr($names->implode(', '), 0, 120);
     }
 }

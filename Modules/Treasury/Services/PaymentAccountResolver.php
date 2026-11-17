@@ -56,8 +56,13 @@ class PaymentAccountResolver
      */
     public function resolveForMethodModel(PaymentMethod $method): ?TreasuryAccount
     {
+        // 0) Efectivo: el dinero cobrado en efectivo llega a la cuenta Efectivo/Caja.
+        // El libro bancario lo ignora aparte (TreasuryIntegrationService).
         if (in_array(mb_strtolower(trim($method->description)), $this->excluded, true)) {
-            return null;
+            return TreasuryAccount::query()
+                ->active()
+                ->cash()
+                ->first();
         }
 
         // 1) Método configurado con cuenta bancaria explícita

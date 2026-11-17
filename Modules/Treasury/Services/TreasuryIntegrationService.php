@@ -254,6 +254,17 @@ class TreasuryIntegrationService
                 $transaction = TreasuryTransaction::query()->find($locked->treasury_transaction_id);
 
                 if ($transaction && ! $transaction->voided_at) {
+                    // Lo conciliado es inmutable: se corrige con un ajuste, no anulando.
+                    if ($transaction->isLocked()) {
+                        Log::warning('[Treasury] No se revierte un movimiento conciliado', [
+                            'transaction_id' => $transaction->id,
+                            'bridge_id' => $locked->id,
+                            'reason' => $reason,
+                        ]);
+
+                        return null;
+                    }
+
                     $transaction->void($userId);
                 }
             }
@@ -385,8 +396,27 @@ class TreasuryIntegrationService
         TreasuryAccount $account,
         float $amount,
     ): ?TreasuryTransaction {
+        // Billetera con banco vinculado: el ingreso cae en la cuenta bancaria y
+        // se conserva la billetera de origen (ej. Yape -> banco).
+        $walletAccount = null;
+        $destination = $account;
+
+        if ($account->type === TreasuryAccount::TYPE_WALLET && $account->companyBilletera?->bank_account_id) {
+            $bankAccount = TreasuryAccount::query()
+                ->active()
+                ->banks()
+                ->where('bank_account_id', $account->companyBilletera->bank_account_id)
+                ->first();
+
+            // Si el banco vinculado no tiene cuenta de tesorería, se mantiene la billetera.
+            if ($bankAccount) {
+                $walletAccount = $account;
+                $destination = $bankAccount;
+            }
+        }
+
         $arguments = [
-            $account,
+            $destination,
             $bridge->movement_date->toDateString(),
             $amount,
             $this->categoryId($bridge),
@@ -398,6 +428,10 @@ class TreasuryIntegrationService
             $bridge->source,
             $bridge->user_id,
             false, // sin firma: la clave única de la puente ya evita duplicados
+            $walletAccount?->id,
+            $bridge->currency ?: 'PEN',
+            $bridge->exchange_rate !== null ? (float) $bridge->exchange_rate : null,
+            ! empty(($bridge->meta ?: [])['cost_center_id']) ? (int) $bridge->meta['cost_center_id'] : null,
         ];
 
         return $bridge->type === TreasurySourceMovement::TYPE_INCOME
@@ -407,15 +441,17 @@ class TreasuryIntegrationService
 
     private function resolveAccount(TreasurySourceMovement $bridge): ?TreasuryAccount
     {
-        if ($bridge->treasury_account_id) {
-            return TreasuryAccount::query()->active()->find($bridge->treasury_account_id);
-        }
+        $account = $bridge->treasury_account_id
+            ? TreasuryAccount::query()->active()->find($bridge->treasury_account_id)
+            : ($bridge->payment_method_id ? $this->resolver->resolveForMethod((int) $bridge->payment_method_id) : null);
 
-        if (! $bridge->payment_method_id) {
+        // El efectivo no entra al libro bancario: se controla con la caja chica
+        // (TreasuryCashService). Así no se duplican saldos.
+        if ($account && $account->type === TreasuryAccount::TYPE_CASH) {
             return null;
         }
 
-        return $this->resolver->resolveForMethod((int) $bridge->payment_method_id);
+        return $account;
     }
 
     /**
@@ -424,8 +460,8 @@ class TreasuryIntegrationService
      */
     private function ledgerAmount(TreasurySourceMovement $bridge, TreasuryAccount $account): ?float
     {
-        $accountCurrency = strtoupper((string) ($account->currency_type_id ?: 'PEN'));
-        $currency = strtoupper((string) $bridge->currency);
+        $accountCurrency = strtoupper((string) ($account->currency_type_id ?: 'PEN')) ?: 'PEN';
+        $currency = strtoupper((string) ($bridge->currency ?: 'PEN')) ?: 'PEN';
 
         if ($accountCurrency === $currency) {
             return round((float) $bridge->amount, 2);
@@ -440,6 +476,13 @@ class TreasuryIntegrationService
 
     private function categoryId(TreasurySourceMovement $bridge): ?int
     {
+        // La categoría explícita (órdenes de pago, gastos) manda sobre el mapeo por operación.
+        $meta = $bridge->meta ?: [];
+
+        if (! empty($meta['category_id'])) {
+            return (int) $meta['category_id'];
+        }
+
         $name = match ($bridge->operation) {
             'sale_income', 'full_payment', 'down_payment' => 'Cobro de venta',
             'quota_payment', 'installment_payment' => 'Abono de cuota',

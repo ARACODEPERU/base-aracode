@@ -26,7 +26,8 @@ class BlogArticle extends Model
         'keywords',
         'short_description',
         'category_id',
-        'user_id'
+        'user_id',
+        'pdf_path',
     ];
 
     protected static function newFactory()
@@ -56,6 +57,15 @@ class BlogArticle extends Model
     public function getKeywordsAttribute($value)
     {
         return ($value ? json_decode($value) : null);
+    }
+
+    /**
+     * URL publica del PDF adjunto. La descarga real pasa por una ruta con
+     * autenticacion; aqui solo se expone la ruta para las pantallas del panel.
+     */
+    public function getPdfUrlAttribute(): ?string
+    {
+        return $this->pdf_path ? asset('storage/'.$this->pdf_path) : null;
     }
 
     public function author(): BelongsTo

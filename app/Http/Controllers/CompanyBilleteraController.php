@@ -24,6 +24,7 @@ class CompanyBilleteraController extends Controller
             'account_name' => $request->get('account_name'),
             'account_number' => $request->get('account_number'),
             'bank_account_id' => $request->get('bank_account_id') ?: null,
+            'has_payment_link' => $request->boolean('has_payment_link'),
             'status' => $request->boolean('status'),
         ];
 
@@ -43,7 +44,14 @@ class CompanyBilleteraController extends Controller
 
             $billetera->update($data);
         } else {
-            CompanyBilletera::create($data);
+            $billetera = CompanyBilletera::create($data);
+
+            // Crea su cuenta de Tesorería; si falla, la billetera igual queda creada
+            try {
+                app(\Modules\Treasury\Services\TreasuryAccountSyncService::class)->ensureForWallet($billetera);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('[Treasury] No se pudo crear la cuenta de tesorería de la billetera', ['error' => $e->getMessage()]);
+            }
         }
 
         return redirect()->route('company_show');

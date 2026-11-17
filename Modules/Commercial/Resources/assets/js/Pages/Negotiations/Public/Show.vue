@@ -13,7 +13,7 @@ import { loadMercadoPago } from "@mercadopago/sdk-js";
 import { Select } from "ant-design-vue";
 import Swal2 from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { faCheckCircle, faFileImage, faMagnifyingGlass, faUpload, faXmark, faXmarkCircle } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faCircleInfo, faFileImage, faMagnifyingGlass, faUpload, faXmark, faXmarkCircle } from "@fortawesome/free-solid-svg-icons";
 import SummaryModal from "./Partials/SummaryModal.vue";
 import { useEmailAccountCheck } from "./composables/useEmailAccountCheck.js";
 import { useDniReniecCheck } from "./composables/useDniReniecCheck.js";
@@ -31,6 +31,8 @@ const props = defineProps({
     ubigeo: { type: Array, default: () => [] },
     paymentMethodCatalog: { type: Array, default: () => [] },
     bankAccounts: { type: Array, default: () => [] },
+    // Cuenta que el asesor marco como Recomendada para la transferencia.
+    recommendedBankAccountId: { type: Number, default: null },
     // TC vigente para mostrar el equivalente en soles cuando la negociacion es USD.
     multiCurrencyEnabled: { type: Boolean, default: false },
     exchangeRate: { type: Number, default: null },
@@ -69,6 +71,71 @@ const validateLegalChecks = () => {
     });
 
     return false;
+};
+
+/**
+ * Pide las aceptaciones legales dentro de un modal. Las casillas viven al final del
+ * formulario y quedan fuera de la vista cuando el cliente usa los botones de busqueda
+ * (RENIEC, SUNAT o "ya es alumno"), asi que se le muestran aqui las mismas casillas: al
+ * confirmar quedan marcadas tambien en el formulario y el envio las valida igual.
+ *
+ * Resuelve true solo si se acepto la politica de privacidad, que es la que habilita las
+ * consultas de identidad.
+ */
+const requestLegalAcceptance = () => {
+    const casillas = legalChecks.map((check) => `
+        <label for="legal-modal-${check.field}" style="display:flex;align-items:flex-start;gap:10px;text-align:left;margin:0 0 12px;cursor:pointer;">
+            <input type="checkbox" id="legal-modal-${check.field}" ${form[check.field] ? "checked" : ""} style="flex:none;width:16px;height:16px;margin:3px 0 0;" />
+            <span style="font-size:13px;line-height:1.4;">
+                ${escapeHtml(check.label)}
+                <a href="${escapeHtml(legalLink(check.linkKey))}" target="_blank" rel="noopener noreferrer" style="margin-left:6px;text-decoration:underline;white-space:nowrap;">Ver documento</a>
+            </span>
+        </label>
+    `).join("");
+
+    return Swal2.fire({
+        title: "Acepta la Política de Privacidad",
+        html: `
+            <p style="text-align:left;font-size:13px;margin:0 0 12px;">
+                Para buscar tus datos necesitamos tu aceptación. Marca la Política de Privacidad para continuar;
+                lo que marques aquí quedará marcado también en el formulario.
+            </p>
+            ${casillas}
+        `,
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "Aceptar y continuar",
+        cancelButtonText: "Cancelar",
+        focusConfirm: false,
+        padding: "2em",
+        customClass: "sweet-alerts",
+        preConfirm: () => {
+            const marcadas = {};
+
+            legalChecks.forEach((check) => {
+                marcadas[check.field] = Boolean(document.getElementById(`legal-modal-${check.field}`)?.checked);
+            });
+
+            if (! marcadas.accepted_privacidad) {
+                Swal2.showValidationMessage("Marca la Política de Privacidad para continuar.");
+                return false;
+            }
+
+            return marcadas;
+        },
+    }).then((result) => {
+        if (! result.isConfirmed || ! result.value) return false;
+
+        // Las casillas del modal son las mismas del formulario: lo marcado (o desmarcado)
+        // aqui se refleja en la seccion de documentos legales de abajo.
+        legalChecks.forEach((check) => {
+            form[check.field] = Boolean(result.value[check.field]);
+        });
+
+        form.clearErrors(legalChecks.map((check) => check.field));
+
+        return true;
+    });
 };
 
 const company = usePage().props.company;
@@ -119,6 +186,8 @@ const form = useForm({
     boleta_numero: null,
     boleta_nombre: null,
     voucher: null,
+    // Banco desde el que el cliente hizo la transferencia (requerido si el medio es transferencia).
+    transfer_origin_bank: null,
     // Mercado Pago: 'card' (pagar ahora con tarjeta) o 'evidence' (el cliente ya
     // pago por fuera y adjunta la captura). El metodo de pago sigue siendo mercadopago.
     payment_option: "card",
@@ -370,6 +439,8 @@ const {
     // La longitud del numero la define el catalogo (8 en L.E/DNI) para autodisparar la consulta.
     numberLength: () => selectedDocumentType.value?.number_characters,
     locks: { lockFields, unlockFields },
+    // Con la politica sin aceptar se muestra el modal de aceptacion y la consulta sigue.
+    requestPrivacyConsent: requestLegalAcceptance,
 });
 
 const {
@@ -385,6 +456,8 @@ const {
     form,
     token: props.negotiation.token,
     locks: { lockFields, unlockFields },
+    // Con la politica sin aceptar se muestra el modal de aceptacion y la consulta sigue.
+    requestPrivacyConsent: requestLegalAcceptance,
 });
 
 // El numero del documento cambio: se descarta la consulta anterior y la ficha que se
@@ -415,14 +488,11 @@ const searchPerson = () => {
     if (searchLoading.value) return;
 
     // La busqueda manda el documento al servidor: no sale del navegador hasta que
-    // el titular acepta la politica de privacidad.
+    // el titular acepta la politica de privacidad. La aceptacion se pide en el modal
+    // (las casillas estan al final del formulario) y, al aceptarla, la busqueda sigue.
     if (! form.accepted_privacidad) {
-        Swal2.fire({
-            title: "Falta tu aceptación",
-            text: "Acepta la Política de Privacidad para buscar tus datos.",
-            icon: "info",
-            padding: "2em",
-            customClass: "sweet-alerts",
+        requestLegalAcceptance().then((accepted) => {
+            if (accepted) searchPerson();
         });
         return;
     }
@@ -1189,7 +1259,7 @@ watch(brickFormVisible, async (visible) => {
                                 <InputLabel for="number" value="Numero de documento *" />
                                 <div v-if="isDni || isRuc" class="flex">
                                     <TextInput id="number" v-model="form.number" type="text" inputmode="numeric" pattern="[0-9]*" class="ltr:rounded-r-none rtl:rounded-l-none" @input="onDocumentNumberInput()" />
-                                    <button v-if="isDni" type="button" class="btn btn-secondary ltr:rounded-l-none rtl:rounded-r-none" :class="{ 'opacity-50': dniLoading }" :disabled="dniLoading" @click="validateDni">
+                                    <button v-if="isDni" type="button" class="btn btn-secondary ltr:rounded-l-none rtl:rounded-r-none" :class="{ 'opacity-50': dniLoading }" :disabled="dniLoading" @click="validateDni()">
                                         <IconLoader v-if="dniLoading" class="w-4 h-4 mr-2 animate-spin" />
                                         <FontAwesomeIcon v-else :icon="faMagnifyingGlass" class="mr-2 h-4 w-4" />
                                         RENIEC
@@ -1518,8 +1588,18 @@ watch(brickFormVisible, async (visible) => {
                             <h3 class="mb-3 font-semibold dark:text-white">Como realizar el pago</h3>
 
                             <div v-if="negotiation.payment_method === 'transferencia'" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div v-for="account in bankAccounts" :key="account.id" class="rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40">
-                                    <p class="text-sm font-semibold dark:text-white">{{ account.bank?.short_name || 'Banco' }} - {{ account.description }}</p>
+                                <div
+                                    v-for="account in bankAccounts"
+                                    :key="account.id"
+                                    class="rounded-md border p-3"
+                                    :class="account.id === recommendedBankAccountId
+                                        ? 'border-2 border-primary bg-primary/5 shadow-md dark:bg-primary/10'
+                                        : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/40'"
+                                >
+                                    <div class="flex items-start justify-between gap-2">
+                                        <p class="text-sm font-semibold dark:text-white">{{ account.bank?.short_name || 'Banco' }} - {{ account.description }}</p>
+                                        <span v-if="account.id === recommendedBankAccountId" class="shrink-0 rounded bg-primary px-2 py-0.5 text-xs font-bold text-white">Recomendada</span>
+                                    </div>
                                     <p class="text-xs text-gray-500">Cuenta: {{ account.number }}</p>
                                     <p v-if="account.cci" class="text-xs text-gray-500">CCI: {{ account.cci }}</p>
                                 </div>
@@ -1541,6 +1621,34 @@ watch(brickFormVisible, async (visible) => {
                                         :alt="billetera.nombre"
                                         class="h-[350px] w-[350px] max-w-full rounded-md border border-gray-200 object-contain dark:border-gray-700"
                                     />
+                                    <!-- Enlace de pago: solo si la billetera lo permite y la negociacion tiene enlace;
+                                         puede mostrarse junto al QR. El icono de ayuda (tooltip) explica que el pago
+                                         se hace en la pagina del enlace y que al volver hay que enviar la evidencia. -->
+                                    <div
+                                        v-if="billetera.tiene_enlace_pago && negotiation.payment_link"
+                                        class="flex items-center justify-center gap-2"
+                                    >
+                                        <a
+                                            :href="negotiation.payment_link"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="btn btn-primary btn-sm"
+                                        >
+                                            Pagar mediante enlace
+                                        </a>
+                                        <button
+                                            type="button"
+                                            aria-label="Como pagar con el enlace"
+                                            class="flex h-8 w-8 shrink-0 cursor-help items-center justify-center rounded-full border border-primary/40 text-primary transition duration-150 hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                            v-tippy="{
+                                                content: 'Dale click a Pagar mediante enlace para redirigirte a la página donde se hará el pago correspondiente. Verifica los datos antes de pagar; luego regresa aquí y envía la evidencia del pago.',
+                                                placement: 'bottom',
+                                                maxWidth: 320,
+                                            }"
+                                        >
+                                            <FontAwesomeIcon :icon="faCircleInfo" class="h-4 w-4" />
+                                        </button>
+                                    </div>
                                 </div>
                                 <p class="text-sm text-gray-500">Elige cualquiera de los medios, escanea el codigo QR y adjunta el voucher o captura del pago.</p>
                             </div>
@@ -1604,6 +1712,22 @@ watch(brickFormVisible, async (visible) => {
                             </div>
 
                             <p v-if="showVoucherUpload" class="mt-2 text-xs text-gray-500">Despues de realizar el pago, adjunta el voucher o captura para que el asesor lo verifique.</p>
+                        </div>
+
+                        <div v-if="showVoucherUpload && negotiation.payment_method === 'transferencia'" class="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">
+                            <InputLabel for="transfer_origin_bank" value="Banco desde el que hiciste la transferencia *" />
+                            <select
+                                id="transfer_origin_bank"
+                                v-model="form.transfer_origin_bank"
+                                class="form-select mt-1 w-full"
+                            >
+                                <option :value="null" disabled>Selecciona el banco</option>
+                                <option v-for="account in bankAccounts" :key="account.id" :value="account.bank?.short_name || account.bank?.full_name || 'Banco'">
+                                    {{ account.bank?.short_name || account.bank?.full_name || 'Banco' }}
+                                </option>
+                            </select>
+                            <p class="mt-2 text-xs text-amber-600 dark:text-amber-400">Debe coincidir con el banco de la transferencia que hiciste, o el asesor no podra validar tu pago.</p>
+                            <InputError :message="form.errors.transfer_origin_bank" class="mt-2" />
                         </div>
 
                         <div v-if="showVoucherUpload" class="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">

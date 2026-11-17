@@ -283,12 +283,17 @@
                                                 v-model:value="parameter.value_default"
                                                 style="width: 100%"
                                                 show-count
-                                                :maxlength="parameter.parameter_code === 'P000026' || parameter.parameter_code === 'P000027' ? 100000 : 5000"
+                                                :maxlength="parameter.parameter_code === 'P000026' || parameter.parameter_code === 'P000027' || parameter.parameter_code === 'P000022' ? 100000 : 5000"
                                                 :autoSize="{ minRows: 3, maxRows: 20 }"
                                                 @blur="updateDefaultValue(parameter.id, parameter.value_default)"
                                                 >
                                             </Textarea>
                                             <small v-if="parameter.parameter_code === 'P000026' || parameter.parameter_code === 'P000027'">El contenido se sincroniza al perder el foco</small>
+                                            <small v-if="parameter.parameter_code === 'P000022'" class="block text-blue-700 dark:text-blue-300">
+                                                Pega aquí el código completo de GTM, GA4 o píxeles, o solo el ID GTM-XXXXXXX.
+                                                No pegues el mismo contenedor dos veces ni dejes el ID GA4 fijo en el layout.
+                                                Se guarda al salir del campo. Ver detalles en Editar.
+                                            </small>
                                         </template>
                                         <template v-else-if="parameter.control_type == 'rdj'">
                                             <div>

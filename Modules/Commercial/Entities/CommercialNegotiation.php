@@ -31,6 +31,8 @@ class CommercialNegotiation extends Model
         'email',
         'payment_method',
         'payment_link',
+        'recommended_bank_account_id',
+        'transfer_origin_bank',
         'mercado_payment_id',
         'mercado_payment_status',
         'mercado_payment_data',

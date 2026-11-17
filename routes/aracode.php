@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BlogRegistrationController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\WebPageController;
 use App\Mail\StudentRegistrationMailable;
@@ -58,6 +59,12 @@ Route::post('/contacto', [WebPageController::class, 'contactoStore'])
     ->name('contacto_store');
 Route::post('/blog/subscribe', [WebPageController::class, 'blogSubscriberStore'])->name('blog.subscribe');
 
+// Alta de lectores desde el modal del blog. Crea la cuenta con telefono y pais
+// y la envia al Integrationhub a traves del evento BlogUserRegistered.
+Route::post('/blog/registro', [BlogRegistrationController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('blog.register');
+
 // Blog
 Route::get('/blog', [WebPageController::class, 'blog_index'])->name('blog_principal');
 // El wildcard {url} captura cualquier slug de artículo público. Se marca como
@@ -68,6 +75,12 @@ Route::get('/blog', [WebPageController::class, 'blog_index'])->name('blog_princi
 Route::get('/blog/{url}', [WebPageController::class, 'blog_article'])
     ->name('blog_article')
     ->fallback();
+
+// Descarga del PDF adjunto. Solo para usuarios autenticados: la vista publica
+// muestra el boton unicamente cuando hay sesion y el articulo tiene archivo.
+Route::get('/blog/{url}/pdf', [WebPageController::class, 'blog_article_pdf'])
+    ->middleware('auth')
+    ->name('blog_article_pdf');
 
 // Registro de la vista del articulo. Va aparte del render para que el navegador
 // decida con localStorage si corresponde contarla (una vez por dia por articulo).
@@ -111,6 +124,8 @@ Route::get('/prices/academic', [LandingController::class, 'academicPrices'])->na
 Route::get('/curso-descripcion/{slug}', [WebPageController::class, 'cursodescripcion'])->name('web_curso_descripcion');
 
 // Landing publica por slug del curso (usada por catalogo, carrito y panel del alumno).
+// TODO: requiere resources/views/pages/course-landing.blade.php (vista que aun
+// no existe en este proyecto; se creara despues).
 Route::get('/curso/{slug}', [WebPageController::class, 'course_url_slug'])->name('course_url_slug');
 
 // Carrito de compras publico (la landing y la descripcion redirigen aqui).
@@ -134,6 +149,9 @@ Route::put('/pagar-proceso/{sale}/{student}', [WebPageController::class, 'proces
 // Alias para plantillas de email antiguas (evita duplicar el path /).
 Route::get('/inicio', function () { return redirect()->route('index_main'); })->name('web_inicio');
 
+// Alias de la landing publica del curso.
+// TODO: requiere Modules/Academic/Resources/assets/js/Pages/Courses/PublicLanding.vue
+// (componente Inertia que aun no existe en este proyecto; se creara despues).
 Route::get('/academy/{slug}', [Modules\Academic\Http\Controllers\AcaCourseLandingController::class, 'show'])
     ->name('academy_landing');
 

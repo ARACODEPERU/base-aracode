@@ -546,9 +546,9 @@ class CommercialNegotiationController extends Controller
             })(),
             'paymentMethods' => $this->paymentMethods(),
             'contactChannels' => $this->contactChannels(),
+            // Todas las billeteras activas: el QR y el enlace de pago son opcionales.
             'companyBilleteras' => \App\Models\CompanyBilletera::with('billetera')
                 ->where('status', true)
-                ->whereNotNull('qr_image')
                 ->get()
                 ->map(fn ($cb) => [
                     'id' => $cb->id,
@@ -557,6 +557,20 @@ class CommercialNegotiationController extends Controller
                     'titular' => $cb->account_name,
                     'numero' => $cb->account_number,
                     'qr_url' => $cb->qr_image ? asset('storage/' . $cb->qr_image) : null,
+                    // Si la billetera permite pago mediante enlace; el enlace se guarda en cada negociacion.
+                    'tiene_enlace_pago' => (bool) $cb->has_payment_link,
+                ])
+                ->values(),
+            // Cuentas bancarias activas para elegir la recomendada en la transferencia.
+            'bankAccounts' => \App\Models\BankAccount::with('bank')
+                ->where('status', 1)
+                ->get()
+                ->map(fn ($ba) => [
+                    'id' => $ba->id,
+                    'banco' => $ba->bank?->short_name ?? $ba->bank?->full_name,
+                    'descripcion' => $ba->description,
+                    'numero' => $ba->number,
+                    'cci' => $ba->cci,
                 ])
                 ->values(),
         ];
@@ -586,11 +600,14 @@ class CommercialNegotiationController extends Controller
             'payment_method' => [
                 Rule::requiredIf(fn () => (float) ($request->input('total_price') ?? 0) !== 0.0),
                 'nullable',
-                Rule::in(['billetera_digital', 'mercadopago', 'transferencia', 'enlace', 'gratis']),
+                // 'enlace' se mantiene para negociaciones anteriores que aun lo usan.
+                Rule::in(['billetera_digital', 'mercadopago', 'transferencia', 'efectivo', 'enlace', 'gratis']),
             ],
             'company_billetera_ids' => ['nullable', 'array'],
             'company_billetera_ids.*' => ['nullable', 'integer', 'exists:company_billeteras,id'],
             'payment_link' => ['nullable', 'url', 'max:500'],
+            // Cuenta bancaria recomendada para la transferencia (opcional, solo si el medio es transferencia).
+            'recommended_bank_account_id' => ['nullable', 'integer', 'exists:bank_accounts,id'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_type' => ['required', Rule::in(['course', 'subscription'])],
             'items.*.item_id' => ['nullable', 'integer'],
@@ -616,8 +633,13 @@ class CommercialNegotiationController extends Controller
                 $billeteraIds = array_values(array_filter((array) ($data['company_billetera_ids'] ?? [])));
 
                 if (count($billeteraIds) === 0) {
-                    $validator->errors()->add('company_billetera_ids', 'Debe seleccionar al menos una billetera digital que tenga QR.');
+                    $validator->errors()->add('company_billetera_ids', 'Debe seleccionar al menos una billetera digital.');
                 }
+            }
+
+            // La cuenta recomendada solo aplica a transferencia.
+            if (($data['payment_method'] ?? null) === 'transferencia' && empty($data['recommended_bank_account_id'])) {
+                $validator->errors()->add('recommended_bank_account_id', 'Elige la cuenta bancaria recomendada.');
             }
 
             if (($data['payment_type'] ?? null) !== 'installments') {
@@ -676,7 +698,13 @@ class CommercialNegotiationController extends Controller
             // editar se conserva el asesor guardado, sin poder cambiarlo.
             'email' => $data['email'] ?? null,
             'payment_method' => $isFree ? 'gratis' : ($data['payment_method'] ?? null),
-            'payment_link' => $isFree ? null : ($data['payment_link'] ?? null),
+            // El enlace solo se guarda para pagos por enlace o por billetera (que lo permita); en otros medios queda vacio.
+            'payment_link' => $isFree || ! in_array(($data['payment_method'] ?? null), ['enlace', 'billetera_digital'], true)
+                ? null
+                : ($data['payment_link'] ?? null),
+            'recommended_bank_account_id' => $isFree || ($data['payment_method'] ?? null) !== 'transferencia'
+                ? null
+                : ($data['recommended_bank_account_id'] ?? null),
         ];
     }
 
@@ -735,11 +763,13 @@ class CommercialNegotiationController extends Controller
 
     private function paymentMethods(): array
     {
+        // Solo bancos, billeteras, Mercado Pago y efectivo. Los valores 'enlace' y 'yape'
+        // de negociaciones anteriores siguen en la base de datos para no afectar reportes.
         return [
+            ['value' => 'transferencia', 'label' => 'Transferencia bancaria'],
             ['value' => 'billetera_digital', 'label' => 'Billetera digital'],
             ['value' => 'mercadopago', 'label' => 'Mercado Pago'],
-            ['value' => 'transferencia', 'label' => 'Transferencia bancaria'],
-            ['value' => 'enlace', 'label' => 'Enlace de pago'],
+            ['value' => 'efectivo', 'label' => 'Efectivo'],
             // Negociacion gratuita: total 0, el cliente no paga nada.
             ['value' => 'gratis', 'label' => 'Gratis'],
         ];

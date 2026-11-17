@@ -5,6 +5,8 @@ namespace Modules\Treasury\Providers;
 use Illuminate\Support\ServiceProvider;
 use Modules\Treasury\Console\BackfillTreasuryCommand;
 use Modules\Treasury\Console\RetryTreasuryIntegrationCommand;
+use Modules\Treasury\Console\RunTreasuryRecurringExpenses;
+use Modules\Treasury\Console\RunTreasuryScheduledCharges;
 use Modules\Treasury\Services\PaymentAccountResolver;
 use Modules\Treasury\Services\TreasuryIntegrationService;
 use Modules\Treasury\Services\TreasuryLedgerService;
@@ -37,8 +39,26 @@ class TreasuryServiceProvider extends ServiceProvider
             $this->commands([
                 BackfillTreasuryCommand::class,
                 RetryTreasuryIntegrationCommand::class,
+                RunTreasuryScheduledCharges::class,
+                RunTreasuryRecurringExpenses::class,
             ]);
         }
+
+        // Cada minuto se encolan los cobros programados y los gastos
+        // recurrentes que correspondan. El worker (queue:work) hace el pago.
+        $this->app->booted(function () {
+            $schedule = $this->app->make(\Illuminate\Console\Scheduling\Schedule::class);
+
+            $schedule->command('treasury:run-scheduled')
+                ->everyMinute()
+                ->withoutOverlapping()
+                ->timezone('America/Lima');
+
+            $schedule->command('treasury:run-recurring')
+                ->everyMinute()
+                ->withoutOverlapping()
+                ->timezone('America/Lima');
+        });
     }
 
     /**

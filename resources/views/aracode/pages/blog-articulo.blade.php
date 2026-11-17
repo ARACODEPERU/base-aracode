@@ -76,7 +76,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 {{-- Main Content (3/4) --}}
-                <article class="lg:col-span-3">
+                <article id="articulo-lectura" class="lg:col-span-3">
                     {{-- Featured Image --}}
                     {{--
                         La imagen se muestra ENTERA, con su propia proporción.
@@ -121,6 +121,35 @@
                         ) !!}
                     </div>
 
+                    {{-- PDF adjunto: solo se ofrece a usuarios con sesión y
+                         cuando la entrada tiene archivo. La ruta de descarga
+                         vuelve a comprobar la autenticación. --}}
+                    @auth
+                        @if($article->pdf_path)
+                            <div class="mt-8 p-5 rounded-xl border-2 border-ara-blue/20 bg-white dark:bg-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-11 h-11 rounded-lg bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6M9 17h4"/>
+                                        </svg>
+                                    </span>
+                                    <div>
+                                        <p class="text-sm font-bold text-ara-slate-700 dark:text-white">Material del artículo</p>
+                                        <p class="text-xs text-ara-slate-400">Descarga el PDF adjunto a esta entrada.</p>
+                                    </div>
+                                </div>
+                                <a href="{{ route('blog_article_pdf', $article->url) }}"
+                                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-ara-blue text-white text-sm font-semibold hover:bg-ara-blue/90 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                    Descargar PDF
+                                </a>
+                            </div>
+                        @endif
+                    @endauth
+
                     {{-- Share --}}
                     <div class="mt-12 pt-8 border-t border-ara-slate-100">
                         <h4 class="text-sm font-semibold text-ara-slate-700 mb-4 uppercase tracking-wide">Compartir artículo</h4>
@@ -155,7 +184,25 @@
 
                 {{-- Sidebar (1/4) --}}
                 <aside class="lg:col-span-1 lg:sticky lg:top-24 lg:self-start space-y-6">
-                    
+
+                    @guest
+                        {{-- Alta de lectores desde el artículo. --}}
+                        <div class="ara-card p-5">
+                            <h3 class="text-sm font-bold text-ara-slate-700 mb-2 flex items-center gap-2 uppercase tracking-wide">
+                                <svg class="w-4 h-4 text-ara-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                                Cuenta gratuita
+                            </h3>
+                            <p class="text-sm text-ara-slate-500 mb-4">
+                                Regístrate para descargar el material de este artículo y recibir contenido de valor.
+                            </p>
+                            <button type="button" data-blog-register class="ara-btn ara-btn-primary w-full">
+                                Crear cuenta
+                            </button>
+                        </div>
+                    @endguest
+
                     {{-- Newsletter --}}
                     @if(session('success'))
                         <div class="p-3 rounded-lg bg-green-500/20 border border-green-400/30 text-green-100 text-xs mb-4">
@@ -290,8 +337,40 @@
         </div>
     </section>
 
+    {{-- Acceso flotante al PDF del articulo.
+
+         Se mantiene a la vista (abajo a la izquierda en escritorio, abajo con
+         hueco para el boton de WhatsApp en el movil) una vez que el lector ha
+         visto al menos la mitad del articulo, o de inmediato cuando el articulo
+         cabe entero o mas de la mitad en la ventana. La esquina inferior derecha
+         queda libre porque alli viven el boton de WhatsApp y el de volver arriba.
+         Una vez mostrado ya no se oculta; al recargar la pagina se vuelve a
+         evaluar. Sin sesion, el bloque no se renderiza. --}}
+    @auth
+        @if($article->pdf_path)
+            <a id="articulo-pdf-flotante"
+               href="{{ route('blog_article_pdf', $article->url) }}"
+               class="ara-pdf-flotante">
+                <span class="ara-pdf-flotante__icono">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6M9 17h4"/>
+                    </svg>
+                </span>
+                <span class="ara-pdf-flotante__texto">
+                    <span class="ara-pdf-flotante__rotulo">Material del artículo</span>
+                    <span class="ara-pdf-flotante__accion">Descargar PDF</span>
+                </span>
+            </a>
+        @endif
+    @endauth
+
     {{-- CTA --}}
     <x-v2.cta-section />
+
+    @guest
+        @include('aracode.components.v2.blog-register-modal')
+    @endguest
 
     @include('aracode.components.v2.footer')
 @push('scripts')
@@ -399,6 +478,111 @@ document.addEventListener('DOMContentLoaded', function() {
     .catch(function () { /* sin conexion o error del servidor: no se marca y se reintenta luego */ });
 })();
 // -- conteo de vistas: fin --
+</script>
+
+{{-- Acceso flotante al PDF: se muestra solo cuando el lector ha visto al menos
+     la mitad del articulo, o cuando el articulo entra completo (o mas de la
+     mitad) en la ventana. Los tramos ya vistos se guardan en coordenadas del
+     documento y se fusionan, asi que el calculo es la union de todo lo que el
+     lector ha tenido a la vista, no solo lo visible en este instante. --}}
+<script>
+// -- pdf flotante: inicio --
+(function () {
+    var articulo = document.getElementById('articulo-lectura');
+    var boton = document.getElementById('articulo-pdf-flotante');
+
+    if (!articulo || !boton) return;
+
+    var visible = false;
+    var tramos = []; // partes del articulo ya vistas, en px del documento
+
+    // Hasta que la pagina no termina de cargar las imagenes, la altura del
+    // articulo puede ser menor que la real y daria un porcentaje falso.
+    var listo = document.readyState === 'complete';
+
+    // Guarda un tramo nuevo fusionandolo con los que se solapan.
+    function registrarTramo(desde, hasta) {
+        var nuevo = [desde, hasta];
+        var resultado = [];
+        var colocado = false;
+
+        for (var i = 0; i < tramos.length; i++) {
+            var tramo = tramos[i];
+
+            if (colocado || tramo[1] < nuevo[0]) {
+                resultado.push(tramo);
+                continue;
+            }
+
+            if (tramo[0] > nuevo[1]) {
+                resultado.push(nuevo);
+                resultado.push(tramo);
+                colocado = true;
+                continue;
+            }
+
+            nuevo = [Math.min(nuevo[0], tramo[0]), Math.max(nuevo[1], tramo[1])];
+        }
+
+        if (!colocado) resultado.push(nuevo);
+
+        tramos = resultado;
+    }
+
+    function altoVisto() {
+        var total = 0;
+
+        for (var i = 0; i < tramos.length; i++) {
+            total += tramos[i][1] - tramos[i][0];
+        }
+
+        return total;
+    }
+
+    function mostrar() {
+        if (visible) return;
+
+        visible = true;
+        boton.classList.add('is-visible');
+    }
+
+    function revisar() {
+        var caja = articulo.getBoundingClientRect();
+        var arriba = caja.top + window.scrollY;
+        var abajo = caja.bottom + window.scrollY;
+        var desde = Math.max(arriba, window.scrollY);
+        var hasta = Math.min(abajo, window.scrollY + window.innerHeight);
+
+        if (hasta > desde) registrarTramo(desde, hasta);
+
+        var alto = Math.max(abajo - arriba, 1);
+
+        if (listo && altoVisto() / alto >= 0.5) mostrar();
+    }
+
+    var pendiente = false;
+
+    function alCambiar() {
+        if (pendiente) return;
+
+        pendiente = true;
+        window.requestAnimationFrame(function () {
+            pendiente = false;
+            revisar();
+        });
+    }
+
+    window.addEventListener('scroll', alCambiar, { passive: true });
+    window.addEventListener('resize', alCambiar);
+    window.addEventListener('load', function () {
+        listo = true;
+        alCambiar();
+        // Segundo repaso: hay imagenes que terminan de maquetar despues del load.
+        window.setTimeout(alCambiar, 300);
+    });
+    revisar();
+})();
+// -- pdf flotante: fin --
 </script>
 @endpush
 @endsection

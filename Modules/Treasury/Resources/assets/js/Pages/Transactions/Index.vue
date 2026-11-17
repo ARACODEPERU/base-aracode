@@ -5,11 +5,12 @@
     import { Dropdown, Menu, MenuItem } from 'ant-design-vue';
     import Swal2 from 'sweetalert2';
     import ModalLarge from '@/Components/ModalLarge.vue';
+    import OriginDetailModal from '../../Components/OriginDetailModal.vue';
     import InputLabel from '@/Components/InputLabel.vue';
     import InputError from '@/Components/InputError.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import { ref, computed } from 'vue';
-    import { faPlus, faFileArrowUp, faFilter } from '@fortawesome/free-solid-svg-icons';
+    import { faPlus, faFileArrowUp, faFilter, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 
     const props = defineProps({
         accounts: { type: Array, default: () => [] },
@@ -22,10 +23,26 @@
         runningBalance: { type: Number, default: 0 },
         calculatedBalance: { type: Number, default: 0 },
         paymentMethods: { type: Array, default: () => [] },
+        accountCurrency: { type: String, default: 'PEN' },
+        costCenters: { type: Array, default: () => [] },
     });
 
-    const currency = (value) =>
-        new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value || 0);
+    const currency = (value, code = props.accountCurrency) => {
+        try {
+            return new Intl.NumberFormat('es-PE', { style: 'currency', currency: code || 'PEN' }).format(value || 0);
+        } catch (e) {
+            return `${code || 'PEN'} ${Number(value || 0).toFixed(2)}`;
+        }
+    };
+
+    // La fecha del libro llega en ISO para el input; en la tabla se muestra dd/mm/aaaa.
+    const fecha = (value) => {
+        if (!value) return '—';
+
+        const [year, month, day] = String(value).split('-');
+
+        return year && month && day ? `${day}/${month}/${year}` : value;
+    };
 
     // Toast de éxito (convención del proyecto)
     const toast = Swal2.mixin({
@@ -61,6 +78,7 @@
         transaction_date: new Date().toISOString().slice(0, 10),
         type: 'expense',
         treasury_category_id: null,
+        cost_center_id: null,
         amount: '',
         reference: '',
         description: '',
@@ -91,6 +109,7 @@
         form.amount = tx.amount;
         form.reference = tx.reference;
         form.description = tx.description;
+        form.cost_center_id = tx.cost_center_id ?? null;
         showModal.value = true;
     };
 
@@ -148,6 +167,17 @@
     };
 
     const canEdit = (tx) => tx.source === 'manual' && !tx.voided;
+
+    // Detalle del origen (comprobante, cuota, curso)
+    const detailModal = ref({ show: false, detail: null });
+
+    const openDetail = (tx) => {
+        detailModal.value = { show: true, detail: tx.detail };
+    };
+
+    const closeDetail = () => {
+        detailModal.value = { show: false, detail: null };
+    };
 
     const sourceLabels = {
         auto: 'Automático',
@@ -227,7 +257,7 @@
                     <table class="min-w-full">
                         <thead>
                             <tr class="bg-gray-50 dark:bg-gray-800/60">
-                                <th class="w-16 text-center">Acciones</th>
+                                <th class="w-24 text-center">Acciones</th>
                                 <th class="w-28">Fecha</th>
                                 <th class="min-w-[240px]">Descripción</th>
                                 <th class="min-w-[160px]">Categoría</th>
@@ -250,6 +280,15 @@
                                 :class="tx.voided ? 'opacity-40' : ''"
                             >
                                 <td class="text-center">
+                                    <button
+                                        v-if="tx.detail"
+                                        type="button"
+                                        class="mr-1 inline-flex h-9 w-9 items-center justify-center rounded-lg border text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                                        title="Ver detalle del origen"
+                                        @click="openDetail(tx)"
+                                    >
+                                        <font-awesome-icon :icon="faCircleInfo" />
+                                    </button>
                                     <Dropdown v-if="!tx.voided" placement="bottomLeft" arrow>
                                         <button
                                             class="inline-flex h-9 w-9 items-center justify-center rounded-lg border text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
@@ -266,7 +305,7 @@
                                     </Dropdown>
                                     <span v-else class="text-xs font-medium text-danger">Anulado</span>
                                 </td>
-                                <td class="text-gray-600 dark:text-gray-400">{{ tx.date }}</td>
+                                <td class="whitespace-nowrap text-gray-600 dark:text-gray-400">{{ fecha(tx.date) }}</td>
                                 <td>
                                     <p class="text-gray-800 dark:text-gray-100">{{ tx.description || '—' }}</p>
                                     <p v-if="tx.reference" class="text-xs text-gray-400">Ref: {{ tx.reference }}</p>
@@ -351,7 +390,7 @@
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div>
                         <InputLabel value="Monto *" class="mb-1.5" />
                         <input v-model="form.amount" type="number" step="0.01" min="0.01" class="form-input w-full" />
@@ -365,6 +404,19 @@
                                 {{ cat.name }}
                             </option>
                         </select>
+                    </div>
+                    <div>
+                        <InputLabel value="Centro de costo" class="mb-1.5" />
+                        <select v-model="form.cost_center_id" class="form-select w-full">
+                            <option :value="null">Sin centro de costo</option>
+                            <option v-for="center in costCenters" :key="center.id" :value="center.id">
+                                {{ center.code }} · {{ center.name }}
+                            </option>
+                        </select>
+                        <InputError :message="form.errors.cost_center_id" class="mt-2" />
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Clasifica el gasto para los reportes por área.
+                        </p>
                     </div>
                 </div>
 
@@ -402,5 +454,8 @@
                 </PrimaryButton>
             </template>
         </ModalLarge>
+
+        <!-- Detalle del origen del movimiento -->
+        <OriginDetailModal :show="detailModal.show" :detail="detailModal.detail" :on-close="closeDetail" />
     </AppLayout>
 </template>

@@ -213,8 +213,24 @@
         invoice_broadcast_date: null,
         invoice_due_date: null,
         invoice_status: null,
-        type_operation: null
+        type_operation: null,
+        is_factura: false,
+        total: 0,
+        detraccion: false,
+        detraccion_auto: false,
+        detraccion_percent: 12,
+        detraccion_amount: 0
     });
+
+    // La detracción es 12 % del total por defecto; puede ser 10 % o 4 %
+    // según el servicio. La auto-detracción cobra todo y luego se traslada.
+    const recalcDetraccion = () => {
+        const total = Number(formHead.total || 0);
+        const percent = Number(formHead.detraccion_percent || 12);
+        formHead.detraccion_amount = formHead.detraccion
+            ? Math.round(total * percent) / 100
+            : 0;
+    };
     const closeModalEditDocument = () => {
         displayEditDocument.value = false ;
     }
@@ -233,6 +249,12 @@
         formHead.invoice_due_date = document.invoice_due_date;
         formHead.invoice_status = document.invoice_status;
         formHead.type_operation = document.invoice_type_operation;
+        formHead.is_factura = String(document.invoice_type_doc) === '01';
+        formHead.total = Number(document.overall_total || 0);
+        formHead.detraccion = Boolean(document.detraccion);
+        formHead.detraccion_auto = Boolean(document.detraccion_auto);
+        formHead.detraccion_percent = Number(document.detraccion_percent || 12);
+        formHead.detraccion_amount = Number(document.detraccion_amount || 0);
         displayEditDocument.value = true ;
     }
 
@@ -726,6 +748,47 @@
                             </template>
                         </select>
                         <InputError :message="formHead.errors.type_operation" class="mt-2" />
+                    </div>
+
+                    <!-- Detracción: solo facturas desde S/ 700, al cobrar -->
+                    <div v-if="formHead.is_factura" class="col-span-6">
+                        <div class="rounded-lg border border-warning/40 bg-warning/5 p-3">
+                            <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+                                <input type="checkbox" class="form-checkbox rounded"
+                                    :disabled="formHead.total < 700"
+                                    v-model="formHead.detraccion"
+                                    @change="formHead.detraccion ? recalcDetraccion() : null" />
+                                Factura sujeta a detracción
+                                <span class="text-xs font-normal text-gray-500">
+                                    ({{ formHead.detraccion_percent || 12 }} % de {{ Number(formHead.total || 0).toFixed(2) }})
+                                </span>
+                            </label>
+                            <p v-if="formHead.total < 700" class="mt-1 text-xs text-gray-500">
+                                Solo aplica desde S/ 700. Las boletas no llevan detracción.
+                            </p>
+                            <template v-else>
+                                <label class="mt-2 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+                                    <input type="checkbox" class="form-checkbox rounded"
+                                        v-model="formHead.detraccion_auto" />
+                                    Hacer auto-detracción
+                                    <span class="text-xs text-gray-500">
+                                        Cobramos todo y la empresa traslada el importe a Detracción
+                                    </span>
+                                </label>
+                                <div v-if="formHead.detraccion" class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                                    <span class="text-gray-600 dark:text-gray-300">Porcentaje</span>
+                                    <select v-model.number="formHead.detraccion_percent" class="form-select w-44" @change="recalcDetraccion">
+                                        <option :value="12">12 % — servicios generales</option>
+                                        <option :value="10">10 % — intermediación / construcción</option>
+                                        <option :value="4">4 % — transporte de bienes</option>
+                                    </select>
+                                    <span class="text-gray-500">
+                                        Detracción: <strong>S/ {{ Number(formHead.detraccion_amount || 0).toFixed(2) }}</strong>
+                                        · se registra al cobrar
+                                    </span>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </div>
             </template>

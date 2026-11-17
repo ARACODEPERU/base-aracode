@@ -8,6 +8,7 @@ use App\Models\Industry;
 use App\Models\Parameter;
 use App\Models\Person;
 use App\Models\User;
+use App\Support\PersonProfileData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -342,48 +343,44 @@ class CrmContactsController extends Controller
             ]
         );
 
-        // $path = 'img' . DIRECTORY_SEPARATOR . 'imagen-no-disponible.jpeg';
-        // $destination = 'uploads' . DIRECTORY_SEPARATOR . 'products';
-        $path = null;
-        $destination = 'uploads/crm/companies';
-        $file = $request->file('image');
-
         $industry = $request->get('industry');
 
-        $per = Person::find($update_id)->update(
-            [
-                'document_type_id'      => $request->get('document_type_id'),
-                'number'                => trim($request->get('number')),
-                'short_name'            => strtoupper(trim($request->get('short_name'))),
-                'full_name'             => strtoupper(trim($request->get('full_name'))),
-                'names'                 => strtoupper(trim($request->get('short_name'))),
-                'telephone'             => trim($request->get('telephone')),
-                'email'                 => trim($request->get('email')),
-                'image'                 => $path,
-                'address'               => $request->get('address'),
-                'ubigeo'                => $request->get('ubigeo'),
-                'industry_id'           => $industry['id'],
-                'industry'              => $industry['description'],
-                'contact_telephone'     => trim($request->get('contact_telephone')),
-                'contact_name'          => trim($request->get('contact_name')),
-                'contact_email'         => trim($request->get('contact_email'))
-            ]
+        $per = Person::findOrFail($update_id);
+
+        // findOrFail devuelve el modelo (antes se usaba el bool de update() como
+        // persona). La imagen solo se escribe cuando llega una nueva.
+        $newImage = PersonProfileData::storeNewImage(
+            $request,
+            'image',
+            'uploads/crm/companies',
+            (string) $request->get('number')
         );
 
-        if ($file) {
-            $original_name = strtolower(trim($file->getClientOriginalName()));
-            $original_name = str_replace(" ", "_", $original_name);
-            $extension = $file->getClientOriginalExtension();
-            $file_name = trim($request->get('number')) . '.' . $extension;
-            $path = $request->file('image')->storeAs(
-                $destination,
-                $file_name,
-                'public'
-            );
+        $data = [
+            'document_type_id'      => $request->get('document_type_id'),
+            'number'                => trim($request->get('number')),
+            'short_name'            => strtoupper(trim($request->get('short_name'))),
+            'full_name'             => strtoupper(trim($request->get('full_name'))),
+            'names'                 => strtoupper(trim($request->get('short_name'))),
+            'telephone'             => trim($request->get('telephone')),
+            'email'                 => trim($request->get('email')),
+            'address'               => $request->get('address'),
+            'ubigeo'                => $request->get('ubigeo'),
+            'contact_telephone'     => trim($request->get('contact_telephone')),
+            'contact_name'          => trim($request->get('contact_name')),
+            'contact_email'         => trim($request->get('contact_email'))
+        ];
 
-            $per->image = $path;
-            $per->save();
+        if (is_array($industry)) {
+            $data['industry_id'] = $industry['id'] ?? null;
+            $data['industry'] = $industry['description'] ?? null;
         }
+
+        if ($newImage) {
+            $data['image'] = $newImage;
+        }
+
+        $per->update($data);
     }
 
     public function companiesDestroy($id)

@@ -27,6 +27,7 @@ use App\Models\Sale;
 use App\Models\SaleDocumentItem;
 use App\Models\SaleProduct;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Greenter\Model\Sale\FormaPagos\FormaPagoContado;
 use Greenter\Model\Sale\FormaPagos\FormaPagoCredito;
 class Boleta
@@ -239,7 +240,11 @@ class Boleta
                 'filePath' => $document->invoice_pdf
             );
         } catch (Exception $e) {
-            var_dump($e);
+            // El error va al log: imprimirlo en la respuesta volcaba la excepcion
+            // completa (con su traza) y podia devolver gigabytes al navegador.
+            Log::error('Boleta::getBoletatDomPdf no pudo generar el PDF del documento '.$id.': '.$e->getMessage());
+
+            return null;
         }
     }
 
@@ -261,7 +266,9 @@ class Boleta
                 'filePath' => $filePath
             );
         } catch (Exception $e) {
-            var_dump($e);
+            Log::error('Boleta::getBoletatPdf no pudo generar el PDF del documento '.$id.': '.$e->getMessage());
+
+            return null;
         }
     }
     public function getBoletaXML($id)
@@ -285,7 +292,10 @@ class Boleta
                 'filePath' => $document->invoice_xml
             );
         } catch (Exception $e) {
-            var_dump($e);
+            // Sin XML el correo sale igual, solo que sin ese adjunto: se avisa en el log.
+            Log::warning('Boleta::getBoletaXML no pudo firmar el XML del documento '.$id.': '.$e->getMessage());
+
+            return null;
         }
     }
     public function getBoletaCDR($id)
@@ -298,7 +308,9 @@ class Boleta
                 'filePath' => $document->invoice_cdr
             );
         } catch (Exception $e) {
-            var_dump($e);
+            Log::error('Boleta::getBoletaCDR no pudo leer el CDR del documento '.$id.': '.$e->getMessage());
+
+            return null;
         }
     }
 

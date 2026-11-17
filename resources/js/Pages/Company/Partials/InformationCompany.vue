@@ -383,6 +383,7 @@ const saveSocialNetworks = () => {
         account_name: null,
         account_number: null,
         qr_image: null,
+        has_payment_link: false,
         bank_account_id: null,
         status: true
     });
@@ -395,6 +396,7 @@ const saveSocialNetworks = () => {
             formBilletera.account_name = item.account_name;
             formBilletera.account_number = item.account_number;
             formBilletera.bank_account_id = item.bank_account_id || null;
+            formBilletera.has_payment_link = item.has_payment_link == 1 || item.has_payment_link === true;
             formBilletera.status = item.status == 1 ? true : false;
         }
         displayModalBilletera.value = true;
@@ -1192,6 +1194,12 @@ const saveSocialNetworks = () => {
                         alt="QR"
                         class="mt-2 w-24 h-24 object-cover rounded-md border"
                     />
+                </div>
+                <div>
+                    <label class="inline-flex">
+                        <input v-model="formBilletera.has_payment_link" type="checkbox" class="form-checkbox text-primary rounded" />
+                        <span class="ml-2">Permite pago mediante enlace</span>
+                    </label>
                 </div>
                 <div>
                     <label class="inline-flex">

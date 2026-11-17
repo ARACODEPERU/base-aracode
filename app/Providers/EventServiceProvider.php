@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\BlogUserRegistered;
+use App\Listeners\SendBlogUserToIntegrationhub;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -17,6 +19,11 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         Registered::class => [
             SendEmailVerificationNotification::class,
+        ],
+        // El alta desde el blog se envia al Integrationhub con todos los datos
+        // del lector; el listener no puede interrumpir el registro.
+        BlogUserRegistered::class => [
+            SendBlogUserToIntegrationhub::class,
         ],
     ];
 

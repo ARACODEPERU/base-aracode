@@ -122,11 +122,18 @@ const updateParameter = () => {
                     class="mt-1 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     id="value_default"
                     v-model="form.value_default"
-                    :rows="form.parameter_code === 'P000026' || form.parameter_code === 'P000027' ? 15 : 5"
-                    :maxlength="form.parameter_code === 'P000026' || form.parameter_code === 'P000027' ? 100000 : 5000"
+                    :rows="form.parameter_code === 'P000026' || form.parameter_code === 'P000027' || form.parameter_code === 'P000022' ? 15 : 5"
+                    :maxlength="form.parameter_code === 'P000026' || form.parameter_code === 'P000027' || form.parameter_code === 'P000022' ? 100000 : 5000"
                 ></textarea>
-                <small class="text-gray-500">{{ form.value_default?.length || 0 }} / {{ form.parameter_code === 'P000026' || form.parameter_code === 'P000027' ? 100000 : 5000 }} caracteres</small>
+                <small class="text-gray-500">{{ form.value_default?.length || 0 }} / {{ form.parameter_code === 'P000026' || form.parameter_code === 'P000027' || form.parameter_code === 'P000022' ? 100000 : 5000 }} caracteres</small>
                 <InputError :message="form.errors.value_default" class="mt-2" />
+                <!-- Guía del parámetro de etiquetas: qué pegar, qué evitar y cómo comprobarlo -->
+                <div v-if="form.parameter_code === 'P000022'" class="mt-2 p-3 text-sm rounded-lg bg-blue-50 text-blue-900 dark:bg-gray-800 dark:text-blue-200">
+                    <p class="font-semibold mb-1">Código de Google Tag Manager, Google Analytics o píxeles</p>
+                    <p class="mb-1"><strong>Qué pegar:</strong> el código completo que entrega la plataforma (scripts y, si aplica, el bloque <code>&lt;noscript&gt;</code>). También puedes pegar solo el ID de GTM (<code>GTM-XXXXXXX</code>) y el sistema genera el resto.</p>
+                    <p class="mb-1"><strong>Qué no hacer:</strong> no pongas el ID de GA4 (<code>G-XXXX</code>) aquí y en el código fijo a la vez; no pegues dos veces el mismo contenedor de GTM; no pegues código sin revisar, porque se imprime tal cual en todas las páginas.</p>
+                    <p><strong>Cómo probar:</strong> guarda, abre el sitio en una ventana privada y revisa en las herramientas de desarrollador (Red) que cargue la etiqueta de GTM o el píxel una sola vez.</p>
+                </div>
             </div>
             <div v-else class="col-span-6 sm:col-span-2 ">
                 <InputLabel for="value_default" value="Valor *" />

@@ -49,6 +49,8 @@ class User extends Authenticatable
         'numero_identidad',
         'sexo',
         'direccion',
+        // Pais declarado en el registro del blog.
+        'country_id',
     ];
 
     /**
@@ -92,6 +94,11 @@ class User extends Authenticatable
     public function person(): HasOne
     {
         return $this->hasOne(Person::class, 'id', 'person_id');
+    }
+
+    public function country(): HasOne
+    {
+        return $this->hasOne(Country::class, 'id', 'country_id');
     }
 
     public function sendEmailVerificationNotification()

@@ -12,11 +12,13 @@ import Swal2 from "sweetalert2";
  * La consulta tambien es lo que habilita el envio del formulario para RUC.
  *
  * @param {object} options
- * @param {object} options.form   Formulario de Inertia (fuente del RUC y destino de los datos).
- * @param {string} options.token  Token publico de la negociacion.
- * @param {object} options.locks  Campos ya verificados (useVerifiedIdentityLocks).
+ * @param {object}   options.form   Formulario de Inertia (fuente del RUC y destino de los datos).
+ * @param {string}   options.token  Token publico de la negociacion.
+ * @param {object}   options.locks  Campos ya verificados (useVerifiedIdentityLocks).
+ * @param {Function} [options.requestPrivacyConsent] Pide la aceptacion de la politica en un modal;
+ *                                             resuelve true si el cliente la acepta.
  */
-export function useRucSunatCheck({ form, token, locks }) {
+export function useRucSunatCheck({ form, token, locks, requestPrivacyConsent }) {
     const rucClientLoading = ref(false);
     // La consulta devolvio datos: razon social y direccion quedaron bloqueadas.
     const rucClientValidated = ref(false);
@@ -61,9 +63,16 @@ export function useRucSunatCheck({ form, token, locks }) {
         if (rucClientLoading.value) return;
 
         // El RUC no sale del navegador hasta que el titular acepta la politica de
-        // privacidad: consultarlo en SUNAT ya es tratar su dato.
+        // privacidad: consultarlo en SUNAT ya es tratar su dato. La aceptacion se pide
+        // en un modal (sus casillas estan al final del formulario) y, al aceptarla, la
+        // consulta sigue sola.
         if (! form.accepted_privacidad) {
             rucClientNotice.value = "Acepta la Política de Privacidad para verificar tu RUC.";
+
+            Promise.resolve(requestPrivacyConsent?.()).then((accepted) => {
+                if (accepted) validateClientRuc();
+            });
+
             return;
         }
 

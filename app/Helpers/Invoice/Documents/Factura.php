@@ -439,7 +439,11 @@ class Factura
                 'filePath' => $document->invoice_pdf
             );
         } catch (Exception $e) {
-            var_dump($e);
+            // El error va al log: imprimirlo en la respuesta volcaba la excepcion
+            // completa (con su traza) y podia devolver gigabytes al navegador.
+            Log::error('Factura::getFacturaDomPdf no pudo generar el PDF del documento '.$id.': '.$e->getMessage());
+
+            return null;
         }
     }
 
@@ -459,7 +463,9 @@ class Factura
                 'filePath' => $filePath
             );
         } catch (Exception $e) {
-            var_dump($e);
+            Log::error('Factura::getFacturaPdf no pudo generar el PDF del documento '.$id.': '.$e->getMessage());
+
+            return null;
         }
     }
     public function getFacturaXML($id)
@@ -481,7 +487,10 @@ class Factura
                 'filePath' => $document->invoice_xml
             );
         } catch (Exception $e) {
-            var_dump($e);
+            // Sin XML el correo sale igual, solo que sin ese adjunto: se avisa en el log.
+            Log::warning('Factura::getFacturaXML no pudo firmar el XML del documento '.$id.': '.$e->getMessage());
+
+            return null;
         }
     }
 
@@ -522,7 +531,9 @@ class Factura
                 'filePath' => $document->invoice_cdr
             );
         } catch (Exception $e) {
-            var_dump($e);
+            Log::error('Factura::getFacturaCDR no pudo leer el CDR del documento '.$id.': '.$e->getMessage());
+
+            return null;
         }
     }
 

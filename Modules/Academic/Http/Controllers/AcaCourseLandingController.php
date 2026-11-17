@@ -727,6 +727,10 @@ class AcaCourseLandingController extends Controller
 
     public function show($slug)
     {
+        // TODO: este alias (/academy/{slug}) renderiza el componente Inertia
+        // `Academic::Courses/PublicLanding`, que debe existir en
+        // Modules/Academic/Resources/assets/js/Pages/Courses/PublicLanding.vue.
+        // Ese componente aun no existe en este proyecto (se creara despues).
         $landing = AcaCourseLanding::where('url_slug', $slug)
             ->where('is_published', true)
             ->with('course.category', 'course.modality')

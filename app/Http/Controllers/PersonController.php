@@ -7,13 +7,12 @@ use App\Models\IdentityDocumentType;
 use App\Models\Parameter;
 use App\Models\Person;
 use App\Models\User;
+use App\Support\PersonProfileData;
 use App\Support\PersonUserPersistenceVerifier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use GuzzleHttp\Client;
 use Illuminate\Validation\Rule;
@@ -198,22 +197,27 @@ class PersonController extends Controller
 
     public function updateInformationPerson(Request $request)
     {
-        $person_id = $request->get('id');
-        $student_id = $request->get('student_id');
+        $user = Auth::user();
 
-        $user = User::where('person_id', $person_id)->first();
+        if (! $user) {
+            abort(403);
+        }
+
+        // La ficha se resuelve por el usuario autenticado, no por el id que manda
+        // el formulario: asi nadie edita la persona de otra cuenta.
+        $person = $user->person_id ? Person::find($user->person_id) : null;
 
         // updated_information en false significa que es la primera vez que la persona
         // completa su perfil obligatorio: esa transicion es la que avisa a n8n.
-        $wasUpdatedInformation = (bool) ($user?->updated_information);
+        $wasUpdatedInformation = (bool) $user->updated_information;
 
         $isForeign = IdentityDocumentType::isForeign($request->get('document_type_id'));
 
         $rules = [
             'document_type_id'  => 'required',
-            'number'            => ['required', 'max:12', \Illuminate\Validation\Rule::unique('people', 'number')->ignore($person_id, 'id')],
+            'number'            => ['required', 'max:12', Rule::unique('people', 'number')->ignore($person?->id, 'id')],
             'telephone'         => 'required|max:12',
-            'email'             => ['required', 'max:255', \Illuminate\Validation\Rule::unique('people', 'email')->ignore($person_id, 'id')],
+            'email'             => ['required', 'max:255', Rule::unique('people', 'email')->ignore($person?->id, 'id')],
             'address'           => 'required|max:255',
             'birthdate'         => 'required',
             'names'             => 'required|max:255',
@@ -239,64 +243,58 @@ class PersonController extends Controller
 
         $this->validate($request, $rules);
 
-        // El texto que se guarda en people sale del catalogo y no de lo que venga en
-        // la peticion, para que la ficha y el payload queden con el nombre oficial.
-        [$occupationId, $occupation] = $this->resolveCatalogValue($request->get('occupation_id'), 'occupations');
-        [$professionId, $profession] = $this->resolveCatalogValue($request->get('profession_id'), 'professions');
-        [$industryId, $industry] = $this->resolveCatalogValue($request->get('industry_id'), 'industries');
+        // Solo se guarda una imagen nueva (data URI o archivo). Si el formulario
+        // reenvia la ruta que ya tenia la ficha, se conserva la foto actual.
+        $newImage = PersonProfileData::storeNewImage(
+            $request,
+            'image',
+            'uploads/students',
+            (string) $request->get('number')
+        );
 
-        $path = null;
-        $destination = 'uploads/students';
-        $base64Image = $request->get('image');
-
-        if ($base64Image) {
-            $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
-            if (PHP_OS == 'WINNT') {
-                $tempFile = tempnam(sys_get_temp_dir(), 'img');
-            } else {
-                $tempFile = tempnam('/var/www/html/img_temp', 'img');
-            }
-            file_put_contents($tempFile, $fileData);
-            $mime = mime_content_type($tempFile);
-
-            $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
-            $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
-
-            if ($file) {
-                $original_name = strtolower(trim($file->getClientOriginalName()));
-                $original_name = str_replace(" ", "_", $original_name);
-                $extension = $file->getClientOriginalExtension();
-                $file_name = trim($request->get('number')) . '.' . $extension;
-                $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
-            }
-        }
-
+        // El formulario obligatorio no tiene campo description: si no llega, no se
+        // incluye en el update y people.description conserva su valor anterior.
         $updateData = [
             'document_type_id'      => $request->get('document_type_id'),
             'short_name'            => trim($request->get('names')),
             'full_name'             => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
-            'description'           => $request->get('description'),
             'number'                => $request->get('number'),
             'telephone'             => $request->get('telephone'),
             'email'                 => $request->get('email'),
-            'image'                 => $path,
             'address'               => $request->get('address'),
-            'is_provider'           => false,
-            'is_client'             => true,
             'birthdate'             => $request->get('birthdate'),
             'names'                 => trim($request->get('names')),
             'father_lastname'       => trim($request->get('father_lastname')),
             'mother_lastname'       => trim($request->get('mother_lastname')),
-            // Mismos campos de la ficha que viajan en el bloque 'persona' del payload.
-            'gender'                => $request->get('gender'),
-            'ocupacion'             => $occupation,
-            'occupation_id'         => $occupationId,
-            'profession'            => $profession,
-            'profession_id'         => $professionId,
-            'company'               => $request->get('company'),
-            'industry'              => $industry,
-            'industry_id'           => $industryId,
         ];
+
+        // Campos opcionales: solo se escriben cuando el formulario los envia con
+        // valor. is_provider/is_client no se tocan.
+        $updateData = array_merge($updateData, PersonProfileData::onlyFilled($request, [
+            'description'   => 'description',
+            'gender'        => 'gender',
+            'company'       => 'company',
+        ]));
+
+        // Los catalogos se resuelven contra su tabla para guardar el id y el texto
+        // oficial, pero solo cuando el request trae el campo.
+        foreach ([
+            ['input' => 'occupation_id', 'table' => 'occupations', 'idField' => 'occupation_id', 'textField' => 'ocupacion'],
+            ['input' => 'profession_id', 'table' => 'professions', 'idField' => 'profession_id', 'textField' => 'profession'],
+            ['input' => 'industry_id', 'table' => 'industries', 'idField' => 'industry_id', 'textField' => 'industry'],
+        ] as $catalogo) {
+            if (! $request->exists($catalogo['input'])) {
+                continue;
+            }
+
+            [$catalogoId, $catalogoTexto] = $this->resolveCatalogValue(
+                $request->input($catalogo['input']),
+                $catalogo['table']
+            );
+
+            $updateData[$catalogo['idField']] = $catalogoId;
+            $updateData[$catalogo['textField']] = $catalogoTexto;
+        }
 
         if ($isForeign) {
             $country = \App\Models\Country::find($request->get('foreign_country_id'));
@@ -313,20 +311,44 @@ class PersonController extends Controller
             $updateData['foreign_city'] = null;
         }
 
-        $person = Person::findOrFail($person_id);
-        $person->update($updateData);
+        if ($newImage) {
+            $updateData['image'] = $newImage;
+        }
+
+        if ($person) {
+            $person->update($updateData);
+        } else {
+            // Usuario sin ficha vinculada (por ejemplo, registrado solo con su
+            // cuenta): se crea la ficha con los datos validados y se enlaza.
+            $person = Person::create(array_merge($updateData, [
+                'is_client' => true,
+                'is_provider' => false,
+            ]));
+        }
 
         $userData = [
             'name' => $request->get('names'),
             'email' => $request->get('email'),
-            'information' => $request->get('description'),
-            'avatar' => $path,
             'updated_information' => true,
-            'person_id' => $person->id,
         ];
+
+        if (! $user->person_id) {
+            $userData['person_id'] = $person->id;
+        }
+
+        if ($request->exists('description') && PersonProfileData::hasValue($request->input('description'))) {
+            $userData['information'] = trim((string) $request->input('description'));
+        }
+
+        if ($newImage) {
+            $userData['avatar'] = $newImage;
+        }
+
         $user->update($userData);
 
-        DB::table('aca_students')->where('id', $student_id)->update([
+        // El codigo de alumno se actualiza por persona: no se usa el student_id
+        // que viaja en el formulario.
+        DB::table('aca_students')->where('person_id', $person->id)->update([
             'student_code'  => $request->get('number'),
         ]);
 
@@ -336,7 +358,7 @@ class PersonController extends Controller
         // sus datos y sus cursos a n8n. En las ediciones posteriores
         // updated_information ya venia en true, asi que no se reenvia.
         if (! $wasUpdatedInformation) {
-            $webhookPersonId = (int) ($person_id ?: $user?->person_id);
+            $webhookPersonId = (int) $person->id;
 
             if ($webhookPersonId > 0) {
                 SendProfileWebhook::dispatchOnce(
@@ -375,8 +397,16 @@ class PersonController extends Controller
 
     public function createdOrUpdated(Request $request)
     {
-        $person_id = $request->get('id');
         $user = Auth::user();
+
+        if (! $user) {
+            abort(403);
+        }
+
+        // La ficha se resuelve por el usuario autenticado. El id del formulario no
+        // puede reapuntar users.person_id a otra persona ni dejar la ficha anterior
+        // huerfana.
+        $person = $user->person_id ? Person::find($user->person_id) : null;
 
         // Si ya habia completado sus datos antes, este guardado es una edicion y no
         // debe reenviarse el aviso a n8n.
@@ -428,125 +458,67 @@ class PersonController extends Controller
             $foreignCity = null;
         }
 
-        if ($person_id) {
-            $person = Person::find($person_id);
-            if ($person) {
-            $person->update([
-                'document_type_id' => $request->get('document_type_id'),
-                'number' => trim($request->input('number')),
-                'short_name' => trim($request->input('names')),
-                'full_name' => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
-                'description' => trim($request->input('description')),
-                'telephone' => $request->input('telephone'),
-                'email' => $email,
-                'address' => trim($request->input('address')),
-                'ubigeo' => $ubigeoValue,
-                'birthdate' => $request->input('birthdate'),
-                'names' => trim($request->input('names')),
-                'father_lastname' => trim($request->input('father_lastname')),
-                'mother_lastname' => trim($request->input('mother_lastname')),
-                'ocupacion' => $request->input('ocupacion'),
-                'presentacion' => $request->input('presentacion'),
-                'gender' => $request->input('gender'),
-                'is_provider'           => false,
-                'is_client'             => true,
-                'status' => true,
-                'social_networks' => json_encode($request->input('social_networks')),
-                'ubigeo_description' => $ubigeoDescription,
-                'foreign_country_id' => $foreignCountryId,
-                'foreign_state' => $foreignState,
-                'foreign_city' => $foreignCity,
-            ]);
+        // Solo se envian a people las claves presentes con valor. description,
+        // ocupacion, presentacion y gender no se borran cuando el formulario no
+        // los manda. is_provider/is_client/status tampoco se tocan.
+        $personData = PersonProfileData::onlyFilled($request, [
+            'document_type_id' => 'document_type_id',
+            'number'           => 'number',
+            'description'      => 'description',
+            'telephone'        => 'telephone',
+            'address'          => 'address',
+            'birthdate'        => 'birthdate',
+            'names'            => 'names',
+            'father_lastname'  => 'father_lastname',
+            'mother_lastname'  => 'mother_lastname',
+            'ocupacion'        => 'ocupacion',
+            'presentacion'     => 'presentacion',
+            'gender'           => 'gender',
+        ]);
 
-            $user = User::find(Auth::id());
-            $user->update([
-                'email' => $email,
-                'name' => trim($request->input('names')),
-                'person_id' => $person->id,
-                'updated_information' => true
-            ]);
+        $personData['short_name'] = trim((string) $request->input('names'));
+        $personData['full_name'] = trim($request->get('father_lastname') . ' ' . $request->get('mother_lastname') . ' ' . $request->get('names'));
+        $personData['email'] = $email;
+        $personData['ubigeo'] = $ubigeoValue;
+        $personData['ubigeo_description'] = $ubigeoDescription;
+        $personData['foreign_country_id'] = $foreignCountryId;
+        $personData['foreign_state'] = $foreignState;
+        $personData['foreign_city'] = $foreignCity;
 
-            $webhookPersonId = $person->id;
-            }
+        if ($request->exists('social_networks') && PersonProfileData::hasValue($request->input('social_networks'))) {
+            $socialNetworks = $request->input('social_networks');
+            $personData['social_networks'] = is_array($socialNetworks) ? json_encode($socialNetworks) : $socialNetworks;
+        }
+
+        if ($person) {
+            $person->update($personData);
         } else {
-            $person = Person::updateOrCreate(
-                [
-                    'document_type_id' => $request->get('document_type_id'),
-                    'number' => $request->input('number')
-                ], // Buscamos a la persona
-                [
-                    'short_name' => $request->input('names'),
-                    'full_name' => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
-                    'description' => $request->input('description'),
-                    'telephone' => $request->input('telephone'),
-                    'email' => $email,
-                    'address' => trim($request->input('address')),
-                    'ubigeo' => $ubigeoValue,
-                    'birthdate' => $request->input('birthdate'),
-                    'names' => trim($request->input('names')),
-                    'father_lastname' => trim($request->input('father_lastname')),
-                    'mother_lastname' => trim($request->input('mother_lastname')),
-                    'ocupacion' => $request->input('ocupacion'),
-                    'presentacion' => $request->input('presentacion'),
-                    'gender' => $request->input('gender'),
-                    'status' => true,
-                    'social_networks' => json_encode($request->input('social_networks')),
-                    'ubigeo_description' => $ubigeoDescription,
-                    'foreign_country_id' => $foreignCountryId,
-                    'foreign_state' => $foreignState,
-                    'foreign_city' => $foreignCity,
-                ]
-            );
-
-            $user = User::find(Auth::id());
-            $user->update([
-                'person_id' => $person->id,
-                'name' => trim($request->input('names')),
-                'email' => $email,
-                'updated_information' => true
+            // Sin ficha previa: se busca por documento y, si no existe, se crea.
+            // Nunca se duplica una persona que ya tenga ese documento.
+            $person = Person::firstOrNew([
+                'document_type_id' => $request->get('document_type_id'),
+                'number'           => trim((string) $request->input('number')),
             ]);
-
-            $webhookPersonId = $person->id;
+            $person->fill($personData)->save();
         }
 
-        if (isset($person) && isset($user) && $person->exists && $user->exists) {
-            PersonUserPersistenceVerifier::verify(
-                $person,
-                $user,
-                [
-                    'document_type_id' => $request->get('document_type_id'),
-                    'number' => trim($request->input('number')),
-                    'short_name' => trim($request->input('names')),
-                    'full_name' => trim($request->get('father_lastname').' '.$request->get('mother_lastname').' '.$request->get('names')),
-                    'description' => trim($request->input('description')),
-                    'telephone' => $request->input('telephone'),
-                    'email' => $email,
-                    'address' => trim($request->input('address')),
-                    'ubigeo' => $ubigeoValue,
-                    'birthdate' => $request->input('birthdate'),
-                    'names' => trim($request->input('names')),
-                    'father_lastname' => trim($request->input('father_lastname')),
-                    'mother_lastname' => trim($request->input('mother_lastname')),
-                    'ocupacion' => $request->input('ocupacion'),
-                    'presentacion' => $request->input('presentacion'),
-                    'gender' => $request->input('gender'),
-                    'is_provider' => false,
-                    'is_client' => true,
-                    'status' => true,
-                    'social_networks' => json_encode($request->input('social_networks')),
-                    'ubigeo_description' => $ubigeoDescription,
-                    'foreign_country_id' => $foreignCountryId,
-                    'foreign_state' => $foreignState,
-                    'foreign_city' => $foreignCity,
-                ],
-                [
-                    'person_id' => $person->id,
-                    'email' => $email,
-                    'name' => trim($request->input('names')),
-                    'updated_information' => true,
-                ]
-            );
+        $userData = [
+            'name'                => trim((string) $request->input('names')),
+            'email'               => $email,
+            'updated_information' => true,
+        ];
+
+        // Solo se enlaza la persona cuando el usuario no tenia una. Si ya tenia,
+        // se conserva esa vinculacion.
+        if (! $user->person_id) {
+            $userData['person_id'] = $person->id;
         }
+
+        $user->update($userData);
+
+        $webhookPersonId = $person->id;
+
+        PersonUserPersistenceVerifier::verify($person, $user, $personData, $userData);
 
         // Primera vez que la persona completa sus datos: mismo aviso a n8n que el
         // formulario de perfil obligatorio, con sus cursos incluidos.
@@ -663,8 +635,23 @@ class PersonController extends Controller
 
     public function updateInfoPersonByUser(Request $request)
     {
-        $person_id = $request->get('id');
-        $user = User::findOrFail($request->get('user_id'));
+        $authUser = Auth::user();
+
+        if (! $authUser) {
+            abort(403);
+        }
+
+        // El panel de usuarios puede editar otra cuenta solo si quien guarda es
+        // administrador; el resto de usuarios siempre edita su propia cuenta.
+        $user = $authUser;
+        if ($request->filled('user_id')
+            && (int) $request->input('user_id') !== (int) $authUser->id
+            && $authUser->hasAnyRole(['admin', 'Administrador'])) {
+            $user = User::findOrFail($request->input('user_id'));
+        }
+
+        // La ficha sale del usuario objetivo, no del id que manda el formulario.
+        $person = $user->person_id ? Person::find($user->person_id) : null;
 
         $isForeign = IdentityDocumentType::isForeign($request->get('document_type'));
 
@@ -672,12 +659,14 @@ class PersonController extends Controller
             'document_type'     => 'required',
             'number'            => [
                 'required', 'max:12',
-                "unique:people,number,{$person_id},id,document_type_id," . $request->get('document_type')
+                Rule::unique('people', 'number')
+                    ->ignore($person?->id, 'id')
+                    ->where('document_type_id', $request->get('document_type'))
             ],
             'email'             => [
                 'required', 'email', 'max:255',
-                "unique:people,email,{$person_id},id",
-                "unique:users,email,{$user->id},id"
+                Rule::unique('people', 'email')->ignore($person?->id, 'id'),
+                Rule::unique('users', 'email')->ignore($user->id, 'id')
             ],
             'names'             => 'required|max:255',
             'father_lastname'   => 'required|max:255',
@@ -697,22 +686,25 @@ class PersonController extends Controller
 
         $this->validate($request, $rules);
 
-        \DB::transaction(function () use ($request, $person_id, $user, $isForeign) {
+        DB::transaction(function () use ($request, $person, $user, $isForeign) {
 
-            $person = Person::find($person_id);
+            // Solo los campos que llegan con valor. gender deja de forzarse a 'M'
+            // y los campos opcionales no se borran por no venir en el formulario.
+            $data = PersonProfileData::onlyFilled($request, [
+                'document_type_id'   => 'document_type',
+                'number'             => 'number',
+                'telephone'          => 'telephone',
+                'email'              => 'email',
+                'address'            => 'address',
+                'birthdate'          => 'birthdate',
+                'names'              => 'names',
+                'father_lastname'    => 'father_lastname',
+                'mother_lastname'    => 'mother_lastname',
+                'gender'             => 'gender',
+            ]);
 
-            $data = [
-                'document_type_id'   => $request->get('document_type'),
-                'number'             => $request->get('number'),
-                'telephone'          => $request->get('telephone'),
-                'email'              => $request->get('email'),
-                'address'            => $request->get('address'),
-                'birthdate'          => $request->get('birthdate'),
-                'names'              => $request->get('names'),
-                'father_lastname'    => $request->get('father_lastname'),
-                'mother_lastname'    => $request->get('mother_lastname'),
-                'gender'             => $request->get('gender') ?? 'M',
-            ];
+            $data['short_name'] = trim((string) $request->input('names'));
+            $data['full_name'] = trim($request->get('father_lastname').' '.$request->get('mother_lastname').' '.$request->get('names'));
 
             if ($isForeign) {
                 $country = \App\Models\Country::find($request->get('foreign_country_id'));
@@ -737,24 +729,18 @@ class PersonController extends Controller
                 $user->person_id = $person->id;
             }
 
-            $user->name = $request->get('names');
-            $user->email = $request->get('email');
-            $user->person_id = $person->id;
-            $user->save();
+            $userData = [
+                'name'  => $request->get('names'),
+                'email' => $request->get('email'),
+            ];
 
-            PersonUserPersistenceVerifier::verify(
-                $person,
-                $user,
-                array_merge($data, [
-                    'short_name' => $request->get('names'),
-                    'full_name' => trim($request->get('father_lastname').' '.$request->get('mother_lastname').' '.$request->get('names')),
-                ]),
-                [
-                    'name' => $request->get('names'),
-                    'email' => $request->get('email'),
-                    'person_id' => $person->id,
-                ]
-            );
+            if (! $user->person_id) {
+                $userData['person_id'] = $person->id;
+            }
+
+            $user->update($userData);
+
+            PersonUserPersistenceVerifier::verify($person, $user, $data, $userData);
         });
 
         return response()->json(['message' => 'Datos actualizados correctamente']);

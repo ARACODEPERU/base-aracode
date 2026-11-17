@@ -18,6 +18,7 @@ use App\Models\SaleDocumentType;
 use App\Models\SaleProduct;
 use App\Models\Serie;
 use App\Models\User;
+use App\Support\PersonProfileData;
 use App\Support\PersonUserPersistenceVerifier;
 use Carbon\Carbon;
 use DataTables;
@@ -271,22 +272,31 @@ class AccountsReceivableController extends Controller
                 if ($person_id) {
                     $person = Person::find($person_id);
 
+                    if (! $person) {
+                        throw new \Exception('La persona indicada no existe.');
+                    }
+
                     $personData = [
                         'short_name' => $request->get('names'),
                         'full_name' => $request->get('afather').' '.$request->get('amother').' '.$request->get('names'),
                         'telephone' => $request->get('telephone'),
                         'email' => $request->get('email'),
-                        'address' => $request->get('address'),
                         'names' => $request->get('names'),
                         'father_lastname' => $request->get('afather'),
                         'mother_lastname' => $request->get('amother'),
-                        'birthdate' => $request->get('birthdate'),
-                        'gender' => $request->get('gender'),
-                        'status' => true,
-                        'ubigeo' => $request->get('ubigeo'),
-                        'ubigeo_description' => $request->get('ubigeo_description'),
-                        'country_id' => $request->get('country_id'),
                     ];
+
+                    // address/ubigeo/country/gender/birthdate son opcionales en
+                    // este formulario: si no llegan, se conserva el valor actual.
+                    $personData = array_merge($personData, PersonProfileData::onlyFilled($request, [
+                        'address' => 'address',
+                        'birthdate' => 'birthdate',
+                        'gender' => 'gender',
+                        'ubigeo' => 'ubigeo',
+                        'ubigeo_description' => 'ubigeo_description',
+                        'country_id' => 'country_id',
+                    ]));
+
                     $person->update($personData);
                 } else {
                     $personData = [
@@ -317,14 +327,25 @@ class AccountsReceivableController extends Controller
                     ['student_code' => $request->get('alu_number')]
                 );
 
-                $userData = [
-                    'name' => $request->get('names'),
-                    'email' => $request->get('email'),
-                    'password' => Hash::make($request->get('alu_number')),
-                    'local_id' => 1,
-                    'person_id' => $person->id,
-                ];
-                $user = User::updateOrCreate(['email' => $request->get('email')], $userData);
+                $user = User::where('person_id', $person->id)->first()
+                    ?: User::where('email', $request->get('email'))->first();
+
+                if ($user) {
+                    // Un alumno existente conserva su contrasena y su avatar.
+                    $user->update([
+                        'name' => $request->get('names'),
+                        'email' => $request->get('email'),
+                        'person_id' => $person->id,
+                    ]);
+                } else {
+                    $user = User::create([
+                        'name' => $request->get('names'),
+                        'email' => $request->get('email'),
+                        'password' => Hash::make($request->get('alu_number')),
+                        'local_id' => 1,
+                        'person_id' => $person->id,
+                    ]);
+                }
 
                 $user->assignRole('Alumno');
 
