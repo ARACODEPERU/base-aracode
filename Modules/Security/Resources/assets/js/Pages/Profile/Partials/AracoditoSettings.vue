@@ -18,6 +18,7 @@
         aracodito_enabled: Boolean(props.user?.aracodito_enabled ?? authUser.aracodito_enabled ?? false),
         aracodito_audio_enabled: Boolean(props.user?.aracodito_audio_enabled ?? authUser.aracodito_audio_enabled ?? false),
         aracodito_ia_enabled: Boolean(props.user?.aracodito_ia_enabled ?? authUser.aracodito_ia_enabled ?? false),
+        aracodito_style: String(props.user?.aracodito_style ?? authUser.aracodito_style ?? 'classic'),
     });
 
     const bubbleText = computed(() => {
@@ -36,14 +37,23 @@
     // El interruptor manda de inmediato: los avisos de la vista usan el mismo
     // valor que se ve en pantalla, sin esperar a guardar ni recargar.
     watch(
-        () => [settings.aracodito_enabled, settings.aracodito_audio_enabled, settings.aracodito_ia_enabled],
-        ([enabled, audio, ia]) => {
+        () => [
+            settings.aracodito_enabled,
+            settings.aracodito_audio_enabled,
+            settings.aracodito_ia_enabled,
+            settings.aracodito_style,
+        ],
+        ([enabled, audio, ia, style]) => {
             window.USER_CONFIG = {
                 ...(window.USER_CONFIG || {}),
                 aracodito_enabled: Boolean(enabled),
                 aracodito_audio_enabled: Boolean(audio),
                 aracodito_ia_enabled: Boolean(ia),
+                aracodito_style: style === 'pixel' ? 'pixel' : 'classic',
             };
+
+            // Si el aviso ya está abierto, cambia el sprite sin recargar la vista.
+            window.Aracodito?.setStyle?.(style);
         },
         { immediate: true }
     );
@@ -113,6 +123,8 @@
                     }), 900);
                 })
                 : undefined;
+
+            window.Aracodito.setStyle?.(settings.aracodito_style);
 
             window.Aracodito.showMessage(item.message, item.type, {
                 duration: 0,
@@ -197,6 +209,58 @@
                             ></span>
                         </label>
                     </div>
+                </div>
+
+                <!-- Estilo visual -->
+                <div class="border border-[#ebedf2] dark:border-[#191e3a] rounded-md p-4" :class="{ 'opacity-60': !settings.aracodito_enabled }">
+                    <p class="font-semibold">Estilo visual</p>
+                    <p class="text-sm text-white-dark mt-1">
+                        Elige cómo aparecerá Aracodito. El estilo clásico se conserva y el retro pixel añade una
+                        retícula visible y una burbuja de diálogo de 16 bits.
+                    </p>
+                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label
+                            for="aracodito_style_classic"
+                            class="flex items-start gap-3 border border-[#ebedf2] dark:border-[#191e3a] rounded-md p-3 cursor-pointer"
+                            :class="{ 'border-primary/60 bg-primary/5': settings.aracodito_style === 'classic' }"
+                        >
+                            <input
+                                id="aracodito_style_classic"
+                                name="aracodito_style"
+                                v-model="settings.aracodito_style"
+                                value="classic"
+                                type="radio"
+                                class="form-radio mt-0.5 shrink-0"
+                                :disabled="!settings.aracodito_enabled"
+                            />
+                            <span>
+                                <span class="block font-semibold">Clásico</span>
+                                <span class="block text-xs text-white-dark">El robot azul actual, con burbuja suave y terminal en el pecho.</span>
+                            </span>
+                        </label>
+                        <label
+                            for="aracodito_style_pixel"
+                            class="flex items-start gap-3 border border-[#ebedf2] dark:border-[#191e3a] rounded-md p-3 cursor-pointer"
+                            :class="{ 'border-primary/60 bg-primary/5': settings.aracodito_style === 'pixel' }"
+                        >
+                            <input
+                                id="aracodito_style_pixel"
+                                name="aracodito_style"
+                                v-model="settings.aracodito_style"
+                                value="pixel"
+                                type="radio"
+                                class="form-radio mt-0.5 shrink-0"
+                                :disabled="!settings.aracodito_enabled"
+                            />
+                            <span>
+                                <span class="block font-semibold">Retro pixel</span>
+                                <span class="block text-xs text-white-dark">Sprite de 16 bits con retícula de píxeles y diálogo pixelado.</span>
+                            </span>
+                        </label>
+                    </div>
+                    <p class="text-xs text-white-dark mt-2">
+                        Las vistas previas de los tipos de mensaje usan el estilo seleccionado.
+                    </p>
                 </div>
 
                 <!-- Modo de salida -->

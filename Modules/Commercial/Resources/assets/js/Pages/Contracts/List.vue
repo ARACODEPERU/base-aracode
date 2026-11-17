@@ -3,9 +3,8 @@ import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
 import Navigation from "@/Components/vristo/layout/Navigation.vue";
 import Pagination from "@/Components/Pagination.vue";
 import Keypad from "@/Components/Keypad.vue";
-import { Link, router, useForm } from "@inertiajs/vue3";
+import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import { faCalendarDays, faPencilAlt, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
-import Swal2 from "sweetalert2";
 
 const props = defineProps({
     contracts: { type: Object, default: () => ({}) },
@@ -27,55 +26,59 @@ const clearSearch = () => {
     });
 };
 
-const destroy = (contract) => {
-    Swal2.fire({
-        title: "Estas seguro?",
-        text: `Esta accion eliminara permanentemente el contrato ${contract.title}.`,
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Eliminar",
-        cancelButtonText: "Cancelar",
-        showLoaderOnConfirm: true,
-        padding: "2em",
-        customClass: "sweet-alerts",
-        preConfirm: () => {
-            return axios.delete(route("comm_contracts_destroy", contract.id)).then((res) => {
-                if (res.data && !res.data.success) {
-                    Swal2.showValidationMessage(res.data.message || "Error al eliminar");
-                }
+/**
+ * Eliminacion: la confirmacion y el resultado pasan por alertaSistema, que
+ * usa Aracodito si el usuario lo tiene activo y Swal si no.
+ */
+const destroy = async (contract) => {
+    const confirmado = await window.alertaSistema(
+        "Estas seguro?",
+        `Esta accion eliminara permanentemente el contrato ${contract.title}.`,
+        "warning",
+        {
+            duration: 0,
+            showCancelButton: true,
+            confirmButtonText: "Eliminar",
+            cancelButtonText: "Cancelar",
+        }
+    );
 
-                return res;
-            }).catch((error) => {
-                Swal2.showValidationMessage(error.response?.data?.message || "Error de conexion");
-            });
-        },
-        allowOutsideClick: () => !Swal2.isLoading(),
-    }).then((result) => {
-        if (!result.isConfirmed) return;
+    if (!confirmado?.isConfirmed) return;
 
-        Swal2.fire({
-            title: "Enhorabuena",
-            text: "Se elimino correctamente",
-            icon: "success",
-            padding: "2em",
-            customClass: "sweet-alerts",
-        });
+    try {
+        const { data } = await axios.delete(route("comm_contracts_destroy", contract.id));
 
-        router.visit(route("comm_contracts"), {
-            replace: false,
-            method: "get",
-            preserveState: true,
-            preserveScroll: true,
-            only: ["contracts"],
-        });
+        if (data && !data.success) {
+            window.alertaSistema("No se pudo eliminar", data.message || "Error al eliminar", "error");
+            return;
+        }
+    } catch (error) {
+        window.alertaSistema(
+            "No se pudo eliminar",
+            error.response?.data?.message || "Error de conexion",
+            "error"
+        );
+        return;
+    }
+
+    window.alertaSistema("Enhorabuena", "Se elimino correctamente", "success");
+
+    router.visit(route("comm_contracts"), {
+        replace: false,
+        method: "get",
+        preserveState: true,
+        preserveScroll: true,
+        only: ["contracts"],
     });
 };
 </script>
 
 <template>
     <AppLayout title="Contratos">
+        <Head>
+            <meta name="aracodito-view" content="new" />
+        </Head>
+
         <Navigation :routeModule="route('comm_dashboard')" titleModule="Comercial"
             :data="[
                 {title: 'Contratos'}

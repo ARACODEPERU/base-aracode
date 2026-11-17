@@ -125,6 +125,7 @@ createInertiaApp({
                     aracodito_enabled: Boolean(Number(usuario.aracodito_enabled)),
                     aracodito_audio_enabled: Boolean(Number(usuario.aracodito_audio_enabled)),
                     aracodito_ia_enabled: Boolean(Number(usuario.aracodito_ia_enabled)),
+                    aracodito_style: usuario.aracodito_style || 'classic',
                 };
             }
 

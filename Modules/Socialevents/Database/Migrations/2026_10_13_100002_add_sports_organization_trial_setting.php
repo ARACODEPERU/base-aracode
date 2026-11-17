@@ -11,13 +11,13 @@ return new class extends Migration
     {
         Schema::create('socialevent_organization_settings', function (Blueprint $table) {
             $table->id();
-            $table->unsignedSmallInteger('trial_days')->default(30);
+            $table->unsignedSmallInteger('trial_days')->default(15);
             $table->decimal('default_match_rate', 10, 2)->default(5);
             $table->timestamps();
         });
 
         DB::table('socialevent_organization_settings')->insert([
-            'trial_days' => 30,
+            'trial_days' => 15,
             'default_match_rate' => 5,
             'created_at' => now(),
             'updated_at' => now(),

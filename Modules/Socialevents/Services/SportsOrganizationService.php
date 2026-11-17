@@ -434,7 +434,7 @@ class SportsOrganizationService
         $settings = Schema::hasTable('socialevent_organization_settings')
             ? DB::table('socialevent_organization_settings')->first()
             : null;
-        $trialDays = max(1, (int) ($settings->trial_days ?? config('socialevents.organizations.trial_days', 30)));
+        $trialDays = max(1, (int) ($settings->trial_days ?? config('socialevents.organizations.trial_days', 15)));
         $startedAt = now();
         $organizationId = DB::table('socialevent_organizations')->insertGetId([
             'name' => $datos['nombre'] ?? $user->name,

@@ -19,17 +19,20 @@
     pointer-events: none;
     font-family: inherit;
     --aracodito-accent: #2196f3;
-    --aracodito-bubble-bg: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%);
-    --aracodito-bubble-tail: #f5f9ff;
-    --aracodito-bubble-border: rgba(33, 150, 243, 0.20);
-    --aracodito-bubble-text: #10203a;
-    --aracodito-bubble-highlight: rgba(255, 255, 255, 0.85);
-    --aracodito-bubble-tint: rgba(33, 150, 243, 0.07);
-    --aracodito-bubble-shadow: 0 24px 60px rgba(15, 23, 42, 0.18), 0 6px 18px rgba(15, 23, 42, 0.08);
+    --aracodito-bubble-bg: #f8fbff;
+    --aracodito-bubble-tail: #f8fbff;
+    --aracodito-bubble-border: rgba(33, 150, 243, 0.35);
+    --aracodito-bubble-text: #0b1f3a;
+    --aracodito-bubble-highlight: #ffffff;
+    --aracodito-bubble-tint: rgba(33, 150, 243, 0.06);
+    --aracodito-bubble-shadow: 6px 6px 0 var(--aracodito-pixel-shadow);
     --aracodito-icon-bg: rgba(33, 150, 243, 0.12);
-    --aracodito-icon-border: rgba(33, 150, 243, 0.26);
-    --aracodito-button-primary-bg: #10203a;
-    --aracodito-button-primary-text: #ffffff;
+    --aracodito-icon-border: rgba(33, 150, 243, 0.34);
+    --aracodito-button-primary-bg: #0b1f3a;
+    --aracodito-button-primary-text: #f8fbff;
+    --aracodito-pixel-ink: #071426;
+    --aracodito-pixel-grid: rgba(33, 150, 243, 0.20);
+    --aracodito-pixel-shadow: rgba(7, 20, 38, 0.28);
 }
 
 #aracodito-widget.aracodito--success {
@@ -90,17 +93,20 @@
 
 /* Modo oscuro del tema Vristo */
 .dark #aracodito-widget {
-    --aracodito-bubble-bg: linear-gradient(180deg, #1a2742 0%, #101a2e 100%);
+    --aracodito-bubble-bg: #101a2e;
     --aracodito-bubble-tail: #101a2e;
-    --aracodito-bubble-border: rgba(130, 170, 255, 0.24);
+    --aracodito-bubble-border: rgba(125, 211, 252, 0.42);
     --aracodito-bubble-text: #eef4ff;
     --aracodito-bubble-highlight: rgba(255, 255, 255, 0.10);
-    --aracodito-bubble-tint: rgba(56, 189, 248, 0.10);
-    --aracodito-bubble-shadow: 0 26px 65px rgba(0, 0, 0, 0.60), 0 0 0 1px rgba(148, 180, 255, 0.06);
+    --aracodito-bubble-tint: rgba(56, 189, 248, 0.08);
+    --aracodito-bubble-shadow: 6px 6px 0 var(--aracodito-pixel-shadow);
     --aracodito-icon-bg: rgba(56, 189, 248, 0.16);
-    --aracodito-icon-border: rgba(125, 211, 252, 0.30);
+    --aracodito-icon-border: rgba(125, 211, 252, 0.38);
     --aracodito-button-primary-bg: #eef4ff;
     --aracodito-button-primary-text: #10203a;
+    --aracodito-pixel-ink: #020814;
+    --aracodito-pixel-grid: rgba(125, 211, 252, 0.16);
+    --aracodito-pixel-shadow: rgba(0, 0, 0, 0.62);
 }
 
 .dark #aracodito-widget.aracodito--success {
@@ -167,26 +173,30 @@
     align-items: flex-start;
     gap: 12px;
     width: max-content;
-    max-width: min(440px, calc(100vw - 32px));
-    padding: 14px 46px 14px 18px;
-    border: 1px solid var(--aracodito-bubble-border);
-    border-radius: 22px;
+    max-width: min(460px, calc(100vw - 32px));
+    padding: 15px 48px 16px 18px;
+    border: 3px solid var(--aracodito-pixel-ink);
+    border-radius: 0;
     background:
-        linear-gradient(180deg, var(--aracodito-bubble-tint) 0%, transparent 65%),
+        linear-gradient(to right, var(--aracodito-pixel-grid) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--aracodito-pixel-grid) 1px, transparent 1px),
         var(--aracodito-bubble-bg);
+    background-size: 8px 8px, 8px 8px, auto;
     color: var(--aracodito-bubble-text);
     box-shadow:
-        var(--aracodito-bubble-shadow),
-        inset 0 1px 0 var(--aracodito-bubble-highlight);
+        inset 0 0 0 2px var(--aracodito-bubble-border),
+        var(--aracodito-bubble-shadow);
+    font-family: "Courier New", ui-monospace, monospace;
+    font-weight: 700;
     /* Oculta por defecto; showMessage() agrega .is-visible */
     opacity: 0;
     visibility: hidden;
-    transform: translateY(10px) scale(0.97);
+    transform: translateY(8px);
     pointer-events: none;
     transition:
-        opacity 0.22s ease,
-        transform 0.22s ease,
-        visibility 0s linear 0.22s;
+        opacity 0.12s steps(2, end),
+        transform 0.12s steps(2, end),
+        visibility 0s linear 0.12s;
 }
 
 .aracodito__bubble.is-visible {
@@ -199,57 +209,71 @@
 
 .aracodito__close {
     position: absolute;
-    top: 7px;
-    right: 7px;
+    top: 8px;
+    right: 8px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     padding: 0;
-    border: 0;
-    border-radius: 999px;
+    border: 2px solid transparent;
+    border-radius: 0;
     background: transparent;
     color: var(--aracodito-bubble-text);
-    opacity: 0.6;
+    opacity: 0.65;
     cursor: pointer;
-    transition: opacity 0.18s ease, background-color 0.18s ease;
+    transition: opacity 0.1s steps(2, end), background-color 0.1s steps(2, end), border-color 0.1s steps(2, end);
 }
 
 .aracodito__close:hover {
-    background: rgba(15, 23, 42, 0.08);
+    border-color: var(--aracodito-pixel-ink);
+    background: var(--aracodito-accent);
+    color: #ffffff;
     opacity: 1;
 }
 
 .dark .aracodito__close:hover {
-    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--aracodito-pixel-ink);
+    background: var(--aracodito-accent);
+    color: #071426;
 }
 
 .aracodito__close:focus-visible {
-    outline: 2px solid var(--aracodito-accent);
+    outline: 3px solid var(--aracodito-accent);
     outline-offset: 2px;
     opacity: 1;
 }
 
 .aracodito__close svg {
     display: block;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
 }
 
-/* Pico de la burbuja apuntando al robot */
-.aracodito__bubble::after {
-    content: '';
+/* Cola escalonada de la burbuja, alineada con la retícula del sprite. */
+.aracodito__tail {
     position: absolute;
     left: 50%;
-    bottom: -9px;
-    width: 18px;
-    height: 18px;
-    background: var(--aracodito-bubble-tail);
-    border-inline-end: 1px solid var(--aracodito-bubble-border);
-    border-bottom: 1px solid var(--aracodito-bubble-border);
-    border-bottom-right-radius: 5px;
-    transform: translateX(-50%) rotate(45deg);
+    bottom: -20px;
+    width: 24px;
+    height: 20px;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.aracodito__tail svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.aracodito__tail-outline {
+    fill: var(--aracodito-pixel-ink);
+}
+
+.aracodito__tail-fill {
+    fill: var(--aracodito-bubble-bg);
 }
 
 .aracodito__icon {
@@ -258,14 +282,14 @@
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     padding: 6px;
-    border: 1px solid var(--aracodito-icon-border);
-    border-radius: 50%;
+    border: 2px solid var(--aracodito-icon-border);
+    border-radius: 0;
     background: var(--aracodito-icon-bg);
     color: var(--aracodito-accent);
-    box-shadow: inset 0 1px 0 var(--aracodito-bubble-highlight);
+    box-shadow: 2px 2px 0 var(--aracodito-pixel-ink);
 }
 
 .aracodito__icon svg {
@@ -277,7 +301,7 @@
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
 }
 
@@ -285,27 +309,30 @@
     margin: 0;
     font-size: 14px;
     line-height: 1.55;
+    font-weight: 700;
+    letter-spacing: 0.01em;
     overflow-wrap: anywhere;
 }
 
 .aracodito__badge {
     align-self: flex-start;
     margin-top: 1px;
-    padding: 2px 7px;
-    border: 1px solid rgba(67, 97, 238, 0.18);
-    border-radius: 999px;
-    background: rgba(67, 97, 238, 0.10);
-    color: #3d55d9;
-    font-size: 10px;
+    padding: 2px 5px;
+    border: 2px solid var(--aracodito-accent);
+    border-radius: 0;
+    background: var(--aracodito-icon-bg);
+    color: var(--aracodito-accent);
+    font-family: "Courier New", ui-monospace, monospace;
+    font-size: 9px;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
 .dark .aracodito__badge {
-    border-color: rgba(147, 180, 255, 0.22);
-    background: rgba(67, 97, 238, 0.24);
-    color: #b8ceff;
+    border-color: var(--aracodito-accent);
+    background: var(--aracodito-icon-bg);
+    color: var(--aracodito-accent);
 }
 
 /* Botones de acción ------------------------------------------------------- */
@@ -314,8 +341,8 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 8px;
-    margin-top: 4px;
+    gap: 10px;
+    margin-top: 6px;
 }
 
 .aracodito__actions[hidden] {
@@ -324,43 +351,52 @@
 
 .aracodito__action {
     appearance: none;
-    padding: 7px 12px;
-    border: 1px solid transparent;
-    border-radius: 9px;
-    font: inherit;
-    font-size: 12.5px;
+    padding: 8px 12px;
+    border: 2px solid var(--aracodito-pixel-ink);
+    border-radius: 0;
+    background: var(--aracodito-bubble-bg);
+    color: var(--aracodito-bubble-text);
+    box-shadow: 3px 3px 0 var(--aracodito-pixel-ink);
+    font-family: "Courier New", ui-monospace, monospace;
+    font-size: 11px;
     font-weight: 700;
     line-height: 1.1;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     cursor: pointer;
-    transition: transform 0.16s ease, background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
+    transition: transform 0.1s steps(2, end), box-shadow 0.1s steps(2, end), background-color 0.1s steps(2, end), color 0.1s steps(2, end);
 }
 
-.aracodito__action:hover {
-    transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+    .aracodito__action:hover {
+        transform: translate(-1px, -1px);
+        box-shadow: 4px 4px 0 var(--aracodito-pixel-ink);
+    }
 }
 
 .aracodito__action:active {
-    transform: none;
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--aracodito-pixel-ink);
 }
 
 .aracodito__action:focus-visible {
-    outline: 2px solid var(--aracodito-accent);
+    outline: 3px solid var(--aracodito-accent);
     outline-offset: 2px;
 }
 
 .aracodito__action--primary {
-    border-color: var(--aracodito-button-primary-bg);
+    border-color: var(--aracodito-pixel-ink);
     background: var(--aracodito-button-primary-bg);
     color: var(--aracodito-button-primary-text);
 }
 
 .aracodito__action--primary:hover {
-    opacity: 0.9;
+    opacity: 1;
 }
 
 .aracodito__action--secondary {
-    border-color: var(--aracodito-bubble-border);
-    background: transparent;
+    border-color: var(--aracodito-pixel-ink);
+    background: var(--aracodito-bubble-bg);
     color: var(--aracodito-bubble-text);
 }
 
@@ -369,7 +405,7 @@
 }
 
 .aracodito__action--danger {
-    border-color: #b91c1c;
+    border-color: var(--aracodito-pixel-ink);
     background: #b91c1c;
     color: #ffffff;
 }
@@ -388,56 +424,64 @@
     background: transparent;
     box-shadow: none;
     cursor: pointer;
-    transition: transform 0.2s ease;
+    filter: drop-shadow(5px 5px 0 var(--aracodito-pixel-shadow));
+    transition: transform 0.12s steps(2, end);
 }
 
-.aracodito__avatar:hover {
-    transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+    .aracodito__avatar:hover {
+        transform: translateY(-4px);
+    }
 }
 
 .aracodito__avatar:focus-visible {
-    outline: 3px solid rgba(67, 97, 238, 0.45);
-    outline-offset: 3px;
+    outline: 3px solid var(--aracodito-accent);
+    outline-offset: 4px;
 }
 
 .aracodito__avatar svg {
     width: 100%;
     height: 100%;
     display: block;
+    image-rendering: pixelated;
     transform-origin: center;
-    animation: aracodito-float 4.5s ease-in-out infinite;
+    animation: aracodito-float 3.2s steps(2, end) infinite;
 }
 
-/* La cabeza gira sobre el cuello y el personaje entero flota. */
+.aracodito__pixel-grid {
+    pointer-events: none;
+}
+
+/* El sprite flota en pasos discretos, como una animación de pocos fotogramas. */
 .aracodito__head {
     transform-box: fill-box;
     transform-origin: 50% 95%;
-    animation: aracodito-head 3.8s ease-in-out infinite;
+    animation: aracodito-head 3.2s steps(2, end) infinite;
 }
 
 .aracodito__eyes {
     transform-box: fill-box;
     transform-origin: center;
-    animation: aracodito-blink 5.2s ease-in-out infinite;
+    animation: aracodito-blink 4.8s steps(1, end) infinite;
 }
 
 @keyframes aracodito-float {
     0%,
     100% {
-        transform: translateY(0) rotate(-1.2deg);
+        transform: translateY(0);
     }
     50% {
-        transform: translateY(-9px) rotate(1.2deg);
+        transform: translateY(-6px);
     }
 }
 
 @keyframes aracodito-head {
     0%,
     100% {
-        transform: rotate(-2deg);
+        transform: translateY(0);
     }
     50% {
-        transform: rotate(2.5deg) translateY(-1px);
+        transform: translateY(-2px);
     }
 }
 
@@ -463,7 +507,7 @@
 }
 
 #aracodito-widget.is-talking .aracodito__mouth {
-    animation: aracodito-mouth-talk 0.28s ease-in-out infinite;
+    animation: aracodito-mouth-talk 0.28s steps(2, end) infinite;
 }
 
 @keyframes aracodito-mouth-talk {
@@ -510,7 +554,7 @@
 }
 
 #aracodito-widget.is-loading .aracodito__terminal-line {
-    animation: aracodito-terminal-code 1.8s ease-in-out infinite;
+    animation: aracodito-terminal-code 1.8s steps(2, end) infinite;
 }
 
 #aracodito-widget.is-loading .aracodito__terminal-line--2 {
@@ -528,11 +572,11 @@
 }
 
 #aracodito-widget.is-loading .aracodito__terminal-progress {
-    animation: aracodito-terminal-progress 1.8s ease-in-out infinite alternate;
+    animation: aracodito-terminal-progress 1.8s steps(6, end) infinite alternate;
 }
 
 #aracodito-widget.is-loading .aracodito__chest-screen-bezel {
-    animation: aracodito-terminal-glow 2s ease-in-out infinite;
+    animation: aracodito-terminal-glow 2s steps(1, end) infinite;
 }
 
 @keyframes aracodito-terminal-blink {
@@ -590,7 +634,8 @@
     }
 
     .aracodito__bubble {
-        max-width: calc(100vw - 32px);
+        max-width: calc(100vw - 24px);
+        padding: 12px 44px 14px 14px;
     }
 }
 
@@ -598,8 +643,11 @@
     .aracodito__bubble,
     .aracodito__bubble.is-visible,
     .aracodito__avatar,
+    .aracodito__avatar:hover,
     .aracodito__close,
-    .aracodito__action {
+    .aracodito__action,
+    .aracodito__action:hover,
+    .aracodito__action:active {
         transition: none;
         transform: none;
     }
@@ -622,5 +670,309 @@
 @media print {
     #aracodito-widget {
         display: none !important;
+    }
+}
+
+/* ==========================================================================
+   Tema clásico
+   Se mantiene como variante seleccionable para no perder el Aracodito
+   existente. El tema base del archivo es el retro pixel.
+   ========================================================================== */
+
+#aracodito-widget:where(.aracodito--classic) {
+    --aracodito-bubble-bg: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%);
+    --aracodito-bubble-tail: #f5f9ff;
+    --aracodito-bubble-text: #10203a;
+    --aracodito-bubble-highlight: rgba(255, 255, 255, 0.85);
+    --aracodito-bubble-tint: rgba(33, 150, 243, 0.07);
+    --aracodito-bubble-shadow: 0 24px 60px rgba(15, 23, 42, 0.18), 0 6px 18px rgba(15, 23, 42, 0.08);
+    --aracodito-button-primary-bg: #10203a;
+    --aracodito-button-primary-text: #ffffff;
+}
+
+.dark #aracodito-widget:where(.aracodito--classic) {
+    --aracodito-bubble-bg: linear-gradient(180deg, #1a2742 0%, #101a2e 100%);
+    --aracodito-bubble-tail: #101a2e;
+    --aracodito-bubble-text: #eef4ff;
+    --aracodito-bubble-highlight: rgba(255, 255, 255, 0.10);
+    --aracodito-bubble-tint: rgba(56, 189, 248, 0.10);
+    --aracodito-bubble-shadow: 0 26px 65px rgba(0, 0, 0, 0.60), 0 0 0 1px rgba(148, 180, 255, 0.06);
+    --aracodito-button-primary-bg: #eef4ff;
+    --aracodito-button-primary-text: #10203a;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__bubble {
+    padding: 14px 46px 14px 18px;
+    border: 1px solid var(--aracodito-bubble-border);
+    border-radius: 22px;
+    background:
+        linear-gradient(180deg, var(--aracodito-bubble-tint) 0%, transparent 65%),
+        var(--aracodito-bubble-bg);
+    box-shadow:
+        var(--aracodito-bubble-shadow),
+        inset 0 1px 0 var(--aracodito-bubble-highlight);
+    font-family: inherit;
+    font-weight: 400;
+    transform: translateY(10px) scale(0.97);
+    transition:
+        opacity 0.22s ease,
+        transform 0.22s ease,
+        visibility 0s linear 0.22s;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__bubble.is-visible {
+    transform: none;
+    transition-delay: 0s;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__close {
+    top: 7px;
+    right: 7px;
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--aracodito-bubble-text);
+    opacity: 0.6;
+    transition: opacity 0.18s ease, background-color 0.18s ease;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__close:hover {
+    border-color: transparent;
+    background: rgba(15, 23, 42, 0.08);
+    color: var(--aracodito-bubble-text);
+    opacity: 1;
+}
+
+.dark #aracodito-widget.aracodito--classic .aracodito__close:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--aracodito-bubble-text);
+}
+
+#aracodito-widget.aracodito--classic .aracodito__close:focus-visible {
+    outline: 2px solid var(--aracodito-accent);
+    outline-offset: 2px;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__close svg {
+    width: 14px;
+    height: 14px;
+    stroke-linecap: round;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__tail {
+    display: none;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__bubble::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -9px;
+    width: 18px;
+    height: 18px;
+    background: var(--aracodito-bubble-tail);
+    border-inline-end: 1px solid var(--aracodito-bubble-border);
+    border-bottom: 1px solid var(--aracodito-bubble-border);
+    border-bottom-right-radius: 5px;
+    transform: translateX(-50%) rotate(45deg);
+}
+
+#aracodito-widget.aracodito--classic .aracodito__icon {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+    border: 1px solid var(--aracodito-icon-border);
+    border-radius: 50%;
+    background: var(--aracodito-icon-bg);
+    box-shadow: inset 0 1px 0 var(--aracodito-bubble-highlight);
+}
+
+#aracodito-widget.aracodito--classic .aracodito__content {
+    gap: 6px;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__text {
+    font-weight: 400;
+    letter-spacing: normal;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__badge {
+    padding: 2px 7px;
+    border: 1px solid rgba(67, 97, 238, 0.18);
+    border-radius: 999px;
+    background: rgba(67, 97, 238, 0.10);
+    color: #3d55d9;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+}
+
+.dark #aracodito-widget.aracodito--classic .aracodito__badge {
+    border-color: rgba(147, 180, 255, 0.22);
+    background: rgba(67, 97, 238, 0.24);
+    color: #b8ceff;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__actions {
+    gap: 8px;
+    margin-top: 4px;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__action {
+    padding: 7px 12px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--aracodito-bubble-text);
+    box-shadow: none;
+    font-family: inherit;
+    font-size: 12.5px;
+    line-height: 1.1;
+    letter-spacing: normal;
+    text-transform: none;
+    transition: transform 0.16s ease, background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    #aracodito-widget.aracodito--classic .aracodito__action:hover {
+        transform: translateY(-1px);
+        box-shadow: none;
+    }
+}
+
+#aracodito-widget.aracodito--classic .aracodito__action:active {
+    transform: none;
+    box-shadow: none;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__action:focus-visible {
+    outline: 2px solid var(--aracodito-accent);
+    outline-offset: 2px;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__action--primary {
+    border-color: var(--aracodito-button-primary-bg);
+    background: var(--aracodito-button-primary-bg);
+    color: var(--aracodito-button-primary-text);
+}
+
+#aracodito-widget.aracodito--classic .aracodito__action--primary:hover {
+    opacity: 0.9;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__action--secondary {
+    border-color: var(--aracodito-bubble-border);
+    background: transparent;
+    color: var(--aracodito-bubble-text);
+}
+
+#aracodito-widget.aracodito--classic .aracodito__action--secondary:hover {
+    background: var(--aracodito-icon-bg);
+}
+
+#aracodito-widget.aracodito--classic .aracodito__action--danger {
+    border-color: #b91c1c;
+    background: #b91c1c;
+    color: #ffffff;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__avatar {
+    filter: none;
+    transition: transform 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    #aracodito-widget.aracodito--classic .aracodito__avatar:hover {
+        transform: translateY(-2px);
+    }
+}
+
+#aracodito-widget.aracodito--classic .aracodito__avatar:focus-visible {
+    outline: 3px solid rgba(67, 97, 238, 0.45);
+    outline-offset: 3px;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__avatar svg {
+    image-rendering: auto;
+    animation: aracodito-classic-float 4.5s ease-in-out infinite;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__head {
+    animation: aracodito-classic-head 3.8s ease-in-out infinite;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__eyes {
+    animation: aracodito-blink 5.2s ease-in-out infinite;
+}
+
+@keyframes aracodito-classic-float {
+    0%,
+    100% {
+        transform: translateY(0) rotate(-1.2deg);
+    }
+    50% {
+        transform: translateY(-9px) rotate(1.2deg);
+    }
+}
+
+@keyframes aracodito-classic-head {
+    0%,
+    100% {
+        transform: rotate(-2deg);
+    }
+    50% {
+        transform: rotate(2.5deg) translateY(-1px);
+    }
+}
+
+#aracodito-widget.aracodito--classic.is-talking .aracodito__mouth {
+    animation: aracodito-mouth-talk 0.28s ease-in-out infinite;
+}
+
+#aracodito-widget.aracodito--classic.is-loading .aracodito__terminal-line {
+    animation: aracodito-terminal-code 1.8s ease-in-out infinite;
+}
+
+#aracodito-widget.aracodito--classic.is-loading .aracodito__terminal-progress {
+    animation: aracodito-terminal-progress 1.8s ease-in-out infinite alternate;
+}
+
+#aracodito-widget.aracodito--classic.is-loading .aracodito__chest-screen-bezel {
+    animation: aracodito-terminal-glow 2s ease-in-out infinite;
+}
+
+@media (max-width: 480px) {
+    #aracodito-widget.aracodito--classic .aracodito__bubble {
+        max-width: calc(100vw - 32px);
+        padding: 14px 46px 14px 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #aracodito-widget.aracodito--classic .aracodito__bubble,
+    #aracodito-widget.aracodito--classic .aracodito__bubble.is-visible,
+    #aracodito-widget.aracodito--classic .aracodito__avatar,
+    #aracodito-widget.aracodito--classic .aracodito__avatar:hover,
+    #aracodito-widget.aracodito--classic .aracodito__close,
+    #aracodito-widget.aracodito--classic .aracodito__action,
+    #aracodito-widget.aracodito--classic .aracodito__action:hover,
+    #aracodito-widget.aracodito--classic .aracodito__action:active {
+        transition: none;
+        transform: none;
+    }
+
+    #aracodito-widget.aracodito--classic .aracodito__avatar svg,
+    #aracodito-widget.aracodito--classic .aracodito__head,
+    #aracodito-widget.aracodito--classic .aracodito__eyes,
+    #aracodito-widget.aracodito--classic.is-loading .aracodito__terminal-line,
+    #aracodito-widget.aracodito--classic.is-loading .aracodito__terminal-progress,
+    #aracodito-widget.aracodito--classic.is-loading .aracodito__chest-screen-bezel {
+        animation: none;
+    }
+
+    #aracodito-widget.aracodito--classic.is-talking .aracodito__mouth {
+        animation: none;
     }
 }
