@@ -15,7 +15,7 @@ return new class extends Migration
             $table->boolean('is_legacy')->default(false);
             $table->string('status', 30)->default('trial');
             $table->timestamp('trial_started_at')->nullable();
-            $table->unsignedSmallInteger('trial_days')->default(30);
+            $table->unsignedSmallInteger('trial_days')->default(15);
             $table->text('read_permissions')->nullable();
             $table->decimal('match_rate', 10, 2)->default(5.00);
             $table->decimal('prepaid_balance', 12, 2)->default(0);

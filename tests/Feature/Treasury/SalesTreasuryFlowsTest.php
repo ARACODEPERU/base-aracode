@@ -414,7 +414,7 @@ class SalesTreasuryFlowsTest extends TestCase
             'treasury_account_id' => $this->account->id,
             'payment_method_id' => $this->method->id,
             'reference' => 'VINC-1',
-        ])->assertSessionHasNoErrors();
+        ])->assertSessionHasNoErrors()->assertSessionHas('success', 'Cobro vinculado a la cuenta seleccionada.');
 
         $this->assertSame(TreasurySourceMovement::STATUS_PROCESSED, $bridge->refresh()->status);
         $this->assertSame(180.0, $this->balance());
@@ -430,9 +430,10 @@ class SalesTreasuryFlowsTest extends TestCase
             'sale_document_id' => $document->id,
             'treasury_account_id' => $this->account->id,
             'payment_method_id' => $this->method->id,
-        ])->assertSessionHasNoErrors();
+        ])->assertSessionHasNoErrors()->assertSessionHas('success', 'Cobro registrado y vinculado a la cuenta.');
 
         $bridge = TreasurySourceMovement::query()->firstOrFail();
+        $this->assertSame(TreasurySourceMovement::STATUS_PROCESSED, $bridge->status);
         $this->assertSame('manual_income', $bridge->operation);
         $this->assertSame(TreasuryTransaction::SOURCE_MANUAL, $bridge->source);
         $this->assertSame(250.0, $this->balance());
@@ -467,7 +468,10 @@ class SalesTreasuryFlowsTest extends TestCase
             'payment_method_id' => $this->method->id,
         ];
 
-        $this->post(route('treasury_collections_link'), $payload)->assertSessionHasNoErrors();
+        $this->post(route('treasury_collections_link'), $payload)
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success', 'Cobro registrado y vinculado a la cuenta.');
+
         $this->post(route('treasury_collections_link'), $payload)->assertSessionHasErrors('sale_document_id');
 
         $this->assertSame(1, TreasuryTransaction::query()->count());

@@ -64,12 +64,27 @@ const TYPE_ALIASES = {
 };
 const DEFAULT_DURATION = 6000;
 
+const STYLE_ALIASES = {
+    clasico: 'classic',
+    'clásico': 'classic',
+    retro: 'pixel',
+    pixelado: 'pixel',
+    'pixel-art': 'pixel',
+};
+
 function normalizeType(tipo) {
     const requestedType = String(tipo || 'info').trim().toLowerCase();
     return TYPE_ALIASES[requestedType] || (TYPES.includes(requestedType) ? requestedType : 'info');
 }
 
-const ICONS = {
+function normalizeStyle(style) {
+    const requestedStyle = String(style || 'classic').trim().toLowerCase();
+    const normalized = STYLE_ALIASES[requestedStyle] || requestedStyle;
+
+    return normalized === 'pixel' ? 'pixel' : 'classic';
+}
+
+const CLASSIC_ICONS = {
     warning:
         '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>',
     confirm:
@@ -86,7 +101,136 @@ const ICONS = {
         '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd"/></svg>',
 };
 
+const PIXEL_ICONS = {
+    // Iconos de 20×20 construidos con bloques de 4 px para el lenguaje pixel art.
+    warning:
+        '<svg viewBox="0 0 20 20" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path fill-rule="evenodd" d="M8 0h4v4h4v4h4v12H0V8h4V4h4V0Zm0 6h4v6H8V6Zm0 9h4v4H8v-4Z" clip-rule="evenodd"/></svg>',
+    confirm:
+        '<svg viewBox="0 0 20 20" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 0h16v4h2v10h-2v4h-4v2H6v-2H2v-4H0V4h2V0Z"/></svg>',
+    help:
+        '<svg viewBox="0 0 20 20" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 2h12v4H4zM12 6h4v6h-4zM8 10h4v4H8zM8 16h4v4H8z"/></svg>',
+    question:
+        '<svg viewBox="0 0 20 20" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 2h12v4H4zM12 6h4v6h-4zM8 10h4v4H8zM8 16h4v4H8z"/></svg>',
+    success:
+        '<svg viewBox="0 0 20 20" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 10h4v4H2zM6 14h4v4H6zM10 10h4v4h-4zM14 6h4v4h-4z"/></svg>',
+    error:
+        '<svg viewBox="0 0 20 20" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 2h4v4H2zM6 6h4v4H6zM10 10h4v4h-4zM14 14h4v4h-4zM14 2h4v4h-4zM10 6h4v4h-4zM6 10h4v4H6zM2 14h4v4H2z"/></svg>',
+    info:
+        '<svg viewBox="0 0 20 20" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M8 2h4v4H8zM8 8h4v10H8z"/></svg>',
+};
+
 const ROBOT_SVG = `
+<svg class="aracodito__sprite" viewBox="0 0 120 130" role="img" aria-hidden="true" focusable="false" shape-rendering="geometricPrecision">
+    <defs>
+        <pattern id="aracodito-pixel-grid" width="4" height="4" patternUnits="userSpaceOnUse">
+            <path d="M 4 0 H 0 V 4" fill="none" stroke="#7dd3fc" stroke-width="0.35" opacity="0.3" />
+        </pattern>
+    </defs>
+    <g class="aracodito__head">
+        <g fill="#071426" shape-rendering="crispEdges">
+            <rect x="52" y="0" width="16" height="12" />
+            <rect x="58" y="12" width="4" height="8" />
+            <rect x="32" y="16" width="56" height="8" />
+            <rect x="24" y="24" width="72" height="12" />
+            <rect x="20" y="36" width="80" height="48" />
+            <rect x="24" y="84" width="72" height="8" />
+            <rect x="32" y="92" width="56" height="4" />
+            <rect x="16" y="44" width="8" height="20" />
+            <rect x="96" y="44" width="8" height="20" />
+        </g>
+        <g fill="#2563eb" shape-rendering="crispEdges">
+            <rect x="36" y="20" width="48" height="8" />
+            <rect x="28" y="28" width="64" height="8" />
+            <rect x="24" y="40" width="72" height="40" />
+            <rect x="28" y="80" width="64" height="8" />
+            <rect x="36" y="88" width="48" height="4" />
+            <rect x="20" y="48" width="4" height="12" />
+            <rect x="96" y="48" width="4" height="12" />
+        </g>
+        <g fill="#60a5fa" shape-rendering="crispEdges">
+            <rect x="36" y="20" width="32" height="4" />
+            <rect x="28" y="28" width="8" height="8" />
+            <rect x="24" y="40" width="8" height="32" />
+        </g>
+        <g fill="#1d4ed8" shape-rendering="crispEdges">
+            <rect x="88" y="40" width="8" height="40" />
+            <rect x="28" y="80" width="64" height="4" />
+            <rect x="36" y="88" width="48" height="4" />
+        </g>
+        <g class="aracodito__pixel-grid" fill="url(#aracodito-pixel-grid)" shape-rendering="crispEdges">
+            <rect x="36" y="20" width="48" height="8" />
+            <rect x="28" y="28" width="64" height="8" />
+            <rect x="24" y="40" width="72" height="40" />
+            <rect x="28" y="80" width="64" height="8" />
+            <rect x="36" y="88" width="48" height="4" />
+            <rect x="20" y="48" width="4" height="12" />
+            <rect x="96" y="48" width="4" height="12" />
+        </g>
+        <rect x="56" y="4" width="8" height="4" fill="#7dd3fc" shape-rendering="crispEdges" />
+        <rect x="58" y="12" width="4" height="8" fill="#38bdf8" shape-rendering="crispEdges" />
+        <g shape-rendering="crispEdges">
+            <rect x="32" y="36" width="56" height="40" fill="#071426" />
+            <rect x="36" y="40" width="48" height="32" fill="#050d18" />
+            <rect x="36" y="40" width="48" height="4" fill="#0d2138" />
+        </g>
+        <g class="aracodito__eyes" fill="#38bdf8" shape-rendering="crispEdges">
+            <rect x="44" y="48" width="8" height="8" />
+            <rect x="44" y="48" width="4" height="4" fill="#e0f2fe" />
+            <rect x="68" y="48" width="8" height="8" />
+            <rect x="68" y="48" width="4" height="4" fill="#e0f2fe" />
+        </g>
+        <g class="aracodito__eyes-happy" fill="#7dd3fc" shape-rendering="crispEdges">
+            <rect x="44" y="52" width="4" height="4" />
+            <rect x="48" y="48" width="4" height="4" />
+            <rect x="52" y="52" width="4" height="4" />
+            <rect x="68" y="52" width="4" height="4" />
+            <rect x="72" y="48" width="4" height="4" />
+            <rect x="76" y="52" width="4" height="4" />
+        </g>
+        <rect class="aracodito__mouth" x="54" y="64" width="12" height="4" fill="#7dd3fc" shape-rendering="crispEdges" />
+        <g class="aracodito__mouth-smile" fill="#7dd3fc" shape-rendering="crispEdges">
+            <rect x="50" y="64" width="4" height="4" />
+            <rect x="54" y="68" width="12" height="4" />
+            <rect x="70" y="64" width="4" height="4" />
+        </g>
+    </g>
+    <rect x="52" y="88" width="16" height="8" fill="#071426" shape-rendering="crispEdges" />
+    <rect x="56" y="92" width="8" height="4" fill="#1d4ed8" shape-rendering="crispEdges" />
+    <rect x="28" y="96" width="64" height="28" fill="#071426" shape-rendering="crispEdges" />
+    <rect x="32" y="96" width="56" height="24" fill="#1e40af" shape-rendering="crispEdges" />
+    <rect x="32" y="96" width="56" height="4" fill="#2563eb" shape-rendering="crispEdges" />
+    <rect x="80" y="96" width="8" height="24" fill="#172554" shape-rendering="crispEdges" />
+    <rect class="aracodito__pixel-grid" x="32" y="96" width="56" height="24" fill="url(#aracodito-pixel-grid)" shape-rendering="crispEdges" />
+    <g class="aracodito__chest-core" shape-rendering="crispEdges">
+        <rect x="52" y="100" width="16" height="16" fill="#071426" />
+        <rect x="56" y="96" width="8" height="4" fill="#071426" />
+        <rect x="56" y="116" width="8" height="4" fill="#071426" />
+        <rect x="52" y="104" width="16" height="8" fill="#38bdf8" />
+        <rect x="56" y="100" width="8" height="16" fill="#38bdf8" />
+        <rect x="56" y="104" width="8" height="8" fill="#7dd3fc" />
+        <rect x="56" y="104" width="4" height="4" fill="#e0f2fe" />
+    </g>
+    <g class="aracodito__chest-screen" aria-hidden="true">
+        <rect class="aracodito__chest-screen-bezel" x="39" y="100" width="42" height="18" fill="#071426" stroke="#7dd3fc" stroke-width="0.8" shape-rendering="crispEdges" />
+        <rect x="40.8" y="101.5" width="38.5" height="14.9" fill="#050d18" />
+        <rect x="40.8" y="101.5" width="38.5" height="3.2" fill="#0d2138" />
+        <rect x="42.4" y="102.6" width="1.2" height="1.2" fill="#fb7185" />
+        <rect x="44.7" y="102.6" width="1.2" height="1.2" fill="#fbbf24" />
+        <rect x="46.9" y="102.6" width="1.2" height="1.2" fill="#4ade80" />
+        <text x="63.6" y="104.1" text-anchor="middle" font-family="monospace" font-size="2.1" font-weight="700" fill="#7dd3fc">ac_build</text>
+        <text x="42.2" y="108.1" font-family="monospace" font-size="2.7" font-weight="700" fill="#7dd3fc">&gt; build</text>
+        <rect class="aracodito__terminal-cursor" x="54.3" y="105.7" width="1.1" height="2.4" fill="#7dd3fc" />
+        <g class="aracodito__terminal-code">
+            <rect class="aracodito__terminal-line aracodito__terminal-line--1" x="42.2" y="109.3" width="22.3" height="0.9" fill="#38bdf8" />
+            <rect class="aracodito__terminal-line aracodito__terminal-line--2" x="42.2" y="111.1" width="28.6" height="0.9" fill="#60a5fa" />
+            <rect class="aracodito__terminal-line aracodito__terminal-line--3" x="42.2" y="112.9" width="17" height="0.9" fill="#818cf8" />
+        </g>
+        <rect class="aracodito__terminal-progress-track" x="42.2" y="114.8" width="35.7" height="0.9" fill="#1e3a5f" />
+        <rect class="aracodito__terminal-progress" x="42.2" y="114.8" width="35.7" height="0.9" fill="#4ade80" />
+    </g>
+</svg>`;
+
+const CLASSIC_ROBOT_SVG = `
 <svg viewBox="0 0 120 130" role="img" aria-hidden="true" focusable="false">
     <defs>
         <linearGradient id="aracodito-widget-body" x1="0" y1="0" x2="1" y2="1">
@@ -152,6 +296,34 @@ let loadToken = 0;
 let hideTimer = null;
 let removeTimer = null;
 let speechToken = 0;
+let currentStyle = 'classic';
+let currentType = 'info';
+
+function getIcons() {
+    return currentStyle === 'pixel' ? PIXEL_ICONS : CLASSIC_ICONS;
+}
+
+/**
+ * Aplica el estilo visual al widget y cambia el sprite sin remontar el aviso.
+ */
+function applyStyle(style) {
+    currentStyle = normalizeStyle(style);
+
+    if (root) {
+        root.classList.toggle('aracodito--pixel', currentStyle === 'pixel');
+        root.classList.toggle('aracodito--classic', currentStyle !== 'pixel');
+
+        if (avatar) {
+            avatar.innerHTML = currentStyle === 'pixel' ? ROBOT_SVG : CLASSIC_ROBOT_SVG;
+        }
+
+        if (icon) {
+            icon.innerHTML = getIcons()[currentType];
+        }
+    }
+
+    return currentStyle;
+}
 
 /**
  * Crea el widget dentro de <body> si aún no existe.
@@ -173,14 +345,32 @@ function mount() {
 
     root = document.createElement('div');
     root.id = 'aracodito-widget';
-    root.className = 'aracodito--info';
+    root.className = `aracodito--info aracodito--${currentStyle}`;
     root.innerHTML = `
         <div class="aracodito__bubble" role="status" aria-live="polite" aria-atomic="true">
             <button type="button" class="aracodito__close" aria-label="Cerrar mensaje de Aracodito" title="Cerrar">
-                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-                    <path d="M6 6l8 8M14 6l-8 8" />
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true">
+                    <path d="M5 5l10 10M15 5L5 15" />
                 </svg>
             </button>
+            <span class="aracodito__tail" aria-hidden="true">
+                <svg viewBox="0 0 24 20" shape-rendering="crispEdges">
+                    <g class="aracodito__tail-outline">
+                        <rect width="24" height="4" />
+                        <rect x="2" y="4" width="20" height="4" />
+                        <rect x="4" y="8" width="16" height="4" />
+                        <rect x="6" y="12" width="12" height="4" />
+                        <rect x="8" y="16" width="8" height="4" />
+                    </g>
+                    <g class="aracodito__tail-fill">
+                        <rect x="2" width="20" height="4" />
+                        <rect x="4" y="4" width="16" height="4" />
+                        <rect x="6" y="8" width="12" height="4" />
+                        <rect x="8" y="12" width="8" height="4" />
+                        <rect x="10" y="16" width="4" height="4" />
+                    </g>
+                </svg>
+            </span>
             <span class="aracodito__icon" aria-hidden="true"></span>
             <div class="aracodito__content">
                 <p class="aracodito__text"></p>
@@ -189,7 +379,7 @@ function mount() {
             </div>
         </div>
         <button type="button" class="aracodito__avatar" aria-label="Aracodito, asistente virtual">
-            ${ROBOT_SVG}
+            ${currentStyle === 'pixel' ? ROBOT_SVG : CLASSIC_ROBOT_SVG}
         </button>
     `;
 
@@ -601,6 +791,10 @@ function showMessage(mensaje, tipo = 'info', opciones = {}) {
 
     const options = opciones || {};
     const type = normalizeType(tipo);
+    currentType = type;
+
+    // El estilo puede venir en la llamada o en la preferencia global del usuario.
+    applyStyle(options.style ?? getUserConfig().aracodito_style ?? currentStyle);
 
     if (root) {
         root.classList.remove('is-loading');
@@ -613,7 +807,7 @@ function showMessage(mensaje, tipo = 'info', opciones = {}) {
     TYPES.forEach((name) => root.classList.remove(`aracodito--${name}`));
     root.classList.add(`aracodito--${type}`);
 
-    icon.innerHTML = ICONS[type];
+    icon.innerHTML = getIcons()[type];
 
     const message = String(mensaje ?? '');
     text.textContent = message;
@@ -701,6 +895,7 @@ function hide(reason = 'close') {
         currentOnAction = null;
         currentConfirm = null;
         currentOptions = null;
+        currentType = 'info';
         removeTimer = null;
     }, 260);
 
@@ -710,7 +905,10 @@ function hide(reason = 'close') {
 const Aracodito = {
     showMessage,
     hide,
-    version: '1.1.3',
+    applyStyle,
+    setStyle: applyStyle,
+    getStyle: () => currentStyle,
+    version: '1.3.0',
 };
 
 if (typeof window !== 'undefined') {

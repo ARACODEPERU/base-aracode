@@ -74,6 +74,7 @@
                 'aracodito_enabled' => (bool) ($aracoditoUser?->aracodito_enabled ?? false),
                 'aracodito_audio_enabled' => (bool) ($aracoditoUser?->aracodito_audio_enabled ?? false),
                 'aracodito_ia_enabled' => (bool) ($aracoditoUser?->aracodito_ia_enabled ?? false),
+                'aracodito_style' => $aracoditoUser?->aracodito_style ?? 'classic',
             ];
         @endphp
         window.USER_CONFIG = @json($aracoditoConfig);

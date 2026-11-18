@@ -5,7 +5,7 @@
     import SearchClients from './Partials/SearchClients.vue';
     import SearchProducts from './Partials/SearchProducts.vue';
     import { faPlus, faXmark, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
-    import { useForm } from '@inertiajs/vue3';
+    import { Head, useForm } from '@inertiajs/vue3';
     import InputError from '@/Components/InputError.vue';
     import { ref, onMounted, watch, computed } from 'vue';
     import Swal2 from 'sweetalert2';
@@ -856,6 +856,10 @@
 </script>
 <template>
     <AppLayout title="Punto de Ventas">
+        <Head>
+            <meta name="aracodito-view" content="new" />
+        </Head>
+
         <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Facturación Electrónica'"
             :data="[
                 {title: 'Crear Documentos'}

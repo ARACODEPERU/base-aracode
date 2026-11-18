@@ -306,7 +306,7 @@ const buildSettingsForms = (organization) => ({
     settings: useForm({
         match_rate: organization.match_rate,
         status: organization.status,
-        trial_days: organization.trial_days || 30,
+        trial_days: organization.trial_days || 15,
         trial_ends_at: organization.trial_ends_at ? String(organization.trial_ends_at).slice(0, 10) : '',
         access_until: organization.access_until?.slice(0, 10) || '',
         credit_amount: null,

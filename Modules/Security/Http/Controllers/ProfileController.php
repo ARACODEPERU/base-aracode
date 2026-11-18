@@ -116,6 +116,7 @@ class ProfileController extends Controller
             'aracodito_enabled' => ['sometimes', 'boolean'],
             'aracodito_audio_enabled' => ['sometimes', 'boolean'],
             'aracodito_ia_enabled' => ['sometimes', 'boolean'],
+            'aracodito_style' => ['sometimes', 'string', 'in:classic,pixel'],
         ]);
 
         $user = $request->user();
@@ -125,6 +126,9 @@ class ProfileController extends Controller
         $user->aracodito_enabled = $request->boolean('aracodito_enabled');
         $user->aracodito_audio_enabled = $request->boolean('aracodito_audio_enabled');
         $user->aracodito_ia_enabled = $request->boolean('aracodito_ia_enabled');
+        // Si la petición no envía el estilo, se conserva el elegido. Los usuarios
+        // anteriores a esta opción quedan en el estilo clásico.
+        $user->aracodito_style = $request->input('aracodito_style', $user->aracodito_style ?: 'classic');
 
         $user->save();
 

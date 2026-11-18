@@ -8,8 +8,7 @@
     import { useForm } from '@inertiajs/vue3';
     import InputError from '@/Components/InputError.vue';
     import { ref, onMounted, watch } from 'vue';
-    import Swal2 from 'sweetalert2';
-    import { Link, router } from '@inertiajs/vue3';
+    import { Head, Link, router } from '@inertiajs/vue3';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import ModalLarge from '@/Components/ModalLarge.vue';
     import TextInput from '@/Components/TextInput.vue';
@@ -111,18 +110,18 @@
                 series.value = res.data.series;
                 formDocument.serie = series.value[0].id;
             } else {
-                Swal2.fire({
-                    title: 'Información Importante',
-                    text: 'No existe serie para este local o tipo de documento',
-                    icon: 'info',
-                    showDenyButton: true,
-                    showCancelButton: false,
-                    confirmButtonText: 'Ok',
-                    denyButtonText: `Crear serie`,
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                }).then((result) => {
-                    if (result.isDenied) {
+                window.alertaSistema(
+                    'Información Importante',
+                    'No existe serie para este local o tipo de documento',
+                    'info',
+                    {
+                        duration: 0,
+                        showCancelButton: true,
+                        confirmButtonText: 'Crear serie',
+                        cancelButtonText: 'Ok',
+                    }
+                ).then((result) => {
+                    if (result?.isConfirmed) {
                         router.visit(route('establishments.index'),{
                             method: 'get'
                         });
@@ -221,13 +220,11 @@
                 formDocument.client_email = data.email;
                 formDocument.client_rzn_social = data.full_name;
             }else{
-                Swal2.fire({
-                    title: 'Información Importante',
-                    text: "El cliente no cuenta con ruc para emitir una factura",
-                    icon: 'info',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
+                window.alertaSistema(
+                    'Información Importante',
+                    'El cliente no cuenta con ruc para emitir una factura',
+                    'info'
+                );
             }
         }
         displayModalClientSearch.value = false;
@@ -335,13 +332,11 @@
 
         if(formDocument.serie){
             if(formDocument.client_dti != 6 && formDocument.sale_documenttype_id == 1){
-                Swal2.fire({
-                    title: 'Información Importante',
-                    text: "El cliente debe tener ruc para emitir una factura",
-                    icon: 'error',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
+                window.alertaSistema(
+                    'Información Importante',
+                    'El cliente debe tener ruc para emitir una factura',
+                    'error'
+                );
                 formDocument.processing = false
                 return;
 
@@ -350,13 +345,7 @@
             axios.post(route('comm_contract_payment_document_store'), formDocument ).then((res) => {
                 console.log(res)
                 if (res.data?.success === false) {
-                    Swal2.fire({
-                        title: 'Error SQL / Exception 500',
-                        text: res.data.message,
-                        icon: 'error',
-                        padding: '2em',
-                        customClass: 'sweet-alerts',
-                    });
+                    window.alertaSistema('Error SQL / Exception 500', res.data.message, 'error');
                     formDocument.processing = false
                     return
                 }
@@ -387,34 +376,51 @@
                 getSeriesByDocumentType();
                 formDocument.processing =  false;
                 formDocument.forma_pago = 'Contado'
-                Swal2.fire({
-                    title: 'Comprobante '+ res.data.invoice_serie +'-'+ res.data.invoice_correlative+ ' creado con éxito',
-                    text: "¿deseas enviar a sunat y/o Imprimir?",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Enviar Ahora',
-                    cancelButtonText: 'Seguir vendiendo',
-                    showDenyButton: true,
-                    denyButtonText: `Solo Imprimir`,
-                    denyButtonColor: '#5E5A5A',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                }).then((result) => {
-                    if (result.isConfirmed) {
+                // Con Aracodito se usan botones propios; Swal mantiene
+                // confirmar/denegar/cancelar. El valor elegido se normaliza.
+                const opcionesAviso = window.alertaSistema.enAracodito?.()
+                    ? {
+                        duration: 0,
+                        buttons: [
+                            { label: 'Enviar Ahora', value: 'send', variant: 'primary' },
+                            { label: 'Solo Imprimir', value: 'print' },
+                            { label: 'Seguir vendiendo', value: 'continue' },
+                        ],
+                    }
+                    : {
+                        duration: 0,
+                        showCancelButton: true,
+                        showDenyButton: true,
+                        confirmButtonText: 'Enviar Ahora',
+                        cancelButtonText: 'Seguir vendiendo',
+                        denyButtonText: 'Solo Imprimir',
+                    };
+
+                window.alertaSistema(
+                    'Comprobante '+ res.data.invoice_serie +'-'+ res.data.invoice_correlative+ ' creado con éxito',
+                    '¿deseas enviar a sunat y/o Imprimir?',
+                    'question',
+                    opcionesAviso
+                ).then((result) => {
+                    const eleccion = ['send', 'print', 'continue'].includes(result?.value)
+                        ? result.value
+                        : result?.isDenied
+                            ? 'print'
+                            : result?.isConfirmed
+                                ? 'send'
+                                : 'continue';
+
+                    if (eleccion === 'send') {
                         if(res.data.invoice_type_doc == '01'){
                             sendSunatDocumentCreated(res.data)
                         }else{
-                            Swal2.fire({
-                                title: 'Información Importante',
-                                text: "Las boletas se envian mediante un resumen",
-                                icon: 'info',
-                                padding: '2em',
-                                customClass: 'sweet-alerts',
-                            });
+                            window.alertaSistema(
+                                'Información Importante',
+                                'Las boletas se envian mediante un resumen',
+                                'info'
+                            );
                         }
-                    } else if (result.isDenied) {
+                    } else if (eleccion === 'print') {
                         downloadDocument(res.data.id,res.data.invoice_type_doc,'PDF')
                     }
                 });
@@ -422,13 +428,7 @@
                 setFormError(error);
             });
         }else{
-            Swal2.fire({
-                title: 'Información Importante',
-                text: "Elejir serie de documento",
-                icon: 'error',
-                padding: '2em',
-                customClass: 'sweet-alerts',
-            });
+            window.alertaSistema('Información Importante', 'Elejir serie de documento', 'error');
             formDocument.processing = false
             return;
         }
@@ -493,20 +493,7 @@
     }
 
     const showAlertMessage = async (msg, xicon = 'success') => {
-        const toast = Swal2.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 5000,
-            padding: '2em',
-            customClass: 'sweet-alerts',
-        });
-        toast.fire({
-            icon: xicon,
-            title: msg,
-            padding: '2em',
-            customClass: 'sweet-alerts',
-        });
+        window.alertaSistema(msg, '', xicon);
     }
 
     const addPayment = () => {
@@ -573,52 +560,52 @@
         displaySearchProducts.value = false;
     }
 
-    const sendSunatDocumentCreated = (document) => {
-        Swal2.fire({
-            title: document.invoice_serie+'-'+document.number,
-            text: 'Enviar documento',
-            showCancelButton: true,
-            confirmButtonText: 'Enviar',
-            showLoaderOnConfirm: true,
-            padding: '2em',
-            customClass: 'sweet-alerts',
-            preConfirm: () => {
-                return axios.get(route('saledocuments_send', [document.id,document.invoice_type_doc])).then((res) => {
-                    if (!res.data.success) {
-                        var cadena = `Error código: ${res.data.code}<br>Descripción:${res.data.message}`;
-                        let notes = res.data.notes;
-                        if (notes) {
-                            cadena += `<br>Nota: ${notes}`;
-                        }
-                        Swal2.showValidationMessage(cadena)
-                        router.visit(route('saledocuments_list'), { replace: true });
-                    }
-                    return res
-                });
-            },
-            allowOutsideClick: () => !Swal2.isLoading()
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var cadena = "";
-                let array = JSON.parse(result.value.data.notes);
-                for (var i = 0; i < array.length; i++) {
-                    cadena += array[i] + "<br>";
-                }
-
-                Swal2.fire({
-                    title: `${result.value.data.message}`,
-                    html: `${cadena}`,
-                    icon: 'success',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                }).then(() => {
-                    router.visit(route('comm_contracts_payments', commercialPayment.contract.id),{
-                        method: 'get'
-                    });
-                });
-
+    const sendSunatDocumentCreated = async (document) => {
+        const confirmado = await window.alertaSistema(
+            document.invoice_serie+'-'+document.number,
+            'Enviar documento',
+            'question',
+            {
+                duration: 0,
+                showCancelButton: true,
+                confirmButtonText: 'Enviar',
+                cancelButtonText: 'Cancelar',
             }
-        });
+        );
+
+        if (!confirmado?.isConfirmed) return;
+
+        let enviado = true;
+
+        try {
+            const { data } = await axios.get(route('saledocuments_send', [document.id,document.invoice_type_doc]));
+            let notas = '';
+
+            try {
+                notas = (JSON.parse(data.notes || '[]') || []).join(' · ');
+            } catch {
+                notas = data.notes || '';
+            }
+
+            window.alertaSistema(data.message || 'Documento enviado', notas, data.success ? 'success' : 'error');
+            enviado = Boolean(data.success);
+        } catch (error) {
+            enviado = false;
+            window.alertaSistema(
+                'No se pudo enviar',
+                error.response?.data?.message || 'Revisa la conexion con SUNAT.',
+                'error'
+            );
+        }
+
+        const contratoId = props.commercialPayment?.contract?.id;
+
+        router.visit(
+            enviado && contratoId
+                ? route('comm_contracts_payments', contratoId)
+                : route('saledocuments_list'),
+            { replace: true }
+        );
     }
     const asetUrl = assetUrl;
 
@@ -659,66 +646,38 @@
     }, { immediate: true }); // 'immediate: true' para que se ejecute la primera vez al montar el componente
 
     const cuotasCalculadas = () => {
-        showAlert()
         displayModalQuotas.value = false;
+        showAlert();
     }
 
-    const showAlert = async () => { // Puedes renombrarla a algo más descriptivo si quieres
-        const toast = Swal2.mixin({ // Usamos Swal directamente si ya lo importaste como Swal
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            showCloseButton: true,
-        });
-
-        toast.fire({
-            html: `
-                <div class="flex">
-                    <div class="shrink-0">
-                        <svg class="size-5 text-gray-100 mt-1 dark:text-neutral-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                            <path fill="currentColor" d="M192 96C156.7 96 128 124.7 128 160L128 384C128 419.3 156.7 448 192 448L544 448C579.3 448 608 419.3 608 384L608 160C608 124.7 579.3 96 544 96L192 96zM368 192C412.2 192 448 227.8 448 272C448 316.2 412.2 352 368 352C323.8 352 288 316.2 288 272C288 227.8 323.8 192 368 192zM192 216L192 168C192 163.6 195.6 160 200 160L248 160C252.4 160 256.1 163.6 255.5 168C251.9 197 228.9 219.9 200 223.5C195.6 224 192 220.4 192 216zM192 328C192 323.6 195.6 319.9 200 320.5C229 324.1 251.9 347.1 255.5 376C256 380.4 252.4 384 248 384L200 384C195.6 384 192 380.4 192 376L192 328zM536 223.5C507 219.9 484.1 196.9 480.5 168C480 163.6 483.6 160 488 160L536 160C540.4 160 544 163.6 544 168L544 216C544 220.4 540.4 224.1 536 223.5zM544 328L544 376C544 380.4 540.4 384 536 384L488 384C483.6 384 479.9 380.4 480.5 376C484.1 347 507.1 324.1 536 320.5C540.4 320 544 323.6 544 328zM80 216C80 202.7 69.3 192 56 192C42.7 192 32 202.7 32 216L32 480C32 515.3 60.7 544 96 544L488 544C501.3 544 512 533.3 512 520C512 506.7 501.3 496 488 496L96 496C87.2 496 80 488.8 80 480L80 216z"/>
-                        </svg>
-                    </div>
-                    <div class="ms-4">
-                        <h3 class="text-gray-100 font-semibold dark:text-white">
-                            Cuotas programadas con éxito
-                        </h3>
-                        <div class="mt-1 text-sm text-gray-100 dark:text-neutral-400">
-                            ${formDocument.quotas.number } pagos cada ${formDocument.quotas.end_month ? 'fin de mes' : formDocument.quotas.days +' días'}
-                        </div>
-                        <div class="mt-4">
-                        <div class="flex gap-x-3">
-                            <button id="reopenModalBtn" type="button" class="text-blue-300 decoration-2 hover:underline font-medium text-sm focus:outline-hidden focus:underline dark:text-blue-500">
-                                Ver cuotas
-                            </button>
-                        </div>
-                        </div>
-                    </div>
-                </div>
-
-            `, // Usamos 'html' para insertar el botón
-            padding: '2em',
-            customClass: {
-                // Puedes agregar clases personalizadas aquí si las necesitas para el toast en general
-                // por ejemplo, para ajustar el ancho o el estilo del texto.
-                // popup: 'sweet-alerts', // Si esta clase define el ancho del popup, puede afectar el toast
-                title: 'text-sm' // Ejemplo para hacer el título más pequeño
-            },
-            didOpen: (toastElement) => {
-                // Este callback se ejecuta cuando el toast está visible en el DOM
-                const reopenBtn = toastElement.querySelector('#reopenModalBtn');
-                if (reopenBtn) {
-                    reopenBtn.addEventListener('click', () => {
-                        displayModalQuotas.value = true; // Abre el modal
-                        Swal2.close(); // Cierra el toast inmediatamente al hacer clic en el botón
-                    });
-                }
+    /**
+     * Aviso de cuotas programadas: sale por alertaSistema y, si el usuario
+     * confirma, se reabre el modal para revisarlas.
+     */
+    const showAlert = async () => {
+        const result = await window.alertaSistema(
+            'Cuotas programadas con éxito',
+            `${formDocument.quotas.number} pagos cada ${formDocument.quotas.end_month ? 'fin de mes' : formDocument.quotas.days + ' días'}`,
+            'success',
+            {
+                duration: 0,
+                showCancelButton: true,
+                confirmButtonText: 'Ver cuotas',
+                cancelButtonText: 'Cerrar',
             }
-        });
+        );
+
+        if (result?.isConfirmed) {
+            displayModalQuotas.value = true;
+        }
     };
 </script>
 <template>
     <AppLayout title="Documento de venta">
+        <Head>
+            <meta name="aracodito-view" content="new" />
+        </Head>
+
         <Navigation :routeModule="route('comm_dashboard')" titleModule="Comercial"
             :data="[
                 {route: route('comm_contracts'), title: 'Contratos'},

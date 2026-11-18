@@ -130,11 +130,15 @@ function alertaSistema(title, text, icon = 'info', options = {}) {
     }
 
     // Vistas antiguas o Aracodito desactivado: comportamiento clásico.
+    // `duration` es propio de Aracodito; SweetAlert2 no lo conoce y avisa por
+    // consola, así que se excluye antes de abrir el modal.
+    const { duration: _duration, ...swalOptions } = opts;
+
     return Swal2.fire({
         title,
         text,
         icon: icon || 'info',
-        ...opts,
+        ...swalOptions,
     });
 }
 

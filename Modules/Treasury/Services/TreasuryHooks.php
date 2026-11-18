@@ -383,6 +383,7 @@ class TreasuryHooks
             return null;
         }
 
+
         $movement = self::applyDetractionToMovements($document, self::quotaPaymentMovements($payment, $document))[0]
             ?? null;
 
@@ -395,6 +396,7 @@ class TreasuryHooks
         self::registerDetractionAfter($income, $document);
 
         return $income;
+
     }
 
     /**
@@ -405,6 +407,7 @@ class TreasuryHooks
         if (! self::enabled()) {
             return null;
         }
+
 
         $document = $destination->document_id ? SaleDocument::find($destination->document_id) : null;
         $movements = self::scheduleDestinationMovements($destination);
@@ -424,6 +427,7 @@ class TreasuryHooks
         }
 
         return $income;
+
     }
 
     /**
@@ -453,7 +457,7 @@ class TreasuryHooks
             description: 'Cuota inicial' . ($document->sale_id ? ' - Venta #' . $document->sale_id : ''),
             userId: auth()->id(),
             meta: ['sale_id' => $document->sale_id, 'document_id' => $document->id],
-        ));
+        ))?->treasuryTransaction;
     }
 
     /**
@@ -494,11 +498,13 @@ class TreasuryHooks
             description: 'Pago total de deuda' . ($document->sale_id ? ' - Venta #' . $document->sale_id : ''),
             userId: auth()->id(),
             meta: ['sale_id' => $document->sale_id, 'document_id' => $document->id],
+
         ));
 
         self::registerDetractionAfter($income, $document);
 
         return $income;
+
     }
 
     /**
@@ -508,6 +514,9 @@ class TreasuryHooks
      * La cuenta se fija en el movimiento, así que no depende del mapeo del
      * método de pago. Queda con source "manual" para distinguirlo del
      * automático y se revierte igual al anular el comprobante.
+     *
+     * Devuelve la fila puente (no la transacción del libro): es la que informa
+     * si el movimiento quedó procesado, fallido o ignorado.
      */
     public static function recordManualDocumentIncome(
         SaleDocument $document,
@@ -895,13 +904,14 @@ class TreasuryHooks
         $count = 0;
 
         foreach ($movements as $movement) {
-            if (self::dispatch($movement)) {
+            if (self::dispatch($movement)?->treasuryTransaction) {
                 $count++;
             }
         }
 
         return $count;
     }
+
 
     private static function dispatchBridge(FinancialMovement $movement): ?TreasurySourceMovement
     {
@@ -919,9 +929,10 @@ class TreasuryHooks
     }
 
     private static function dispatch(FinancialMovement $movement): ?TreasuryTransaction
+
     {
         try {
-            return app(TreasuryIntegrationService::class)->register($movement)->treasuryTransaction;
+            return app(TreasuryIntegrationService::class)->register($movement);
         } catch (\Throwable $e) {
             Log::warning('[Treasury] No se registró el movimiento financiero', [
                 'origin' => $movement->sourceType . '#' . $movement->sourceId,

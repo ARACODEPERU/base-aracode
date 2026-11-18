@@ -39,7 +39,7 @@ class SportsOrganizationAdminController extends Controller
 
         return Inertia::render('Socialevents::Organizations/Admin', [
             'defaults' => [
-                'trial_days' => (int) ($settings->trial_days ?? 30),
+                'trial_days' => (int) ($settings->trial_days ?? 15),
                 'default_match_rate' => (float) ($settings->default_match_rate ?? 5),
                 'seat_price' => (float) ($settings->seat_price ?? 1),
             ],
@@ -815,7 +815,7 @@ class SportsOrganizationAdminController extends Controller
             DB::table('socialevent_organizations')->where('id', $organization->id)->update([
                 'prepaid_balance' => $balance,
                 'status' => 'active',
-                'access_until' => $renewalBase->addDays((int) ($organization->trial_days ?: 30))->toDateString(),
+                'access_until' => $renewalBase->addDays((int) ($organization->trial_days ?: 15))->toDateString(),
                 'deleted_at' => null,
                 'updated_at' => now(),
             ]);
