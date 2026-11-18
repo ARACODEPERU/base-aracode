@@ -168,9 +168,14 @@ const borrarDatos = () => {
         <div class="mt-5 grid sm:grid-cols-2 gap-4">
             <div class="col-span-2 sm:col-span-1">
                 <label class="text-sm font-medium">Correo del alumno de prueba</label>
-                <input v-model="email" type="email" class="form-input mt-1" placeholder="prueba@tucorreo.com" />
+                <input v-model="email" type="email" class="form-input mt-1" placeholder="test_user_123456@testuser.com" />
                 <p class="text-xs text-gray-500 mt-1">
                     Ahí llegarán los correos de renovación, cobro fallido o suspensión. Revisa también spam.
+                    <span class="block mt-1">
+                        Este correo viaja a MercadoPago como correo del pagador: con credenciales de prueba debe ser
+                        el de un <strong>usuario de prueba comprador</strong> (termina en <code>@testuser.com</code>).
+                        Un correo personal sin cuenta de MercadoPago hace que el alta se rechace.
+                    </span>
                 </p>
             </div>
 

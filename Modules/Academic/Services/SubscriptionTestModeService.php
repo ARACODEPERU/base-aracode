@@ -753,7 +753,9 @@ class SubscriptionTestModeService
             // El paso se indica en el mensaje: aquí ya se tokenizó la tarjeta y el
             // rechazo viene del alta de la suscripción con test_access_token.
             throw new RuntimeException(
-                'No se pudo crear la suscripción de prueba con test_access_token. ' . $e->getMessage(),
+                'No se pudo crear la suscripción de prueba con test_access_token. ' . $e->getMessage()
+                . ' Revisa que el correo sea el de un usuario de prueba de MercadoPago (test_user_...@testuser.com),'
+                . ' que el pagador no sea el dueño del token y que token y public key sean de la misma cuenta.',
                 0,
                 $e
             );
