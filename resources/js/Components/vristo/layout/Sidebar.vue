@@ -355,7 +355,31 @@
                             </template>
                             <template v-else>
                                 <li v-can="item.permissions" class="menu nav-item">
+                                    {{-- Las vistas Blade completas no pasan por Inertia: se abren como enlace normal. --}}
+                                    <a
+                                        v-if="item.fullPage"
+                                        :href="item.route"
+                                        class="nav-link group"
+                                        @click="toggleMobileMenu"
+                                    >
+                                        <div class="flex items-center">
+                                            <font-awesome-icon :icon="item.icom" class="group-hover:!text-primary shrink-0" />
+                                            <div class="flex flex-1 items-center justify-between gap-2">
+                                                <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">
+                                                    {{ item.text }}
+                                                </span>
+                                                <span
+                                                    v-if="item.badge"
+                                                    class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                                    :class="badgeClasses(item.badge)"
+                                                >
+                                                    {{ item.badge }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </a>
                                     <Link
+                                        v-else
                                         :href="item.route"
                                         class="nav-link group"
                                         @click="toggleMobileMenu"

@@ -427,6 +427,11 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->get('subscriptions/list', 'AcaSubscriptionTypeController@index')
         ->name('aca_subscriptions_list');
 
+    // Vista completa de los planes activos (Blade, con el diseño de la landing).
+    Route::middleware(['middleware' => 'permission:aca_suscripciones'])
+        ->get('subscriptions/showcase', 'AcaSubscriptionTypeController@showcase')
+        ->name('aca_subscriptions_showcase');
+
     Route::middleware(['middleware' => 'permission:aca_suscripciones_nuevo'])
         ->get('subscriptions/create', 'AcaSubscriptionTypeController@create')
         ->name('aca_subscriptions_create');

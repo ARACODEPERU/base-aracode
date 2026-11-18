@@ -1,7 +1,8 @@
 import {
     faPoll,
     faGraduationCap,
-    faMagnifyingGlassChart
+    faMagnifyingGlassChart,
+    faCreditCard
 } from "@fortawesome/free-solid-svg-icons";
 import { ref, reactive } from 'vue';
 import menuAcademic from 'Modules/Academic/Resources/assets/js/Menu.js';
@@ -45,6 +46,15 @@ const MenuData = ref([
         //         permissions: "aca_dashboard",
         //     },
         // ]
+    },
+    {
+        status: false,
+        text: 'Suscripciones',
+        icom: faCreditCard,
+        route: route('aca_subscriptions_showcase'),
+        permissions: 'aca_suscripciones',
+        // Es una vista Blade completa: se abre con navegación normal, no con Inertia.
+        fullPage: true,
     },
     menuConfig,
     //menuPurchases,

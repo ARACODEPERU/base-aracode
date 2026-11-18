@@ -4,6 +4,7 @@ namespace Modules\CMS\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Parameter;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,10 @@ use Modules\Academic\Entities\AcaCourse;
 use Modules\CMS\Entities\CmsLanding;
 use Modules\CMS\Entities\CmsSubscriber;
 use Modules\CMS\Http\Requests\CmsLandingRequest;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OneFreeCourseController extends Controller
 {
@@ -239,38 +244,15 @@ class OneFreeCourseController extends Controller
      */
     private function getUtmStatsData(?CmsLanding $landing, $start = null, $end = null): array
     {
-        $config = $landing ? ($landing->utm_config ?? []) : [];
+        $campaign = $this->campaignForLanding($landing);
 
-        $campaign = ! empty($config['campaign'])
-            ? $config['campaign']
-            : $this->defaultUtmCampaign($landing);
-
-        $slug = trim((string) ($landing->slug ?? ''));
-
-        $scope = function ($q) use ($campaign, $slug, $start, $end) {
-            $q->where(function ($w) use ($campaign, $slug) {
-                $w->where('utm_campaign', $campaign);
-
-                // Tambien cuentan los envios hechos desde este landing sin UTM:
-                // el formulario guarda la URL de origen en landing_url.
-                if ($slug !== '') {
-                    $w->orWhere('landing_url', 'like', '%' . $slug . '%');
-                }
-            });
-
-            if ($start && $end) {
-                $q->whereDate('created_at', '>=', $start)
-                    ->whereDate('created_at', '<=', $end);
-            }
-        };
-
-        $subscribers = CmsSubscriber::where($scope)
+        $subscribers = $this->leadsQuery($landing, $start, $end)
             ->select('traffic_source', DB::raw('COUNT(*) as total'))
             ->groupBy('traffic_source')
             ->orderByDesc('total')
             ->get();
 
-        $socialSubscribers = CmsSubscriber::where($scope)
+        $socialSubscribers = $this->leadsQuery($landing, $start, $end)
             ->where('traffic_source', 'social')
             ->select('utm_source', 'utm_medium', DB::raw('COUNT(*) as total'))
             ->groupBy('utm_source', 'utm_medium')
@@ -278,7 +260,7 @@ class OneFreeCourseController extends Controller
             ->get();
 
         $referrerSubscribers = $this->groupByRefererHost(
-            CmsSubscriber::where($scope)
+            $this->leadsQuery($landing, $start, $end)
                 ->where('traffic_source', 'referrer')
                 ->whereNotNull('referer')
                 ->where('referer', '!=', '')
@@ -292,6 +274,200 @@ class OneFreeCourseController extends Controller
             'social_detail' => $socialSubscribers,
             'referrer_detail' => $referrerSubscribers,
         ];
+    }
+
+    /**
+     * Campaña UTM configurada del landing (o la de por defecto).
+     */
+    private function campaignForLanding(?CmsLanding $landing): string
+    {
+        $config = $landing ? ($landing->utm_config ?? []) : [];
+
+        return ! empty($config['campaign'])
+            ? $config['campaign']
+            : $this->defaultUtmCampaign($landing);
+    }
+
+    /**
+     * Consulta base de los registros del landing: los envios con su campaña UTM
+     * o los hechos desde su url (landing_url). Admite fechas y busqueda.
+     */
+    private function leadsQuery(?CmsLanding $landing, $start = null, $end = null, ?string $search = null)
+    {
+        $campaign = $this->campaignForLanding($landing);
+        $slug = trim((string) ($landing->slug ?? ''));
+
+        $query = CmsSubscriber::query()->where(function ($w) use ($campaign, $slug) {
+            $w->where('utm_campaign', $campaign);
+
+            // Tambien cuentan los envios hechos desde este landing sin UTM:
+            // el formulario guarda la URL de origen en landing_url.
+            if ($slug !== '') {
+                $w->orWhere('landing_url', 'like', '%' . $slug . '%');
+            }
+        });
+
+        if ($start && $end) {
+            $query->whereDate('created_at', '>=', $start)
+                ->whereDate('created_at', '<=', $end);
+        }
+
+        $search = trim((string) $search);
+
+        if ($search !== '') {
+            $term = '%' . $search . '%';
+
+            $query->where(function ($w) use ($term) {
+                $w->where('full_name', 'like', $term)
+                    ->orWhere('email', 'like', $term)
+                    ->orWhere('phone', 'like', $term);
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * Columnas que se muestran, exportan e imprimen de cada registro.
+     */
+    private function registroColumns(): array
+    {
+        return [
+            'id', 'created_at', 'full_name', 'email', 'phone', 'subject',
+            'utm_source', 'utm_medium', 'utm_campaign', 'traffic_source', 'landing_url',
+        ];
+    }
+
+    /**
+     * Registros del landing paginados para la tabla del editor.
+     */
+    public function getRegistros(Request $request, $id): JsonResponse
+    {
+        $landing = CmsLanding::where('menu_id', $id)->first();
+
+        [$start, $end] = $this->parseDateRange($request->get('dates'));
+
+        $porPagina = 15;
+        $pagina = max(1, (int) $request->get('page', 1));
+
+        $query = $this->leadsQuery($landing, $start, $end, $request->get('search'));
+        $total = (int) (clone $query)->count();
+
+        $registros = $query->orderByDesc('id')
+            ->forPage($pagina, $porPagina)
+            ->get($this->registroColumns())
+            ->map(fn ($r) => [
+                'id' => $r->id,
+                'fecha' => optional($r->created_at)->format('d/m/Y H:i'),
+                'nombre' => $r->full_name,
+                'email' => $r->email,
+                'telefono' => $r->phone,
+                'asunto' => $r->subject,
+                'utm_source' => $r->utm_source,
+                'utm_medium' => $r->utm_medium,
+                'utm_campaign' => $r->utm_campaign,
+                'traffic_source' => $r->traffic_source,
+                'landing_url' => $r->landing_url,
+            ]);
+
+        return response()->json([
+            'data' => $registros,
+            'total' => $total,
+            'page' => $pagina,
+            'per_page' => $porPagina,
+            'last_page' => max(1, (int) ceil($total / $porPagina)),
+            'campaign' => $this->campaignForLanding($landing),
+        ]);
+    }
+
+    /**
+     * Descarga en Excel (xlsx) los registros del landing con los filtros actuales.
+     */
+    public function exportRegistrosExcel(Request $request, $id): StreamedResponse
+    {
+        $landing = CmsLanding::where('menu_id', $id)->first();
+
+        [$start, $end] = $this->parseDateRange($request->get('dates'));
+
+        $registros = $this->leadsQuery($landing, $start, $end, $request->get('search'))
+            ->orderByDesc('id')
+            ->get($this->registroColumns());
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Registros');
+
+        $cabeceras = [
+            'Fecha', 'Nombre', 'Email', 'Teléfono', 'Asunto',
+            'Origen', 'UTM source', 'UTM medium', 'UTM campaign', 'URL del landing',
+        ];
+
+        $sheet->fromArray($cabeceras, null, 'A1');
+        $sheet->getStyle('A1:J1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:J1')->getFill()
+            ->setFillType(Fill::FILL_SOLID)
+            ->getStartColor()->setARGB('FFE9EEF5');
+
+        $fila = 2;
+
+        foreach ($registros as $registro) {
+            $sheet->fromArray([
+                optional($registro->created_at)->format('d/m/Y H:i'),
+                $registro->full_name,
+                $registro->email,
+                $registro->phone,
+                $registro->subject,
+                $registro->traffic_source,
+                $registro->utm_source,
+                $registro->utm_medium,
+                $registro->utm_campaign,
+                $registro->landing_url,
+            ], null, 'A' . $fila);
+
+            $fila++;
+        }
+
+        foreach (['A' => 18, 'B' => 30, 'C' => 32, 'D' => 18, 'E' => 28, 'F' => 16, 'G' => 16, 'H' => 16, 'I' => 26, 'J' => 45] as $columna => $ancho) {
+            $sheet->getColumnDimension($columna)->setWidth($ancho);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'registros_landing_' . preg_replace('/[^a-z0-9]+/i', '_', $id) . '_' . now()->format('Ymd_His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Descarga en PDF los registros del landing con los filtros actuales.
+     */
+    public function exportRegistrosPdf(Request $request, $id)
+    {
+        $landing = CmsLanding::where('menu_id', $id)->first();
+
+        [$start, $end] = $this->parseDateRange($request->get('dates'));
+
+        $registros = $this->leadsQuery($landing, $start, $end, $request->get('search'))
+            ->orderByDesc('id')
+            ->get($this->registroColumns());
+
+        $pdf = Pdf::loadView('cms::landings.registros_pdf', [
+            'landing' => $landing,
+            'registros' => $registros,
+            'campaign' => $this->campaignForLanding($landing),
+            'desde' => $start,
+            'hasta' => $end,
+            'search' => $request->get('search'),
+        ]);
+
+        $pdf->setPaper('A4', 'landscape');
+
+        $fileName = 'registros_landing_' . preg_replace('/[^a-z0-9]+/i', '_', $id) . '_' . now()->format('Ymd_His') . '.pdf';
+
+        return $pdf->download($fileName);
     }
 
     /**

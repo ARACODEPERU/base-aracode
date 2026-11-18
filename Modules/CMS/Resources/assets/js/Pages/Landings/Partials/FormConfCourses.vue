@@ -139,7 +139,7 @@
 
             window.alertaSistema(
                 'Cursos ajustados',
-                `El landing mostrara ${limite} curso(s) gratis. Se quitaron de la seleccion los cursos que sobraban.`,
+                `El landing mostrará ${limite} curso(s) gratis. Se quitaron de la selección los cursos que sobraban.`,
                 'info',
                 { duration: 3500 }
             );
@@ -154,8 +154,8 @@
             inputCourses.value = values.slice(0, limite);
 
             window.alertaSistema(
-                'Limite de cursos',
-                `Este landing solo muestra ${limite} curso(s) gratis. Cambia la cantidad de cursos gratis si necesitas agregar mas.`,
+                'Límite de cursos',
+                `Este landing solo muestra ${limite} curso(s) gratis. Cambia la cantidad de cursos gratis si necesitas agregar más.`,
                 'warning',
                 { duration: 4000 }
             );
@@ -257,7 +257,7 @@
         <div class="flex sm:flex-row flex-col">
             <label for="txttitle" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">
                 Título*
-                <HelpTip text="Título principal del landing. Tambien genera la url amigable (slug)." />
+                <HelpTip text="Título principal del landing. También genera la url amigable (slug)." />
             </label>
             <div class="flex-1">
                 <input v-model="form.title" @input="onTitleInput" id="txttitle" type="text" placeholder="Título principal" class="form-input" />
@@ -267,7 +267,7 @@
         <div class="flex sm:flex-row flex-col">
             <label for="txtslug" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">
                 url amigable (slug)
-                <HelpTip text="Se genera automaticamente desde el título. Se usa en la url del landing y en los enlaces UTM." />
+                <HelpTip text="Se genera automáticamente desde el título. Se usa en la url del landing y en los enlaces UTM." />
             </label>
             <div class="flex-1">
                 <input v-model="form.slug" id="txtslug" type="text" placeholder="automáticamente se generara el slug"
@@ -292,7 +292,7 @@
         <div class="flex sm:flex-row flex-col">
             <label for="txtdescription" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">
                 Descripción * (Contenido)
-                <HelpTip text="Contenido completo que verá el visitante en el landing. Puedes combinar texto e imágenes." width="w-64" />
+                <HelpTip text="Contenido completo que verá el visitante en el landing. Puedes combinar texto e imágenes." />
             </label>
             <div class="flex-1">
                 <Editor
@@ -354,7 +354,7 @@
         <div class="flex sm:flex-row flex-col">
             <label for="txtaditional1" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">
                 Título del formulario paso 1
-                <HelpTip text="Primer texto que ve el visitante al abrir el formulario de registro." width="w-64" />
+                <HelpTip text="Primer texto que ve el visitante al abrir el formulario de registro." />
             </label>
             <div class="flex-1">
                 <input v-model="form.additional_field1" id="txtaditional1" type="text" placeholder="Título del formulario" class="form-input flex-1" />
@@ -364,7 +364,7 @@
         <div class="flex sm:flex-row flex-col">
             <label for="txtaditional2" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">
                 Título del formulario paso 2
-                <HelpTip text="Texto que acompaña el segundo paso del formulario (confirmacion o agradecimiento)." width="w-64" />
+                <HelpTip text="Texto que acompaña el segundo paso del formulario (confirmación o agradecimiento)." />
             </label>
             <div class="flex-1">
                 <input v-model="form.additional_field2" id="txtaditional2" type="text" placeholder="adicional 2" class="form-input flex-1" />
@@ -374,7 +374,7 @@
         <div class="flex sm:flex-row flex-col">
             <label for="freeCoursesCount" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">
                 Cursos gratis a mostrar
-                <HelpTip text="Elige cuantos cursos gratis muestra este landing: 1, 2 o 3. El selector de cursos se limita a esa cantidad." width="w-64" />
+                <HelpTip text="Elige cuántos cursos gratis muestra este landing: 1, 2 o 3. El selector de cursos se limita a esa cantidad." />
             </label>
             <div class="flex-1">
                 <select
@@ -411,15 +411,15 @@
                 </Select>
                 <InputError :message="form.errors.data_related" class="mt-2" />
                 <p class="mt-1 text-xs text-gray-400">
-                    Puedes elegir hasta {{ form.free_courses_count }} curso(s) gratis, segun la cantidad configurada.
+                    Puedes elegir hasta {{ form.free_courses_count }} curso(s) gratis, según la cantidad configurada.
                 </p>
             </div>
         </div>
 
         <div class="flex sm:flex-row flex-col">
             <label for="txtaditional2" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">
-                Duración de la promocion
-                <HelpTip text="Rango de fechas durante el que se muestra la promocion del landing." width="w-64" />
+                Duración de la promoción
+                <HelpTip text="Rango de fechas durante el que se muestra la promoción del landing." />
             </label>
             <div class="flex-1">
                 <flat-pickr v-model="dateRange" class="form-input" :config="rangeCalendar"></flat-pickr>
@@ -430,7 +430,7 @@
         <div class="flex sm:flex-row flex-col">
             <label for="txtaditional3" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">
                 Campo adicional 3
-                <HelpTip text="Texto libre de apoyo. Es opcional y no afecta el funcionamiento del landing." width="w-64" />
+                <HelpTip text="Texto libre de apoyo. Es opcional y no afecta el funcionamiento del landing." />
             </label>
             <div class="flex-1">
                 <input v-model="form.additional_field3" id="txtaditional3" type="text" placeholder="adicional 3" class="form-input flex-1" />

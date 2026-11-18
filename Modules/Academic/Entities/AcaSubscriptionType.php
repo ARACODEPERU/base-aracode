@@ -44,6 +44,7 @@ class AcaSubscriptionType extends Model
         'description',
         'details',
         'prices',
+        'show_dollar_price',
         'status',
         'period',
         'order_number',
@@ -60,6 +61,7 @@ class AcaSubscriptionType extends Model
     protected $casts = [
         'details' => 'array',
         'prices' => 'array',
+        'show_dollar_price' => 'boolean',
         'access_all_courses' => 'boolean',
         'access_specialization_programs' => 'boolean',
         'access_all_webinars' => 'boolean',

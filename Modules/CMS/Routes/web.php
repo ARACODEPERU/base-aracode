@@ -111,6 +111,17 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('cms')->gro
         ->get('one/free/course/{menu_id}/utm-stats', [OneFreeCourseController::class, 'getUtmStats'])
         ->name('cms_landing_course_free_utm_stats');
 
+    // Registros (leads del formulario) de este landing y sus exportaciones.
+    Route::middleware(['permission:cms_landing_curso_gratis'])
+        ->get('one/free/course/{menu_id}/registros', [OneFreeCourseController::class, 'getRegistros'])
+        ->name('cms_landing_course_free_registros');
+    Route::middleware(['permission:cms_landing_curso_gratis'])
+        ->get('one/free/course/{menu_id}/registros/excel', [OneFreeCourseController::class, 'exportRegistrosExcel'])
+        ->name('cms_landing_course_free_registros_excel');
+    Route::middleware(['permission:cms_landing_curso_gratis'])
+        ->get('one/free/course/{menu_id}/registros/pdf', [OneFreeCourseController::class, 'exportRegistrosPdf'])
+        ->name('cms_landing_course_free_registros_pdf');
+
     // Mensajes de Contacto
     Route::middleware(['permission:cms_mensajes_contacto'])
         ->get('contact-messages', [CmsContactMessageController::class, 'index'])->name('cms_contact_messages_list');
