@@ -156,7 +156,7 @@ class EvenLocalController extends Controller
 
         return Inertia::render('Socialevents::Local/Edit', [
             'ubigeo' => $ubigeo,
-            'local' => $local
+            'local' => $local,
         ]);
     }
 

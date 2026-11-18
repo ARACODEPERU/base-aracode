@@ -37,6 +37,10 @@ use Modules\Sales\Http\Controllers\SalesPrintTemplateController;
 use Modules\Sales\Http\Controllers\SaleSummaryController;
 use Modules\Sales\Http\Controllers\SerieController;
 use Modules\Sales\Http\Controllers\ServicesController;
+use Modules\Sales\Http\Controllers\SireConfiguracionController;
+use Modules\Sales\Http\Controllers\SirePropuestaController;
+use Modules\Sales\Http\Controllers\SireRceComprasController;
+use Modules\Sales\Http\Controllers\SireRvieVentasController;
 use Modules\Sales\Http\Controllers\QuickSaleController;
 use Modules\Sales\Http\Controllers\QuickSaleStoreController;
 
@@ -267,6 +271,30 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
     Route::middleware(['middleware' => 'permission:invo_dashboard'])
         ->get('reports/invoice', [InvoiceReportsController::class, 'index'])
         ->name('reports_invoice');
+
+    // SIRE: credenciales de la API (cifradas) y modo de trabajo de la empresa.
+    Route::middleware(['middleware' => 'permission:sire_api'])->group(function () {
+        Route::get('sire/configuracion', [SireConfiguracionController::class, 'index'])->name('sire_configuracion');
+        Route::post('sire/configuracion', [SireConfiguracionController::class, 'update'])->name('sire_configuracion_update');
+        Route::post('sire/configuracion/probar', [SireConfiguracionController::class, 'probar'])->name('sire_configuracion_probar');
+    });
+
+    // SIRE: registro de ventas electrónico (RVIE) del período.
+    Route::middleware(['middleware' => 'permission:sire_rvie_ventas'])->group(function () {
+        Route::get('sire/rvie-ventas', [SireRvieVentasController::class, 'index'])->name('sire_rvie_ventas_index');
+        Route::get('sire/rvie-ventas/txt', [SireRvieVentasController::class, 'txt'])->name('sire_rvie_ventas_txt');
+        Route::get('sire/rvie-ventas/zip', [SireRvieVentasController::class, 'zip'])->name('sire_rvie_ventas_zip');
+        // Solo lectura: descarga la propuesta de SUNAT, no envía reemplazos.
+        Route::post('sire/rvie-ventas/propuesta', [SirePropuestaController::class, 'ventas'])->name('sire_rvie_ventas_propuesta');
+    });
+
+    // SIRE: registro de compras electrónico (RCE) del período.
+    Route::middleware(['middleware' => 'permission:sire_rce_compras'])->group(function () {
+        Route::get('sire/rce-compras', [SireRceComprasController::class, 'index'])->name('sire_rce_compras_index');
+        Route::get('sire/rce-compras/txt', [SireRceComprasController::class, 'txt'])->name('sire_rce_compras_txt');
+        Route::get('sire/rce-compras/zip', [SireRceComprasController::class, 'zip'])->name('sire_rce_compras_zip');
+        Route::post('sire/rce-compras/propuesta', [SirePropuestaController::class, 'compras'])->name('sire_rce_compras_propuesta');
+    });
 
     Route::middleware(['middleware' => 'permission:acco_dashboard'])
         ->get('accountsreceivable/dashboard', [AccountsReceivableDashboardController::class, 'index'])

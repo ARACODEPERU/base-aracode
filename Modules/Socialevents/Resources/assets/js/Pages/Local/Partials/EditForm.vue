@@ -6,7 +6,6 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
-import Swal2 from 'sweetalert2';
 import { onMounted } from 'vue';
 import 'cropperjs/dist/cropper.css';
 import CropperImage from '@/Components/CropperImage.vue';
@@ -51,11 +50,7 @@ const updateNow = () => {
         errorBag: 'updateNow',
         preserveScroll: true,
         onSuccess: () => {
-            Swal2.fire({
-                title: 'Enhorabuena',
-                text: 'Se Actualizado correctamente',
-                icon: 'success',
-            });
+            window.alertaSistema('Enhorabuena', 'Se actualizó correctamente', 'success');
         },
     });
 }

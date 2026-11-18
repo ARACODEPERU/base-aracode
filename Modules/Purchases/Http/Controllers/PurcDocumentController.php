@@ -434,70 +434,74 @@ class PurcDocumentController extends Controller
         try {
             $res = DB::transaction(function () use ($id) {
 
-                $purchase = PurcDocument::find($id);
+                $purchase = PurcDocument::findOrFail($id);
+
+                if ($purchase->status === 'A') {
+                    return $purchase;
+                }
+
+                // 'A' es el estado que el RCE usa para excluir el comprobante.
                 $purchase->update([
                     'status' => 'A'
                 ]);
 
-                $products = PurcDocumentItems::where('purchase_id', $id)->get();
+                $items = PurcDocumentItems::where('purchase_id', $id)->get();
 
-                foreach ($products as $produc) {
+                foreach ($items as $item) {
 
-                    $pro = Product::find($produc->product_id);
-                    $t = $pro->stock;
+                    $product = Product::find($item->product_id);
 
-                    if ($pro->is_product) {
-                        $k = Kardex::create([
+                    if (! $product) {
+                        continue;
+                    }
+
+                    if ($product->is_product) {
+                        $kardex = Kardex::create([
                             'date_of_issue' => Carbon::now()->format('Y-m-d'),
                             'motion' => 'purchase',
-                            'product_id' => $produc->product_id,
+                            'product_id' => $item->product_id,
                             'local_id' => $purchase->local_id,
-                            'quantity' => (-$produc->quantity),
+                            'quantity' => (-$item->quantity),
                             'document_id' => $purchase->id,
                             'document_entity' => PurcDocument::class,
                             'description' => 'Compra Anulada'
                         ]);
 
-                        if ($pro->presentations) {
+                        if ($product->presentations) {
                             KardexSize::create([
-                                'kardex_id' => $k->id,
-                                'product_id' => $produc->product_id,
+                                'kardex_id' => $kardex->id,
+                                'product_id' => $item->product_id,
                                 'local_id' => $purchase->local_id,
-                                'size'      => $produc['size'],
-                                'quantity'  => (-$produc['quantity'])
+                                'size'      => $item->size,
+                                'quantity'  => (-$item->quantity)
                             ]);
-
-                            $tallas = $pro->sizes;
-
-                            $n_tallas = [];
-                            foreach (json_decode($tallas, true) as $k => $talla) {
-                                if ($talla['size'] == $produc['size']) {
-                                    $n_tallas[$k] = array(
-                                        'size' => $talla['size'],
-                                        'quantity' => ($talla['quantity'] - $produc['quantity'])
-                                    );
-                                } else {
-                                    $n_tallas[$k] = array(
-                                        'size' => $talla['size'],
-                                        'quantity' => $talla['quantity']
-                                    );
-                                }
-                            }
                         }
                     }
-                    $pro->update([
-                        'stock' => $t - $produc->quantity,
-                        'sizes' => json_encode($n_tallas)
-                    ]);
-                }
 
+                    $product->decrement('stock', $item->quantity);
+
+                    // Solo los productos con tallas guardan el detalle por talla:
+                    // el resto conserva su columna `sizes` como estaba.
+                    if ($product->presentations) {
+                        $sizes = json_decode((string) $product->sizes, true) ?: [];
+
+                        $sizes = array_map(fn ($size) => [
+                            'size' => $size['size'],
+                            'quantity' => $size['quantity'] - ($size['size'] === $item->size ? $item->quantity : 0),
+                        ], $sizes);
+
+                        $product->update([
+                            'sizes' => json_encode($sizes)
+                        ]);
+                    }
+                }
 
                 return $purchase;
             });
 
             return response()->json([
                 'success' => true,
-                'message' => 'El Docuemtno fue anulado'
+                'message' => 'El documento fue anulado'
             ]);
         } catch (\Exception $e) {
             return response()->json([

@@ -23,6 +23,7 @@ class PurcDocument extends Model
         'date_of_issue',
         'date_of_due',
         'currency_type_id',
+        'exchange_rate',
         'descripction',
         'total_prepayment',
         'total_charge',
@@ -42,7 +43,8 @@ class PurcDocument extends Model
         'total',
         'total_canceled',
         'legends',
-        'status'
+        'status',
+        'document_id',
     ];
 
     protected static function newFactory()

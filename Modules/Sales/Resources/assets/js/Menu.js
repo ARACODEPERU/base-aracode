@@ -11,6 +11,7 @@ import {
     faListOl,
     faFileLines,
     faFileArrowDown,
+    faFileExport,
     faFileFragment,
     faFileCircleQuestion,
     faCircleDollarToSlot,
@@ -191,6 +192,28 @@ const menuSales = [
                 text: 'Guías de Remisión',
                 permissions: 'invo_guia_remision_lista',
                 icom: faFileArrowDown,
+            },
+            {
+                route: route('sire_rvie_ventas_index'),
+                status: false,
+                text: 'SIRE · Registro de Ventas',
+                permissions: 'sire_rvie_ventas',
+                icom: faFileExport,
+            },
+            {
+                route: route('sire_rce_compras_index'),
+                status: false,
+                text: 'SIRE · Registro de Compras',
+                permissions: 'sire_rce_compras',
+                icom: faFileExport,
+            },
+            {
+                // Credenciales de la API del SIRE y modo de trabajo.
+                route: route('sire_configuracion'),
+                status: false,
+                text: 'SIRE · Configuración API',
+                permissions: 'sire_api',
+                icom: faScrewdriverWrench,
             },
             // {
             //     route: route('reports_invoice'),

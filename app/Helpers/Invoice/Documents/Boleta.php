@@ -91,13 +91,28 @@ class Boleta
 
         if (! $res->isSuccess() && $failure !== null && $failure['retryable']) {
             $status = 'Pendiente de Reintento';
-            $messageError = SunatResilience::FRIENDLY_QUEUED;
+            // El texto depende del motivo: no es lo mismo SUNAT caído que un
+            // certificado local que no se pudo cargar.
+            $messageError = $failure['friendly'];
             $notes = null;
             $queued = true;
 
             $resilience->markQueued($document, $failure['kind'], $failure['technical']);
+
+            // Motivo técnico real de la cola para soporte; el cajero solo ve
+            // el mensaje amigable.
+            Log::warning('SUNAT: comprobante en cola', [
+                'document_id' => $document->id,
+                'comprobante' => trim($document->invoice_serie.'-'.$document->invoice_correlative),
+                'tipo' => $document->invoice_type_doc,
+                'kind' => $failure['kind'],
+                'technical' => mb_substr((string) $failure['technical'], 0, 500),
+            ]);
         } elseif ($res->isSuccess()) {
             $resilience->markSent($document, (string) $codeError === '0');
+        } elseif ($failure !== null && ! $failure['retryable']) {
+            // Rechazo de negocio: no se reintenta solo y sale de la cola.
+            $resilience->markSent($document, false);
         }
 
         $document->invoice_response_code = $codeError;

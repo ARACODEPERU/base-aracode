@@ -28,10 +28,14 @@ class EvenLocalRental extends Model
         'includes_food',
         'beer_provided_by',
         'total_price',
+        'discount_amount',
+        'discount_reason',
         'paid_amount',
         'balance_amount',
         'payment_status',
         'reservation_status',
+        'is_tournament',
+        'tournament_venue',
         'notes',
     ];
 
@@ -42,6 +46,7 @@ class EvenLocalRental extends Model
         'hourly_rate' => 'decimal:2',
         'base_amount' => 'decimal:2',
         'total_price' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'balance_amount' => 'decimal:2',
         'includes_tables_chairs' => 'boolean',
@@ -84,6 +89,11 @@ class EvenLocalRental extends Model
     public function rate(): BelongsTo
     {
         return $this->belongsTo(EvenLocalRentalRate::class, 'rental_rate_id');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(EvenLocalRentalItem::class, 'rental_id');
     }
 
     public function extraCharges(): HasMany

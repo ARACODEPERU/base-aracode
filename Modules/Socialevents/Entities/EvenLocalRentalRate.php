@@ -13,6 +13,7 @@ class EvenLocalRentalRate extends Model
 
     protected $fillable = [
         'local_id',
+        'area_id',
         'name',
         'hourly_rate',
         'is_active',
@@ -26,6 +27,11 @@ class EvenLocalRentalRate extends Model
     public function local(): BelongsTo
     {
         return $this->belongsTo(LocalSale::class, 'local_id');
+    }
+
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(EvenLocalArea::class, 'area_id');
     }
 
     public function rentals(): HasMany

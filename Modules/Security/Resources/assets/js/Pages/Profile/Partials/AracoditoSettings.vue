@@ -1,5 +1,5 @@
 <script setup>
-    import { computed, watch } from 'vue';
+    import { computed, ref, watch } from 'vue';
     import { useForm, usePage } from '@inertiajs/vue3';
 
     const props = defineProps({
@@ -20,6 +20,59 @@
         aracodito_ia_enabled: Boolean(props.user?.aracodito_ia_enabled ?? authUser.aracodito_ia_enabled ?? false),
         aracodito_style: String(props.user?.aracodito_style ?? authUser.aracodito_style ?? 'classic'),
     });
+
+    // Cada estilo reúne su tarjeta y el aspecto de la burbuja de vista previa,
+    // para no repetir tres bloques de plantilla casi iguales.
+    const STYLE_OPTIONS = [
+        {
+            value: 'classic',
+            title: 'Clásico',
+            description: 'El robot azul de siempre, con terminal en el pecho.',
+            bubble: 'rounded-2xl border border-[#dce9ff] bg-gradient-to-b from-white to-[#f5f9ff] shadow-lg shadow-slate-900/10 dark:border-[#2a3b5f] dark:from-[#1a2742] dark:to-[#101a2e] dark:shadow-black/50',
+            tail: 'border-[#dce9ff] bg-white dark:border-[#2a3b5f] dark:bg-[#1a2742]',
+            text: 'text-[#10203a] dark:text-[#eef4ff]',
+        },
+        {
+            value: 'pixel',
+            title: 'Retro pixel',
+            description: 'Sprite de 16 bits y diálogo pixelado.',
+            bubble: 'rounded-none border-2 border-slate-900 bg-[#f8fbff] font-mono shadow-[4px_4px_0_rgba(15,23,42,0.35)] dark:border-sky-200/70 dark:bg-[#101a2e] dark:shadow-[4px_4px_0_rgba(0,0,0,0.6)]',
+            tail: 'border-slate-900 bg-[#f8fbff] dark:border-sky-200/70 dark:bg-[#101a2e]',
+            text: 'font-mono text-[13px] font-bold text-[#0b1f3a] dark:text-[#eef4ff]',
+        },
+        {
+            value: 'futbol',
+            title: 'Futbolero',
+            description: 'Camiseta verde y balón que se anima en cada aviso.',
+            bubble: 'rounded-2xl border border-emerald-200 bg-gradient-to-b from-white to-emerald-50 shadow-lg shadow-emerald-900/10 dark:border-emerald-500/40 dark:from-[#122a1d] dark:to-[#0b1f14]',
+            tail: 'border-emerald-200 bg-white dark:border-emerald-500/40 dark:bg-[#122a1d]',
+            text: 'text-emerald-950 dark:text-[#eafff3]',
+        },
+    ];
+
+    const STYLE_VALUES = STYLE_OPTIONS.map((option) => option.value);
+
+    const activeStyle = computed(() =>
+        STYLE_VALUES.includes(settings.aracodito_style) ? settings.aracodito_style : 'classic'
+    );
+
+    const previewTheme = computed(
+        () => STYLE_OPTIONS.find((option) => option.value === activeStyle.value) ?? STYLE_OPTIONS[0]
+    );
+
+    // La tarjeta de vista previa usa el mismo sprite que el widget real, así
+    // que nunca se queda mostrando el personaje de otro estilo.
+    const previewSprite = ref('');
+
+    const syncPreviewSprite = () => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        previewSprite.value = window.Aracodito?.getSprite?.(activeStyle.value) || '';
+    };
+
+    watch(activeStyle, syncPreviewSprite, { immediate: true });
 
     const bubbleText = computed(() => {
         if (!settings.aracodito_enabled) {
@@ -43,17 +96,17 @@
             settings.aracodito_ia_enabled,
             settings.aracodito_style,
         ],
-        ([enabled, audio, ia, style]) => {
+        ([enabled, audio, ia]) => {
             window.USER_CONFIG = {
                 ...(window.USER_CONFIG || {}),
                 aracodito_enabled: Boolean(enabled),
                 aracodito_audio_enabled: Boolean(audio),
                 aracodito_ia_enabled: Boolean(ia),
-                aracodito_style: style === 'pixel' ? 'pixel' : 'classic',
+                aracodito_style: activeStyle.value,
             };
 
             // Si el aviso ya está abierto, cambia el sprite sin recargar la vista.
-            window.Aracodito?.setStyle?.(style);
+            window.Aracodito?.applyStyle?.(activeStyle.value);
         },
         { immediate: true }
     );
@@ -124,8 +177,6 @@
                 })
                 : undefined;
 
-            window.Aracodito.setStyle?.(settings.aracodito_style);
-
             window.Aracodito.showMessage(item.message, item.type, {
                 duration: 0,
                 audio: false,
@@ -135,7 +186,6 @@
                 confirmButtonText: item.type === 'confirm' ? 'Sí, guardar' : 'OK',
                 cancelButtonText: 'Cancelar',
                 loadingText: 'Guardando los cambios…',
-                minLoadingDuration: 650,
                 ...(simulateProcess ? { onConfirm: simulateProcess } : {}),
             });
         }
@@ -215,51 +265,34 @@
                 <div class="border border-[#ebedf2] dark:border-[#191e3a] rounded-md p-4" :class="{ 'opacity-60': !settings.aracodito_enabled }">
                     <p class="font-semibold">Estilo visual</p>
                     <p class="text-sm text-white-dark mt-1">
-                        Elige cómo aparecerá Aracodito. El estilo clásico se conserva y el retro pixel añade una
-                        retícula visible y una burbuja de diálogo de 16 bits.
+                        Elige cómo aparecerá Aracodito. El estilo clásico se conserva, el retro pixel añade una
+                        retícula visible y el futbolero suma camiseta y un balón que acompaña cada aviso.
                     </p>
-                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <label
-                            for="aracodito_style_classic"
+                            v-for="option in STYLE_OPTIONS"
+                            :key="option.value"
+                            :for="`aracodito_style_${option.value}`"
                             class="flex items-start gap-3 border border-[#ebedf2] dark:border-[#191e3a] rounded-md p-3 cursor-pointer"
-                            :class="{ 'border-primary/60 bg-primary/5': settings.aracodito_style === 'classic' }"
+                            :class="{ 'border-primary/60 bg-primary/5': settings.aracodito_style === option.value }"
                         >
                             <input
-                                id="aracodito_style_classic"
+                                :id="`aracodito_style_${option.value}`"
                                 name="aracodito_style"
                                 v-model="settings.aracodito_style"
-                                value="classic"
+                                :value="option.value"
                                 type="radio"
                                 class="form-radio mt-0.5 shrink-0"
                                 :disabled="!settings.aracodito_enabled"
                             />
                             <span>
-                                <span class="block font-semibold">Clásico</span>
-                                <span class="block text-xs text-white-dark">El robot azul actual, con burbuja suave y terminal en el pecho.</span>
-                            </span>
-                        </label>
-                        <label
-                            for="aracodito_style_pixel"
-                            class="flex items-start gap-3 border border-[#ebedf2] dark:border-[#191e3a] rounded-md p-3 cursor-pointer"
-                            :class="{ 'border-primary/60 bg-primary/5': settings.aracodito_style === 'pixel' }"
-                        >
-                            <input
-                                id="aracodito_style_pixel"
-                                name="aracodito_style"
-                                v-model="settings.aracodito_style"
-                                value="pixel"
-                                type="radio"
-                                class="form-radio mt-0.5 shrink-0"
-                                :disabled="!settings.aracodito_enabled"
-                            />
-                            <span>
-                                <span class="block font-semibold">Retro pixel</span>
-                                <span class="block text-xs text-white-dark">Sprite de 16 bits con retícula de píxeles y diálogo pixelado.</span>
+                                <span class="block font-semibold">{{ option.title }}</span>
+                                <span class="block text-xs text-white-dark">{{ option.description }}</span>
                             </span>
                         </label>
                     </div>
                     <p class="text-xs text-white-dark mt-2">
-                        Las vistas previas de los tipos de mensaje usan el estilo seleccionado.
+                        La tarjeta de vista previa y los avisos de prueba usan el estilo seleccionado.
                     </p>
                 </div>
 
@@ -345,48 +378,31 @@
                 <p class="text-xs font-semibold uppercase tracking-wide text-white-dark mb-3">Vista previa</p>
 
                 <div class="flex justify-center mb-4" :class="{ 'aracodito-talking': settings.aracodito_enabled && settings.aracodito_audio_enabled }">
-                    <!-- Robot androide (personaje 3). Reemplazar este SVG por el asset
-                         definitivo cuando esté disponible, p. ej.:
-                         <img src="/assets/images/aracodito-3.png" alt="Aracodito" class="w-32 h-32 object-contain" /> -->
-                    <svg viewBox="0 0 120 130" class="w-32 h-32" role="img" aria-label="Aracodito, asistente virtual">
-                        <defs>
-                            <linearGradient id="aracoditoBody" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0%" stop-color="#7dd3fc" />
-                                <stop offset="100%" stop-color="#2563eb" />
-                            </linearGradient>
-                        </defs>
-                        <!-- antena -->
-                        <line x1="60" y1="14" x2="60" y2="26" stroke="#2563eb" stroke-width="4" stroke-linecap="round" />
-                        <circle cx="60" cy="10" r="5" fill="#38bdf8" />
-                        <!-- cabeza -->
-                        <rect x="22" y="26" width="76" height="62" rx="24" fill="url(#aracoditoBody)" />
-                        <!-- visor -->
-                        <rect x="32" y="42" width="56" height="28" rx="14" fill="#0f172a" />
-                        <!-- ojos -->
-                        <circle cx="48" cy="56" r="5" fill="#38bdf8" />
-                        <circle cx="72" cy="56" r="5" fill="#38bdf8" />
-                        <!-- boca -->
-                        <rect class="aracodito-mouth" x="52" y="64" width="16" height="4" rx="2" fill="#7dd3fc" />
-                        <!-- orejas -->
-                        <rect x="14" y="48" width="8" height="20" rx="4" fill="#2563eb" />
-                        <rect x="98" y="48" width="8" height="20" rx="4" fill="#2563eb" />
-                        <!-- cuello y cuerpo -->
-                        <rect x="52" y="88" width="16" height="8" fill="#1d4ed8" />
-                        <rect x="34" y="96" width="52" height="26" rx="12" fill="#1e40af" />
-                        <circle cx="60" cy="109" r="6" fill="#38bdf8" />
-                    </svg>
+                    <!-- Sprite real del estilo elegido: window.Aracodito.getSprite(). -->
+                    <div
+                        class="w-32 h-32 aracodito-preview-sprite"
+                        :class="{ 'aracodito-preview-sprite--pixel': activeStyle === 'pixel' }"
+                        role="img"
+                        aria-label="Aracodito, asistente virtual"
+                        v-html="previewSprite"
+                    ></div>
                 </div>
 
                 <!-- Burbuja de conversación -->
-                <div class="relative bg-gradient-to-b from-white to-[#f5f9ff] dark:from-[#1a2742] dark:to-[#101a2e] border border-[#dce9ff] dark:border-[#2a3b5f] rounded-2xl px-4 py-3 shadow-lg shadow-slate-900/10 dark:shadow-black/50">
-                    <span class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-[#1a2742] border-l border-t border-[#dce9ff] dark:border-[#2a3b5f] rotate-45"></span>
+                <div class="relative px-4 py-3 transition-colors" :class="previewTheme.bubble">
+                    <span
+                        class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border-l border-t"
+                        :class="previewTheme.tail"
+                    ></span>
                     <div class="flex items-start gap-2.5">
                         <span class="inline-flex items-center justify-center w-7 h-7 shrink-0 rounded-full bg-primary/10 text-primary border border-primary/20">
                             <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd"/>
                             </svg>
                         </span>
-                        <p class="text-sm leading-relaxed text-[#10203a] dark:text-[#eef4ff]">{{ bubbleText }}</p>
+                        <p class="text-sm leading-relaxed" :class="previewTheme.text">
+                            {{ bubbleText }}
+                        </p>
                     </div>
                 </div>
 
@@ -442,12 +458,25 @@
 </template>
 
 <style scoped>
-    .aracodito-mouth {
+    /* El sprite llega por v-html, así que necesita :deep() para heredar el
+       tamaño y la animación de voz de la tarjeta. */
+    .aracodito-preview-sprite :deep(svg) {
+        display: block;
+        width: 100%;
+        height: 100%;
+        transform-origin: center;
+    }
+
+    .aracodito-preview-sprite--pixel :deep(svg) {
+        image-rendering: pixelated;
+    }
+
+    .aracodito-preview-sprite :deep(.aracodito__mouth) {
         transform-box: fill-box;
         transform-origin: center;
     }
 
-    .aracodito-talking .aracodito-mouth {
+    .aracodito-talking :deep(.aracodito__mouth) {
         animation: aracodito-talk 0.45s ease-in-out infinite;
     }
 

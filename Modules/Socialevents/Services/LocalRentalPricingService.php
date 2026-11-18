@@ -74,6 +74,13 @@ class LocalRentalPricingService
 
     public function recalculateTotals(EvenLocalRental $rental): EvenLocalRental
     {
+        // Con varias áreas, la base de la reserva es la suma de las bases de sus líneas.
+        // Sin líneas (reservas antiguas) se conserva la base de la cabecera.
+        // Un torneo tiene monto fijo en la cabecera: sus líneas no suman base.
+        if (! $rental->is_tournament && $rental->items()->exists()) {
+            $rental->base_amount = round((float) $rental->items()->sum('base_amount'), 2);
+        }
+
         $extrasTotal = $this->sumExtraCharges($rental);
         $rental->total_price = $this->calculateTotalPrice((float) $rental->base_amount, $extrasTotal);
         $rental->balance_amount = round($rental->total_price - (float) $rental->paid_amount, 2);
@@ -129,6 +136,36 @@ class LocalRentalPricingService
             'paid_amount' => $paidAmount,
             'balance_amount' => $balanceAmount,
             'payment_status' => $this->resolvePaymentStatus($totalPrice, $paidAmount),
+        ];
+    }
+
+    /**
+     * Calcula una línea (un área de la reserva). Cada área usa su propia tarifa;
+     * el servidor siempre recalcula, nunca confía en los montos enviados.
+     *
+     * @param  array<string, mixed>  $line  event_date, event_end_date, start_time, end_time, rental_rate_id, extras
+     * @return array<string, mixed>
+     */
+    public function buildItemSnapshot(array $line): array
+    {
+        $eventEndDate = $line['event_end_date'] ?? $line['event_date'];
+
+        $totalHours = $this->calculateHours(
+            $line['event_date'],
+            $line['start_time'],
+            $eventEndDate,
+            $line['end_time']
+        );
+        $hourlyRate = $this->getHourlyRate((int) $line['rental_rate_id']);
+        $baseAmount = $this->calculateBaseAmount($totalHours, $hourlyRate);
+        $extrasTotal = $this->sumExtraChargesFromArray($line['extras'] ?? []);
+
+        return [
+            'total_hours' => $totalHours,
+            'hourly_rate' => $hourlyRate,
+            'base_amount' => $baseAmount,
+            'extras_total' => $extrasTotal,
+            'subtotal' => $this->calculateTotalPrice($baseAmount, $extrasTotal),
         ];
     }
 

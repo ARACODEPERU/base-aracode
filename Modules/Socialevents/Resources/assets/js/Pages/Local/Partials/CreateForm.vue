@@ -6,7 +6,6 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
-import Swal2 from 'sweetalert2';
 import 'cropperjs/dist/cropper.css';
 import CropperImage from '@/Components/CropperImage.vue';
 import SelectCities from '@/Components/SelectCities.vue';
@@ -38,11 +37,7 @@ const createNow = () => {
         errorBag: 'createNow',
         preserveScroll: true,
         onSuccess: () => {
-            Swal2.fire({
-                title: 'Enhorabuena',
-                text: 'Se registró correctamente',
-                icon: 'success',
-            });
+            window.alertaSistema('Enhorabuena', 'Se registró correctamente', 'success');
             form.reset()
         },
     });

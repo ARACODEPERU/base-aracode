@@ -35,6 +35,23 @@ class Company extends Model
         'withdrawal_account_number',
         'brand_primary',
         'brand_secondary',
+        'sire_mode',
+        'sire_client_id',
+        'sire_client_secret',
+        'sire_sol_user',
+        'sire_sol_key',
+    ];
+
+    /**
+     * Las cuatro piezas de la credencial del SIRE se guardan cifradas: el
+     * client_id/client_secret identifican a la aplicación y el usuario/clave
+     * SOL al contribuyente.
+     */
+    protected $casts = [
+        'sire_client_id' => 'encrypted',
+        'sire_client_secret' => 'encrypted',
+        'sire_sol_user' => 'encrypted',
+        'sire_sol_key' => 'encrypted',
     ];
 
     public function district(): HasOne

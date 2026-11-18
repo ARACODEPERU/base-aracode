@@ -1,7 +1,7 @@
 <script setup>
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import EditForm from './Partials/EditForm.vue';
-    import { Link, usePage } from '@inertiajs/vue3';
+    import { Head, Link, usePage } from '@inertiajs/vue3';
     import { computed } from 'vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     // En modo deportivo (torneos) el local se llama complejo deportivo.
@@ -14,12 +14,15 @@
         local: {
             type: Object,
             default: () => ({}),
-        }
+        },
     });
 </script>
 
 <template>
     <AppLayout :title="etiquetaLocal">
+        <Head>
+            <meta name="aracodito-view" content="new" />
+        </Head>
         <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
             :data="[
                 {route: route('even_local_list'), title: etiquetaLocal},

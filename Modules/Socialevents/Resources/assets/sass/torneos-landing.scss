@@ -3899,3 +3899,62 @@ a.se-team-card:focus-visible {
     }
 }
 
+/* ==========================================================================
+   Campeón del torneo
+   ========================================================================== */
+
+.se-champion {
+    position: relative;
+    overflow: hidden;
+}
+
+.se-champion__glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 22% 50%, var(--se-accent-glow), transparent 60%);
+}
+
+.se-champion__card {
+    position: relative;
+    display: grid;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1.5rem;
+    border: 1px solid var(--se-border);
+    border-radius: var(--se-radius-lg);
+    background: var(--se-bg-card);
+}
+
+.se-champion__art {
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+}
+
+/* Copa: tamaño acotado en móvil y, más abajo, en PC. */
+.se-cup {
+    display: block;
+    width: min(100%, 12rem);
+    height: auto;
+    max-width: 100%;
+}
+
+@media (min-width: 1024px) {
+    .se-champion__card {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+        gap: 3rem;
+        padding: 3rem;
+    }
+
+    .se-cup {
+        width: min(100%, 16rem);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .se-cup * {
+        animation: none;
+    }
+}
+

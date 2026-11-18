@@ -45,6 +45,14 @@ class SunatResilience
         .'Puedes entregar la constancia interna al cliente.';
 
     /**
+     * El certificado digital es un problema local, no de SUNAT. El comprobante
+     * igual queda en cola para reenviarlo cuando se restaure el archivo.
+     */
+    public const FRIENDLY_CERTIFICATE = 'La venta se registró correctamente, pero el problema no es SUNAT: '
+        .'no se pudo cargar el certificado digital del emisor. Revisa que el certificado esté cargado en la '
+        .'configuración de la empresa; el comprobante quedó en cola y se reintentará automáticamente.';
+
+    /**
      * Envía el comprobante a SUNAT sin permitir que una excepción escape.
      *
      * @return array{outcome: SunatSendOutcome, xml: string|null, see: See|null}
@@ -113,7 +121,11 @@ class SunatResilience
                 'retryable' => $outcome->isRetryable(),
                 'kind' => $outcome->kind(),
                 'technical' => $outcome->technicalDetail(),
-                'friendly' => self::FRIENDLY_QUEUED,
+                // No todas las excepciones son una caída de SUNAT: un
+                // certificado ausente o inválido es un problema local.
+                'friendly' => $outcome->kind() === self::KIND_CERTIFICATE
+                    ? self::FRIENDLY_CERTIFICATE
+                    : self::FRIENDLY_QUEUED,
             ];
         }
 
@@ -146,9 +158,11 @@ class SunatResilience
         }
 
         // Códigos numéricos de indisponibilidad de SUNAT (incluye los de la capa SOAP).
+        // El 1033 NO va aquí: significa «El comprobante fue registrado previamente con
+        // otros datos», un rechazo de negocio. Reintentarlo solo repite el error.
         $numeric = (int) $code;
 
-        if (in_array($numeric, [109, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 1033], true)) {
+        if (in_array($numeric, [109, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139], true)) {
             return ['retryable' => true, 'kind' => self::KIND_SUNAT_UNAVAILABLE];
         }
 

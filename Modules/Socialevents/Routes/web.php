@@ -83,6 +83,10 @@ Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('soc
     Route::middleware(['middleware' => 'permission:even_alquiler_local_listado'])->get('alquiler-local', [EvenLocalRentalController::class, 'index'])->name('even_alquiler_local_index');
     Route::middleware(['middleware' => 'permission:even_alquiler_local_nuevo'])->get('alquiler-local/create', [EvenLocalRentalController::class, 'create'])->name('even_alquiler_local_create');
     Route::middleware(['middleware' => 'permission:even_alquiler_local_nuevo'])->post('alquiler-local', [EvenLocalRentalController::class, 'store'])->name('even_alquiler_local_store');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_nuevo'])->get('alquiler-local/areas/{localId}', [EvenLocalRentalController::class, 'areasByLocal'])->name('even_alquiler_local_areas_by_local');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_editar'])->post('alquiler-local/areas/store', [EvenLocalRentalController::class, 'storeArea'])->name('even_alquiler_local_areas_store');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_editar'])->put('alquiler-local/areas/{id}', [EvenLocalRentalController::class, 'updateArea'])->name('even_alquiler_local_areas_update');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_eliminar'])->delete('alquiler-local/areas/{id}', [EvenLocalRentalController::class, 'destroyArea'])->name('even_alquiler_local_areas_destroy');
     Route::middleware(['middleware' => 'permission:even_alquiler_local_nuevo'])->get('alquiler-local/rates/{localId}', [EvenLocalRentalController::class, 'ratesByLocal'])->name('even_alquiler_local_rates_by_local');
     Route::middleware(['middleware' => 'permission:even_alquiler_local_nuevo'])->post('alquiler-local/rates/store', [EvenLocalRentalController::class, 'storeRate'])->name('even_alquiler_local_rates_store');
     Route::middleware(['middleware' => 'permission:even_alquiler_local_editar'])->get('alquiler-local/{id}/edit', [EvenLocalRentalController::class, 'edit'])->name('even_alquiler_local_edit');

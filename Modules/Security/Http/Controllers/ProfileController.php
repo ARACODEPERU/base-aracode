@@ -116,7 +116,7 @@ class ProfileController extends Controller
             'aracodito_enabled' => ['sometimes', 'boolean'],
             'aracodito_audio_enabled' => ['sometimes', 'boolean'],
             'aracodito_ia_enabled' => ['sometimes', 'boolean'],
-            'aracodito_style' => ['sometimes', 'string', 'in:classic,pixel'],
+            'aracodito_style' => ['sometimes', 'string', 'in:classic,pixel,futbol'],
         ]);
 
         $user = $request->user();

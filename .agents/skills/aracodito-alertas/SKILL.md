@@ -130,6 +130,46 @@ if (result.value) {
 
 Si el proceso falla, Aracodito muestra el mensaje de error en la burbuja y el puente devuelve el error de validación; no hace falta un `catch` que abra otro aviso.
 
+## Regla obligatoria: todo proceso que espera una respuesta del servidor
+
+Cuando una acción llama al backend (guardar, actualizar, eliminar, cambiar estado, enviar), la confirmación **no puede cerrarse antes de que el servidor responda**. Aracodito debe quedarse en pantalla con su animación de espera: la terminal del pecho y los ojitos haciendo gestos, el mismo loader que ya está configurado para las confirmaciones.
+
+Se implementa siempre así:
+
+- La confirmación se abre con `duration: 0`, `showCancelButton: true` y `loadingText`.
+- La llamada al backend va en `onConfirm` **y** en `preConfirm`. `onConfirm` es el que usa Aracodito; `preConfirm` es el respaldo de SweetAlert2 (con `showLoaderOnConfirm: true`).
+- Si la llamada falla, lanzar el error dentro de la función (no capturarlo para abrir otro aviso). El puente muestra el error en la burbuja.
+- Después de `await window.alertaSistema(...)`, si `window.alertaSistema.enAracodito?.()` es `true`, **no** volver a mostrar el resultado: Aracodito ya lo mostró.
+- Prohibido: llamar al backend fuera de la confirmación (por ejemplo, después de cerrar un aviso `success` o `info`), porque Aracodito deja de esperar y el usuario ve la pantalla sin el loader.
+- Prohibido: usar `duration` distinto de `0` en una confirmación que lanza una petición.
+
+Ejemplo mínimo (eliminar un registro):
+
+```js
+const borrar = async () => {
+    await axios.delete(route("ruta_destroy", id));
+    await recargarLista();
+    return { message: "Se eliminó correctamente.", type: "success" };
+};
+
+const result = await window.alertaSistema("Eliminar área", "¿Seguro que deseas eliminarla?", "warning", {
+    duration: 0,
+    showCancelButton: true,
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar",
+    loadingText: "Eliminando área...",
+    showLoaderOnConfirm: true,
+    onConfirm: borrar,
+    preConfirm: borrar,
+});
+
+if (!result?.isConfirmed) return;
+if (window.alertaSistema.enAracodito?.()) return;
+if (result.value) window.alertaSistema("Área eliminada", result.value.message, "success");
+```
+
+Aplica también a cualquier otro proceso que espere respuesta (subidas, cálculos en servidor, validaciones remotas): mismo patrón, misma animación.
+
 ## Reglas de convivencia
 
 1. **No** importar `Swal2` en componentes nuevos solo para alertar. El único lugar donde se usa `Swal2` es `resources/js/alerta-sistema.js` (respaldo).
@@ -153,4 +193,5 @@ Si el proceso falla, Aracodito muestra el mensaje de error en la burbuja y el pu
 - [ ] Ninguna confirmación ni aviso usa `Swal2.fire` directo.
 - [ ] Las confirmaciones usan `duration: 0` y revisan `result.isConfirmed`.
 - [ ] Si hay proceso asíncrono, la confirmación espera (`onConfirm` + `preConfirm`) y el mensaje final sale por el mismo canal.
+- [ ] Ninguna petición al backend ocurre fuera de la confirmación cuando el usuario debe esperar: Aracodito muestra la animación de espera hasta la respuesta.
 - [ ] Probado con un usuario con `aracodito_enabled = 1` y con uno con `0`: el primero ve a Aracodito y el segundo las alertas clásicas.

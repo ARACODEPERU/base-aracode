@@ -412,10 +412,17 @@
     color: #ffffff;
 }
 
+@media (hover: hover) and (pointer: fine) {
+    .aracodito__action--danger:hover {
+        background: #991b1b;
+    }
+}
+
 /* Robot ------------------------------------------------------------------ */
 
 .aracodito__avatar {
     display: grid;
+    position: relative;
     place-items: center;
     width: clamp(180px, 26vw, 300px);
     height: clamp(180px, 26vw, 300px);
@@ -428,6 +435,25 @@
     cursor: pointer;
     filter: drop-shadow(5px 5px 0 var(--aracodito-pixel-shadow));
     transition: transform 0.12s steps(2, end);
+    /* Entrada suave: el robot sube flotando en lugar de aparecer de golpe. */
+    animation: aracodito-avatar-enter 0.68s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes aracodito-avatar-enter {
+    0% {
+        opacity: 0;
+        translate: 0 26px;
+        scale: 0.86;
+    }
+    60% {
+        opacity: 1;
+        scale: 1.03;
+    }
+    100% {
+        opacity: 1;
+        translate: 0 0;
+        scale: 1;
+    }
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -501,6 +527,73 @@
     }
 }
 
+/* Balón del estilo futbolero ---------------------------------------------- */
+
+.aracodito__ball {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: aracodito-ball-bounce 1.6s ease-in-out infinite;
+}
+
+.aracodito__ball-body {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    animation: aracodito-ball-spin 6s linear infinite;
+}
+
+.aracodito__ball-shadow {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    animation: aracodito-ball-shadow 1.6s ease-in-out infinite;
+}
+
+/* Confirmación en curso: el balón hace jueguitos mientras el robot "piensa". */
+#aracodito-widget.is-loading .aracodito__ball {
+    animation: aracodito-ball-juggle 0.72s ease-in-out infinite;
+}
+
+#aracodito-widget.is-loading .aracodito__ball-body {
+    animation: aracodito-ball-spin 1.05s linear infinite;
+}
+
+@keyframes aracodito-ball-bounce {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-7px);
+    }
+}
+
+@keyframes aracodito-ball-juggle {
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-15px) rotate(-7deg);
+    }
+}
+
+@keyframes aracodito-ball-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes aracodito-ball-shadow {
+    0%,
+    100% {
+        transform: scaleX(1);
+        opacity: 0.32;
+    }
+    50% {
+        transform: scaleX(0.68);
+        opacity: 0.2;
+    }
+}
+
 /* Boca del robot ---------------------------------------------------------- */
 
 .aracodito__mouth {
@@ -522,6 +615,329 @@
     }
 }
 
+/* Manos y gestos --------------------------------------------------------- */
+
+.aracodito__arm {
+    transform-box: view-box;
+    transform-origin: 34px 103px;
+    transition: transform 0.24s ease;
+}
+
+.aracodito__arm--right {
+    transform-origin: 86px 103px;
+}
+
+/* En pixel art los hombros quedan más adentro y los brazos son bloques. */
+.aracodito__arms--pixel .aracodito__arm--left {
+    transform-origin: 28px 100px;
+}
+
+.aracodito__arms--pixel .aracodito__arm--right {
+    transform-origin: 92px 100px;
+}
+
+/* Propulsión: sustituye a las piernas y sostiene la sensación de flotar. */
+.aracodito__thruster {
+    pointer-events: none;
+}
+
+.aracodito__plume {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+    animation: aracodito-plume-flicker 0.9s ease-in-out infinite;
+}
+
+.aracodito__plume-core {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+    animation: aracodito-plume-flicker 0.62s ease-in-out infinite;
+}
+
+/* Con el proceso en marcha el empuje se acelera. */
+#aracodito-widget.is-loading .aracodito__plume {
+    animation-duration: 0.42s;
+}
+
+#aracodito-widget.is-loading .aracodito__plume-core {
+    animation-duration: 0.3s;
+}
+
+@keyframes aracodito-plume-flicker {
+    0%,
+    100% {
+        transform: scaleY(1) scaleX(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scaleY(0.74) scaleX(0.9);
+        opacity: 0.72;
+    }
+}
+
+/* La burbuja llega un instante después que el robot. */
+.aracodito__bubble.is-visible {
+    animation: aracodito-bubble-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+@keyframes aracodito-bubble-enter {
+    0% {
+        opacity: 0;
+        translate: 0 10px;
+        scale: 0.96;
+    }
+    100% {
+        opacity: 1;
+        translate: 0 0;
+        scale: 1;
+    }
+}
+
+/* La cara acompaña el gesto: sonrisa y ojos felices al celebrar. */
+#aracodito-widget.aracodito--success .aracodito__eyes-happy,
+#aracodito-widget.aracodito--success .aracodito__mouth-smile {
+    opacity: 1;
+}
+
+#aracodito-widget.aracodito--success .aracodito__eyes,
+#aracodito-widget.aracodito--success .aracodito__mouth {
+    opacity: 0;
+}
+
+/* info: explica con la mano derecha levantada. */
+#aracodito-widget.aracodito--info .aracodito__arm--right {
+    animation: aracodito-arm-explain 2.6s ease-in-out infinite;
+}
+
+/* success: los dos brazos arriba, celebrando. */
+#aracodito-widget.aracodito--success .aracodito__arm--left {
+    animation: aracodito-arm-cheer-left 1.1s ease-in-out infinite;
+}
+
+#aracodito-widget.aracodito--success .aracodito__arm--right {
+    animation: aracodito-arm-cheer-right 1.1s ease-in-out infinite;
+}
+
+/* error: se lleva las manos a la cabeza y la sacude. */
+#aracodito-widget.aracodito--error .aracodito__arm--left {
+    animation: aracodito-arm-alarm-left 0.9s ease-in-out infinite;
+}
+
+#aracodito-widget.aracodito--error .aracodito__arm--right {
+    animation: aracodito-arm-alarm-right 0.9s ease-in-out infinite;
+}
+
+#aracodito-widget.aracodito--error .aracodito__avatar .aracodito__head {
+    animation: aracodito-head-shake 0.7s ease-in-out 2;
+}
+
+/* warning: palma abierta en alto, como diciendo «espera». */
+#aracodito-widget.aracodito--warning .aracodito__arm--left {
+    transform: rotate(16deg);
+}
+
+#aracodito-widget.aracodito--warning .aracodito__arm--right {
+    animation: aracodito-arm-stop 1.2s ease-in-out infinite;
+}
+
+/* confirm: abre las manos y asiente, esperando la respuesta del usuario. */
+#aracodito-widget.aracodito--confirm .aracodito__arm--left {
+    animation: aracodito-arm-offer-left 2.4s ease-in-out infinite;
+}
+
+#aracodito-widget.aracodito--confirm .aracodito__arm--right {
+    animation: aracodito-arm-offer-right 2.4s ease-in-out infinite;
+}
+
+#aracodito-widget.aracodito--confirm .aracodito__avatar .aracodito__head {
+    animation: aracodito-head-nod 2.4s ease-in-out infinite;
+}
+
+/* question y help: mano al mentón, pensando la respuesta. */
+#aracodito-widget.aracodito--question .aracodito__arm--right,
+#aracodito-widget.aracodito--help .aracodito__arm--right {
+    animation: aracodito-arm-think 2.8s ease-in-out infinite;
+}
+
+#aracodito-widget.aracodito--question .aracodito__avatar .aracodito__head,
+#aracodito-widget.aracodito--help .aracodito__avatar .aracodito__head {
+    animation: aracodito-head-tilt 3.4s ease-in-out infinite;
+}
+
+@keyframes aracodito-arm-explain {
+    0%,
+    100% {
+        transform: rotate(-54deg);
+    }
+    50% {
+        transform: rotate(-70deg) translateY(-1px);
+    }
+}
+
+@keyframes aracodito-arm-cheer-left {
+    0%,
+    100% {
+        transform: rotate(84deg);
+    }
+    50% {
+        transform: rotate(97deg) translateY(-1px);
+    }
+}
+
+@keyframes aracodito-arm-cheer-right {
+    0%,
+    100% {
+        transform: rotate(-84deg);
+    }
+    50% {
+        transform: rotate(-97deg) translateY(-1px);
+    }
+}
+
+@keyframes aracodito-arm-alarm-left {
+    0%,
+    100% {
+        transform: rotate(116deg);
+    }
+    50% {
+        transform: rotate(128deg) translateY(-1px);
+    }
+}
+
+@keyframes aracodito-arm-alarm-right {
+    0%,
+    100% {
+        transform: rotate(-116deg);
+    }
+    50% {
+        transform: rotate(-128deg) translateY(-1px);
+    }
+}
+
+@keyframes aracodito-arm-stop {
+    0%,
+    100% {
+        transform: rotate(-104deg);
+    }
+    50% {
+        transform: rotate(-86deg);
+    }
+}
+
+@keyframes aracodito-arm-offer-left {
+    0%,
+    100% {
+        transform: rotate(20deg);
+    }
+    50% {
+        transform: rotate(30deg) translateY(-1px);
+    }
+}
+
+@keyframes aracodito-arm-offer-right {
+    0%,
+    100% {
+        transform: rotate(-20deg);
+    }
+    50% {
+        transform: rotate(-30deg) translateY(-1px);
+    }
+}
+
+@keyframes aracodito-arm-think {
+    0%,
+    100% {
+        transform: rotate(-132deg);
+    }
+    50% {
+        transform: rotate(-122deg);
+    }
+}
+
+@keyframes aracodito-head-shake {
+    0%,
+    100% {
+        transform: translateX(0) rotate(0deg);
+    }
+    25% {
+        transform: translateX(-2px) rotate(-2deg);
+    }
+    75% {
+        transform: translateX(2px) rotate(2deg);
+    }
+}
+
+@keyframes aracodito-head-nod {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(1.6px);
+    }
+}
+
+@keyframes aracodito-head-tilt {
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+    50% {
+        transform: rotate(-4deg) translateY(-1px);
+    }
+}
+
+/* Emote: símbolo junto a la cabeza que resume el mensaje ------------------ */
+
+.aracodito__emote {
+    position: absolute;
+    top: 2%;
+    right: 4%;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 6px;
+    border: 3px solid var(--aracodito-pixel-ink);
+    background: var(--aracodito-bubble-tail);
+    color: var(--aracodito-accent);
+    box-shadow: 3px 3px 0 var(--aracodito-pixel-ink);
+    font-family: "Courier New", ui-monospace, monospace;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+    animation: aracodito-emote-pop 2.2s ease-in-out infinite;
+}
+
+.aracodito__emote:empty {
+    display: none;
+}
+
+#aracodito-widget.aracodito--classic .aracodito__emote {
+    min-width: 30px;
+    height: 30px;
+    border: 1px solid var(--aracodito-bubble-border);
+    border-radius: 999px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16);
+    font-family: inherit;
+    font-size: 16px;
+}
+
+@keyframes aracodito-emote-pop {
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+    40% {
+        transform: translateY(-3px) scale(1.08);
+    }
+    70% {
+        transform: translateY(-1px) scale(1);
+    }
+}
+
 /* Proceso en curso: mini consola en el pecho y cara feliz ----------------- */
 
 .aracodito__chest-screen,
@@ -540,6 +956,35 @@
 #aracodito-widget.is-loading .aracodito__eyes,
 #aracodito-widget.is-loading .aracodito__mouth {
     opacity: 0;
+}
+
+/* Mientras el servidor responde, las manos escriben en la terminal. */
+#aracodito-widget.is-loading .aracodito__arm--left {
+    animation: aracodito-arm-type-left 0.5s steps(2, end) infinite;
+}
+
+#aracodito-widget.is-loading .aracodito__arm--right {
+    animation: aracodito-arm-type-right 0.5s steps(2, end) 0.25s infinite;
+}
+
+@keyframes aracodito-arm-type-left {
+    0%,
+    100% {
+        transform: rotate(62deg) translateX(2px);
+    }
+    50% {
+        transform: rotate(46deg) translateX(-1px);
+    }
+}
+
+@keyframes aracodito-arm-type-right {
+    0%,
+    100% {
+        transform: rotate(-46deg) translateX(1px);
+    }
+    50% {
+        transform: rotate(-62deg) translateX(-2px);
+    }
 }
 
 /* La carita no se mueve: ojos cerrados hacia arriba y una sonrisa tranquila. */
@@ -667,6 +1112,31 @@
     #aracodito-widget.is-talking .aracodito__mouth {
         animation: none;
     }
+
+    .aracodito__ball,
+    .aracodito__ball-body,
+    .aracodito__ball-shadow,
+    #aracodito-widget.is-loading .aracodito__ball,
+    #aracodito-widget.is-loading .aracodito__ball-body {
+        animation: none;
+    }
+
+    .aracodito__avatar,
+    .aracodito__bubble.is-visible,
+    .aracodito__plume,
+    .aracodito__plume-core,
+    #aracodito-widget.is-loading .aracodito__plume,
+    #aracodito-widget.is-loading .aracodito__plume-core,
+    .aracodito__arm,
+    .aracodito__emote,
+    #aracodito-widget.is-loading .aracodito__arm--left,
+    #aracodito-widget.is-loading .aracodito__arm--right,
+    #aracodito-widget.aracodito--error .aracodito__head,
+    #aracodito-widget.aracodito--confirm .aracodito__head,
+    #aracodito-widget.aracodito--question .aracodito__head,
+    #aracodito-widget.aracodito--help .aracodito__head {
+        animation: none;
+    }
 }
 
 @media print {
@@ -704,6 +1174,7 @@
 }
 
 #aracodito-widget.aracodito--classic .aracodito__bubble {
+    max-width: min(440px, calc(100vw - 32px));
     padding: 14px 46px 14px 18px;
     border: 1px solid var(--aracodito-bubble-border);
     border-radius: 22px;
@@ -880,6 +1351,12 @@
     color: #ffffff;
 }
 
+@media (hover: hover) and (pointer: fine) {
+    #aracodito-widget.aracodito--classic .aracodito__action--danger:hover {
+        background: #991b1b;
+    }
+}
+
 #aracodito-widget.aracodito--classic .aracodito__avatar {
     filter: none;
     transition: transform 0.2s ease;
@@ -967,6 +1444,10 @@
 
     #aracodito-widget.aracodito--classic .aracodito__avatar svg,
     #aracodito-widget.aracodito--classic .aracodito__head,
+    #aracodito-widget.aracodito--error .aracodito__avatar .aracodito__head,
+    #aracodito-widget.aracodito--confirm .aracodito__avatar .aracodito__head,
+    #aracodito-widget.aracodito--question .aracodito__avatar .aracodito__head,
+    #aracodito-widget.aracodito--help .aracodito__avatar .aracodito__head,
     #aracodito-widget.aracodito--classic .aracodito__eyes,
     #aracodito-widget.aracodito--classic.is-loading .aracodito__terminal-line,
     #aracodito-widget.aracodito--classic.is-loading .aracodito__terminal-progress,
@@ -977,4 +1458,43 @@
     #aracodito-widget.aracodito--classic.is-talking .aracodito__mouth {
         animation: none;
     }
+
+    .aracodito__ball,
+    .aracodito__ball-body,
+    .aracodito__ball-shadow {
+        animation: none;
+    }
+}
+
+/* ==========================================================================
+   Tema futbolero
+   Comparte la burbuja clásica (el widget conserva .aracodito--classic) y suma
+   la camiseta verde y el balón animado.
+   ========================================================================== */
+
+#aracodito-widget.aracodito--futbol .aracodito__bubble {
+    border-color: rgba(22, 163, 74, 0.38);
+}
+
+.dark #aracodito-widget.aracodito--futbol .aracodito__bubble {
+    border-color: rgba(74, 222, 128, 0.42);
+}
+
+#aracodito-widget.aracodito--futbol .aracodito__bubble::after {
+    border-inline-end-color: rgba(22, 163, 74, 0.38);
+    border-bottom-color: rgba(22, 163, 74, 0.38);
+}
+
+.dark #aracodito-widget.aracodito--futbol .aracodito__bubble::after {
+    border-inline-end-color: rgba(74, 222, 128, 0.42);
+    border-bottom-color: rgba(74, 222, 128, 0.42);
+}
+
+#aracodito-widget.aracodito--futbol .aracodito__icon {
+    border-color: rgba(22, 163, 74, 0.3);
+    background: rgba(22, 163, 74, 0.1);
+}
+
+#aracodito-widget.aracodito--futbol .aracodito__avatar:focus-visible {
+    outline-color: rgba(22, 163, 74, 0.55);
 }

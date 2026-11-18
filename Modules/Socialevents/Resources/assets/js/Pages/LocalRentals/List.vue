@@ -6,7 +6,7 @@ import Pagination from '@/Components/Pagination.vue';
 import RentalsTable from './Partials/RentalsTable.vue';
 import RentalStatusModal from './Partials/RentalStatusModal.vue';
 import RentalPaymentsModal from './Partials/RentalPaymentsModal.vue';
-import { Link, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import Swal2 from 'sweetalert2';
 
@@ -64,41 +64,57 @@ const closePaymentsModal = () => {
     selectedRental.value = null;
 };
 
-const deleteRental = (rental) => {
-    Swal2.fire({
-        title: '¿Eliminar reserva?',
-        text: `Reserva #${rental.id} — ${rental.customer?.full_name || ''}`,
-        icon: 'warning',
+// Llama al backend para eliminar la reserva. Si el servidor rechaza la operación
+// (por ejemplo, la reserva tiene notas de venta), lanza un error con el motivo.
+const borrarReserva = async (rental) => {
+    try {
+        const res = await axios.delete(route('even_alquiler_local_destroy', rental.id));
+        return res.data.message || 'Reserva eliminada correctamente.';
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'No se pudo eliminar la reserva.');
+    }
+};
+
+const deleteRental = async (rental) => {
+    // Con Aracodito la confirmación espera la respuesta del servidor (onConfirm).
+    // En el respaldo de SweetAlert2 se usa preConfirm y el motivo se muestra en el modal.
+    const eliminar = () => borrarReserva(rental).then((message) => {
+        router.reload({ only: ['rentals'], preserveScroll: true });
+        return { message, type: 'success' };
+    });
+
+    const result = await window.alertaSistema('¿Eliminar reserva?', `Reserva #${rental.id} — ${rental.customer?.full_name || ''}`, 'warning', {
+        duration: 0,
         showCancelButton: true,
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar',
-        padding: '2em',
-        customClass: 'sweet-alerts',
+        loadingText: 'Eliminando reserva...',
         showLoaderOnConfirm: true,
-        preConfirm: () => axios.delete(route('even_alquiler_local_destroy', rental.id)).then((res) => {
-            if (!res.data.success) {
-                Swal2.showValidationMessage(res.data.message);
+        onConfirm: eliminar,
+        preConfirm: async () => {
+            try {
+                return await eliminar();
+            } catch (error) {
+                Swal2.showValidationMessage(error.message);
             }
-            return res;
-        }),
-        allowOutsideClick: () => !Swal2.isLoading(),
-    }).then((result) => {
-        if (result.isConfirmed) {
-            Swal2.fire({
-                title: 'Enhorabuena',
-                text: 'Reserva eliminada correctamente',
-                icon: 'success',
-                padding: '2em',
-                customClass: 'sweet-alerts',
-            });
-            router.reload({ only: ['rentals'], preserveScroll: true });
-        }
+        },
     });
+
+    if (!result?.isConfirmed) return;
+    // Aracodito ya mostró el resultado en su burbuja.
+    if (window.alertaSistema.enAracodito?.()) return;
+
+    if (result.value) {
+        window.alertaSistema('Enhorabuena', result.value.message || 'Reserva eliminada correctamente', 'success');
+    }
 };
 </script>
 
 <template>
     <AppLayout title="Alquiler de local">
+        <Head>
+            <meta name="aracodito-view" content="new" />
+        </Head>
         <Navigation
             :routeModule="route('even_dashboard')"
             :titleModule="'Eventos sociales'"

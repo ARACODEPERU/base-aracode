@@ -3,12 +3,16 @@
 namespace Modules\Socialevents\Services;
 
 use Carbon\Carbon;
-use Modules\Socialevents\Entities\EvenLocalRental;
+use Modules\Socialevents\Entities\EvenLocalRentalItem;
 
 class LocalRentalAvailabilityService
 {
-    public function hasOverlap(
-        int $localId,
+    /**
+     * Comprueba solapamiento de horario dentro de un área concreta.
+     * Un salón reservado no bloquea el campo, y viceversa.
+     */
+    public function hasOverlapInArea(
+        int $areaId,
         string $eventDate,
         string $startTime,
         string $eventEndDate,
@@ -22,24 +26,26 @@ class LocalRentalAvailabilityService
             return false;
         }
 
-        $query = EvenLocalRental::query()
-            ->where('local_id', $localId)
-            ->where('reservation_status', '!=', 'cancelled');
+        $query = EvenLocalRentalItem::query()
+            ->where('area_id', $areaId)
+            ->whereHas('rental', function ($rentalQuery) use ($excludeRentalId) {
+                $rentalQuery->where('reservation_status', '!=', 'cancelled');
 
-        if ($excludeRentalId) {
-            $query->where('id', '!=', $excludeRentalId);
-        }
+                if ($excludeRentalId) {
+                    $rentalQuery->where('id', '!=', $excludeRentalId);
+                }
+            });
 
-        foreach ($query->get() as $rental) {
-            $existingEndDate = $rental->event_end_date
-                ? $rental->event_end_date->format('Y-m-d')
-                : $rental->event_date->format('Y-m-d');
+        foreach ($query->get() as $item) {
+            $existingEndDate = $item->event_end_date
+                ? $item->event_end_date->format('Y-m-d')
+                : $item->event_date->format('Y-m-d');
 
             $existingStart = Carbon::parse(
-                $rental->event_date->format('Y-m-d') . ' ' . substr((string) $rental->start_time, 0, 5)
+                $item->event_date->format('Y-m-d') . ' ' . substr((string) $item->start_time, 0, 5)
             );
             $existingEnd = Carbon::parse(
-                $existingEndDate . ' ' . substr((string) $rental->end_time, 0, 5)
+                $existingEndDate . ' ' . substr((string) $item->end_time, 0, 5)
             );
 
             if ($newStart->lt($existingEnd) && $newEnd->gt($existingStart)) {
