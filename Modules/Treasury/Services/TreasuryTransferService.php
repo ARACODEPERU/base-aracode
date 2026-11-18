@@ -218,6 +218,8 @@ class TreasuryTransferService
             TreasuryTransaction::create([
                 'treasury_account_id' => $from->id,
                 'transaction_date' => $dateValue->toDateString(),
+                // La hora de la transferencia acompaña a la fecha en el libro.
+                'transaction_time' => $dateValue->isToday() ? now()->format('H:i:s') : null,
                 'type' => TreasuryTransaction::TYPE_EXPENSE,
                 'treasury_category_id' => null,
                 'origin_type' => 'treasury_transfer',
@@ -242,6 +244,8 @@ class TreasuryTransferService
                 TreasuryTransaction::create([
                     'treasury_account_id' => $from->id,
                     'transaction_date' => $dateValue->toDateString(),
+                    // La hora de la transferencia acompaña a la fecha en el libro.
+                    'transaction_time' => $dateValue->isToday() ? now()->format('H:i:s') : null,
                     'type' => TreasuryTransaction::TYPE_EXPENSE,
                     'treasury_category_id' => $feeCategoryId,
                     'origin_type' => 'treasury_transfer_fee',
@@ -267,6 +271,8 @@ class TreasuryTransferService
                 TreasuryTransaction::create([
                     'treasury_account_id' => $from->id,
                     'transaction_date' => $dateValue->toDateString(),
+                    // La hora de la transferencia acompaña a la fecha en el libro.
+                    'transaction_time' => $dateValue->isToday() ? now()->format('H:i:s') : null,
                     'type' => TreasuryTransaction::TYPE_EXPENSE,
                     'treasury_category_id' => $itfCategoryId,
                     'origin_type' => 'treasury_transfer_itf',
@@ -294,6 +300,8 @@ class TreasuryTransferService
             TreasuryTransaction::create([
                 'treasury_account_id' => $to->id,
                 'transaction_date' => $dateValue->toDateString(),
+                // La hora de la transferencia acompaña a la fecha en el libro.
+                'transaction_time' => $dateValue->isToday() ? now()->format('H:i:s') : null,
                 'type' => TreasuryTransaction::TYPE_INCOME,
                 'origin_type' => 'treasury_transfer',
                 'origin_id' => $transfer->id,
@@ -313,6 +321,8 @@ class TreasuryTransferService
                 TreasuryTransaction::create([
                     'treasury_account_id' => $to->id,
                     'transaction_date' => $dateValue->toDateString(),
+                    // La hora de la transferencia acompaña a la fecha en el libro.
+                    'transaction_time' => $dateValue->isToday() ? now()->format('H:i:s') : null,
                     'type' => TreasuryTransaction::TYPE_EXPENSE,
                     'treasury_category_id' => $feeCategoryId,
                     'origin_type' => 'treasury_transfer_fee',

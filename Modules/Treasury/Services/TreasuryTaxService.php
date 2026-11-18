@@ -224,6 +224,7 @@ class TreasuryTaxService
         return $query->get()->map(fn (TreasuryTransaction $payment) => [
             'id' => $payment->id,
             'date' => $payment->transaction_date?->format('Y-m-d'),
+            'time' => $payment->transaction_time ? substr((string) $payment->transaction_time, 0, 5) : null,
             'period' => $payment->origin_id ? substr((string) $payment->origin_id, 0, 4) . '-' . substr((string) $payment->origin_id, 4, 2) : null,
             'amount' => (float) $payment->amount,
             'currency' => $payment->currency ?: 'PEN',

@@ -295,7 +295,10 @@
                         </thead>
                         <tbody>
                             <tr v-for="payment in payments" :key="payment.id" :class="payment.voided ? 'opacity-50' : ''">
-                                <td class="text-sm">{{ fecha(payment.date) }}</td>
+                                <td class="text-sm">
+                                    {{ fecha(payment.date) }}
+                                    <span v-if="payment.time" class="block text-xs text-gray-500">{{ payment.time }}</span>
+                                </td>
                                 <td class="text-sm">{{ payment.period }}</td>
                                 <td class="text-sm">{{ payment.account }}</td>
                                 <td class="text-sm text-gray-500">{{ payment.reference || '—' }}</td>

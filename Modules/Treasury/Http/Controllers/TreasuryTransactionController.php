@@ -141,6 +141,7 @@ class TreasuryTransactionController extends Controller
                     null,
                     $data['cost_center_id'] ?? null,
                     $data['operation_number'] ?? null,
+                    $data['transaction_time'] ?? null,
                 )
                 : $this->ledger->registerExpense(
                     $account,
@@ -160,6 +161,7 @@ class TreasuryTransactionController extends Controller
                     null,
                     $data['cost_center_id'] ?? null,
                     $data['operation_number'] ?? null,
+                    $data['transaction_time'] ?? null,
                 );
         } catch (TreasuryOperationException $e) {
             return back()->with('error', $e->getMessage());
@@ -207,6 +209,7 @@ class TreasuryTransactionController extends Controller
 
             $transaction->fill([
                 'transaction_date' => $data['transaction_date'],
+                'transaction_time' => $data['transaction_time'] ?? null,
                 'type' => $data['type'],
                 'treasury_category_id' => $data['treasury_category_id'] ?? null,
                 'cost_center_id' => $data['cost_center_id'] ?? null,
@@ -312,6 +315,8 @@ class TreasuryTransactionController extends Controller
         return $request->validate([
             'treasury_account_id' => ['required', 'integer', 'exists:treasury_accounts,id'],
             'transaction_date' => ['required', 'date'],
+            // Hora opcional: HH:MM (input del navegador) o HH:MM:SS.
+            'transaction_time' => ['nullable', 'regex:/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/'],
             'type' => ['required', 'in:income,expense'],
             'treasury_category_id' => ['nullable', 'integer', 'exists:treasury_categories,id'],
             'cost_center_id' => ['nullable', 'integer', 'exists:treasury_cost_centers,id'],

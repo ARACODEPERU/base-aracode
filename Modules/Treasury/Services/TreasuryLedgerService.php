@@ -52,6 +52,7 @@ class TreasuryLedgerService
         ?float $exchangeRate = null,
         ?int $costCenterId = null,
         ?string $operationNumber = null,
+        ?string $time = null,
     ): ?TreasuryTransaction {
         $income = $this->register(
             $account,
@@ -72,6 +73,7 @@ class TreasuryLedgerService
             $exchangeRate,
             $costCenterId,
             $operationNumber,
+            $time,
         );
 
         // Si la cuenta cobra comisiones, se registra su egreso (comisión + IGV) en la misma cuenta.
@@ -123,6 +125,7 @@ class TreasuryLedgerService
             TreasuryTransaction::create([
                 'treasury_account_id' => $account->id,
                 'transaction_date' => $income->transaction_date,
+                'transaction_time' => $income->transaction_time,
                 'type' => TreasuryTransaction::TYPE_EXPENSE,
                 'origin_type' => 'treasury_commission',
                 'origin_id' => $income->id,
@@ -162,6 +165,7 @@ class TreasuryLedgerService
         ?float $exchangeRate = null,
         ?int $costCenterId = null,
         ?string $operationNumber = null,
+        ?string $time = null,
     ): ?TreasuryTransaction {
         return $this->register(
             $account,
@@ -182,6 +186,7 @@ class TreasuryLedgerService
             $exchangeRate,
             $costCenterId,
             $operationNumber,
+            $time,
         );
     }
 
@@ -213,6 +218,7 @@ class TreasuryLedgerService
         ?float $exchangeRate = null,
         ?int $costCenterId = null,
         ?string $operationNumber = null,
+        ?string $time = null,
     ): ?TreasuryTransaction {
         try {
             if (! $account || ! $account->status) {
@@ -226,6 +232,11 @@ class TreasuryLedgerService
             }
 
             $dateValue = $date instanceof Carbon ? $date->copy() : Carbon::parse($date);
+
+            // Hora del movimiento: la indicada al registrarlo o, si es de hoy,
+            // la actual. Los movimientos históricos quedan sin hora.
+            $timeValue = TreasuryTransaction::normalizeTimeValue($time)
+                ?? ($dateValue->isToday() ? now()->format('H:i:s') : null);
 
             if (! config('treasury.allow_future_dates', false) && $dateValue->isAfter(now()->startOfDay())) {
                 throw new TreasuryOperationException('No se permiten movimientos con fecha futura.');
@@ -272,6 +283,7 @@ class TreasuryLedgerService
             return TreasuryTransaction::create([
                 'treasury_account_id' => $account->id,
                 'transaction_date' => $dateValue->toDateString(),
+                'transaction_time' => $timeValue,
                 'type' => $type,
                 'treasury_category_id' => $categoryId,
                 'origin_type' => $originType,
@@ -586,6 +598,8 @@ class TreasuryLedgerService
                 'before_start' => $beforeStart,
                 'id' => $tx->id,
                 'date' => $tx->transaction_date->format('Y-m-d'),
+                // Hora en HH:MM para la tabla; null si el movimiento no la tiene.
+                'time' => $tx->transaction_time ? substr((string) $tx->transaction_time, 0, 5) : null,
                 'type' => $tx->type,
                 'category' => $tx->category?->name,
                 'category_color' => $tx->category?->color,

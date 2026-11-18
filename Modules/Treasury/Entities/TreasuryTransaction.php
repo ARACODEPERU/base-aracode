@@ -68,6 +68,34 @@ class TreasuryTransaction extends Model
         'voided_at' => 'datetime',
     ];
 
+    /**
+     * Normaliza la hora del movimiento a HH:MM:SS (o null si no es válida).
+     * El input del navegador envía HH:MM; los extractos suelen traer HH:MM:SS.
+     */
+    public static function normalizeTimeValue(mixed $value): ?string
+    {
+        $text = trim((string) $value);
+
+        if ($text === '') {
+            return null;
+        }
+
+        foreach (['H:i:s', 'H:i'] as $format) {
+            $parsed = \DateTime::createFromFormat($format, $text);
+
+            if ($parsed && $parsed->format($format) === $text) {
+                return $parsed->format('H:i:s');
+            }
+        }
+
+        return null;
+    }
+
+    public function setTransactionTimeAttribute(mixed $value): void
+    {
+        $this->attributes['transaction_time'] = self::normalizeTimeValue($value);
+    }
+
     protected static function booted(): void
     {
         // El movimiento conciliado no se toca: es la evidencia del acta.

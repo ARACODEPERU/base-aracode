@@ -340,7 +340,10 @@
                         </thead>
                         <tbody>
                             <tr v-for="movement in summary.movements" :key="movement.id">
-                                <td class="whitespace-nowrap text-sm">{{ fecha(movement.date) }}</td>
+                                <td class="whitespace-nowrap text-sm">
+                                    {{ fecha(movement.date) }}
+                                    <span v-if="movement.time" class="block text-xs text-gray-500">{{ movement.time }}</span>
+                                </td>
                                 <td class="text-sm">{{ movement.description }}</td>
                                 <td class="text-sm text-gray-500">{{ movement.reference || '—' }}</td>
                                 <td class="whitespace-nowrap text-sm text-gray-500">{{ movement.operation_number || '—' }}</td>

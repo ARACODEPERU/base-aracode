@@ -51,6 +51,7 @@ class ProcessTreasuryScheduledCharge implements ShouldQueue
             $transaction = TreasuryTransaction::create([
                 'treasury_account_id' => $account->id,
                 'transaction_date' => now()->toDateString(),
+                'transaction_time' => now()->format('H:i:s'),
                 'type' => TreasuryTransaction::TYPE_EXPENSE,
                 'origin_type' => 'treasury_schedule',
                 'origin_id' => $account->id,

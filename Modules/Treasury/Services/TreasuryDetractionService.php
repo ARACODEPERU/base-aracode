@@ -459,6 +459,7 @@ class TreasuryDetractionService
                 return [
                     'id' => $movement->id,
                     'date' => $movement->transaction_date?->format('Y-m-d'),
+                    'time' => $movement->transaction_time ? substr((string) $movement->transaction_time, 0, 5) : null,
                     'document' => $movement->reference,
                     'document_date' => $factura?->invoice_broadcast_date ? substr((string) $factura->invoice_broadcast_date, 0, 10) : null,
                     'client' => $factura?->client_rzn_social,
@@ -476,6 +477,7 @@ class TreasuryDetractionService
             'movements' => $movimientos->map(fn (TreasuryTransaction $movement) => [
                 'id' => $movement->id,
                 'date' => $movement->transaction_date?->format('Y-m-d'),
+                'time' => $movement->transaction_time ? substr((string) $movement->transaction_time, 0, 5) : null,
                 'type' => $movement->type,
                 'origin' => $movement->origin_type,
                 'description' => $movement->description,

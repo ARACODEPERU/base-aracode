@@ -49,6 +49,12 @@
         return year && month && day ? `${day}/${month}/${year}` : value;
     };
 
+    // Hora local en HH:MM para el input type="time".
+    const horaActual = () => {
+        const ahora = new Date();
+        return `${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}`;
+    };
+
     // Toast de éxito (convención del proyecto)
     const toast = Swal2.mixin({
         toast: true,
@@ -81,6 +87,7 @@
     const form = useForm({
         treasury_account_id: props.selectedAccountId,
         transaction_date: new Date().toISOString().slice(0, 10),
+        transaction_time: horaActual(),
         type: 'expense',
         treasury_category_id: null,
         cost_center_id: null,
@@ -103,6 +110,7 @@
         form.reset();
         form.treasury_account_id = filters.value.account_id;
         form.transaction_date = new Date().toISOString().slice(0, 10);
+        form.transaction_time = horaActual();
         form.type = type;
         showModal.value = true;
     };
@@ -111,6 +119,7 @@
         editingId.value = tx.id;
         form.treasury_account_id = filters.value.account_id;
         form.transaction_date = tx.date;
+        form.transaction_time = tx.time || '';
         form.type = tx.type;
         form.amount = tx.amount;
         form.reference = tx.reference;
@@ -360,7 +369,7 @@
                         <thead>
                             <tr class="bg-gray-50 dark:bg-gray-800/60">
                                 <th class="w-24 text-center">Acciones</th>
-                                <th class="w-28">Fecha</th>
+                                <th class="w-32">Fecha y hora</th>
                                 <th class="min-w-[240px]">Descripción</th>
                                 <th class="min-w-[160px]">Categoría</th>
                                 <th class="w-32">Referencia</th>
@@ -408,7 +417,10 @@
                                     </Dropdown>
                                     <span v-else class="text-xs font-medium text-danger">Anulado</span>
                                 </td>
-                                <td class="whitespace-nowrap text-gray-600 dark:text-gray-400">{{ fecha(tx.date) }}</td>
+                                <td class="whitespace-nowrap text-gray-600 dark:text-gray-400">
+                                    {{ fecha(tx.date) }}
+                                    <span v-if="tx.time" class="block text-xs text-gray-400 dark:text-gray-500">{{ tx.time }}</span>
+                                </td>
                                 <td>
                                     <p class="text-gray-800 dark:text-gray-100">{{ tx.description || '—' }}</p>
                                     <p v-if="tx.reference" class="text-xs text-gray-400">Ref: {{ tx.reference }}</p>
@@ -490,10 +502,18 @@
                         </select>
                         <InputError :message="form.errors.treasury_account_id" class="mt-2" />
                     </div>
-                    <div>
-                        <InputLabel value="Fecha *" class="mb-1.5" />
-                        <input v-model="form.transaction_date" type="date" class="form-input w-full" />
-                        <InputError :message="form.errors.transaction_date" class="mt-2" />
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <InputLabel value="Fecha *" class="mb-1.5" />
+                            <input v-model="form.transaction_date" type="date" class="form-input w-full" />
+                            <InputError :message="form.errors.transaction_date" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel value="Hora" class="mb-1.5" />
+                            <input v-model="form.transaction_time" type="time" class="form-input w-full" />
+                            <InputError :message="form.errors.transaction_time" class="mt-2" />
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Se guarda con la fecha.</p>
+                        </div>
                     </div>
                 </div>
 

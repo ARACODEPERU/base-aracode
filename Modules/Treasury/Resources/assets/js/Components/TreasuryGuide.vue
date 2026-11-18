@@ -306,6 +306,76 @@
         pistaTimer = setTimeout(ocultarPista, 5200);
     };
 
+    // ─── Ocultar el botón cuando estorba ──────────────────────────────────
+    // El botón flota sobre la esquina de la tabla y a veces tapa datos. Si el
+    // puntero descansa encima más de 4 s, el botón se desvanece para dejar ver
+    // lo que hay detrás; mientras el puntero siga en ese lugar permanece
+    // oculto y vuelve 10 s después de alejarse.
+    const MS_PARA_OCULTAR = 4000;
+    const MS_PARA_VOLVER = 10000;
+
+    const botonOculto = ref(false);
+    const refBoton = ref(null);
+    let ocultarTimer = null;
+    let reaparecerTimer = null;
+    let zonaOculta = null;
+
+    // Sigue al puntero: solo cuando sale del área que ocupaba el botón empieza
+    // la cuenta para que reaparezca.
+    function vigilarSalida(evento) {
+        if (!zonaOculta) return;
+
+        const dentro = evento.clientX >= zonaOculta.left
+            && evento.clientX <= zonaOculta.right
+            && evento.clientY >= zonaOculta.top
+            && evento.clientY <= zonaOculta.bottom;
+
+        if (dentro) return;
+
+        document.removeEventListener('mousemove', vigilarSalida);
+        reaparecerTimer = setTimeout(() => {
+            reaparecerTimer = null;
+            zonaOculta = null;
+            botonOculto.value = false;
+        }, MS_PARA_VOLVER);
+    }
+
+    const programarOcultado = () => {
+        if (typeof window === 'undefined' || botonOculto.value) return;
+
+        clearTimeout(ocultarTimer);
+        ocultarTimer = setTimeout(() => {
+            ocultarTimer = null;
+
+            if (!refBoton.value) return;
+
+            const caja = refBoton.value.getBoundingClientRect();
+            zonaOculta = { left: caja.left, top: caja.top, right: caja.right, bottom: caja.bottom };
+            botonOculto.value = true;
+            document.addEventListener('mousemove', vigilarSalida);
+        }, MS_PARA_OCULTAR);
+    };
+
+    // Si el puntero se va antes de los 4 s, el botón sigue visible.
+    const cancelarOcultado = () => {
+        clearTimeout(ocultarTimer);
+        ocultarTimer = null;
+    };
+
+    const reiniciarOcultado = () => {
+        clearTimeout(ocultarTimer);
+        clearTimeout(reaparecerTimer);
+        ocultarTimer = null;
+        reaparecerTimer = null;
+
+        if (typeof document !== 'undefined') {
+            document.removeEventListener('mousemove', vigilarSalida);
+        }
+
+        zonaOculta = null;
+        botonOculto.value = false;
+    };
+
     const mostrar = () => {
         if (!guia.value || typeof window.alertaSistema !== 'function') return;
 
@@ -338,6 +408,8 @@
                 delete document.body.dataset.aracoditoView;
             }
 
+            // Cada pestaña arranca con el botón visible.
+            reiniciarOcultado();
         },
         { immediate: true }
     );
@@ -347,23 +419,32 @@
         mostrarPista();
     });
 
-    onBeforeUnmount(ocultarPista);
+    onBeforeUnmount(() => {
+        ocultarPista();
+        reiniciarOcultado();
+    });
 </script>
 
 <template>
     <div v-if="guia" class="fixed bottom-24 ltr:right-6 rtl:left-6 z-40 flex items-end gap-2">
         <!-- Pista: flecha grande que señala el botón y desaparece sola -->
         <transition name="pista">
-            <div v-if="pistaVisible"
+            <div v-if="pistaVisible && !botonOculto"
                 class="pointer-events-none mb-9 flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white shadow-xl ring-2 ring-warning/70">
                 <span>Toca aquí para la guía</span>
                 <font-awesome-icon :icon="faArrowRight" class="pista-flecha text-3xl text-warning" />
             </div>
         </transition>
 
-        <div class="relative">
+        <div
+            ref="refBoton"
+            class="relative origin-bottom-right transition duration-300"
+            :class="botonOculto ? 'pointer-events-none scale-90 opacity-0' : 'scale-100 opacity-100'"
+            @mouseenter="programarOcultado"
+            @mouseleave="cancelarOcultado"
+        >
             <!-- Latido alrededor del botón mientras dura la pista -->
-            <span v-if="pistaVisible" class="pointer-events-none absolute inset-0 animate-ping rounded-full bg-primary/60"></span>
+            <span v-if="pistaVisible && !botonOculto" class="pointer-events-none absolute inset-0 animate-ping rounded-full bg-primary/60"></span>
 
             <button type="button" class="btn btn-primary relative rounded-full shadow-lg gap-2 px-4 py-3" @click="mostrar"
                 :title="`Guía de Aracodito: ${guia.titulo}`">
