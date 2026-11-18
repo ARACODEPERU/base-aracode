@@ -15,6 +15,7 @@ use Modules\Treasury\Http\Controllers\TreasuryCollectionLinkController;
 use Modules\Treasury\Http\Controllers\TreasuryConfigurationController;
 use Modules\Treasury\Http\Controllers\TreasuryDashboardController;
 use Modules\Treasury\Http\Controllers\TreasuryDetractionController;
+use Modules\Treasury\Http\Controllers\TreasuryDocumentController;
 use Modules\Treasury\Http\Controllers\TreasuryForecastController;
 use Modules\Treasury\Http\Controllers\TreasuryIntegrationController;
 use Modules\Treasury\Http\Controllers\TreasuryPaymentOrderController;
@@ -22,6 +23,7 @@ use Modules\Treasury\Http\Controllers\TreasuryPeriodController;
 use Modules\Treasury\Http\Controllers\TreasuryRecurringExpenseController;
 use Modules\Treasury\Http\Controllers\TreasuryReconciliationController;
 use Modules\Treasury\Http\Controllers\TreasuryReportController;
+use Modules\Treasury\Http\Controllers\TreasuryStatementImportController;
 use Modules\Treasury\Http\Controllers\TreasurySupplierController;
 use Modules\Treasury\Http\Controllers\TreasuryTaxController;
 use Modules\Treasury\Http\Controllers\TreasuryTransactionController;
@@ -68,6 +70,10 @@ Route::middleware(['auth', 'verified', 'user_activity_log', EnsureTreasuryEnable
         ->post('transactions/update/{id}', [TreasuryTransactionController::class, 'update'])->name('treasury_transactions_update');
     Route::middleware(['middleware' => 'permission:treasury_movimientos_eliminar'])
         ->delete('transactions/destroy/{id}', [TreasuryTransactionController::class, 'destroy'])->name('treasury_transactions_destroy');
+    // Auto-detracción de una factura desde el cobro registrado.
+    Route::middleware(['middleware' => 'permission:treasury_movimientos_nuevo', 'throttle:20,1'])
+        ->post('transactions/auto-detraction/{id}', [TreasuryTransactionController::class, 'autoDetraction'])
+        ->name('treasury_transactions_auto_detraction');
 
     // Pagos, compras, pagos a proveedores y gastos
     Route::middleware(['middleware' => 'permission:treasury_pagos'])
@@ -82,6 +88,10 @@ Route::middleware(['auth', 'verified', 'user_activity_log', EnsureTreasuryEnable
         ->post('payments/pay/{id}', [TreasuryPaymentOrderController::class, 'pay'])->name('treasury_payments_pay');
     Route::middleware(['middleware' => 'permission:treasury_pagos_anular'])
         ->post('payments/void/{id}', [TreasuryPaymentOrderController::class, 'destroy'])->name('treasury_payments_void');
+    // Archivo del lote para el banco: no ejecuta pagos, deja el lote registrado.
+    Route::middleware(['middleware' => 'permission:treasury_pagos_masivos', 'throttle:20,1'])
+        ->post('payments/bulk-file', [TreasuryPaymentOrderController::class, 'exportBulk'])
+        ->name('treasury_payments_bulk_file');
 
     // Proveedores
     Route::middleware(['middleware' => 'permission:treasury_proveedores'])
@@ -109,9 +119,22 @@ Route::middleware(['auth', 'verified', 'user_activity_log', EnsureTreasuryEnable
     Route::middleware(['middleware' => 'permission:treasury_prevision'])
         ->delete('forecast/adjustments/destroy/{id}', [TreasuryForecastController::class, 'destroyAdjustment'])->name('treasury_forecast_adjustments_destroy');
 
-    // Efectivo (caja chica, solo lectura)
+    // Efectivo: panel de caja chica y arqueo con cierre de sesión
     Route::middleware(['middleware' => 'permission:treasury_efectivo'])
         ->get('cash', [TreasuryCashController::class, 'index'])->name('treasury_cash_index');
+    Route::middleware(['middleware' => 'permission:treasury_efectivo_arqueo'])
+        ->post('cash/count', [TreasuryCashController::class, 'storeCount'])->name('treasury_cash_count');
+
+    // Cartera de cheques y letras (por cobrar y por pagar)
+    Route::middleware(['middleware' => 'permission:treasury_documentos'])
+        ->get('documents', [TreasuryDocumentController::class, 'index'])->name('treasury_documents_index');
+    Route::middleware(['middleware' => 'permission:treasury_documentos_gestionar'])
+        ->post('documents/store', [TreasuryDocumentController::class, 'store'])->name('treasury_documents_store');
+    Route::middleware(['middleware' => 'permission:treasury_documentos_gestionar'])
+        ->post('documents/status/{id}', [TreasuryDocumentController::class, 'changeStatus'])->name('treasury_documents_status');
+    // Consulta RENIEC/SUNAT del emisor: se limita por minuto para cuidar el token.
+    Route::middleware(['middleware' => 'permission:treasury_documentos_gestionar', 'throttle:30,1'])
+        ->post('documents/consult-issuer', [TreasuryDocumentController::class, 'consultIssuer'])->name('treasury_documents_consult_issuer');
 
     // Cobros sin cuenta: vinculación manual de comprobantes
     Route::middleware(['middleware' => 'permission:treasury_cobros_vincular'])
@@ -131,6 +154,26 @@ Route::middleware(['auth', 'verified', 'user_activity_log', EnsureTreasuryEnable
     Route::middleware(['middleware' => 'permission:treasury_conciliacion'])
         ->delete('reconciliation/items/destroy/{id}', [TreasuryReconciliationController::class, 'destroyItem'])->name('treasury_reconciliation_items_destroy');
 
+    // Importación de extractos (CSV, Excel u OFX) con mapeo revisado
+    Route::middleware(['middleware' => 'permission:treasury_conciliacion_importar', 'throttle:20,1'])
+        ->post('reconciliation/import/preview', [TreasuryStatementImportController::class, 'preview'])
+        ->name('treasury_reconciliation_import_preview');
+    Route::middleware(['middleware' => 'permission:treasury_conciliacion_importar', 'throttle:20,1'])
+        ->post('reconciliation/import/confirm', [TreasuryStatementImportController::class, 'confirm'])
+        ->name('treasury_reconciliation_import_confirm');
+    // Registrar como movimiento una línea del extracto que no tenía par.
+    Route::middleware(['middleware' => 'permission:treasury_conciliacion_importar', 'throttle:60,1'])
+        ->post('reconciliation/statement/{import}/movement', [TreasuryReconciliationController::class, 'createStatementMovement'])
+        ->name('treasury_reconciliation_statement_movement');
+    // Registrar varias líneas del extracto seleccionadas de una sola vez.
+    Route::middleware(['middleware' => 'permission:treasury_conciliacion_importar', 'throttle:60,1'])
+        ->post('reconciliation/statement/{import}/movements', [TreasuryReconciliationController::class, 'createStatementMovements'])
+        ->name('treasury_reconciliation_statement_movements');
+    // Descartar el par recomendado: la línea del banco es otro movimiento.
+    Route::middleware(['middleware' => 'permission:treasury_conciliacion_importar', 'throttle:60,1'])
+        ->post('reconciliation/statement/{import}/lines/{line}/unlink', [TreasuryReconciliationController::class, 'dismissStatementMatch'])
+        ->name('treasury_reconciliation_statement_unlink');
+
     // Cierre de periodos
     Route::middleware(['middleware' => 'permission:treasury_periodos'])
         ->get('periods', [TreasuryPeriodController::class, 'index'])->name('treasury_periods_index');
@@ -148,6 +191,10 @@ Route::middleware(['auth', 'verified', 'user_activity_log', EnsureTreasuryEnable
         ->post('reports/cost-centers/update/{id}', [TreasuryReportController::class, 'updateCostCenter'])->name('treasury_cost_centers_update');
     Route::middleware(['middleware' => 'permission:treasury_reportes'])
         ->delete('reports/cost-centers/destroy/{id}', [TreasuryReportController::class, 'destroyCostCenter'])->name('treasury_cost_centers_destroy');
+    Route::middleware(['middleware' => 'permission:treasury_presupuesto'])
+        ->post('reports/budgets/store', [TreasuryReportController::class, 'storeBudget'])->name('treasury_budgets_store');
+    Route::middleware(['middleware' => 'permission:treasury_presupuesto'])
+        ->delete('reports/budgets/destroy/{id}', [TreasuryReportController::class, 'destroyBudget'])->name('treasury_budgets_destroy');
 
     // Cuenta de detracciones: cobros, liberación y ajuste crítico
     Route::middleware(['middleware' => 'permission:treasury_detraccion'])
@@ -157,6 +204,9 @@ Route::middleware(['auth', 'verified', 'user_activity_log', EnsureTreasuryEnable
         ->post('detraction/adjust', [TreasuryDetractionController::class, 'adjust'])->name('treasury_detraction_adjust');
     Route::middleware(['middleware' => 'permission:treasury_detraccion', 'throttle:6,1'])
         ->post('detraction/release', [TreasuryDetractionController::class, 'release'])->name('treasury_detraction_release');
+    // Banco y número de cuenta donde los clientes depositan la detracción.
+    Route::middleware(['middleware' => 'permission:treasury_detraccion'])
+        ->post('detraction/account', [TreasuryDetractionController::class, 'updateAccount'])->name('treasury_detraction_account_update');
 
     // IGV de boletas y facturas: obligación del periodo y su pago
     Route::middleware(['middleware' => 'permission:treasury_impuestos'])

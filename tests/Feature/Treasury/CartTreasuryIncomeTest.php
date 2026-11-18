@@ -2,15 +2,20 @@
 
 namespace Tests\Feature\Treasury;
 
-use App\Http\Controllers\WebPageController;
 use App\Models\BilleteraDigital;
 use App\Models\CompanyBilletera;
+use App\Models\Sale;
+use App\Models\SaleDocument;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Onlineshop\Entities\OnliSale;
 use Modules\Treasury\Entities\TreasurySourceMovement;
 use Modules\Treasury\Entities\TreasuryAccount;
+use Modules\Treasury\Entities\TreasuryTransaction;
 use Modules\Treasury\Services\TreasuryAccountSyncService;
+use Modules\Treasury\Services\TreasuryHooks;
+use Modules\Treasury\Services\TreasuryLedgerService;
+use Modules\Treasury\Services\TreasuryTransactionOriginService;
 use Tests\TestCase;
 
 /**
@@ -56,13 +61,12 @@ class CartTreasuryIncomeTest extends TestCase
     }
 
     /**
-     * Ejecuta el método privado del controlador que registra el ingreso.
+     * Registra el ingreso con la misma ruta que usan el carrito web y la
+     * suscripción de MercadoPago: TreasuryHooks::recordOnlineSaleIncome().
      */
     private function registrarIngreso(OnliSale $sale): void
     {
-        $metodo = new \ReflectionMethod(WebPageController::class, 'registerCartTreasuryIncome');
-        $metodo->setAccessible(true);
-        $metodo->invoke(app(WebPageController::class), $sale);
+        TreasuryHooks::recordOnlineSaleIncome($sale);
     }
 
     public function test_venta_aprobada_registra_ingreso_en_la_cuenta_de_mercadopago(): void
@@ -122,6 +126,100 @@ class CartTreasuryIncomeTest extends TestCase
 
         $this->assertSame(0, TreasurySourceMovement::query()->where('source_type', 'onli_sale')->count());
         $this->assertNotNull(OnliSale::find($sale->id));
+    }
+
+    /**
+     * Nota de venta que crea el checkout al finalizar la compra, con el cobro
+     * de MercadoPago ya incluido en su JSON de pagos.
+     */
+    private function notaDeVenta(OnliSale $sale): Sale
+    {
+        return Sale::create([
+            'sale_date' => now()->toDateString(),
+            'user_id' => auth()->id(),
+            'client_id' => 1,
+            'local_id' => 1,
+            'total' => $sale->total,
+            'advancement' => $sale->total,
+            'total_discount' => 0,
+            'payments' => [['type' => 6, 'amount' => (float) $sale->total, 'reference' => $sale->mercado_payment_id]],
+            'status' => true,
+            'physical' => 1,
+            'invoice_type' => 2,
+        ]);
+    }
+
+    public function test_el_movimiento_del_carrito_muestra_comprobante_cliente_y_medio_de_pago(): void
+    {
+        $this->cuentaMercadoPago();
+
+        $sale = $this->venta();
+        $sale->mercado_payment_id = 987654;
+        $sale->response_payment_method_id = 'visa';
+        $sale->save();
+
+        $this->registrarIngreso($sale);
+
+        $nota = $this->notaDeVenta($sale);
+        $sale->nota_sale_id = $nota->id;
+        $sale->save();
+
+        // La boleta se emite después del cobro: el detalle debe encontrarla
+        // siguiendo la nota de venta enlazada.
+        SaleDocument::create([
+            'sale_id' => $nota->id,
+            'serie_id' => 1,
+            'number' => '1',
+            'invoice_serie' => 'B001',
+            'invoice_correlative' => '1',
+            'invoice_type_doc' => '03',
+            'invoice_type_currency' => 'PEN',
+            'client_rzn_social' => 'Cliente Prueba',
+            'overall_total' => 120,
+            'forma_pago' => 'Contado',
+        ]);
+
+        $transaction = TreasuryTransaction::query()
+            ->whereIn('id', TreasurySourceMovement::query()
+                ->where('source_type', 'onli_sale')
+                ->where('source_id', $sale->id)
+                ->pluck('treasury_transaction_id'))
+            ->firstOrFail();
+
+        $detail = app(TreasuryTransactionOriginService::class)
+            ->detailsFor([$transaction->id])[$transaction->id] ?? null;
+
+        $this->assertNotNull($detail, 'El movimiento del carrito debe tener detalle de origen.');
+        $this->assertSame('Venta online (carrito)', $detail['tipo']);
+        $this->assertSame('Boleta', $detail['comprobante_tipo']);
+        $this->assertSame('B001-1', $detail['comprobante']);
+        $this->assertSame('Cliente Prueba', $detail['cliente']);
+        $this->assertSame('MercadoPago (VISA)', $detail['metodo']);
+        $this->assertSame(120.0, (float) $detail['total']);
+        $this->assertSame('MercadoPago #987654', $detail['referencia']);
+        $this->assertNotEmpty($detail['meta']);
+    }
+
+    public function test_emitir_el_comprobante_del_carrito_no_duplica_el_ingreso(): void
+    {
+        $cuenta = $this->cuentaMercadoPago();
+
+        $sale = $this->venta();
+        $this->registrarIngreso($sale);
+
+        $nota = $this->notaDeVenta($sale);
+        $sale->nota_sale_id = $nota->id;
+        $sale->save();
+
+        // Lo que hace SaleDocumentController al emitir la boleta o factura.
+        $this->assertSame(0, TreasuryHooks::recordSaleIncomes($nota));
+
+        $this->assertSame(
+            120.0,
+            app(TreasuryLedgerService::class)->accountBalance($cuenta),
+            'El saldo de la cuenta debe tener un solo cobro de 120.'
+        );
+        $this->assertSame(1, TreasuryTransaction::query()->whereNull('voided_at')->count());
     }
 
     public function test_billetera_con_enlace_de_pago_se_guarda_como_flag_booleano(): void

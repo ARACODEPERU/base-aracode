@@ -1,7 +1,7 @@
 <script setup>
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
-    import { Head, useForm, router } from '@inertiajs/vue3';
+    import { Head, useForm, router, usePage } from '@inertiajs/vue3';
     import { computed, watch } from 'vue';
     import InputLabel from '@/Components/InputLabel.vue';
     import InputError from '@/Components/InputError.vue';
@@ -39,6 +39,8 @@
         exchange_rate: null,
     });
 
+    const page = usePage();
+    const flash = computed(() => page.props.flash || {});
     const fromAccount = computed(() => props.accounts.find((a) => a.id === form.from_account_id));
     const toAccount = computed(() => props.accounts.find((a) => a.id === form.to_account_id));
     const crossCurrency = computed(() =>
@@ -69,7 +71,7 @@
 
     const r2 = (value) => Math.round(value * 100) / 100;
 
-    // Las comisiones de transferencia llevan IGV (18 %), igual que en el servidor.
+    // Las comisiones entre cuentas propias no llevan IGV, igual que en el servidor.
     const preview = computed(() => {
         const amount = Number(form.amount) || 0;
         const destination = destinationAmount.value;
@@ -77,20 +79,16 @@
         const fromFee = form.charge_origin_fee
             ? r2(Number(form.from_fixed_fee) + (amount * Number(form.from_percent_fee)) / 100)
             : 0;
-        const toIgv = r2(toFee * 0.18);
-        const fromIgv = r2(fromFee * 0.18);
         const itf = !form.own_account_itf_free && amount >= props.itfThreshold ? r2(amount * 0.00005) : 0;
-        const net = r2(destination - toFee - toIgv);
+        const net = r2(destination - toFee);
 
         return {
             fromFee,
-            fromIgv,
             toFee,
-            toIgv,
             itf,
             destination: r2(destination),
             net: Math.max(0, net),
-            expenses: r2(fromFee + fromIgv + itf + toFee + toIgv),
+            expenses: r2(fromFee + itf + toFee),
         };
     });
 
@@ -124,13 +122,19 @@
         else if (flash.success) window.alertaSistema('Transferencia registrada', flash.success, 'success');
     };
 
+    // El motivo de un rechazo se muestra en la propia pantalla, no solo en un aviso.
+    const insufficient = computed(() => {
+        const available = fromAccount.value?.balance;
+
+        if (available === null || available === undefined || !Number(form.amount)) return false;
+
+        return r2(Number(form.amount) + preview.value.fromFee + preview.value.itf) > available;
+    });
+
     const submit = () => {
         form.post(route('treasury_transfers_store'), {
             preserveScroll: true,
-            onSuccess: (page) => {
-                notifyFlash(page);
-                form.reset('amount', 'reference');
-            },
+            onSuccess: () => form.reset('amount', 'reference'),
             onError: () => window.alertaSistema('Revisa el formulario', 'Hay datos que no son válidos.', 'warning'),
         });
     };
@@ -165,6 +169,21 @@
         <div class="panel mt-6">
             <h2 class="mb-4 text-lg font-semibold">Nueva transferencia</h2>
 
+            <div
+                v-if="flash.error"
+                class="mb-4 rounded border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger"
+                role="alert"
+            >
+                {{ flash.error }}
+            </div>
+            <div
+                v-else-if="flash.success"
+                class="mb-4 rounded border border-success/30 bg-success/5 px-4 py-3 text-sm text-success"
+                role="status"
+            >
+                {{ flash.success }}
+            </div>
+
             <form class="grid grid-cols-1 gap-4 md:grid-cols-2" @submit.prevent="submit">
                 <div>
                     <InputLabel for="from_account_id" value="Cuenta origen" />
@@ -172,6 +191,13 @@
                         <option :value="null" disabled>Seleccione</option>
                         <option v-for="a in accounts" :key="a.id" :value="a.id">{{ a.label }} ({{ a.currency }})</option>
                     </select>
+                    <p v-if="fromAccount" class="mt-1 text-xs text-gray-500">
+                        Disponible para transferir:
+                        <strong>{{ fromAccount.balance === null ? 'sin límite (caja)' : money(fromAccount.balance, fromAccount.currency) }}</strong>
+                    </p>
+                    <p v-if="insufficient" class="mt-1 text-xs text-danger">
+                        El monto más los gastos del origen supera el saldo disponible.
+                    </p>
                     <InputError :message="form.errors.from_account_id" />
                 </div>
 
@@ -261,9 +287,7 @@
                     <p class="text-xs font-semibold uppercase text-gray-500">Gastos de la transferencia (se registran como egresos aparte)</p>
                     <div class="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
                         <p>Comisión origen: {{ money(preview.fromFee, fromAccount?.currency) }}</p>
-                        <p>IGV origen (18 %): {{ money(preview.fromIgv, fromAccount?.currency) }}</p>
                         <p>Comisión destino: {{ money(preview.toFee, toAccount?.currency) }}</p>
-                        <p>IGV destino (18 %): {{ money(preview.toIgv, toAccount?.currency) }}</p>
                         <p>ITF: {{ money(preview.itf, fromAccount?.currency) }} (0,005 % desde {{ money(itfThreshold) }})</p>
                         <p class="font-medium">Total gastos: {{ money(preview.expenses, fromAccount?.currency) }}</p>
                     </div>
@@ -290,14 +314,13 @@
                             <th class="text-right">Sale</th>
                             <th class="text-right">Llega</th>
                             <th class="text-right">Comisión</th>
-                            <th class="text-right">IGV</th>
                             <th class="text-right">ITF</th>
                             <th class="text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-if="transfers.length === 0">
-                            <td colspan="9" class="text-center text-gray-500">Sin transferencias registradas.</td>
+                            <td colspan="8" class="text-center text-gray-500">Sin transferencias registradas.</td>
                         </tr>
                         <tr v-for="t in transfers" :key="t.id" :class="t.voided ? 'opacity-50' : ''">
                             <td>{{ t.transfer_date }}</td>
@@ -309,7 +332,6 @@
                             </td>
                             <td class="text-right">{{ money(t.amount_destination, t.to_currency) }}</td>
                             <td class="text-right">{{ money((t.from_fee_amount || 0) + (t.to_fee_amount || 0), t.from_currency) }}</td>
-                            <td class="text-right">{{ money((t.from_fee_igv || 0) + (t.to_fee_igv || 0), t.from_currency) }}</td>
                             <td class="text-right">{{ t.itf_applies ? money(t.itf_amount, t.from_currency) : 'Libre' }}</td>
                             <td class="text-right">
                                 <span v-if="t.voided" class="text-xs text-danger">Anulada</span>

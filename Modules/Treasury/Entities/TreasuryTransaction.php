@@ -24,11 +24,13 @@ class TreasuryTransaction extends Model
     public const SOURCE_AUTO = 'auto';
     public const SOURCE_MANUAL = 'manual';
     public const SOURCE_BACKFILL = 'backfill';
+    public const SOURCE_STATEMENT = 'statement';
 
     protected $fillable = [
         'treasury_account_id',
         'source_wallet_account_id',
         'transaction_date',
+        'transaction_time',
         'type',
         'treasury_category_id',
         'cost_center_id',
@@ -43,6 +45,7 @@ class TreasuryTransaction extends Model
         'igv_amount',
         'itf_amount',
         'reference',
+        'operation_number',
         'description',
         'attachment_path',
         'payment_method_id',

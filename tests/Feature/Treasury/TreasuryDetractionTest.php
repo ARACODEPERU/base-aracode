@@ -8,10 +8,12 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Modules\Treasury\Entities\TreasuryAccount;
+use Modules\Treasury\Entities\TreasurySourceMovement;
 use Modules\Treasury\Entities\TreasuryTransaction;
 use Modules\Treasury\Services\TreasuryDetractionService;
 use Modules\Treasury\Services\TreasuryLedgerService;
 use Modules\Treasury\Services\TreasuryTaxService;
+use Modules\Treasury\Services\TreasuryTransactionOriginService;
 use Modules\Treasury\Services\TreasuryTransferService;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
@@ -88,7 +90,7 @@ class TreasuryDetractionTest extends TestCase
         ]);
     }
 
-    public function test_la_auto_detraccion_cobra_todo_y_traslada_el_importe(): void
+    public function test_la_auto_detraccion_se_ejecuta_despues_desde_movimientos(): void
     {
         $factura = $this->document(['overall_total' => 1000, 'detraccion_auto' => true]);
 
@@ -110,6 +112,12 @@ class TreasuryDetractionTest extends TestCase
 
         $this->service->afterPayment($factura, $ingreso->account, now()->toDateString());
 
+        // Al cobrar no se traslada nada: queda pendiente hasta hacerla.
+        $this->assertSame(1000.0, app(TreasuryLedgerService::class)->accountBalance($this->cuenta));
+        $this->assertSame(0.0, app(TreasuryLedgerService::class)->accountBalance($this->service->account()));
+
+        $this->service->registerAutoDetraction($factura, $this->cuenta, now()->toDateString());
+
         // La empresa traslada 120: caja queda en 880 y detracción en 120.
         $this->assertSame(880.0, app(TreasuryLedgerService::class)->accountBalance($this->cuenta));
         $this->assertSame(120.0, app(TreasuryLedgerService::class)->accountBalance($this->service->account()));
@@ -119,6 +127,64 @@ class TreasuryDetractionTest extends TestCase
             'type' => TreasuryTransaction::TYPE_EXPENSE,
             'amount' => 120,
         ]);
+    }
+
+    public function test_el_cobro_avisa_la_detraccion_pendiente_y_la_ejecuta_desde_movimientos(): void
+    {
+        $user = $this->userWith(['treasury_movimientos_nuevo']);
+        $factura = $this->document(['overall_total' => 1500, 'detraccion_auto' => true]);
+        $this->service->syncDocument($factura);
+
+        $ingreso = app(TreasuryLedgerService::class)->registerIncome(
+            $this->cuenta,
+            now()->toDateString(),
+            1500,
+            null,
+            null,
+            null,
+            'F001-1',
+            'Cobro con auto-detracción',
+        );
+
+        // Puente de la venta: es lo que permite ver el comprobante en Movimientos.
+        TreasurySourceMovement::create([
+            'module' => TreasurySourceMovement::MODULE_SALES,
+            'source_type' => TreasurySourceMovement::SOURCE_SALE_DOCUMENT,
+            'source_id' => $factura->id,
+            'operation' => 'full_payment',
+            'type' => TreasurySourceMovement::TYPE_INCOME,
+            'status' => TreasurySourceMovement::STATUS_PROCESSED,
+            'amount' => 1500,
+            'currency' => 'PEN',
+            'amount_base' => 1500,
+            'movement_date' => now()->toDateString(),
+            'treasury_account_id' => $this->cuenta->id,
+            'treasury_transaction_id' => $ingreso->id,
+            'idempotency_key' => 'auto-detraccion-' . $ingreso->id,
+        ]);
+
+        $this->service->afterPayment($factura, $ingreso->account, now()->toDateString());
+
+        $detail = app(TreasuryTransactionOriginService::class)->detailsFor([$ingreso->id])[$ingreso->id];
+
+        $this->assertTrue($detail['detraccion_pendiente']);
+        $this->assertSame(180.0, $detail['detraccion']);
+
+        $this->actingAs($user)
+            ->post(route('treasury_transactions_auto_detraction', $ingreso->id))
+            ->assertSessionHas('success');
+
+        $this->assertSame(1320.0, app(TreasuryLedgerService::class)->accountBalance($this->cuenta));
+        $this->assertSame(180.0, app(TreasuryLedgerService::class)->accountBalance($this->service->account()));
+        $this->assertTrue((bool) $factura->fresh()->detraccion_auto);
+
+        $detail = app(TreasuryTransactionOriginService::class)->detailsFor([$ingreso->id])[$ingreso->id];
+        $this->assertFalse($detail['detraccion_pendiente']);
+
+        // Repetirla se rechaza: la auto-detracción es una sola vez.
+        $this->actingAs($user)
+            ->post(route('treasury_transactions_auto_detraction', $ingreso->id))
+            ->assertSessionHas('error');
     }
 
     public function test_la_detraccion_rebaja_el_igv_del_periodo(): void
@@ -294,6 +360,68 @@ class TreasuryDetractionTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertSame(0.0, app(TreasuryLedgerService::class)->accountBalance($detraccion));
+    }
+
+    public function test_el_detalle_del_movimiento_muestra_el_total_y_la_detraccion(): void
+    {
+        $factura = $this->document(['overall_total' => 1500]);
+        $this->service->syncDocument($factura);
+        $movement = $this->service->registerIncome($factura, now()->toDateString());
+
+        $detail = app(TreasuryTransactionOriginService::class)->detailsFor([$movement->id])[$movement->id];
+
+        $this->assertSame('Detracción', $detail['tipo']);
+        $this->assertSame(1500.0, $detail['total']);
+        $this->assertSame(180.0, $detail['detraccion']);
+        $this->assertSame(12.0, $detail['detraccion_porcentaje']);
+        $this->assertSame('PEN', $detail['moneda']);
+        $this->assertFalse($detail['detraccion_pendiente']);
+    }
+
+    public function test_el_detalle_de_una_boleta_muestra_su_total_sin_detraccion(): void
+    {
+        $boleta = $this->document([
+            'invoice_type_doc' => '03',
+            'invoice_serie' => 'B001',
+            'overall_total' => 150,
+            'invoice_mto_igv' => 0,
+            'detraccion' => false,
+            'detraccion_amount' => 0,
+        ]);
+
+        $income = app(TreasuryLedgerService::class)->registerIncome(
+            $this->cuenta,
+            now()->toDateString(),
+            150,
+            null,
+            null,
+            null,
+            'B001-1',
+            'Cobro de boleta',
+        );
+
+        TreasurySourceMovement::create([
+            'module' => TreasurySourceMovement::MODULE_SALES,
+            'source_type' => TreasurySourceMovement::SOURCE_SALE_DOCUMENT,
+            'source_id' => $boleta->id,
+            'operation' => 'full_payment',
+            'type' => TreasurySourceMovement::TYPE_INCOME,
+            'status' => TreasurySourceMovement::STATUS_PROCESSED,
+            'amount' => 150,
+            'currency' => 'PEN',
+            'amount_base' => 150,
+            'movement_date' => now()->toDateString(),
+            'treasury_account_id' => $this->cuenta->id,
+            'treasury_transaction_id' => $income->id,
+            'idempotency_key' => 'detalle-boleta-' . $income->id,
+        ]);
+
+        $detail = app(TreasuryTransactionOriginService::class)->detailsFor([$income->id])[$income->id];
+
+        $this->assertSame(150.0, $detail['total']);
+        $this->assertNull($detail['detraccion']);
+        $this->assertSame('Boleta', $detail['comprobante_tipo']);
+        $this->assertSame('B001-1', trim($detail['comprobante']));
     }
 
     /**

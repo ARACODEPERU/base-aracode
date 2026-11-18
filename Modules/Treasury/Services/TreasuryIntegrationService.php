@@ -397,9 +397,15 @@ class TreasuryIntegrationService
         float $amount,
     ): ?TreasuryTransaction {
         // Billetera con banco vinculado: el ingreso cae en la cuenta bancaria y
-        // se conserva la billetera de origen (ej. Yape -> banco).
+        // se conserva la billetera de origen (ej. Yape -> banco). Si la
+        // billetera tiene plazo, el dinero se queda en ella y se encola el
+        // traslado al banco para la fecha hábil acordada.
         $walletAccount = null;
         $destination = $account;
+        $deferredWalletTransfer = false;
+        $linkedBank = null;
+
+        $account->loadMissing('companyBilletera');
 
         if ($account->type === TreasuryAccount::TYPE_WALLET && $account->companyBilletera?->bank_account_id) {
             $bankAccount = TreasuryAccount::query()
@@ -410,8 +416,13 @@ class TreasuryIntegrationService
 
             // Si el banco vinculado no tiene cuenta de tesorería, se mantiene la billetera.
             if ($bankAccount) {
-                $walletAccount = $account;
-                $destination = $bankAccount;
+                if ((int) ($account->companyBilletera->bank_transfer_days ?? 0) > 0) {
+                    $deferredWalletTransfer = true;
+                    $linkedBank = $bankAccount;
+                } else {
+                    $walletAccount = $account;
+                    $destination = $bankAccount;
+                }
             }
         }
 
@@ -434,9 +445,16 @@ class TreasuryIntegrationService
             ! empty(($bridge->meta ?: [])['cost_center_id']) ? (int) $bridge->meta['cost_center_id'] : null,
         ];
 
-        return $bridge->type === TreasurySourceMovement::TYPE_INCOME
+        $transaction = $bridge->type === TreasurySourceMovement::TYPE_INCOME
             ? $this->ledger->registerIncome(...$arguments)
             : $this->ledger->registerExpense(...$arguments);
+
+        // Ingreso diferido: queda en la billetera y se programa el traslado.
+        if ($deferredWalletTransfer && $linkedBank && $transaction && $bridge->type === TreasurySourceMovement::TYPE_INCOME) {
+            app(TreasuryWalletTransferService::class)->schedule($bridge, $account, $linkedBank, $amount);
+        }
+
+        return $transaction;
     }
 
     private function resolveAccount(TreasurySourceMovement $bridge): ?TreasuryAccount
@@ -486,6 +504,7 @@ class TreasuryIntegrationService
         $name = match ($bridge->operation) {
             'sale_income', 'full_payment', 'down_payment' => 'Cobro de venta',
             'quota_payment', 'installment_payment' => 'Abono de cuota',
+            'purchase_payment' => 'Pago a proveedor',
             default => $bridge->type === TreasurySourceMovement::TYPE_INCOME ? 'Otros ingresos' : 'Otros egresos',
         };
 

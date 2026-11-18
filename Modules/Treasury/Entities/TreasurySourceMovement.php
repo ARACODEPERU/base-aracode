@@ -32,6 +32,7 @@ class TreasurySourceMovement extends Model
     public const SOURCE_SALE_DOCUMENT = 'sale_document';
     public const SOURCE_SALE_PAYMENT_QUOTA = 'sale_payment_quota';
     public const SOURCE_SALE_SCHEDULE_DESTINATION = 'sale_payment_schedule_destination';
+    public const SOURCE_PURCHASE_DOCUMENT = 'purc_document';
 
     public const TYPE_INCOME = 'income';
     public const TYPE_EXPENSE = 'expense';

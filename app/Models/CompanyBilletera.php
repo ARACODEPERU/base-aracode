@@ -17,7 +17,14 @@ class CompanyBilletera extends Model
         'qr_image',
         'has_payment_link',
         'bank_account_id',
+        'bank_transfer_days',
         'status',
+    ];
+
+    protected $casts = [
+        'bank_transfer_days' => 'integer',
+        'has_payment_link' => 'boolean',
+        'status' => 'boolean',
     ];
 
     public function billetera(): BelongsTo

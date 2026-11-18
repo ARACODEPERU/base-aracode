@@ -115,6 +115,7 @@ class HandleInertiaRequests extends Middleware
                 // duplicados en Categorias/Tipo/Sector): BackWithError usa
                 // la misma llave de sesion.
                 'error' => fn () => $request->session()->get('error'),
+                'success' => fn () => $request->session()->get('success'),
             ],
             // Interruptor multi-moneda (PTM0004): el header oculta el botón
             // "Cambio de moneda" cuando el sistema opera solo en soles.

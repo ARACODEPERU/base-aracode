@@ -7,7 +7,8 @@
     import InputError from '@/Components/InputError.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import { computed, ref } from 'vue';
-    import { faFilter, faCircleCheck, faLock, faPlus, faTrash, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+    import { faFilter, faCircleCheck, faLock, faPlus, faTrash, faCircleInfo, faFileImport } from '@fortawesome/free-solid-svg-icons';
+    import StatementImportModal from 'Modules/Treasury/Resources/assets/js/Components/StatementImportModal.vue';
 
     const props = defineProps({
         accounts: { type: Array, default: () => [] },
@@ -21,6 +22,9 @@
         history: { type: Array, default: () => [] },
         tolerance: { type: Number, default: 0.01 },
         canClose: { type: Boolean, default: false },
+        canImport: { type: Boolean, default: false },
+        imports: { type: Array, default: () => [] },
+        comparison: { type: Object, default: null },
     });
 
     const accountCurrency = computed(() => {
@@ -35,6 +39,19 @@
         } catch (e) {
             return `${currency} ${Number(value || 0).toFixed(2)}`;
         }
+    };
+
+    // Monto con su signo real: los egresos son negativos, los ingresos positivos.
+    const signedAmount = (line) => Math.abs(Number(line.amount || 0)) * (line.type === 'income' ? 1 : -1);
+
+    // La hora llega como HH:MM:SS; en pantalla basta HH:MM.
+    const horaTexto = (value) => (value ? String(value).slice(0, 5) : '');
+
+    // Las líneas del extracto llegan como Y-m-d; los avisos usan d/m/Y.
+    const fechaTexto = (value) => {
+        const [year, month, day] = String(value || '').split('-');
+
+        return year && month && day ? `${day}/${month}/${year}` : value || '';
     };
 
     const filters = ref({
@@ -66,16 +83,28 @@
 
     const isBalanced = computed(() => difference.value !== null && Math.abs(difference.value) <= props.tolerance);
 
-    const selected = ref([]);
+    // Importación de extracto: se revisa el mapeo y luego se aplica.
+    const importModal = ref(false);
 
-    const toggleAll = (event) => {
-        selected.value = event.target.checked ? props.unreconciled.map((row) => row.id) : [];
+    const abrirImportacion = () => {
+        if (!props.selectedAccountId) {
+            window.alertaSistema('Falta la cuenta', 'Elige la cuenta a conciliar antes de importar el extracto.', 'warning');
+
+            return;
+        }
+
+        importModal.value = true;
     };
 
-    const toggle = (id) => {
-        selected.value = selected.value.includes(id)
-            ? selected.value.filter((value) => value !== id)
-            : [...selected.value, id];
+    const importacionAplicada = (result) => {
+        router.reload({
+            preserveScroll: true,
+            onSuccess: () => window.alertaSistema(
+                'Extracto importado',
+                `${result.rows_total} línea(s): ${result.rows_matched} emparejada(s) y ${result.rows_created} partida(s) nueva(s). Revisa las líneas y cierra la conciliación cuando cuadre.`,
+                'success'
+            ),
+        });
     };
 
     // Partidas del extracto
@@ -142,7 +171,7 @@
 
         const result = await window.alertaSistema(
             'Cerrar conciliación',
-            `Se cerrará el día ${props.until} con saldo de banco ${money(statement.value)}. Las ${selected.value.length || props.unreconciledCount} líneas quedarán bloqueadas para siempre y se guardará quién cerró.`,
+            `Se cerrará el día ${props.until} con saldo de banco ${money(statement.value)}. Las ${props.unreconciledCount} líneas pendientes quedarán bloqueadas para siempre y se guardará quién cerró.`,
             'warning',
             { duration: 0, showCancelButton: true, confirmButtonText: 'Sí, cerrar', cancelButtonText: 'Cancelar' }
         );
@@ -153,11 +182,111 @@
             treasury_account_id: props.selectedAccountId,
             until: props.until,
             statement_balance: statement.value,
-            transaction_ids: selected.value,
         }, {
             preserveScroll: true,
             onSuccess: notifyFlash,
-            onError: () => window.alertaSistema('No se pudo cerrar', 'Revisa el saldo y las líneas seleccionadas.', 'error'),
+            onError: () => window.alertaSistema('No se pudo cerrar', 'Revisa el saldo y las partidas del extracto.', 'error'),
+        });
+    };
+
+    // Línea del extracto sin par: se registra como movimiento del libro.
+    const registrarMovimiento = async (line) => {
+        const result = await window.alertaSistema(
+            'Registrar movimiento',
+            `Se registrará en la cuenta un ${line.type === 'income' ? 'ingreso' : 'egreso'} de ${money(signedAmount(line))} con fecha ${fechaTexto(line.date)}${line.time ? ` a las ${horaTexto(line.time)}` : ''}. La partida de ajuste se retira porque el movimiento pasa al libro.`,
+            'warning',
+            { duration: 0, showCancelButton: true, confirmButtonText: 'Sí, registrar', cancelButtonText: 'Cancelar' }
+        );
+
+        if (!result?.isConfirmed) return;
+
+        router.post(route('treasury_reconciliation_statement_movement', props.comparison.import_id), {
+            line_index: line.index,
+        }, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                selectedLines.value = selectedLines.value.filter((value) => value !== line.index);
+                notifyFlash(page);
+            },
+        });
+    };
+
+    // El par recomendado no siempre es el mismo movimiento: el encargado decide.
+    const marcarDiferentes = async (line) => {
+        const bankTime = line.time ? ` a las ${horaTexto(line.time)}` : '';
+        const bookTime = line.transaction?.time ? ` a las ${horaTexto(line.transaction.time)}` : '';
+
+        const result = await window.alertaSistema(
+            'Son movimientos diferentes',
+            `El movimiento del libro (${line.transaction?.date || ''}${bookTime} · ${money(Math.abs(Number(line.transaction?.amount || 0)))} ${line.type === 'income' ? 'ingreso' : 'egreso'}) se queda como está. `
+            + `La línea del banco (${fechaTexto(line.date)}${bankTime} · ${money(signedAmount(line))}) pasará a «Sin par» para que la registres como movimiento nuevo. ¿Continuar?`,
+            'warning',
+            { duration: 0, showCancelButton: true, confirmButtonText: 'Sí, son diferentes', cancelButtonText: 'Cancelar' }
+        );
+
+        if (!result?.isConfirmed) return;
+
+        router.post(
+            route('treasury_reconciliation_statement_unlink', [props.comparison.import_id, line.index]),
+            {},
+            { preserveScroll: true, onSuccess: notifyFlash }
+        );
+    };
+
+    // Varias líneas sin par: se seleccionan y se registran de una sola vez.
+    const selectedLines = ref([]);
+
+    const pendingLines = computed(() => (props.comparison?.lines || []).filter((line) => line.status === 'pending'));
+
+    const allLinesSelected = computed(() => pendingLines.value.length > 0
+        && selectedLines.value.length === pendingLines.value.length);
+
+    const toggleLine = (index) => {
+        selectedLines.value = selectedLines.value.includes(index)
+            ? selectedLines.value.filter((value) => value !== index)
+            : [...selectedLines.value, index];
+    };
+
+    const toggleAllLines = (event) => {
+        selectedLines.value = event.target.checked ? pendingLines.value.map((line) => line.index) : [];
+    };
+
+    const registrarSeleccionados = async () => {
+        if (!selectedLines.value.length) return;
+
+        const lines = pendingLines.value.filter((line) => selectedLines.value.includes(line.index));
+        const incomes = lines.filter((line) => line.type === 'income');
+        const expenses = lines.filter((line) => line.type !== 'income');
+        const incomeTotal = incomes.reduce((acumulado, line) => acumulado + signedAmount(line), 0);
+        const expenseTotal = expenses.reduce((acumulado, line) => acumulado + signedAmount(line), 0);
+
+        const partes = [];
+        if (incomes.length) partes.push(`${incomes.length} ingreso(s) por ${money(incomeTotal)}`);
+        if (expenses.length) partes.push(`${expenses.length} egreso(s) por ${money(expenseTotal)}`);
+
+        // El neto solo se menciona cuando hay ambos tipos, para no confundir
+        // un total de ingresos con un total de egresos.
+        const neto = incomes.length && expenses.length
+            ? ` El neto es ${money(incomeTotal + expenseTotal)}.`
+            : '';
+
+        const result = await window.alertaSistema(
+            'Registrar movimientos',
+            `Se registrarán ${lines.length} movimiento(s) del extracto: ${partes.join(' y ')}.${neto} Las partidas de ajuste correspondientes se retiran porque el movimiento pasa al libro.`,
+            'warning',
+            { duration: 0, showCancelButton: true, confirmButtonText: 'Sí, registrar', cancelButtonText: 'Cancelar' }
+        );
+
+        if (!result?.isConfirmed) return;
+
+        router.post(route('treasury_reconciliation_statement_movements', props.comparison.import_id), {
+            line_indexes: selectedLines.value,
+        }, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                selectedLines.value = [];
+                notifyFlash(page);
+            },
         });
     };
 
@@ -210,15 +339,27 @@
                     </button>
                 </div>
 
-                <div>
-                    <label class="mb-1.5 block text-sm font-medium">Saldo real del banco ({{ accountCurrency }})</label>
-                    <input
-                        v-model="realBalance"
-                        type="number"
-                        step="0.01"
-                        class="form-input w-full sm:w-56"
-                        placeholder="Monto según extracto…"
-                    />
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium">Saldo real del banco ({{ accountCurrency }})</label>
+                        <input
+                            v-model="realBalance"
+                            type="number"
+                            step="0.01"
+                            class="form-input w-full sm:w-48"
+                            placeholder="Monto según extracto…"
+                        />
+                    </div>
+                    <button
+                        v-if="canImport"
+                        type="button"
+                        class="btn btn-outline-primary whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50"
+                        :disabled="!selectedAccountId"
+                        title="Leer un extracto CSV, Excel u OFX y emparejar por monto, fecha y referencia"
+                        @click="abrirImportacion"
+                    >
+                        <font-awesome-icon :icon="faFileImport" class="mr-1" /> Importar extracto
+                    </button>
                 </div>
             </div>
 
@@ -275,6 +416,159 @@
                 </button>
             </div>
 
+            <!-- Comparación del extracto contra el libro -->
+            <div v-if="comparison" class="panel overflow-hidden p-0">
+                <div class="flex flex-col gap-3 border-b border-gray-200 p-5 sm:flex-row sm:items-start sm:justify-between dark:border-gray-700">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Comparación con el extracto</h2>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            {{ comparison.file_name }} · {{ comparison.imported_at }} · movimientos del libro
+                            del {{ comparison.from }} al {{ comparison.to }} (±{{ comparison.margin_days }} días del extracto).
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <button
+                            v-if="canImport && selectedLines.length"
+                            type="button"
+                            class="btn btn-sm btn-primary whitespace-nowrap"
+                            :title="`Registrar ${selectedLines.length} línea(s) seleccionada(s) en el libro`"
+                            @click="registrarSeleccionados"
+                        >
+                            <font-awesome-icon :icon="faPlus" class="mr-1" />
+                            Registrar seleccionados ({{ selectedLines.length }})
+                        </button>
+                        <span class="rounded-full bg-success/10 px-2.5 py-1 font-medium text-success">
+                            {{ comparison.accepted }} aceptada(s)
+                        </span>
+                        <span class="rounded-full bg-warning/10 px-2.5 py-1 font-medium text-warning">
+                            {{ comparison.pending }} sin par
+                        </span>
+                        <span v-if="comparison.created" class="rounded-full bg-info/10 px-2.5 py-1 font-medium text-info">
+                            {{ comparison.created }} creada(s)
+                        </span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-800/60">
+                                <th class="w-12 text-center">
+                                    <input
+                                        type="checkbox"
+                                        class="form-checkbox"
+                                        :checked="allLinesSelected"
+                                        :disabled="pendingLines.length === 0"
+                                        title="Seleccionar todas las líneas sin par"
+                                        @change="toggleAllLines"
+                                    />
+                                </th>
+                                <th>Fecha banco</th>
+                                <th class="min-w-[180px]">Descripción del banco</th>
+                                <th class="text-right">Monto</th>
+                                <th class="min-w-[200px]">Movimiento del libro</th>
+                                <th>Estado</th>
+                                <th class="text-right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="line in comparison.lines" :key="line.index">
+                                <td class="text-center">
+                                    <input
+                                        v-if="line.status === 'pending' && canImport"
+                                        type="checkbox"
+                                        class="form-checkbox"
+                                        :checked="selectedLines.includes(line.index)"
+                                        @change="toggleLine(line.index)"
+                                    />
+                                </td>
+                                <td class="whitespace-nowrap text-sm">
+                                    {{ line.date }}<span v-if="line.time" class="text-xs text-gray-500"> {{ horaTexto(line.time) }}</span>
+                                </td>
+                                <td class="text-sm">
+                                    {{ line.description }}
+                                    <p v-if="line.reference" class="text-xs text-gray-500">Ref. {{ line.reference }}</p>
+                                    <p v-if="line.operation_number" class="text-xs text-gray-500">Op. {{ line.operation_number }}</p>
+                                </td>
+                                <td
+                                    class="whitespace-nowrap text-right font-semibold"
+                                    :class="line.type === 'income' ? 'text-success' : 'text-danger'"
+                                >
+                                    {{ line.type === 'income' ? '+' : '−' }} {{ money(line.amount) }}
+                                </td>
+                                <td class="text-sm">
+                                    <template v-if="line.transaction">
+                                        {{ line.transaction.date }}<span v-if="line.transaction.time" class="text-xs text-gray-500"> {{ horaTexto(line.transaction.time) }}</span>
+                                        · {{ line.transaction.description }}
+                                        <p v-if="line.transaction.operation_number" class="text-xs text-gray-500">
+                                            Op. {{ line.transaction.operation_number }}
+                                        </p>
+                                        <p v-if="line.operation_match" class="text-xs font-medium text-success">
+                                            Mismo N° de operación: es este movimiento
+                                        </p>
+                                    </template>
+                                    <span v-else class="text-gray-400">Sin movimiento en el libro</span>
+                                    <p v-if="line.time && line.transaction?.time && horaTexto(line.time) !== horaTexto(line.transaction.time)" class="text-xs font-medium text-warning">
+                                        Hora distinta a la del libro
+                                    </p>
+                                </td>
+                                <td class="whitespace-nowrap">
+                                    <span v-if="line.status === 'accepted'" class="inline-flex items-center gap-1 rounded-md bg-success/10 px-2 py-1 text-xs font-medium text-success">
+                                        <font-awesome-icon :icon="faCircleCheck" /> Aceptado
+                                    </span>
+                                    <span v-else-if="line.status === 'created'" class="rounded-md bg-info/10 px-2 py-1 text-xs font-medium text-info">
+                                        Movimiento creado
+                                    </span>
+                                    <span v-else class="rounded-md bg-warning/10 px-2 py-1 text-xs font-medium text-warning">
+                                        Sin par
+                                    </span>
+                                </td>
+                                <td class="space-y-1 text-right">
+                                    <button
+                                        v-if="line.status === 'accepted' && canImport && !line.operation_match"
+                                        type="button"
+                                        class="whitespace-nowrap text-xs font-medium text-danger hover:underline"
+                                        title="El movimiento del libro se queda; esta línea del banco se registrará aparte"
+                                        @click="marcarDiferentes(line)"
+                                    >
+                                        Son movimientos diferentes
+                                    </button>
+                                    <button
+                                        v-if="line.status === 'pending' && canImport"
+                                        type="button"
+                                        class="btn btn-sm btn-outline-primary whitespace-nowrap"
+                                        :title="`Registrar ${line.type === 'income' ? 'ingreso' : 'egreso'} en el libro con la fecha del banco`"
+                                        @click="registrarMovimiento(line)"
+                                    >
+                                        <font-awesome-icon :icon="faPlus" class="mr-1" /> Registrar movimiento
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="comparison.book_unmatched.length" class="border-t border-gray-200 p-5 dark:border-gray-700">
+                    <p class="text-xs font-semibold uppercase text-gray-500">
+                        Movimientos del libro que el extracto no trae ({{ comparison.book_unmatched.length }})
+                    </p>
+                    <ul class="mt-2 divide-y divide-gray-100 dark:divide-gray-700">
+                        <li v-for="row in comparison.book_unmatched" :key="row.id" class="flex items-center justify-between gap-3 py-2 text-sm">
+                            <span class="truncate">
+                                {{ row.date }} · {{ row.description }}
+                                <span v-if="row.operation_number" class="text-gray-400">· Op. {{ row.operation_number }}</span>
+                            </span>
+                            <span class="whitespace-nowrap font-semibold" :class="row.type === 'income' ? 'text-success' : 'text-danger'">
+                                {{ row.type === 'income' ? '+' : '−' }} {{ money(row.amount) }}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div v-else-if="selectedAccountId" class="panel p-5 text-sm text-gray-500 dark:text-gray-400">
+                Importa un extracto para comparar los movimientos del banco con los del libro en el mismo rango de fechas.
+            </div>
+
             <div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
                 <!-- Líneas sin conciliar -->
                 <div class="panel overflow-hidden p-0 xl:col-span-2">
@@ -285,22 +579,25 @@
                                 <span class="ml-2 rounded-full bg-primary/10 px-2.5 py-0.5 text-sm text-primary">{{ unreconciledCount }}</span>
                             </h2>
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                Seleccionadas: {{ selected.length }} · sin seleccionar: {{ unreconciledCount - selected.length }}
+                                Son movimientos del libro pendientes de conciliar. Al cerrar la conciliación, todos los de
+                                esta lista hasta la fecha de corte quedan bloqueados para siempre y se guarda quién cerró.
                             </p>
                         </div>
+                        <button
+                            v-if="canClose"
+                            type="button"
+                            class="btn btn-primary shrink-0 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="statement === null || !isBalanced"
+                            :title="statement === null ? 'Ingresa el saldo del banco para cerrar' : (!isBalanced ? 'La conciliación debe cuadrar para cerrar' : 'Cerrar y bloquear las líneas')"
+                            @click="closeReconciliation"
+                        >
+                            Cerrar conciliación
+                        </button>
                     </div>
                     <div class="table-responsive">
                         <table class="min-w-full">
                             <thead>
                                 <tr class="bg-gray-50 dark:bg-gray-800/60">
-                                    <th class="w-12 text-center">
-                                        <input
-                                            type="checkbox"
-                                            class="form-checkbox"
-                                            :checked="unreconciled.length > 0 && selected.length === unreconciled.length"
-                                            @change="toggleAll"
-                                        />
-                                    </th>
                                     <th>Fecha</th>
                                     <th>Descripción</th>
                                     <th>Categoría</th>
@@ -310,15 +607,13 @@
                             </thead>
                             <tbody>
                                 <tr v-if="unreconciled.length === 0">
-                                    <td colspan="6" class="py-8 text-center text-sm text-gray-500">No hay líneas pendientes a esta fecha.</td>
+                                    <td colspan="5" class="py-8 text-center text-sm text-gray-500">No hay líneas pendientes a esta fecha.</td>
                                 </tr>
                                 <tr v-for="row in unreconciled" :key="row.id">
-                                    <td class="text-center">
-                                        <input type="checkbox" class="form-checkbox" :checked="selected.includes(row.id)" @change="toggle(row.id)" />
-                                    </td>
                                     <td class="whitespace-nowrap text-sm">{{ row.date }}</td>
                                     <td class="text-sm">
                                         {{ row.description || row.reference || '—' }}
+                                        <p v-if="row.operation_number" class="text-xs text-gray-500">Op. {{ row.operation_number }}</p>
                                         <p class="text-xs text-gray-500">{{ row.source }}</p>
                                     </td>
                                     <td class="text-sm">{{ row.category || '—' }}</td>
@@ -364,6 +659,20 @@
                         <p v-if="items.length === 0" class="py-6 text-center text-sm text-gray-500">
                             Sin partidas registradas.
                         </p>
+                    </div>
+
+                    <!-- Trazabilidad de los extractos leídos -->
+                    <div v-if="imports.length" class="mt-5 border-t border-gray-200 pt-4 dark:border-gray-700">
+                        <p class="text-xs font-semibold uppercase text-gray-500">Extractos importados</p>
+                        <ul class="mt-2 space-y-2">
+                            <li v-for="row in imports" :key="row.id" class="text-xs text-gray-600 dark:text-gray-300">
+                                <p class="truncate font-medium">{{ row.file_name }}</p>
+                                <p class="text-gray-500">
+                                    {{ row.format }} · {{ row.rows_total }} línea(s) · {{ row.rows_matched }} emparejada(s)
+                                    · {{ row.rows_created }} partida(s) · {{ row.created_at }}
+                                </p>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -441,5 +750,14 @@
                 <PrimaryButton :disabled="itemForm.processing" @click="saveItem">Agregar partida</PrimaryButton>
             </template>
         </ModalMedium>
+
+        <StatementImportModal
+            :show="importModal"
+            :account-id="selectedAccountId"
+            :until="until"
+            :currency="accountCurrency"
+            @close="importModal = false"
+            @applied="importacionAplicada"
+        />
     </AppLayout>
 </template>

@@ -1,20 +1,22 @@
 <script setup>
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
-    import { Head, useForm, router } from '@inertiajs/vue3';
+    import { Head, Link, useForm, router } from '@inertiajs/vue3';
     import { Dropdown, Menu, MenuItem } from 'ant-design-vue';
     import ModalLarge from '@/Components/ModalLarge.vue';
     import InputLabel from '@/Components/InputLabel.vue';
     import InputError from '@/Components/InputError.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import { ref, reactive } from 'vue';
-    import { faLandmark, faWallet, faPencil, faTrash } from '@fortawesome/free-solid-svg-icons';
+    import { faLandmark, faWallet, faPencil, faTrash, faListUl } from '@fortawesome/free-solid-svg-icons';
 
     const props = defineProps({
         accounts: { type: Array, default: () => [] },
         bankAccounts: { type: Array, default: () => [] },
         wallets: { type: Array, default: () => [] },
         paymentMethods: { type: Array, default: () => [] },
+        walletTransfers: { type: Array, default: () => [] },
+        cashOpen: { type: Object, default: () => ({ count: 0, balance: 0 }) },
     });
 
     // Cada cuenta se muestra en su moneda: nunca se pinta un saldo en dólares con S/.
@@ -24,6 +26,21 @@
         } catch (e) {
             return `${code || 'PEN'} ${Number(value || 0).toFixed(2)}`;
         }
+    };
+
+    // Fecha corta para la cola de transferencias.
+    const fecha = (value) => {
+        if (!value) return '—';
+
+        const [year, month, day] = String(value).split('-');
+
+        return year && month && day ? `${day}/${month}/${year}` : value;
+    };
+
+    const transferStatus = {
+        pending: { label: 'Programada', class: 'bg-warning/10 text-warning' },
+        processed: { label: 'Ejecutada', class: 'bg-success/10 text-success' },
+        failed: { label: 'Fallida', class: 'bg-danger/10 text-danger' },
     };
 
     // Crea en Tesorería las cuentas de bancos y billeteras que aún no existan
@@ -208,6 +225,13 @@
                                 class="hover:bg-gray-50/70 dark:hover:bg-gray-800/30"
                             >
                                 <td class="text-center">
+                                    <Link
+                                        :href="route('treasury_transactions_index', { account_id: account.id })"
+                                        class="mr-1 inline-flex h-9 w-9 items-center justify-center rounded-lg border text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                                        title="Ver movimientos de esta cuenta"
+                                    >
+                                        <font-awesome-icon :icon="faListUl" />
+                                    </Link>
                                     <Dropdown placement="bottomLeft" arrow>
                                         <button
                                             class="inline-flex h-9 w-9 items-center justify-center rounded-lg border text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
@@ -217,6 +241,9 @@
                                         </button>
                                         <template #overlay>
                                             <Menu>
+                                                <MenuItem key="movements" @click="router.get(route('treasury_transactions_index', { account_id: account.id }))">
+                                                    Ver movimientos
+                                                </MenuItem>
                                                 <MenuItem key="edit" @click="openEdit(account)">Editar</MenuItem>
                                                 <MenuItem key="delete" danger @click="remove(account)">
                                                     <span class="inline-flex items-center gap-2">
@@ -238,7 +265,18 @@
                                         {{ sourceLabels[account.type] }}
                                     </span>
                                 </td>
-                                <td class="font-medium text-gray-800 dark:text-gray-100">{{ account.label }}</td>
+                                <td class="font-medium text-gray-800 dark:text-gray-100">
+                                    {{ account.label }}
+                                    <p v-if="account.type === 'wallet' && account.bank_transfer_days > 0" class="text-xs text-gray-400">
+                                        Al banco en {{ account.bank_transfer_days }} día{{ account.bank_transfer_days === 1 ? '' : 's' }} hábil{{ account.bank_transfer_days === 1 ? '' : 'es' }}
+                                    </p>
+                                    <p v-if="account.type === 'cash'" class="text-xs text-gray-400">
+                                        Cajas abiertas: {{ cashOpen.count }} · efectivo esperado {{ currency(cashOpen.balance) }}
+                                        <button type="button" class="text-primary underline" @click="router.get(route('treasury_cash_index'))">
+                                            Ver cajas
+                                        </button>
+                                    </p>
+                                </td>
                                 <td class="text-gray-600 dark:text-gray-400">{{ account.currency }}</td>
                                 <td class="text-right text-gray-600 dark:text-gray-400">
                                     {{ currency(account.opening_balance, account.currency) }}
@@ -259,6 +297,9 @@
                                     :class="account.balance >= 0 ? 'text-gray-800 dark:text-gray-100' : 'text-danger'"
                                 >
                                     {{ currency(account.balance, account.currency) }}
+                                    <p v-if="account.wallets_count > 0" class="text-xs font-normal text-gray-400">
+                                        Incluye {{ account.wallets_count }} billetera{{ account.wallets_count === 1 ? '' : 's' }} vinculada{{ account.wallets_count === 1 ? '' : 's' }}
+                                    </p>
                                 </td>
                                 <td class="text-center">
                                     <span
@@ -269,6 +310,47 @@
                                     >
                                         {{ account.status ? 'Activa' : 'Inactiva' }}
                                     </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Cola de traslados de billeteras a su banco -->
+            <div v-if="walletTransfers.length" class="panel p-5">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Transferencias programadas de billeteras</h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Los cobros de billeteras con plazo quedan en su cuenta hasta la fecha hábil acordada; ese día se
+                    transfieren solos al banco vinculado.
+                </p>
+
+                <div class="mt-4 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-800/60">
+                                <th class="w-28">Fecha</th>
+                                <th class="min-w-[180px]">Billetera</th>
+                                <th class="min-w-[180px]">Banco destino</th>
+                                <th class="w-36 text-right">Monto</th>
+                                <th class="w-32">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in walletTransfers" :key="item.id">
+                                <td class="whitespace-nowrap text-gray-600 dark:text-gray-400">{{ fecha(item.scheduled_date) }}</td>
+                                <td class="text-gray-800 dark:text-gray-100">{{ item.wallet }}</td>
+                                <td class="text-gray-800 dark:text-gray-100">{{ item.bank }}</td>
+                                <td class="text-right font-semibold">{{ currency(item.amount, item.currency) }}</td>
+                                <td>
+                                    <span
+                                        class="rounded-md px-2 py-1 text-xs font-medium"
+                                        :class="(transferStatus[item.status] || transferStatus.pending).class"
+                                        :title="item.error || ''"
+                                    >
+                                        {{ (transferStatus[item.status] || transferStatus.pending).label }}
+                                    </span>
+                                    <p v-if="item.executed_at" class="mt-1 text-xs text-gray-400">{{ item.executed_at }}</p>
                                 </td>
                             </tr>
                         </tbody>

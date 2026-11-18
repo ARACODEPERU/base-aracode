@@ -20,8 +20,11 @@ class AcaSubscriptionTypeController extends Controller
     public function index()
     {
         $subscriptions = AcaSubscriptionType::orderBy('order_number')->get();
+
         return Inertia::render('Academic::Subscriptions/List', [
-            'subscriptions' => $subscriptions
+            'subscriptions' => $subscriptions,
+            // Aviso del webhook necesario para los planes con cobro automático.
+            'mercadopagoWebhook' => app(\Modules\Academic\Services\MercadoPagoWebhookStatus::class)->state(),
         ]);
     }
 
@@ -92,7 +95,12 @@ class AcaSubscriptionTypeController extends Controller
 
         return Inertia::render('Academic::Subscriptions/Edit', [
             'subscription' => $subscription,
-            'periods' => $periods
+            'periods' => $periods,
+            // Aviso y acceso directo a IntegrationHub para configurar el webhook.
+            'mercadopagoWebhook' => app(\Modules\Academic\Services\MercadoPagoWebhookStatus::class)->state(),
+            // Estado del modo prueba: credenciales, suscripciones y bitácora.
+            'subscriptionTest' => app(\Modules\Academic\Services\SubscriptionTestModeService::class)
+                ->state($subscription, auth()->user()?->email),
         ]);
     }
 
@@ -110,9 +118,17 @@ class AcaSubscriptionTypeController extends Controller
                 'prices.0.currency' => 'required',
                 'prices.0.amount' => 'required',
                 'prices.0.detail' => 'required',
-                'period' => 'required'
+                'period' => 'required',
+                'recurring_enabled' => 'nullable|boolean',
+                'test_mode' => 'nullable|boolean'
             ]
         );
+
+        $period = $request->get('period');
+        // El cobro automático solo existe para planes mensuales.
+        $recurringEnabled = $request->boolean('recurring_enabled') && $period === 'Mensual';
+        // El modo prueba también es solo mensual (la recurrencia implementada).
+        $testMode = $request->boolean('test_mode') && $period === 'Mensual';
 
         AcaSubscriptionType::find($id)->update([
             'title' => $request->get('title'),
@@ -121,7 +137,9 @@ class AcaSubscriptionTypeController extends Controller
             'details' => $request->get('details'),
             'prices' => $request->get('prices'),
             'status' => $request->get('status') ?? false,
-            'period' => $request->get('period'),
+            'period' => $period,
+            'recurring_enabled' => $recurringEnabled,
+            'test_mode' => $testMode,
             'order_number' => $request->get('order_number'),
             'access_all_courses' => $request->boolean('access_all_courses'),
             'access_specialization_programs' => $request->boolean('access_specialization_programs'),

@@ -26,7 +26,10 @@ class AcaSubscriptionType extends Model
         'access_specialization_programs',
         'access_all_webinars',
         'can_view_specialization_zooms',
-        'can_view_specialization_webinars'
+        'can_view_specialization_webinars',
+        'recurring_enabled',
+        'test_mode',
+        'mercadopago_plan_id',
     ];
 
     protected $casts = [
@@ -37,5 +40,7 @@ class AcaSubscriptionType extends Model
         'access_all_webinars' => 'boolean',
         'can_view_specialization_zooms' => 'boolean',
         'can_view_specialization_webinars' => 'boolean',
+        'recurring_enabled' => 'boolean',
+        'test_mode' => 'boolean',
     ];
 }

@@ -1,7 +1,7 @@
 <script setup>
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
-    import { Head, useForm, router } from '@inertiajs/vue3';
+    import { Head, Link, useForm, router } from '@inertiajs/vue3';
     import { Dropdown, Menu, MenuItem } from 'ant-design-vue';
     import Swal2 from 'sweetalert2';
     import ModalLarge from '@/Components/ModalLarge.vue';
@@ -10,7 +10,7 @@
     import InputError from '@/Components/InputError.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import { ref, computed } from 'vue';
-    import { faPlus, faFileArrowUp, faFilter, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+    import { faPlus, faFileArrowUp, faFilter, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
     const props = defineProps({
         accounts: { type: Array, default: () => [] },
@@ -21,7 +21,12 @@
         transactions: { type: Array, default: () => [] },
         openingBalance: { type: Number, default: 0 },
         runningBalance: { type: Number, default: 0 },
+        beforeStartCount: { type: Number, default: 0 },
         calculatedBalance: { type: Number, default: 0 },
+        hidesBalance: { type: Boolean, default: false },
+        walletTransferDays: { type: Number, default: 0 },
+        walletBank: { type: String, default: null },
+        cashOpen: { type: Object, default: () => ({ count: 0, balance: 0 }) },
         paymentMethods: { type: Array, default: () => [] },
         accountCurrency: { type: String, default: 'PEN' },
         costCenters: { type: Array, default: () => [] },
@@ -81,6 +86,7 @@
         cost_center_id: null,
         amount: '',
         reference: '',
+        operation_number: '',
         description: '',
         payment_method_id: null,
         attachment: null,
@@ -108,6 +114,7 @@
         form.type = tx.type;
         form.amount = tx.amount;
         form.reference = tx.reference;
+        form.operation_number = tx.operation_number || '';
         form.description = tx.description;
         form.cost_center_id = tx.cost_center_id ?? null;
         showModal.value = true;
@@ -125,7 +132,16 @@
         form.post(url, {
             preserveScroll: true,
             forceFormData: true,
-            onSuccess: () => {
+            onSuccess: (page) => {
+                // El servidor rechaza, por ejemplo, un N° de operación repetido
+                // en la cuenta: el mensaje debe verse y el modal seguir abierto.
+                const error = page?.props?.flash?.error;
+
+                if (error) {
+                    window.alertaSistema('No se pudo guardar el movimiento', error, 'error');
+                    return;
+                }
+
                 toast.fire({ icon: 'success', title: 'Movimiento guardado' });
                 showModal.value = false;
                 attachmentFile.value = null;
@@ -166,6 +182,37 @@
         });
     };
 
+    // La cifra del saldo es la misma de la pestaña Cuentas; la nota explica
+    // cuándo el dinero de una billetera todavía no es del banco.
+    const balanceLabel = computed(() => {
+        if (props.hidesBalance) return 'Saldo propio (su dinero está en el banco)';
+        if (props.walletTransferDays > 0) return 'Saldo propio (aún en la billetera)';
+
+        return 'Saldo actual (igual que Cuentas)';
+    });
+
+    const balanceNote = computed(() => {
+        if (props.hidesBalance) {
+            return `Lo cobrado por esta billetera se muestra sumado en ${props.walletBank || 'su banco vinculado'}.`;
+        }
+
+        if (props.walletTransferDays > 0) {
+            const dias = props.walletTransferDays === 1 ? '1 día hábil' : `${props.walletTransferDays} días hábiles`;
+
+            return `Se transferirá a ${props.walletBank || 'su banco'} en ${dias}.`;
+        }
+
+        return null;
+    });
+
+    // La cuenta elegida puede ser la caja: entonces se cruza el efectivo de las
+    // sesiones abiertas, que no vive en el libro de bancos.
+    const selectedAccount = computed(() =>
+        props.accounts.find((account) => account.id === props.selectedAccountId) || null
+    );
+
+    const isCashAccount = computed(() => selectedAccount.value?.type === 'cash');
+
     const canEdit = (tx) => tx.source === 'manual' && !tx.voided;
 
     // Detalle del origen (comprobante, cuota, curso)
@@ -177,6 +224,41 @@
 
     const closeDetail = () => {
         detailModal.value = { show: false, detail: null };
+    };
+
+    // Auto-detracción de una factura desde su cobro.
+    const autoDetraction = async (tx) => {
+        const detail = tx.detail || {};
+        const monto = currency(detail.detraccion || 0, detail.moneda || props.accountCurrency);
+
+        const result = await window.alertaSistema(
+            'Hacer auto-detracción',
+            `Se transferirá ${monto} de esta cuenta a la cuenta de Detracción por la factura ${detail.comprobante || ''}. ¿Continuar?`,
+            'warning',
+            {
+                duration: 0,
+                showCancelButton: true,
+                confirmButtonText: 'Sí, transferir',
+                cancelButtonText: 'Cancelar',
+            }
+        );
+
+        if (!result?.isConfirmed) return;
+
+        router.post(route('treasury_transactions_auto_detraction', tx.id), {}, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                const success = page.props.flash?.success;
+                const error = page.props.flash?.error;
+
+                if (success) {
+                    window.alertaSistema('Auto-detracción registrada', success, 'success');
+                } else if (error) {
+                    window.alertaSistema('No se pudo hacer la auto-detracción', error, 'error');
+                }
+            },
+            onError: () => window.alertaSistema('No se pudo hacer la auto-detracción', 'Revisa el movimiento e inténtalo de nuevo.', 'error'),
+        });
     };
 
     const sourceLabels = {
@@ -212,7 +294,7 @@
                     <p class="mt-2 text-2xl font-bold text-gray-800 dark:text-gray-100">{{ currency(openingBalance) }}</p>
                 </div>
                 <div class="panel p-5">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Saldo del período</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Saldo al cierre del período</p>
                     <p
                         class="mt-2 text-2xl font-bold"
                         :class="runningBalance >= 0 ? 'text-gray-800 dark:text-gray-100' : 'text-danger'"
@@ -221,8 +303,13 @@
                     </p>
                 </div>
                 <div class="panel bg-gradient-to-br from-primary to-primary-dark p-5 text-white">
-                    <p class="text-sm opacity-80">Saldo actual en el sistema</p>
+                    <p class="text-sm opacity-80">{{ balanceLabel }}</p>
                     <p class="mt-2 text-2xl font-bold">{{ currency(calculatedBalance) }}</p>
+                    <p v-if="balanceNote" class="mt-1 text-xs opacity-80">{{ balanceNote }}</p>
+                    <p v-if="isCashAccount" class="mt-1 text-xs opacity-80">
+                        Cajas abiertas: {{ cashOpen.count }} · efectivo esperado {{ currency(cashOpen.balance) }}.
+                        <Link :href="route('treasury_cash_index')" class="underline">Ver cajas</Link>
+                    </p>
                 </div>
             </div>
 
@@ -241,7 +328,10 @@
                     </button>
                 </div>
 
-                <div class="flex gap-2">
+                <div class="flex flex-wrap gap-2">
+                    <Link :href="route('treasury_accounts_index')" class="btn btn-outline-primary">
+                        Ver cuentas
+                    </Link>
                     <button type="button" class="btn btn-success" @click="openCreate('income')">
                         <font-awesome-icon :icon="faPlus" class="mr-1" /> Ingreso
                     </button>
@@ -249,6 +339,18 @@
                         <font-awesome-icon :icon="faPlus" class="mr-1" /> Egreso
                     </button>
                 </div>
+            </div>
+
+            <!-- Movimientos anteriores al inicio del módulo -->
+            <div
+                v-if="beforeStartCount"
+                class="panel border-l-4 border-warning p-4 text-sm text-gray-600 dark:text-gray-300"
+            >
+                <font-awesome-icon :icon="faTriangleExclamation" class="mr-1 text-warning" />
+                Hay {{ beforeStartCount }} movimiento(s) anteriores al inicio de Tesorería. Se muestran en la lista
+                para que puedas revisarlos, pero no suman en saldos, proyecciones ni reportes. Si deben contar, cambia
+                la fecha de inicio en
+                <Link :href="route('treasury_configuration_index')" class="underline">Configuración</Link>.
             </div>
 
             <!-- Libro de movimientos -->
@@ -262,6 +364,7 @@
                                 <th class="min-w-[240px]">Descripción</th>
                                 <th class="min-w-[160px]">Categoría</th>
                                 <th class="w-32">Referencia</th>
+                                <th class="w-32">N° operación</th>
                                 <th class="w-28">Origen</th>
                                 <th class="w-36 text-right">Monto</th>
                                 <th class="w-40 text-right">Saldo</th>
@@ -269,7 +372,7 @@
                         </thead>
                         <tbody>
                             <tr v-if="transactions.length === 0">
-                                <td colspan="8" class="py-8 text-center text-sm text-gray-500">
+                                <td colspan="9" class="py-8 text-center text-sm text-gray-500">
                                     Sin movimientos en el período seleccionado.
                                 </td>
                             </tr>
@@ -309,6 +412,25 @@
                                 <td>
                                     <p class="text-gray-800 dark:text-gray-100">{{ tx.description || '—' }}</p>
                                     <p v-if="tx.reference" class="text-xs text-gray-400">Ref: {{ tx.reference }}</p>
+                                    <p v-if="tx.operation_number" class="text-xs text-gray-400">Op: {{ tx.operation_number }}</p>
+                                    <span
+                                        v-if="tx.before_start"
+                                        class="mt-1 inline-flex items-center gap-1 rounded-md bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"
+                                    >
+                                        Antes del inicio
+                                    </span>
+                                    <template v-if="tx.detail?.detraccion_pendiente">
+                                        <span class="mt-1 inline-flex items-center gap-1 rounded-md bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">
+                                            <font-awesome-icon :icon="faTriangleExclamation" /> Falta detracción
+                                        </span>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-warning mt-1.5 w-full sm:w-auto"
+                                            @click="autoDetraction(tx)"
+                                        >
+                                            Hacer auto-detracción
+                                        </button>
+                                    </template>
                                 </td>
                                 <td>
                                     <span
@@ -320,6 +442,7 @@
                                     </span>
                                 </td>
                                 <td class="text-gray-600 dark:text-gray-400">{{ tx.reference || '—' }}</td>
+                                <td class="whitespace-nowrap text-gray-600 dark:text-gray-400">{{ tx.operation_number || '—' }}</td>
                                 <td>
                                     <span class="rounded-md px-2 py-1 text-xs" :class="sourceColors[tx.source] || sourceColors.manual">
                                         {{ sourceLabels[tx.source] || tx.source }}
@@ -333,9 +456,12 @@
                                 </td>
                                 <td
                                     class="text-right font-bold"
-                                    :class="tx.running_balance >= 0 ? 'text-gray-800 dark:text-gray-100' : 'text-danger'"
+                                    :class="tx.before_start
+                                        ? 'text-gray-400 dark:text-gray-500'
+                                        : (tx.running_balance >= 0 ? 'text-gray-800 dark:text-gray-100' : 'text-danger')"
+                                    :title="tx.before_start ? 'Anterior al inicio del módulo: no suma al saldo' : null"
                                 >
-                                    {{ currency(tx.running_balance) }}
+                                    {{ tx.before_start ? '—' : currency(tx.running_balance) }}
                                 </td>
                             </tr>
                         </tbody>
@@ -422,8 +548,20 @@
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <InputLabel value="Referencia / N° operación" class="mb-1.5" />
+                        <InputLabel value="Referencia" class="mb-1.5" />
                         <input v-model="form.reference" type="text" class="form-input w-full" />
+                    </div>
+                    <div>
+                        <InputLabel value="N° de operación del banco" class="mb-1.5" />
+                        <input
+                            v-model="form.operation_number"
+                            type="text"
+                            class="form-input w-full"
+                            placeholder="El que trae el extracto"
+                        />
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Si coincide con el del extracto, la conciliación los reconoce como el mismo movimiento.
+                        </p>
                     </div>
                     <div>
                         <InputLabel value="Método de pago" class="mb-1.5" />

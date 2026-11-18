@@ -38,6 +38,11 @@ return [
     | Carpetas de imágenes
     |--------------------------------------------------------------------------
     |
+    | Solo se revisan los archivos que suben los usuarios: el disco público de
+    | storage (storage/app/public, expuesto en /storage). Los archivos que
+    | forman parte del proyecto (public/img, public/themes, public/images) no
+    | entran en el inventario porque no son contenido editable del cliente.
+    |
     | `tab` es la pestaña por defecto cuando la imagen no se detecta en uso
     | dentro de un curso, el blog o la tienda. Las imágenes referenciadas se
     | colocan en su pestaña real independientemente de la carpeta.
@@ -45,16 +50,7 @@ return [
     */
 
     'directories' => [
-        ['path' => public_path('img'), 'url' => '/img', 'tab' => 'paginas'],
-        ['path' => public_path('themes'), 'url' => '/themes', 'tab' => 'paginas'],
-        ['path' => public_path('images'), 'url' => '/images', 'tab' => 'paginas'],
-        ['path' => storage_path('app/public/uploads'), 'url' => '/storage/uploads', 'tab' => 'otros'],
-        ['path' => storage_path('app/public/company'), 'url' => '/storage/company', 'tab' => 'otros'],
-        ['path' => storage_path('app/public/health'), 'url' => '/storage/health', 'tab' => 'otros'],
-        ['path' => storage_path('app/public/students'), 'url' => '/storage/students', 'tab' => 'otros'],
-        ['path' => storage_path('app/public/myclients'), 'url' => '/storage/myclients', 'tab' => 'otros'],
-        ['path' => storage_path('app/public/negotiations'), 'url' => '/storage/negotiations', 'tab' => 'otros'],
-        ['path' => storage_path('app/public/invoice'), 'url' => '/storage/invoice', 'tab' => 'otros'],
+        ['path' => storage_path('app/public'), 'url' => '/storage', 'tab' => 'otros'],
     ],
 
     'extensions' => ['jpg', 'jpeg', 'png', 'webp', 'gif'],
@@ -69,7 +65,6 @@ return [
     */
 
     'tabs' => [
-        'paginas'    => 'Páginas',
         'cursos'     => 'Cursos',
         'blog'       => 'Blog',
         'productos'  => 'Productos',
@@ -105,8 +100,13 @@ return [
 
     'new_days' => 7,
 
-    // Días que se conservan las copias de seguridad antes de borrarlas.
+    // Días que se conservan las copias de seguridad antes de borrarlas. El
+    // administrador puede adelantar ese borrado desde la pantalla.
     'backup_days' => 30,
+
+    // Días mínimos que un archivo debe llevar en cuarentena antes de que se
+    // permita eliminarlo definitivamente.
+    'quarantine_days' => 7,
 
     /*
     |--------------------------------------------------------------------------

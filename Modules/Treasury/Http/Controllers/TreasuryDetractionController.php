@@ -62,6 +62,27 @@ class TreasuryDetractionController extends Controller
     }
 
     /**
+     * Banco y número de cuenta de detracciones (Banco de la Nación).
+     */
+    public function updateAccount(Request $request)
+    {
+        $this->authorizePermission('treasury_detraccion');
+
+        $data = $request->validate([
+            'bank_name' => ['nullable', 'string', 'max:80'],
+            'account_number' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $this->detractions->updateAccountDetails(
+            trim((string) ($data['bank_name'] ?? '')) ?: 'Banco de la Nación',
+            trim((string) ($data['account_number'] ?? '')) ?: null,
+            auth()->id(),
+        );
+
+        return back()->with('success', 'Cuenta de detracciones actualizada: los clientes depositarán en ese número.');
+    }
+
+    /**
      * Ajuste manual del saldo de detracción. Crítico: pide contraseña.
      */
     public function adjust(Request $request)

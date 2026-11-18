@@ -21,7 +21,8 @@ use Modules\Treasury\Exceptions\TreasuryOperationException;
  * - El dinero se registra cuando se cobra: la parte detraída entra a la
  *   cuenta «Detracción» y el resto a la cuenta indicada.
  * - Con auto-detracción el cliente paga todo a la cuenta de la empresa y esta
- *   traslada el importe detraído a la cuenta de detracción.
+ *   traslada el importe detraído a la cuenta de detracción. Ese traslado queda
+ *   pendiente hasta que se ejecuta desde Movimientos.
  * - La cuenta de detracción solo paga IGV, libera saldo a una cuenta de la
  *   empresa o recibe un ajuste manual (estos dos últimos son críticos y
  *   requieren la contraseña del usuario).
@@ -59,12 +60,35 @@ class TreasuryDetractionService
             ?? TreasuryAccount::create([
                 'type' => TreasuryAccount::TYPE_DETRACTION,
                 'label' => 'Detracción',
+                'bank_name' => 'Banco de la Nación',
                 'currency_type_id' => 'PEN',
                 'opening_balance' => 0,
                 'status' => true,
             ]);
 
         return $this->cuenta;
+    }
+
+    /**
+     * Banco y número de cuenta donde los clientes depositan la detracción.
+     * Por norma es una cuenta del Banco de la Nación a nombre de la empresa.
+     */
+    public function updateAccountDetails(string $bankName, ?string $accountNumber, ?int $userId = null): TreasuryAccount
+    {
+        $account = $this->account();
+        $antes = ['bank_name' => $account->bank_name, 'account_number' => $account->account_number];
+
+        $account->fill([
+            'bank_name' => $bankName !== '' ? $bankName : 'Banco de la Nación',
+            'account_number' => $accountNumber !== '' ? $accountNumber : null,
+        ])->save();
+
+        $this->audit->log('detraccion', $account->id, 'account_details', $antes, [
+            'bank_name' => $account->bank_name,
+            'account_number' => $account->account_number,
+        ], ['user_id' => $userId]);
+
+        return $account;
     }
 
     /**
@@ -252,7 +276,9 @@ class TreasuryDetractionService
 
         DB::transaction(function () use ($document, $source, $account, $amount, $date, $userId) {
             $reference = $this->documentNumber($document);
-            $description = 'Auto-detracción de ' . $reference;
+            // Movimiento de ida y vuelta: en la cuenta de la empresa sale como
+            // transferencia y en la de detracción entra como auto-detracción.
+            $description = 'Transferencia auto-detracción de ' . $reference;
 
             $this->ledger->registerExpense(
                 $source,
@@ -307,13 +333,55 @@ class TreasuryDetractionService
             return;
         }
 
-        if ((bool) $document->detraccion_auto && $account) {
-            $this->registerAutoTransfer($document, $account, $date, $userId);
-
+        if ((bool) $document->detraccion_auto) {
+            // La auto-detracción no se ejecuta al cobrar: el dinero entra
+            // completo a la cuenta y el traslado queda pendiente en
+            // Movimientos hasta que la empresa lo haga.
             return;
         }
 
         $this->registerIncome($document, $date, $userId);
+    }
+
+    /**
+     * Auto-detracción desde Movimientos: transfiere el importe detraído de la
+     * cuenta donde se cobró la factura a la cuenta de detracción.
+     */
+    public function registerAutoDetraction(
+        SaleDocument $document,
+        TreasuryAccount $source,
+        string|Carbon $date,
+        ?int $userId = null,
+    ): TreasuryTransaction {
+        if (! $this->applies($document)) {
+            throw new TreasuryOperationException('Esta factura no está sujeta a detracción.');
+        }
+
+        if ($this->incomeExists($document) || $this->autoMoveExists($document)) {
+            throw new TreasuryOperationException('La detracción de esta factura ya está registrada.');
+        }
+
+        if ($source->isDetraction()) {
+            throw new TreasuryOperationException('La auto-detracción debe salir de la cuenta donde se cobró la factura.');
+        }
+
+        $this->registerAutoTransfer($document, $source, $date, $userId);
+
+        $income = TreasuryTransaction::query()
+            ->where('origin_type', self::ORIGIN_AUTO_MOVE)
+            ->where('origin_id', (int) $document->id)
+            ->where('type', TreasuryTransaction::TYPE_INCOME)
+            ->active()
+            ->latest('id')
+            ->first();
+
+        if (! $income) {
+            throw new TreasuryOperationException('No se pudo registrar la auto-detracción.');
+        }
+
+        $document->forceFill(['detraccion_auto' => true])->save();
+
+        return $income;
     }
 
     /**
@@ -354,6 +422,8 @@ class TreasuryDetractionService
         return [
             'account_id' => $account->id,
             'account_label' => $account->displayName(),
+            'bank_name' => $account->bank_name,
+            'account_number' => $account->account_number,
             'currency' => $this->currency->accountCurrency($account),
             'balance' => $saldo,
             'total_detracted' => round((float) TreasuryTransaction::query()
@@ -394,6 +464,11 @@ class TreasuryDetractionService
                     'client' => $factura?->client_rzn_social,
                     'percent' => $factura ? $this->percent($factura) : null,
                     'amount' => (float) $movement->amount,
+                    'invoice_total' => $factura ? $this->documentTotal($factura) : null,
+                    // Lo que queda libre para la empresa: total menos detracción.
+                    'net_to_company' => $factura
+                        ? round(max(0, $this->documentTotal($factura) - (float) $movement->amount), 2)
+                        : null,
                     'auto' => (bool) ($factura?->detraccion_auto),
                     'status' => (string) ($factura?->invoice_status ?: '—'),
                 ];
@@ -405,6 +480,7 @@ class TreasuryDetractionService
                 'origin' => $movement->origin_type,
                 'description' => $movement->description,
                 'reference' => $movement->reference,
+                'operation_number' => $movement->operation_number,
                 'amount' => (float) $movement->amount,
             ])->all(),
         ];

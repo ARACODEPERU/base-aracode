@@ -18,6 +18,7 @@ use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Client\PaymentMethod\PaymentMethodClient;
 use MercadoPago\MercadoPagoConfig;
 use Modules\Socialevents\Services\SportsOrganizationService;
+use Modules\Integrationhub\Services\IntegrationCredentialResolver;
 
 class OrganizationTopUpController extends Controller
 {
@@ -379,8 +380,11 @@ class OrganizationTopUpController extends Controller
         $signature = (string) $request->header('x-signature');
         $requestId = (string) $request->header('x-request-id');
         $query = $request->query->all();
-        $dataId = (string) ($query['data.id'] ?? data_get($query, 'data.id') ?? data_get($request->all(), 'data.id', ''));
-        $secret = (string) config('services.mercadopago.webhook_secret');
+        // PHP convierte "data.id" de la query en "data_id"; MercadoPago lo envía con punto.
+        $dataId = (string) ($query['data.id'] ?? $query['data_id'] ?? data_get($request->all(), 'data.id', ''));
+        // El secreto se administra en IntegrationHub y el .env queda como respaldo.
+        $secret = (string) app(IntegrationCredentialResolver::class)
+            ->value('MercadoPago', 'webhook_secret', (string) config('services.mercadopago.webhook_secret'));
         $parts = [];
         foreach (explode(',', $signature) as $part) {
             [$key, $value] = array_pad(explode('=', trim($part), 2), 2, null);

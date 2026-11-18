@@ -32,12 +32,22 @@ const form = useForm({
     prices: props.subscription.prices,
     status: props.subscription.status == 1 ? true : false,
     period: props.subscription.period,
+    recurring_enabled: props.subscription.recurring_enabled == 1,
+    test_mode: props.subscription.test_mode == 1,
     order_number: props.subscription.order_number ?? 1,
     access_all_courses: props.subscription.access_all_courses == 1,
     access_specialization_programs: props.subscription.access_specialization_programs == 1,
     access_all_webinars: props.subscription.access_all_webinars == 1,
     can_view_specialization_zooms: props.subscription.can_view_specialization_zooms == 1,
     can_view_specialization_webinars: props.subscription.can_view_specialization_webinars == 1
+});
+
+// El cobro automático y el modo prueba solo tienen sentido en planes mensuales.
+watch(() => form.period, (period) => {
+    if (period !== 'Mensual') {
+        form.recurring_enabled = false;
+        form.test_mode = false;
+    }
 });
 
 const updateSubscription = () => {
@@ -158,6 +168,44 @@ const removePrice = (indexToRemove) => {
                     <input v-model="form.status" type="checkbox" class="form-checkbox rounded-full" />
                     <span>Activo</span>
                 </label>
+            </div>
+            <div class="col-span-6">
+                <div class="p-4 border border-[#888ea8] dark:border-[#1b2e4b] rounded">
+                    <label class="flex items-start gap-3 cursor-pointer" :class="{ 'opacity-60': form.period !== 'Mensual' }">
+                        <input
+                            v-model="form.recurring_enabled"
+                            type="checkbox"
+                            class="form-checkbox mt-0.5"
+                            :disabled="form.period !== 'Mensual'"
+                        />
+                        <span>
+                            <span class="block font-medium">Cobro automático mensual con MercadoPago</span>
+                            <span class="block text-xs text-gray-500">
+                                Cobra la tarjeta del alumno cada mes con la fecha de su alta. Solo disponible para planes mensuales
+                                y requiere el webhook de MercadoPago configurado en IntegrationHub.
+                            </span>
+                        </span>
+                    </label>
+                    <InputError :message="form.errors.recurring_enabled" class="mt-2" />
+
+                    <label class="flex items-start gap-3 cursor-pointer mt-4 pt-4 border-t border-dashed border-[#888ea8] dark:border-[#1b2e4b]" :class="{ 'opacity-60': form.period !== 'Mensual' }">
+                        <input
+                            v-model="form.test_mode"
+                            type="checkbox"
+                            class="form-checkbox mt-0.5"
+                            :disabled="form.period !== 'Mensual'"
+                        />
+                        <span>
+                            <span class="block font-medium">Modo prueba de cobros recurrentes</span>
+                            <span class="block text-xs text-gray-500">
+                                Habilita en la edición los botones para crear una suscripción con tarjeta de prueba en MercadoPago,
+                                simular la renovación, cancelarla y borrar esos datos. Usa las credenciales de PRUEBA
+                                (test_access_token y test_public_key), nunca las de producción.
+                            </span>
+                        </span>
+                    </label>
+                    <InputError :message="form.errors.test_mode" class="mt-2" />
+                </div>
             </div>
             <div class="col-span-6">
                 <div class="p-4 border border-[#888ea8] dark:border-[#1b2e4b] rounded">

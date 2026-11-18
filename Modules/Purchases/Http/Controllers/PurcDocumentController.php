@@ -19,6 +19,7 @@ use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Modules\Purchases\Entities\PurcDocumentItems;
+use Modules\Treasury\Services\PurchaseTreasuryHooks;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 
 class PurcDocumentController extends Controller
@@ -389,6 +390,10 @@ class PurcDocumentController extends Controller
                     'total_canceled'            => 0,
                 ]);
 
+                // El dinero pagado al proveedor sale de la cuenta del medio de
+                // pago usado: cada pago del formulario es un egreso del libro.
+                PurchaseTreasuryHooks::recordPurchaseExpenses($purchase, (array) $request->get('payments', []));
+
                 return $purchase;
             });
 
@@ -439,12 +444,16 @@ class PurcDocumentController extends Controller
                     'status' => 'A'
                 ]);
 
+                // La compra anulada devuelve el dinero a la cuenta de salida.
+                PurchaseTreasuryHooks::voidPurchaseExpenses($purchase, 'Compra anulada');
+
                 $products = PurcDocumentItems::where('purchase_id', $id)->get();
 
                 foreach ($products as $produc) {
 
                     $pro = Product::find($produc->product_id);
                     $t = $pro->stock;
+                    $n_tallas = null;
 
                     if ($pro->is_product) {
                         $k = Kardex::create([
@@ -485,10 +494,15 @@ class PurcDocumentController extends Controller
                             }
                         }
                     }
-                    $pro->update([
-                        'stock' => $t - $produc->quantity,
-                        'sizes' => json_encode($n_tallas)
-                    ]);
+                    // Solo se tocan las tallas si el producto las maneja; los
+                    // productos simples no tienen ese JSON.
+                    $cambios = ['stock' => $t - $produc->quantity];
+
+                    if ($n_tallas !== null) {
+                        $cambios['sizes'] = json_encode($n_tallas);
+                    }
+
+                    $pro->update($cambios);
                 }
 
 

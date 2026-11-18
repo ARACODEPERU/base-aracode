@@ -5,6 +5,7 @@ import {
     faMoneyCheckDollar,
     faMoneyBillWave,
     faLink,
+    faScroll,
     faScaleBalanced,
     faTags,
     faArrowRightArrowLeft,
@@ -81,6 +82,13 @@ const menuTreasury = {
             text: "Cobros sin cuenta",
             permissions: "treasury_cobros_vincular",
             icom: faLink,
+        },
+        {
+            route: route("treasury_documents_index"),
+            status: false,
+            text: "Cartera",
+            permissions: "treasury_documentos",
+            icom: faScroll,
         },
         {
             route: route("treasury_reconciliation_index"),

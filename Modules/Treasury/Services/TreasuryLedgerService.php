@@ -51,6 +51,7 @@ class TreasuryLedgerService
         ?string $currency = null,
         ?float $exchangeRate = null,
         ?int $costCenterId = null,
+        ?string $operationNumber = null,
     ): ?TreasuryTransaction {
         $income = $this->register(
             $account,
@@ -70,6 +71,7 @@ class TreasuryLedgerService
             $currency,
             $exchangeRate,
             $costCenterId,
+            $operationNumber,
         );
 
         // Si la cuenta cobra comisiones, se registra su egreso (comisión + IGV) en la misma cuenta.
@@ -159,6 +161,7 @@ class TreasuryLedgerService
         ?string $currency = null,
         ?float $exchangeRate = null,
         ?int $costCenterId = null,
+        ?string $operationNumber = null,
     ): ?TreasuryTransaction {
         return $this->register(
             $account,
@@ -178,6 +181,7 @@ class TreasuryLedgerService
             $currency,
             $exchangeRate,
             $costCenterId,
+            $operationNumber,
         );
     }
 
@@ -208,6 +212,7 @@ class TreasuryLedgerService
         ?string $currency = null,
         ?float $exchangeRate = null,
         ?int $costCenterId = null,
+        ?string $operationNumber = null,
     ): ?TreasuryTransaction {
         try {
             if (! $account || ! $account->status) {
@@ -260,6 +265,10 @@ class TreasuryLedgerService
                 }
             }
 
+            // El N° de operación identifica la operación en el banco: no puede
+            // repetirse en la misma cuenta porque sería el mismo movimiento.
+            $this->assertOperationNumberAvailable($account->id, $operationNumber);
+
             return TreasuryTransaction::create([
                 'treasury_account_id' => $account->id,
                 'transaction_date' => $dateValue->toDateString(),
@@ -273,6 +282,7 @@ class TreasuryLedgerService
                 'amount_base' => $amountBase,
                 'cost_center_id' => $costCenterId,
                 'reference' => $reference,
+                'operation_number' => $operationNumber !== null && trim($operationNumber) !== '' ? trim($operationNumber) : null,
                 'description' => $description,
                 'payment_method_id' => $paymentMethodId,
                 'source' => $source,
@@ -386,9 +396,29 @@ class TreasuryLedgerService
     {
         $balances = $this->balancesByAccount($untilDate);
 
+        // El saldo de detracción no es dinero libre: solo paga IGV. Sumarlo al
+        // consolidado infla el disponible, así que se informa aparte.
+        $operativas = [];
+        $detraccion = 0.0;
+        $cuentasDetraccion = 0;
+
+        foreach ($balances as $row) {
+            if ($row['account']->isDetraction()) {
+                $detraccion += (float) $row['balance'];
+                $cuentasDetraccion++;
+                continue;
+            }
+
+            $operativas[] = $row;
+        }
+
+        $consolidation = app(TreasuryCurrencyService::class)->consolidate($operativas, $untilDate);
+        $consolidation['detraction'] = round($detraccion, 2);
+        $consolidation['detraction_accounts'] = $cuentasDetraccion;
+
         return [
             'balances' => $balances,
-            'consolidation' => app(TreasuryCurrencyService::class)->consolidate($balances, $untilDate),
+            'consolidation' => $consolidation,
         ];
     }
 
@@ -426,7 +456,13 @@ class TreasuryLedgerService
     public function displayBalance(TreasuryAccount $account, ?string $untilDate = null): float
     {
         if ($account->type === TreasuryAccount::TYPE_WALLET) {
-            return $this->bankForWallet($account) ? 0.0 : $this->accountBalance($account, $untilDate);
+            // Con traslado inmediato el dinero ya está en el banco. Con plazo,
+            // sigue en la billetera hasta que se ejecute la transferencia.
+            if ($this->bankForWallet($account) && ! $this->walletTransferDelayed($account)) {
+                return 0.0;
+            }
+
+            return $this->accountBalance($account, $untilDate);
         }
 
         if ($account->type !== TreasuryAccount::TYPE_BANK) {
@@ -436,6 +472,11 @@ class TreasuryLedgerService
         $total = $this->accountBalance($account, $untilDate);
 
         foreach ($this->walletsLinkedTo($account) as $wallet) {
+            // La billetera con plazo todavía no ha transferido: su saldo no es del banco.
+            if ($this->walletTransferDelayed($wallet)) {
+                continue;
+            }
+
             $total += $this->accountBalance($wallet, $untilDate);
         }
 
@@ -446,11 +487,18 @@ class TreasuryLedgerService
     public function hidesBalance(TreasuryAccount $account): bool
     {
         return $account->type === TreasuryAccount::TYPE_WALLET
-            && $this->bankForWallet($account) !== null;
+            && $this->bankForWallet($account) !== null
+            && ! $this->walletTransferDelayed($account);
+    }
+
+    /** La billetera espera días hábiles antes de transferir a su banco. */
+    private function walletTransferDelayed(TreasuryAccount $wallet): bool
+    {
+        return (int) ($wallet->companyBilletera?->bank_transfer_days ?? 0) > 0;
     }
 
     /** Cuenta de tesorería del banco vinculado a la billetera. */
-    private function bankForWallet(TreasuryAccount $wallet): ?TreasuryAccount
+    public function bankForWallet(TreasuryAccount $wallet): ?TreasuryAccount
     {
         $bankAccountId = $wallet->companyBilletera?->bank_account_id;
 
@@ -484,10 +532,21 @@ class TreasuryLedgerService
     /**
      * Estado de cuenta con saldo corrido por fila.
      *
+     * Con `$includeBeforeStart` se listan también los movimientos anteriores
+     * al inicio del módulo (por ejemplo, los registrados al conciliar un
+     * extracto antiguo): se marcan con `before_start` y no suman al saldo.
+     *
      * @return array<int, array<string, mixed>>
      */
-    public function statement(TreasuryAccount $account, ?string $fromDate = null, ?string $untilDate = null, int $limit = 500): array
-    {
+    public function statement(
+        TreasuryAccount $account,
+        ?string $fromDate = null,
+        ?string $untilDate = null,
+        int $limit = 500,
+        bool $includeBeforeStart = false,
+    ): array {
+        $startsOn = $this->settings->startsOn();
+
         $openingUntilPrevious = $fromDate
             ? $this->accountBalance($account, Carbon::parse($fromDate)->subDay()->toDateString())
             : 0.0;
@@ -498,8 +557,11 @@ class TreasuryLedgerService
             ->orderBy('transaction_date')
             ->orderBy('id');
 
-        // El libro arranca en la fecha de inicio del módulo.
-        $this->settings->applyCutoff($query);
+        // El libro arranca en la fecha de inicio del módulo, salvo que se pida
+        // ver también lo anterior (solo para mostrarlo, no para saldos).
+        if (! $includeBeforeStart) {
+            $this->settings->applyCutoff($query);
+        }
 
         if ($fromDate) {
             $query->whereDate('transaction_date', '>=', $fromDate);
@@ -510,12 +572,18 @@ class TreasuryLedgerService
 
         $balance = $openingUntilPrevious;
 
-        return $query->limit($limit)->get()->map(function (TreasuryTransaction $tx) use (&$balance) {
-            $balance += $tx->type === TreasuryTransaction::TYPE_INCOME
-                ? (float) $tx->amount
-                : -1 * (float) $tx->amount;
+        return $query->limit($limit)->get()->map(function (TreasuryTransaction $tx) use (&$balance, $startsOn) {
+            $beforeStart = $startsOn !== null
+                && $tx->transaction_date->toDateString() < $startsOn;
+
+            if (! $beforeStart) {
+                $balance += $tx->type === TreasuryTransaction::TYPE_INCOME
+                    ? (float) $tx->amount
+                    : -1 * (float) $tx->amount;
+            }
 
             return [
+                'before_start' => $beforeStart,
                 'id' => $tx->id,
                 'date' => $tx->transaction_date->format('Y-m-d'),
                 'type' => $tx->type,
@@ -526,8 +594,9 @@ class TreasuryLedgerService
                 'amount' => (float) $tx->amount,
                 'currency' => $tx->currency ?: 'PEN',
                 'amount_base' => $tx->amount_base !== null ? (float) $tx->amount_base : null,
-                'running_balance' => round($balance, 2),
+                'running_balance' => $beforeStart ? null : round($balance, 2),
                 'reference' => $tx->reference,
+                'operation_number' => $tx->operation_number,
                 'description' => $tx->description,
                 'origin_type' => $tx->origin_type,
                 'origin_id' => $tx->origin_id,
@@ -537,6 +606,35 @@ class TreasuryLedgerService
                 'voided' => $tx->voided_at !== null,
             ];
         })->all();
+    }
+
+    /**
+     * Un N° de operación identifica una operación del banco: si ya está en la
+     * cuenta, registrar otro movimiento con el mismo número sería duplicar el
+     * mismo movimiento.
+     *
+     * @throws TreasuryOperationException
+     */
+    public function assertOperationNumberAvailable(int $accountId, ?string $operationNumber, ?int $ignoreTransactionId = null): void
+    {
+        $number = trim((string) $operationNumber);
+
+        if ($number === '') {
+            return;
+        }
+
+        $exists = TreasuryTransaction::query()
+            ->where('treasury_account_id', $accountId)
+            ->whereNull('voided_at')
+            ->where('operation_number', $number)
+            ->when($ignoreTransactionId, fn ($query) => $query->where('id', '!=', $ignoreTransactionId))
+            ->exists();
+
+        if ($exists) {
+            throw new TreasuryOperationException(
+                "El N° de operación {$number} ya está registrado en esta cuenta: es el mismo movimiento."
+            );
+        }
     }
 
     /**

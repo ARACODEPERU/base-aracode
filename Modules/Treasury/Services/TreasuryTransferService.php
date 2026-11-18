@@ -17,8 +17,9 @@ use Modules\Treasury\Exceptions\TreasuryOperationException;
  * - La comisión del destino siempre se cobra sobre el monto acreditado.
  * - La comisión del origen se cobra solo cuando la transferencia es entre
  *   cuentas propias (siempre lo son aquí) y el usuario la activa.
- * - Las comisiones llevan IGV (18 %) y, junto con el ITF, se registran como
- *   egresos propios con su categoría: son gastos, no parte del monto movido.
+ * - Las comisiones entre cuentas propias NO llevan IGV; junto con el ITF se
+ *   registran como egresos propios con su categoría: son gastos, no parte del
+ *   monto movido.
  * - El ITF se aplica salvo que el check "cuenta propia libre de ITF" esté
  *   activo para ese par.
  * - Si origen y destino tienen monedas distintas se exige tipo de cambio
@@ -66,11 +67,11 @@ class TreasuryTransferService
         $conversionMissing = $destinationAmount === null;
         $destinationAmount = $destinationAmount ?? round($amount, 2);
 
-        // Las comisiones de transferencia llevan IGV: se muestra y se registra aparte.
+        // Las comisiones entre bancos o cuentas propias no generan IGV.
         $fromFee = $chargeOriginFee
-            ? $this->fees->commission($amount, $fromFixedFee, $fromPercentFee, true)
+            ? $this->fees->commission($amount, $fromFixedFee, $fromPercentFee, false)
             : ['comision' => 0.0, 'igv' => 0.0, 'total' => 0.0];
-        $toFee = $this->fees->commission($destinationAmount, $toFixedFee, $toPercentFee, true);
+        $toFee = $this->fees->commission($destinationAmount, $toFixedFee, $toPercentFee, false);
 
         // ITF: se calcula sobre el monto que sale de la cuenta origen.
         $itf = $ownAccountItfFree ? 0.0 : $this->fees->itf($amount);
@@ -84,9 +85,10 @@ class TreasuryTransferService
             'tipo_cambio' => $rate !== null ? round((float) $rate, 4) : null,
             'monto_destino' => $destinationAmount,
             'comision_origen' => round($fromFee['comision'], 2),
-            'igv_origen' => round($fromFee['igv'], 2),
+            // Se mantiene en 0: la comisión de transferencia no causa IGV.
+            'igv_origen' => 0.0,
             'comision_destino' => round($toFee['comision'], 2),
-            'igv_destino' => round($toFee['igv'], 2),
+            'igv_destino' => 0.0,
             'gastos_origen' => round($fromFee['total'] + $itf, 2),
             'gastos_destino' => round($toFee['total'], 2),
             'itf' => round($itf, 2),
@@ -153,7 +155,7 @@ class TreasuryTransferService
             $rate,
         );
 
-        // Lo que sale de la cuenta origen: monto + gastos del origen (comisión + IGV + ITF).
+        // Lo que sale de la cuenta origen: monto + gastos del origen (comisión + ITF).
         $totalOut = round($amount + $preview['gastos_origen'], 2);
 
         if ($from->type !== TreasuryAccount::TYPE_CASH && config('treasury.block_negative_balance', true)) {
@@ -233,9 +235,9 @@ class TreasuryTransferService
                 'user_id' => $userId,
             ]);
 
-            // Comisión del origen + su IGV: un egreso propio del gasto.
+            // Comisión del origen: un egreso propio del gasto, sin IGV.
             if ($preview['gastos_origen'] - $preview['itf'] > 0) {
-                $feeTotal = round($preview['comision_origen'] + $preview['igv_origen'], 2);
+                $feeTotal = round($preview['comision_origen'], 2);
 
                 TreasuryTransaction::create([
                     'treasury_account_id' => $from->id,
@@ -252,7 +254,7 @@ class TreasuryTransferService
                         ? $feeTotal
                         : $this->currency->toBase($feeTotal, $preview['from_currency'], $dateValue->toDateString()),
                     'fee_amount' => $preview['comision_origen'],
-                    'igv_amount' => $preview['igv_origen'],
+                    'igv_amount' => 0,
                     'reference' => $reference,
                     'description' => 'Comisión de transferencia a ' . $to->displayName(),
                     'source' => TreasuryTransaction::SOURCE_MANUAL,
@@ -306,7 +308,7 @@ class TreasuryTransferService
                 'user_id' => $userId,
             ]);
 
-            // Comisión del destino + su IGV: gasto separado que explica el neto recibido.
+            // Comisión del destino: gasto separado que explica el neto recibido.
             if ($preview['gastos_destino'] > 0) {
                 TreasuryTransaction::create([
                     'treasury_account_id' => $to->id,
@@ -323,7 +325,7 @@ class TreasuryTransferService
                         ? $preview['gastos_destino']
                         : $this->currency->toBase($preview['gastos_destino'], $preview['to_currency'], $dateValue->toDateString()),
                     'fee_amount' => $preview['comision_destino'],
-                    'igv_amount' => $preview['igv_destino'],
+                    'igv_amount' => 0,
                     'reference' => $reference,
                     'description' => 'Comisión de recepción desde ' . $from->displayName(),
                     'source' => TreasuryTransaction::SOURCE_MANUAL,

@@ -9,6 +9,7 @@ use App\Models\Sale;
 use App\Models\SaleDocument;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Modules\Sales\Entities\SaleDocumentQuota;
 use Modules\Sales\Entities\SalePaymentQuota;
 
@@ -60,6 +61,7 @@ class TreasuryCashService
             'sessions' => $sessions,
             'unsessioned' => $unsessioned->all(),
             'cashMethods' => $this->cashMethodNames($cashIds),
+            'open' => $this->openSummary(),
             'totals' => [
                 'sales' => round($movements->where('kind', 'venta')->sum('amount'), 2),
                 'quotas' => round($movements->where('kind', 'cuota')->sum('amount'), 2),
@@ -76,6 +78,32 @@ class TreasuryCashService
                     'expenses' => $movements->where('kind', 'egreso')->count(),
                 ],
             ],
+        ];
+    }
+
+    /**
+     * Efectivo esperado en las cajas abiertas, calculado hasta hoy.
+     *
+     * Es la cifra que cruzan Cuentas, Movimientos y Dashboard para que el
+     * efectivo no quede aislado en su pestaña. Una caja cerrada no suma: su
+     * dinero ya quedó contado en un arqueo.
+     *
+     * @return array{count: int, balance: float, sessions: array<int, array<string, mixed>>}
+     */
+    public function openSummary(): array
+    {
+        $sessions = PettyCash::query()
+            ->where('state', 1)
+            ->orderBy('date_opening')
+            ->pluck('id')
+            ->map(fn ($id) => $this->sessionDetail((int) $id))
+            ->filter()
+            ->values();
+
+        return [
+            'count' => $sessions->count(),
+            'balance' => round((float) $sessions->sum('balance'), 2),
+            'sessions' => $sessions->all(),
         ];
     }
 
@@ -233,6 +261,57 @@ class TreasuryCashService
         }
 
         return $rows;
+    }
+
+    /**
+     * Saldo calculado de una sesión concreta, desde su apertura hasta hoy (o
+     * hasta su cierre). Es la base del arqueo: lo que el sistema espera tener
+     * en la caja antes de contar los billetes.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function sessionDetail(int $pettyCashId): ?array
+    {
+        // Se lee con el query builder porque los accessors del modelo
+        // devuelven las fechas formateadas (d-m-Y).
+        $cash = DB::table('petty_cashes')->where('id', $pettyCashId)->first();
+
+        if (! $cash) {
+            return null;
+        }
+
+        $from = Carbon::parse($cash->date_opening)->toDateString();
+        $to = Carbon::parse($cash->date_closed ?: Carbon::today()->toDateString())->toDateString();
+
+        if ($to < $from) {
+            $to = $from;
+        }
+
+        $cashIds = $this->resolver->excludedMethodIds();
+
+        $rows = collect($this->cashSales($from, $to, $cashIds))
+            ->merge($this->cashQuotaPayments($from, $to, $cashIds))
+            ->merge($this->cashExpenses($from, $to))
+            ->where('petty_cash_id', $pettyCashId);
+
+        $sales = round((float) $rows->where('kind', 'venta')->sum('amount'), 2);
+        $quotas = round((float) $rows->where('kind', 'cuota')->sum('amount'), 2);
+        $expenses = round((float) $rows->where('kind', 'egreso')->sum('amount'), 2);
+        $beginning = round((float) $cash->beginning_balance, 2);
+
+        return [
+            'id' => (int) $cash->id,
+            'opening' => Carbon::parse($cash->date_opening)->format('d-m-Y'),
+            'closed' => $cash->date_closed ? Carbon::parse($cash->date_closed)->format('d-m-Y') : null,
+            'is_open' => (int) $cash->state === 1,
+            'seller' => $cash->seller_name,
+            'beginning_balance' => $beginning,
+            'sales' => $sales,
+            'quotas' => $quotas,
+            'expenses' => $expenses,
+            'balance' => round($beginning + $sales + $quotas - $expenses, 2),
+            'movements_count' => $rows->count(),
+        ];
     }
 
     /**

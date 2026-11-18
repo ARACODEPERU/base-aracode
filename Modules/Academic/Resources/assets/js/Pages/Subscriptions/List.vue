@@ -9,6 +9,10 @@
         subscriptions: {
             type: Object,
             default: () => ({})
+        },
+        mercadopagoWebhook: {
+            type: Object,
+            default: () => ({})
         }
     });
 
@@ -70,6 +74,37 @@
             </li>
         </Navigation>
         <div class="pt-5 space-y-8">
+            <!-- Aviso del webhook que acredita los cobros automáticos. -->
+            <div v-if="!mercadopagoWebhook.configured" class="panel border-l-4 border-warning">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h5 class="font-semibold text-warning">Falta configurar el webhook de MercadoPago</h5>
+                        <p class="text-sm mt-2">
+                            Los planes con <strong>cobro automático mensual</strong> no podrán acreditar sus pagos ni renovarse
+                            mientras falte el secreto del webhook en IntegrationHub. Tampoco saldrán los correos de
+                            renovación, cobro fallido o suspensión.
+                        </p>
+                        <p class="text-sm mt-2">
+                            Debe llenarse el campo <code>webhook_secret</code> de la integración
+                            <strong>{{ mercadopagoWebhook.integration_name || 'MercadoPago' }}</strong>, que ya existe en el
+                            Centro de Integraciones.
+                        </p>
+                    </div>
+                    <a :href="mercadopagoWebhook.edit_url" class="btn btn-primary">
+                        Configurar en IntegrationHub
+                    </a>
+                </div>
+            </div>
+
+            <div v-else class="panel border-l-4 border-success">
+                <h5 class="font-semibold text-success">Webhook de MercadoPago configurado</h5>
+                <p class="text-sm mt-2">
+                    Los cobros automáticos pueden acreditarse correctamente
+                    <span v-if="mercadopagoWebhook.source === 'env'">(el secreto viene del .env; se recomienda registrarlo en IntegrationHub)</span>.
+                    <a :href="mercadopagoWebhook.edit_url" class="text-primary hover:underline ml-1">Revisar configuración</a>
+                </p>
+            </div>
+
             <div class="panel">
                 <div class="flex items-center justify-between mb-5">
                     <h5 class="font-semibold text-lg dark:text-white-light">Tipo de suscripciones</h5>
@@ -84,6 +119,12 @@
                                     <div class="border-t border-black dark:border-white-dark w-1/5 mx-auto my-6 group-hover:border-primary"></div>
                                     <p class="text-[15px]">{{ subscription.description }}</p>
                                     <p class="text-[15px]">{{ subscription.period }}</p>
+                                    <span v-if="subscription.recurring_enabled" class="badge bg-success mt-2 inline-block">
+                                        Cobro automático mensual
+                                    </span>
+                                    <span v-if="subscription.test_mode" class="badge bg-danger mt-2 inline-block">
+                                        Modo prueba
+                                    </span>
                                     <template v-for="price in subscription.prices" >
                                         <div v-if="price.amount && price.amount != '' && price.amount > 0" class="my-7 p-2.5 text-center text-lg group-hover:text-primary">
                                             <strong class="text-[#3b3f5c] dark:text-white-dark text-3xl lg:text-5xl group-hover:text-primary">{{ price.currency == 'PEN' ? 'S/' : '$' }}{{ price.amount }}</strong> / {{ price.detail }}

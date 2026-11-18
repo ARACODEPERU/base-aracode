@@ -23,6 +23,9 @@ Route::middleware(['auth', 'verified', 'user_activity_log', 'role:admin|Administ
         Route::post('images/optimize', [PerformanceImageController::class, 'optimize'])
             ->name('performance_images_optimize');
 
+        Route::post('images/replace', [PerformanceImageController::class, 'replace'])
+            ->name('performance_images_replace');
+
         Route::post('images/webp', [PerformanceImageController::class, 'webp'])
             ->name('performance_images_webp');
 
@@ -34,6 +37,15 @@ Route::middleware(['auth', 'verified', 'user_activity_log', 'role:admin|Administ
 
         Route::post('images/quarantine/restore', [PerformanceImageController::class, 'restoreQuarantine'])
             ->name('performance_images_quarantine_restore');
+
+        Route::get('images/quarantine/file', [PerformanceImageController::class, 'quarantineFile'])
+            ->name('performance_images_quarantine_file');
+
+        Route::post('images/quarantine/delete', [PerformanceImageController::class, 'deleteQuarantine'])
+            ->name('performance_images_quarantine_delete');
+
+        Route::post('images/backups/purge', [PerformanceImageController::class, 'purgeBackups'])
+            ->name('performance_backups_purge');
 
         Route::post('images/restore', [PerformanceImageController::class, 'restore'])
             ->name('performance_images_restore');

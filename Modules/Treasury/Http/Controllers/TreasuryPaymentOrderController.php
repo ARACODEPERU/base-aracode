@@ -13,6 +13,7 @@ use Modules\Treasury\Entities\TreasuryPaymentOrder;
 use Modules\Treasury\Entities\TreasuryRecurringExpense;
 use Modules\Treasury\Entities\TreasurySupplier;
 use Modules\Treasury\Exceptions\TreasuryOperationException;
+use Modules\Treasury\Services\TreasuryBulkPaymentService;
 use Modules\Treasury\Services\TreasuryPaymentOrderService;
 
 /**
@@ -26,8 +27,10 @@ class TreasuryPaymentOrderController extends Controller
 {
     use ValidatesTreasuryRequests;
 
-    public function __construct(private TreasuryPaymentOrderService $orders)
-    {
+    public function __construct(
+        private TreasuryPaymentOrderService $orders,
+        private TreasuryBulkPaymentService $bulk,
+    ) {
     }
 
     public function index()
@@ -149,6 +152,12 @@ class TreasuryPaymentOrderController extends Controller
                 'approval_threshold' => (float) config('treasury.approval_threshold', 0),
                 'require_different_approver' => (bool) config('treasury.require_different_approver', true),
             ],
+            'bulk' => [
+                'candidates' => $this->bulk->candidates(),
+                'formats' => collect(TreasuryBulkPaymentService::FORMATS)
+                    ->map(fn ($label, $code) => ['code' => $code, 'label' => $label])
+                    ->values(),
+            ],
             'can' => [
                 'create' => auth()->user()?->hasPermissionTo('treasury_pagos_nuevo'),
                 'approve' => auth()->user()?->hasPermissionTo('treasury_pagos_aprobar'),
@@ -156,8 +165,49 @@ class TreasuryPaymentOrderController extends Controller
                 'void' => auth()->user()?->hasPermissionTo('treasury_pagos_anular'),
                 'suppliers' => auth()->user()?->hasPermissionTo('treasury_proveedores'),
                 'recurring' => auth()->user()?->hasPermissionTo('treasury_recurrentes'),
+                'bulk' => auth()->user()?->hasPermissionTo('treasury_pagos_masivos'),
             ],
         ]);
+    }
+
+    /**
+     * Genera el archivo del lote para el banco. No ejecuta pagos: deja el lote
+     * y la fecha de exportación en cada orden.
+     */
+    public function exportBulk(Request $request)
+    {
+        $this->authorizePermission('treasury_pagos_masivos');
+
+        $data = $request->validate([
+            'orders' => ['required', 'array', 'min:1'],
+            'orders.*' => ['integer'],
+            'format' => ['required', 'in:' . implode(',', array_keys(TreasuryBulkPaymentService::FORMATS))],
+            'date' => ['nullable', 'date'],
+        ]);
+
+        try {
+            $file = $this->bulk->generate(
+                $data['orders'],
+                $data['format'],
+                $data['date'] ?? null,
+                auth()->id()
+            );
+        } catch (TreasuryOperationException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->streamDownload(
+            fn () => print $file['content'],
+            $file['filename'],
+            [
+                'Content-Type' => $file['mime'],
+                'X-Treasury-Batch' => $file['batch'],
+                'X-Treasury-Count' => (string) $file['count'],
+                'X-Treasury-Total' => number_format((float) $file['total'], 2, '.', ''),
+                'X-Treasury-Currency' => $file['currency'],
+                'X-Treasury-Warnings' => rawurlencode(implode(' | ', $file['warnings'])),
+            ]
+        );
     }
 
     public function store(Request $request)

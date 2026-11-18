@@ -15,6 +15,8 @@ use App\Http\Controllers\LandingController;
 use Illuminate\Support\Facades\Route;
 use Modules\Academic\Entities\AcaExcelStudentsExportJob;
 use Modules\Academic\Http\Controllers\AcaAttendanceController;
+use Modules\Academic\Http\Controllers\MercadoPagoSubscriptionWebhookController;
+use Modules\Academic\Http\Controllers\AcaSubscriptionTestModeController;
 use Modules\Academic\Http\Controllers\AcaAuthController;
 use Modules\Academic\Http\Controllers\AcaCapRegistrationController;
 use Modules\Academic\Http\Controllers\AcaCertificateController;
@@ -440,6 +442,25 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::middleware(['middleware' => 'permission:aca_suscripciones_editar'])
         ->put('subscriptions/update/{id}', 'AcaSubscriptionTypeController@update')
         ->name('aca_subscriptions_update');
+
+    /*
+     * Modo prueba de los cobros recurrentes: crea una suscripción en el
+     * ambiente de PRUEBA de MercadoPago, simula la renovación, cancela y borra
+     * solo lo marcado como prueba. Usa test_access_token/test_public_key de
+     * IntegrationHub y nunca las credenciales de producción.
+     */
+    Route::middleware(['middleware' => 'permission:aca_suscripciones_editar'])
+        ->prefix('subscriptions/{id}/test-mode')
+        ->group(function () {
+            Route::post('start', [AcaSubscriptionTestModeController::class, 'start'])
+                ->name('aca_subscriptions_test_start');
+            Route::post('renew', [AcaSubscriptionTestModeController::class, 'renew'])
+                ->name('aca_subscriptions_test_renew');
+            Route::post('cancel', [AcaSubscriptionTestModeController::class, 'cancel'])
+                ->name('aca_subscriptions_test_cancel');
+            Route::post('purge', [AcaSubscriptionTestModeController::class, 'purge'])
+                ->name('aca_subscriptions_test_purge');
+        });
 
     Route::middleware(['middleware' => 'permission:aca_suscripciones_eliminar'])
         ->delete('subscriptions/destroy/{id}', 'AcaSubscriptionTypeController@destroy')
@@ -1195,6 +1216,10 @@ Route::middleware(['auth'])->put('create/payment/{id}/pay', [MercadopagoControll
 
 Route::middleware(['auth'])->put('mercadopago/{id}/academic', [MercadopagoController::class, 'processPayment'])
     ->name('aca_mercadopago_processpayment');
+
+// Webhook público de suscripciones: la autenticación es la firma x-signature.
+Route::post('academic/mercadopago/subscriptions/webhook', MercadoPagoSubscriptionWebhookController::class)
+    ->name('aca_mercadopago_subscription_webhook');
 
 Route::middleware(['auth'])->get('academic/virtual-classroom', [AcaVirtualClassroomController::class, 'index'])
     ->middleware(['middleware' => 'permission:aca_virtual_listado'])

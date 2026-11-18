@@ -18,6 +18,7 @@ use Modules\Academic\Entities\AcaCategoryCourse;
 use Modules\Onlineshop\Entities\OnliSale;
 use Modules\Onlineshop\Entities\OnliSaleDetail;
 use Modules\Onlineshop\Entities\OnliCarritoAbandonado;
+use Modules\Treasury\Services\TreasuryHooks;
 use Modules\Academic\Entities\AcaTeacher;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
@@ -809,7 +810,7 @@ class WebPageController extends Controller
         }
 
         // Ingreso a Tesorería solo tras la aprobación de MercadoPago; si falla, la venta no se afecta.
-        $this->registerCartTreasuryIncome($sale);
+        TreasuryHooks::recordOnlineSaleIncome($sale);
 
         return response()->json([
             'status' => $payment->status,
@@ -822,51 +823,6 @@ class WebPageController extends Controller
                 'document_number' => $sale->identification_number,
             ],
         ]);
-    }
-
-    /**
-     * Registra en Tesorería el cobro de un carrito aprobado por MercadoPago.
-     * Va a la cuenta tipo billetera de MercadoPago. Es best-effort: si el módulo
-     * está desactivado, no existe la cuenta o algo falla, no interrumpe la venta.
-     */
-    private function registerCartTreasuryIncome(OnliSale $sale): void
-    {
-        try {
-            if (! \Modules\Treasury\Services\TreasuryHooks::enabled()) {
-                return;
-            }
-
-            $account = app(\Modules\Treasury\Services\PaymentAccountResolver::class)->walletForName('MercadoPago');
-
-            if (! $account) {
-                return;
-            }
-
-            $sale->refresh();
-
-            $movement = new \Modules\Treasury\Services\FinancialMovement(
-                module: \Modules\Treasury\Entities\TreasurySourceMovement::MODULE_SALES,
-                sourceType: 'onli_sale',
-                sourceId: (int) $sale->id,
-                operation: 'cart_income',
-                type: \Modules\Treasury\Entities\TreasurySourceMovement::TYPE_INCOME,
-                amount: (float) $sale->total,
-                date: $sale->response_date_approved ?: now(),
-                currency: $sale->currency ?: 'PEN',
-                exchangeRate: $sale->exchange_rate ? (float) $sale->exchange_rate : null,
-                reference: $sale->mercado_payment_id ? 'MercadoPago #' . $sale->mercado_payment_id : null,
-                description: 'Venta online - Carrito #' . $sale->id,
-                treasuryAccountId: (int) $account->id,
-                meta: ['onli_sale_id' => $sale->id],
-            );
-
-            app(\Modules\Treasury\Services\TreasuryIntegrationService::class)->register($movement);
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('[Treasury] No se registró el ingreso del carrito', [
-                'onli_sale_id' => $sale->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 
     public function cartFinalize(Request $request)

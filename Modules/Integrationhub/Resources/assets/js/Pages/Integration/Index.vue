@@ -17,6 +17,10 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    mercadopagoWebhook: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 const form = useForm({
@@ -77,6 +81,9 @@ const statusLabel = (status) => {
     return status ? 'Activo' : 'Inactivo';
 };
 
+// La integración que guarda el secreto del webhook de suscripciones.
+const esMercadoPago = (integration) => String(integration?.name || '').toLowerCase() === 'mercadopago';
+
 const executionTypeLabel = (type) => {
     const types = {
         'manual': 'Manual',
@@ -125,6 +132,39 @@ const executionTypeLabel = (type) => {
 
 
 
+            <!-- Estado del webhook de MercadoPago: se configura aquí, no en el .env. -->
+            <div
+                class="panel mb-5 border-l-4"
+                :class="mercadopagoWebhook.configured ? 'border-success' : 'border-warning'"
+            >
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h5 class="font-semibold" :class="mercadopagoWebhook.configured ? 'text-success' : 'text-warning'">
+                            Webhook de MercadoPago:
+                            {{ mercadopagoWebhook.configured ? 'configurado' : 'pendiente de configurar' }}
+                        </h5>
+                        <p class="text-sm mt-2">
+                            <template v-if="mercadopagoWebhook.configured">
+                                La integración <strong>{{ mercadopagoWebhook.integration_name || 'MercadoPago' }}</strong>
+                                valida las notificaciones de cobros automáticos
+                                <span v-if="mercadopagoWebhook.source === 'env'">(por ahora con el secreto del .env)</span>.
+                            </template>
+                            <template v-else>
+                                La integración <strong>{{ mercadopagoWebhook.integration_name || 'MercadoPago' }}</strong>
+                                ya está creada; solo falta pegar su <code>webhook_secret</code>. Sin ese dato, MercadoPago
+                                no podrá avisar los cobros y las suscripciones mensuales no se renovarán solas.
+                            </template>
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 break-all">
+                            URL del webhook: {{ mercadopagoWebhook.webhook_url }}
+                        </p>
+                    </div>
+                    <Link :href="mercadopagoWebhook.edit_url" class="btn btn-primary shrink-0">
+                        {{ mercadopagoWebhook.configured ? 'Revisar configuración' : 'Configurar webhook' }}
+                    </Link>
+                </div>
+            </div>
+
             <div class="bg-white dark:bg-zinc-800 rounded-lg shadow overflow-hidden dark:shadow-zinc-900">
                 <table class="w-full text-sm text-left">
                     <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-zinc-700 dark:text-gray-400">
@@ -154,6 +194,13 @@ const executionTypeLabel = (type) => {
                         <tr v-for="integration in integrations.data" :key="integration.id" class="border-b border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700/50 transition">
                             <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
                                 {{ integration.name }}
+                                <span
+                                    v-if="esMercadoPago(integration)"
+                                    class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
+                                    :class="mercadopagoWebhook.configured ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'"
+                                >
+                                    Webhook: {{ mercadopagoWebhook.configured ? 'configurado' : 'pendiente' }}
+                                </span>
                             </td>
                             <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
                                 <div class="max-w-xs truncate" :title="integration.url_base">

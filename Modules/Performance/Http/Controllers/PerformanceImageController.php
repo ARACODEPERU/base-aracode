@@ -32,7 +32,7 @@ class PerformanceImageController extends Controller
         $all = $this->inventory->all($request->boolean('refresh'));
         $summary = $this->inventory->summary($all, $quarantined);
 
-        $tab = (string) $request->get('tab', 'paginas');
+        $tab = (string) $request->get('tab', 'todos');
         $search = trim((string) $request->get('search', ''));
         $minKb = max(0, (int) $request->get('min_kb', 0));
         $sort = in_array($request->get('sort'), ['bytes', 'name', 'width', 'date'], true)
@@ -85,8 +85,10 @@ class PerformanceImageController extends Controller
                     'detected_at' => $alert->detected_at?->format('Y-m-d H:i'),
                 ])
                 ->all(),
+            'backups' => $this->tools->backupSummary((int) config('performance.backup_days', 30)),
             'limits'  => [
-                'backup_days' => (int) config('performance.backup_days', 30),
+                'backup_days'    => (int) config('performance.backup_days', 30),
+                'quarantine_days' => (int) config('performance.quarantine_days', 7),
                 'new_days'    => (int) config('performance.new_days', 7),
                 'webp_widths' => (array) config('performance.webp_widths', [0, 1280, 800]),
                 'gif_supported' => $this->tools->supportsAnimatedGif(),
@@ -128,6 +130,38 @@ class PerformanceImageController extends Controller
         });
 
         return $this->inventoryResponse($results);
+    }
+
+    /**
+     * Reemplaza una imagen por la versión que ya procesó el navegador.
+     *
+     * El frontend redimensiona o recomprime con canvas y envía un único
+     * archivo por petición: así ninguna solicitud arrastra el lote completo y
+     * el progreso se puede informar foto por foto. La validación de ruta y el
+     * respaldo del original viven en ImageToolsService.
+     */
+    public function replace(Request $request)
+    {
+        $this->ensurePermission($request, 'performance_images');
+
+        $data = $request->validate([
+            'path' => 'required|string',
+            'file' => 'required|file|mimes:jpg,jpeg,png,webp|max:20480',
+        ]);
+
+        try {
+            $result = $this->tools->replaceWithUpload($data['path'], $request->file('file'));
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'result'  => ['path' => $data['path']] + $result,
+        ]);
     }
 
     /**
@@ -214,6 +248,71 @@ class PerformanceImageController extends Controller
         );
 
         return $this->inventoryResponse($results);
+    }
+
+    /**
+     * Elimina definitivamente archivos en cuarentena con antigüedad suficiente.
+     */
+    public function deleteQuarantine(Request $request)
+    {
+        $this->ensurePermission($request, 'performance_images');
+
+        $data = $request->validate([
+            'items'   => 'required|array|min:1|max:200',
+            'items.*' => 'string',
+        ]);
+
+        $results = $this->runPerItem(
+            $data['items'],
+            fn (string $item): array => $this->tools->deleteQuarantined($item)
+        );
+
+        return $this->inventoryResponse($results);
+    }
+
+    /**
+     * Borra las copias de seguridad que ya superaron la retención.
+     */
+    public function purgeBackups(Request $request)
+    {
+        $this->ensurePermission($request, 'performance_images');
+
+        $days = max(1, (int) config('performance.backup_days', 30));
+        $purged = $this->tools->purgeOldBackups($days);
+
+        return response()->json([
+            'success' => true,
+            'purged'  => $purged,
+            'backups' => $this->tools->backupSummary($days),
+        ]);
+    }
+
+    /**
+     * Sirve el archivo de una imagen en cuarentena para poder verla.
+     *
+     * Sin esta ruta la miniatura y el visor no tienen de dónde leer: el
+     * archivo ya no está en storage/app/public. Solo se entrega un archivo
+     * registrado en cuarentena, nunca una ruta libre.
+     */
+    public function quarantineFile(Request $request)
+    {
+        $this->ensurePermission($request, 'performance_images');
+
+        $data = $request->validate([
+            'path' => 'required|string',
+        ]);
+
+        try {
+            $absolute = $this->tools->quarantineFile($data['path']);
+        } catch (\Throwable $e) {
+            abort(404, $e->getMessage());
+        }
+
+        return response()->file($absolute, [
+            'Content-Type'            => @mime_content_type($absolute) ?: 'application/octet-stream',
+            'Cache-Control'           => 'private, max-age=300',
+            'X-Content-Type-Options'  => 'nosniff',
+        ]);
     }
 
     /**

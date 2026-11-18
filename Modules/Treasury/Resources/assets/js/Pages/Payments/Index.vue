@@ -8,7 +8,7 @@
     import InputError from '@/Components/InputError.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import { ref, computed } from 'vue';
-    import { faPlus, faCheck, faMoneyBillTransfer, faBan, faRotateRight, faPen } from '@fortawesome/free-solid-svg-icons';
+    import { faPlus, faCheck, faMoneyBillTransfer, faBan, faRotateRight, faPen, faFileExport } from '@fortawesome/free-solid-svg-icons';
 
     const props = defineProps({
         orders: { type: Array, default: () => [] },
@@ -20,6 +20,7 @@
         paymentMethods: { type: Array, default: () => [] },
         bankAccounts: { type: Array, default: () => [] },
         options: { type: Object, default: () => ({}) },
+        bulk: { type: Object, default: () => ({ candidates: [], formats: [] }) },
         can: { type: Object, default: () => ({}) },
     });
 
@@ -148,6 +149,106 @@
         route('treasury_payments_void', order.id),
         { reason: 'Anulación manual desde la pantalla de pagos' }
     );
+
+    // ---------------- Pago masivo ----------------
+    const bulkSelected = ref([]);
+    const bulkFormat = ref('csv');
+    const bulkDate = ref(today());
+    const bulkProcessing = ref(false);
+    const bulkResult = ref(null);
+
+    const bulkOrders = computed(() => props.bulk?.candidates || []);
+    const bulkSelectedOrders = computed(() => bulkOrders.value.filter((order) => bulkSelected.value.includes(order.id)));
+    const bulkTotal = computed(() =>
+        Math.round(bulkSelectedOrders.value.reduce((total, order) => total + Number(order.amount || 0), 0) * 100) / 100
+    );
+    const bulkCurrency = computed(() => bulkSelectedOrders.value[0]?.currency || 'PEN');
+
+    const toggleBulk = (id) => {
+        bulkSelected.value = bulkSelected.value.includes(id)
+            ? bulkSelected.value.filter((item) => item !== id)
+            : [...bulkSelected.value, id];
+    };
+
+    const allBulkSelected = computed(
+        () => bulkOrders.value.length > 0 && bulkSelected.value.length === bulkOrders.value.length
+    );
+
+    const toggleAllBulk = () => {
+        bulkSelected.value = allBulkSelected.value ? [] : bulkOrders.value.map((order) => order.id);
+    };
+
+    // Descarga el archivo del lote y muestra el resumen que devuelve el servidor.
+    const generateBulk = async () => {
+        if (bulkSelected.value.length === 0) {
+            window.alertaSistema('Sin órdenes', 'Selecciona al menos una orden aprobada para el lote.', 'warning');
+            return;
+        }
+
+        bulkProcessing.value = true;
+        bulkResult.value = null;
+
+        try {
+            const response = await window.axios.post(
+                route('treasury_payments_bulk_file'),
+                {
+                    orders: bulkSelected.value,
+                    format: bulkFormat.value,
+                    date: bulkDate.value,
+                },
+                { responseType: 'blob' }
+            );
+
+            const extension = ['csv', 'bcp'].includes(bulkFormat.value) ? 'csv' : 'txt';
+            const blob = new Blob([response.data], {
+                type: response.headers['content-type'] || 'application/octet-stream',
+            });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = `pago-masivo-${bulkFormat.value}-${bulkDate.value}.${extension}`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+
+            const batch = response.headers['x-treasury-batch'] || '';
+            const count = Number(response.headers['x-treasury-count'] || bulkSelected.value.length);
+            const total = Number(response.headers['x-treasury-total'] || bulkTotal.value);
+            const warnings = decodeURIComponent(response.headers['x-treasury-warnings'] || '');
+
+            bulkResult.value = { batch, count, total, warnings };
+
+            window.alertaSistema(
+                'Archivo del lote generado',
+                `Lote ${batch} con ${count} orden(es) por ${money(total, bulkCurrency.value)}.` +
+                    (warnings ? ` Avisos: ${warnings}` : ''),
+                warnings ? 'warning' : 'success'
+            );
+
+            bulkSelected.value = [];
+            router.reload({ only: ['bulk', 'orders'] });
+        } catch (error) {
+            let message = 'No se pudo generar el archivo del banco.';
+            const data = error?.response?.data;
+
+            if (data instanceof Blob) {
+                try {
+                    const parsed = JSON.parse(await data.text());
+                    message = parsed.message || message;
+                } catch (e) {
+                    // El cuerpo no era JSON: se mantiene el mensaje genérico.
+                }
+            } else if (data?.message) {
+                message = data.message;
+            }
+
+            window.alertaSistema('No se pudo generar el archivo', message, 'error');
+        } finally {
+            bulkProcessing.value = false;
+        }
+    };
 
     // ---------------- Proveedores ----------------
     const supplierModal = ref(false);
@@ -323,6 +424,7 @@
                     <button
                         v-for="item in [
                             { key: 'orders', label: 'Órdenes de pago' },
+                            { key: 'bulk', label: 'Pago masivo' },
                             { key: 'suppliers', label: 'Proveedores' },
                             { key: 'recurring', label: 'Gastos recurrentes' },
                         ]"
@@ -429,6 +531,108 @@
             </div>
 
             <!-- Proveedores -->
+            <!-- Pago masivo: archivo para el banco -->
+            <div v-if="tab === 'bulk'" class="space-y-5">
+                <div class="panel p-5">
+                    <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Pago masivo con archivo bancario</h2>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                Arma el archivo con las órdenes aprobadas y súbelo al banco. Esto no ejecuta el pago ni mueve
+                                el libro: cada orden conserva el lote y la fecha de exportación.
+                            </p>
+                            <p class="mt-2 text-xs text-warning">
+                                Los layouts son referenciales (CSV, BCP, BBVA e Interbank). Valida el formato con tu banco antes de subirlo.
+                            </p>
+                        </div>
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium">Formato</label>
+                                <select v-model="bulkFormat" class="form-select sm:w-44">
+                                    <option v-for="item in bulk.formats" :key="item.code" :value="item.code">{{ item.label }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium">Fecha de proceso</label>
+                                <input v-model="bulkDate" type="date" class="form-input sm:w-40" />
+                            </div>
+                            <button
+                                v-if="can.bulk"
+                                type="button"
+                                class="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+                                :disabled="bulkProcessing || bulkSelected.length === 0"
+                                @click="generateBulk"
+                            >
+                                <font-awesome-icon :icon="faFileExport" class="mr-1" />
+                                {{ bulkProcessing ? 'Generando…' : 'Generar archivo' }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap items-center gap-4 rounded-lg bg-gray-50 p-3 text-sm dark:bg-gray-800/60">
+                        <span>Seleccionadas: <strong>{{ bulkSelected.length }}</strong></span>
+                        <span>Total: <strong>{{ money(bulkTotal, bulkCurrency) }}</strong></span>
+                        <span v-if="bulkResult?.batch" class="text-xs text-gray-500">
+                            Último lote: <span class="font-mono">{{ bulkResult.batch }}</span>
+                        </span>
+                    </div>
+
+                    <div v-if="bulkResult?.warnings" class="mt-3 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+                        {{ bulkResult.warnings }}
+                    </div>
+                </div>
+
+                <div class="panel overflow-hidden p-0">
+                    <div class="table-responsive">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="bg-gray-50 dark:bg-gray-800/60">
+                                    <th class="w-12">
+                                        <input
+                                            type="checkbox"
+                                            class="form-checkbox"
+                                            :checked="allBulkSelected"
+                                            title="Seleccionar todas"
+                                            @change="toggleAllBulk"
+                                        />
+                                    </th>
+                                    <th>Código</th>
+                                    <th class="min-w-[200px]">Proveedor</th>
+                                    <th>Cuenta del proveedor</th>
+                                    <th>Vence</th>
+                                    <th class="text-right">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-if="bulkOrders.length === 0">
+                                    <td colspan="6" class="py-8 text-center text-sm text-gray-500">
+                                        No hay órdenes aprobadas o programadas para incluir en un lote.
+                                    </td>
+                                </tr>
+                                <tr v-for="order in bulkOrders" :key="order.id">
+                                    <td>
+                                        <input
+                                            type="checkbox"
+                                            class="form-checkbox"
+                                            :checked="bulkSelected.includes(order.id)"
+                                            @change="toggleBulk(order.id)"
+                                        />
+                                    </td>
+                                    <td class="font-mono text-xs">{{ order.code }}</td>
+                                    <td>
+                                        <p class="text-sm">{{ order.supplier }}</p>
+                                        <p class="text-xs text-gray-500">{{ order.document || 'Sin documento' }}</p>
+                                    </td>
+                                    <td class="font-mono text-xs">{{ order.bank_account || 'Sin cuenta' }}</td>
+                                    <td class="text-sm">{{ order.due_date || order.scheduled_date || '—' }}</td>
+                                    <td class="text-right font-semibold">{{ money(order.amount, order.currency) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <div v-if="tab === 'suppliers'" class="space-y-5">
                 <div class="panel flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
                     <div>

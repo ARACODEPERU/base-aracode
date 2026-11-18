@@ -48,6 +48,10 @@ class CommercialSaleDocumentTest extends TestCase
 
     private int $quotaBId;
 
+    private int $contractAId;
+
+    private int $serviceId;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -107,6 +111,8 @@ class CommercialSaleDocumentTest extends TestCase
             'updated_at' => now(),
         ]);
 
+        $this->serviceId = (int) $serviceId;
+
         $this->serieFacturaId = $this->makeSerie($this->facturaTypeId, 'F001', 1);
         $this->serieBoletaId = $this->makeSerie($this->boletaTypeId, 'B001', 1);
         $this->serieOtroLocalId = $this->makeSerie($this->facturaTypeId, 'F002', 2);
@@ -139,6 +145,7 @@ class CommercialSaleDocumentTest extends TestCase
             'updated_at' => now(),
         ]);
 
+        $this->contractAId = (int) $contractA;
         $this->quotaAId = $this->makeQuota($contractA, 1, 400);
         $this->quotaBId = $this->makeQuota($contractB, 1, 300);
     }
@@ -294,6 +301,101 @@ class CommercialSaleDocumentTest extends TestCase
         $this->assertSame(TreasurySourceMovement::STATUS_PROCESSED, $bridge->status);
         $this->assertSame('sale_income', $bridge->operation);
         $this->assertSame(700.0, (float) $bridge->amount);
+    }
+
+    public function test_el_comprobante_de_una_cuota_queda_ligado_al_contrato_y_el_movimiento_lo_muestra(): void
+    {
+        $method = $this->linkTransferMethod();
+
+        $this->postJson(route('comm_sales_documents_store'), $this->payload([
+            'payments' => [['type' => $method->id, 'amount' => 400, 'reference' => 'TRF-C2']],
+            'items' => [
+                ['quota_id' => $this->quotaAId, 'amount' => 400, 'description' => 'Cuota A'],
+            ],
+        ]))->assertOk()->assertJson(['success' => true]);
+
+        $document = SaleDocument::query()->orderByDesc('id')->firstOrFail();
+
+        // El comprobante queda relacionado (solo para mostrar) con el contrato y su cuota.
+        $this->assertSame($this->contractAId, (int) $document->commercial_contract_id);
+        $this->assertSame($this->quotaAId, (int) $document->commercial_contract_payment_id);
+
+        $transaction = TreasuryTransaction::query()->firstOrFail();
+        $this->assertSame('Cobro de contrato · Contrato A', $transaction->description);
+
+        $detail = app(\Modules\Treasury\Services\TreasuryTransactionOriginService::class)
+            ->detailsFor([$transaction->id])[$transaction->id];
+
+        $this->assertSame('F001-1', $detail['comprobante']);
+
+        $valores = collect($detail['meta'])->pluck('value')->implode(' | ');
+        $this->assertStringContainsString('Contrato A', $valores);
+        $this->assertStringContainsString('Cuota 1 de 1', $valores);
+    }
+
+    public function test_el_comprobante_de_una_cuota_emitido_desde_el_cronograma_registra_el_ingreso_y_liga_el_contrato(): void
+    {
+        $method = $this->linkTransferMethod();
+
+        $response = $this->postJson(route('comm_contract_payment_document_store'), [
+            'commercial_payment_id' => $this->quotaAId,
+            'total' => 400,
+            'client_id' => $this->clientId,
+            'client_name' => '20551234567-Colegio Demo SAC',
+            'client_rzn_social' => 'Colegio Demo SAC',
+            'client_dti' => '6',
+            'client_number' => '20551234567',
+            'client_ubigeo' => '150101',
+            'client_ubigeo_description' => 'LIMA-LIMA-LIMA',
+            'client_direction' => 'Av. Siempre Viva 123',
+            'client_phone' => '999999999',
+            'client_email' => 'cliente@example.com',
+            'sale_documenttype_id' => $this->facturaTypeId,
+            'type_operation' => '0101',
+            'serie' => $this->serieFacturaId,
+            'date_issue' => now()->toDateString(),
+            'date_end' => now()->toDateString(),
+            'forma_pago' => 'Contado',
+            'total_discount' => 0,
+            'payments' => [['type' => $method->id, 'reference' => 'TRF-C3', 'amount' => 400]],
+            'items' => [[
+                'id' => $this->serviceId,
+                'interne' => 'SRV001',
+                'description' => 'Cuota 1 - Contrato A',
+                'is_product' => false,
+                'unit_type' => 'ZZ',
+                'quantity' => 1,
+                'unit_price' => 400,
+                'discount' => 0,
+                'total' => 400,
+                'v_sale' => 0,
+                'afe_igv' => '10',
+                'size' => null,
+                'icbper' => false,
+                'm_igv' => 0,
+            ]],
+        ]);
+
+        $response->assertOk()->assertJson(['commercial_contract_id' => $this->contractAId]);
+
+        $document = SaleDocument::query()->orderByDesc('id')->firstOrFail();
+
+        $this->assertSame(400.0, (float) $document->invoice_mto_imp_sale);
+        $this->assertSame($this->contractAId, (int) $document->commercial_contract_id);
+        $this->assertSame($this->quotaAId, (int) $document->commercial_contract_payment_id);
+
+        $transaction = TreasuryTransaction::query()->firstOrFail();
+        $this->assertSame('Cobro de contrato · Contrato A', $transaction->description);
+        $this->assertSame(400.0, (float) $transaction->amount);
+
+        $detail = app(\Modules\Treasury\Services\TreasuryTransactionOriginService::class)
+            ->detailsFor([$transaction->id])[$transaction->id];
+
+        $this->assertStringContainsString('Contrato A', collect($detail['meta'])->pluck('value')->implode(' | '));
+
+        // La cuota del cronograma queda vinculada al comprobante emitido.
+        $quota = DB::table('commercial_contract_payments')->where('id', $this->quotaAId)->first();
+        $this->assertSame($document->id, (int) json_decode((string) $quota->document_payments, true)[0]['document_id']);
     }
 
     public function test_cobro_al_contado_con_dos_medios_de_pago_exige_el_total_y_registra_ambos_movimientos(): void

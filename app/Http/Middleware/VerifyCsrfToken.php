@@ -15,5 +15,6 @@ class VerifyCsrfToken extends Middleware
         '/webhook',
         'negotiations/registro-de-inscripcion/*',
         'socialevents/organizations/topup/webhook',
+        'academic/mercadopago/subscriptions/webhook',
     ];
 }

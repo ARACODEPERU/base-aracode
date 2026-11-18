@@ -70,6 +70,13 @@ return [
     'forecast_min_balance' => (float) env('TREASURY_FORECAST_MIN_BALANCE', 0),
 
     /*
+    | La previsión incluye las compras registradas con saldo pendiente del
+    | módulo Compras (cuentas por pagar reales). Se descarta la compra cuyo
+    | importe ya está comprometido en una orden de pago abierta.
+    */
+    'forecast_include_purchases' => (bool) env('TREASURY_FORECAST_INCLUDE_PURCHASES', true),
+
+    /*
     | IGV de ventas: la previsión incluye el IGV de las boletas y facturas
     | emitidas que todavía no se pagó. El vencimiento es este día del mes
     | siguiente al periodo (SUNAT usa el día 15 en el régimen general).

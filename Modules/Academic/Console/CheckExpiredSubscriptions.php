@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Modules\Academic\Emails\SubscriptionExpired;
 use Modules\Academic\Entities\AcaStudent;
+use Modules\Academic\Entities\AcaSubscriptionPreapproval;
+use Modules\Academic\Services\SubscriptionRecurringNotifier;
 
 class CheckExpiredSubscriptions extends Command
 {
@@ -52,12 +54,18 @@ class CheckExpiredSubscriptions extends Command
                 foreach ($expiredSubscriptions as $subscription) {
                     $studentEmail = $this->getStudentEmail($subscription->student_id);
 
+                    $preapproval = $this->preapprovalFor($subscription);
+                    $detalleGracia = $preapproval && ! $preapproval->hasGraceExpired()
+                        ? ' · en días de gracia hasta ' . ($preapproval->graceEndsAt()?->format('d/m/Y') ?? 'sin fecha')
+                        : '';
+
                     $this->line(sprintf(
-                        '   - Suscripción #%s / estudiante #%s (venció el %s) → correo: %s',
+                        '   - Suscripción #%s / estudiante #%s (venció el %s) → correo: %s%s',
                         $subscription->subscription_id,
                         $subscription->student_id,
                         $subscription->date_end,
-                        $studentEmail ?: 'sin correo'
+                        $studentEmail ?: 'sin correo',
+                        $detalleGracia
                     ));
                 }
 
@@ -67,9 +75,26 @@ class CheckExpiredSubscriptions extends Command
 
             $updatedCount = 0;
             $notifiedCount = 0;
+            $inGraceCount = 0;
+            $notifier = app(SubscriptionRecurringNotifier::class);
 
             foreach ($expiredSubscriptions as $subscription) {
                 try {
+                    // Suscripción recurrente: mientras corran los días de gracia del
+                    // cobro mensual se mantiene el acceso, sin desactivar ni avisar.
+                    $preapproval = $this->preapprovalFor($subscription);
+
+                    if ($preapproval && ! $preapproval->hasGraceExpired()) {
+                        $inGraceCount++;
+                        $this->info(sprintf(
+                            '⏳ Suscripción #%s en días de gracia hasta %s: se mantiene activa.',
+                            $subscription->subscription_id,
+                            $preapproval->graceEndsAt()?->format('d/m/Y') ?? 'sin fecha'
+                        ));
+
+                        continue;
+                    }
+
                     // 1. Actualiza el estado de la suscripción a 'false' (inactiva/vencida)
                     DB::table('aca_student_subscriptions')
                         ->where('subscription_id', $subscription->subscription_id)
@@ -80,7 +105,20 @@ class CheckExpiredSubscriptions extends Command
 
                     $this->info("🔄 Suscripción ID {$subscription->subscription_id} actualizada a 'false'.");
 
-                    // 2. Prepara y envía el correo electrónico al estudiante
+                    // 2. Suscripción recurrente con la gracia terminada: se avisa la
+                    //    suspensión y no se repite el correo genérico de expiración.
+                    if ($preapproval) {
+                        if ($notifier->graceExpired($preapproval)) {
+                            $notifiedCount++;
+                            $this->info('✉️ Aviso de suspensión enviado (días de gracia terminados).');
+                        } else {
+                            $this->warn('⚠️ No se pudo enviar el aviso de suspensión (sin correo o fallo de envío).');
+                        }
+
+                        continue;
+                    }
+
+                    // 3. Prepara y envía el correo electrónico al estudiante
                     $studentEmail = $this->getStudentEmail($subscription->student_id);
                     $studentName = $this->getStudentName($subscription->student_id);
 
@@ -102,7 +140,7 @@ class CheckExpiredSubscriptions extends Command
                 }
             }
 
-            $this->info("✨ Proceso completado para el módulo Académico. {$updatedCount} suscripciones actualizadas y {$notifiedCount} notificaciones enviadas.");
+            $this->info("✨ Proceso completado para el módulo Académico. {$updatedCount} suscripciones actualizadas, {$inGraceCount} en días de gracia y {$notifiedCount} notificaciones enviadas.");
 
             return 0; // 0 indica que el comando se ejecutó con éxito
         } catch (\Throwable $e) {
@@ -114,6 +152,19 @@ class CheckExpiredSubscriptions extends Command
 
             return 1;
         }
+    }
+
+    /**
+     * Suscripción recurrente activa del alumno para este plan, si existe.
+     */
+    protected function preapprovalFor($subscription): ?AcaSubscriptionPreapproval
+    {
+        return AcaSubscriptionPreapproval::query()
+            ->where('student_id', $subscription->student_id)
+            ->where('subscription_id', $subscription->subscription_id)
+            ->whereIn('status', ['authorized', 'paused'])
+            ->latest('id')
+            ->first();
     }
 
     protected function getStudentEmail($studentId)

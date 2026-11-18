@@ -80,7 +80,8 @@ const renderCardPaymentBrick = async (bricksBuilder) => {
                     }).then((response) => {
                         return response.data;
                     }).then((data) => {
-                        if (data.status === "approved") {
+                        // 'authorized' es la respuesta de los planes con cobro automático.
+                        if (["approved", "authorized"].includes(data.status)) {
                             router.visit(data.url, {
                                 method: 'get',
                                 replace: true,
