@@ -18,7 +18,25 @@ class AcaSubscriptionPayment extends Model
         'document_id',
         'date_start',
         'date_end',
-        'amount'
+        'amount',
+        'authorized_payment_id',
+        'payment_id',
+        'preapproval_id',
+        'status',
+        'source',
+        'paid_at',
+        'mercadopago_event_id',
+        'renewal_notified_at',
+        'is_test',
+    ];
+
+    protected $casts = [
+        'date_start' => 'date',
+        'date_end' => 'date',
+        'amount' => 'decimal:2',
+        'paid_at' => 'datetime',
+        'renewal_notified_at' => 'datetime',
+        'is_test' => 'boolean',
     ];
 
     public function subscription(): BelongsTo
@@ -33,5 +51,10 @@ class AcaSubscriptionPayment extends Model
     public function document(): BelongsTo
     {
         return $this->belongsTo(SaleDocument::class, 'document_id');
+    }
+
+    public function preapproval(): BelongsTo
+    {
+        return $this->belongsTo(AcaSubscriptionPreapproval::class, 'preapproval_id', 'preapproval_id');
     }
 }

@@ -26,6 +26,8 @@ class TreasuryForecastService
         private TreasuryLedgerService $ledger,
         private TreasuryCurrencyService $currency,
         private TreasuryTaxService $taxes,
+        private TreasuryDocumentService $documents,
+        private TreasuryWalletTransferService $walletTransfers,
     ) {
     }
 
@@ -84,6 +86,8 @@ class TreasuryForecastService
 
         $this->addReceivables($buckets, $currency, $from, $to, $ratio);
         $this->addOpenOrders($buckets, $currency, $from, $to);
+        $this->addDocuments($buckets, $currency, $from, $to);
+        $this->addPurchases($buckets, $currency, $from, $to);
         $this->addRecurring($buckets, $currency, $from, $to);
         $this->addScheduledCharges($buckets, $accounts, $from, $to);
         $this->addTaxes($buckets, $currency, $from, $to);
@@ -151,6 +155,7 @@ class TreasuryForecastService
             'min_balance' => round($minBalance, 2),
             'min_date' => $minDate,
             'warnings' => $warnings,
+            'wallet_transfers' => $this->walletTransfers->pending($currency, null, $to->toDateString(), 10),
             'estimated' => true,
         ];
     }
@@ -256,6 +261,84 @@ class TreasuryForecastService
                 'concept' => $order->code . ' · ' . $order->description,
                 'type' => 'orden',
                 'amount' => (float) $order->amount,
+            ]);
+        }
+    }
+
+    /**
+     * Cheques y letras en cartera que vencen dentro del horizonte.
+     *
+     * @param  array<string, array<string, mixed>>  $buckets
+     */
+    private function addDocuments(array &$buckets, string $currency, Carbon $from, Carbon $to): void
+    {
+        foreach ($this->documents->forecastItems($from, $to) as $item) {
+            if ($item['currency'] !== $currency) {
+                continue;
+            }
+
+            $this->push($buckets, (string) $item['date'], $item['direction'], (float) $item['amount'], [
+                'concept' => $item['concept'],
+                'type' => 'documento',
+                'amount' => (float) $item['amount'],
+            ]);
+        }
+    }
+
+    /**
+     * Compras registradas con saldo pendiente (CxP real del módulo Compras).
+     *
+     * Se descarta la compra cuyo importe ya está comprometido en una orden de
+     * pago abierta, para no proyectar dos veces el mismo desembolso.
+     *
+     * @param  array<string, array<string, mixed>>  $buckets
+     */
+    private function addPurchases(array &$buckets, string $currency, Carbon $from, Carbon $to): void
+    {
+        if (! Schema::hasTable('purc_documents') || ! (bool) config('treasury.forecast_include_purchases', true)) {
+            return;
+        }
+
+        $committed = TreasuryPaymentOrder::query()
+            ->open()
+            ->where('currency', $currency)
+            ->pluck('amount')
+            ->map(fn ($value) => round((float) $value, 2))
+            ->all();
+
+        $rows = DB::table('purc_documents')
+            ->whereBetween('date_of_due', [$from->toDateString(), $to->toDateString()])
+            ->whereRaw('COALESCE(total, 0) - COALESCE(total_canceled, 0) > 0')
+            ->where(function ($query) {
+                $query->whereNull('status')->orWhere('status', '<>', 'A');
+            })
+            ->select(['id', 'serie', 'number', 'date_of_due', 'total', 'total_canceled', 'currency_type_id'])
+            ->orderBy('date_of_due')
+            ->get();
+
+        foreach ($rows as $row) {
+            if ($this->currency->normalize($row->currency_type_id) !== $currency) {
+                continue;
+            }
+
+            $amount = round((float) $row->total - (float) $row->total_canceled, 2);
+
+            if ($amount <= 0) {
+                continue;
+            }
+
+            // Ya está comprometida en una orden de pago abierta.
+            $index = array_search($amount, $committed, true);
+
+            if ($index !== false) {
+                unset($committed[$index]);
+                continue;
+            }
+
+            $this->push($buckets, (string) $row->date_of_due, 'out', $amount, [
+                'concept' => 'Compra ' . trim((string) $row->serie . '-' . (string) $row->number),
+                'type' => 'compra',
+                'amount' => $amount,
             ]);
         }
     }

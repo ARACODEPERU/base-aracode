@@ -91,6 +91,15 @@ class TreasurySettingsTest extends TestCase
         app(TreasurySettingsService::class)->update(true, now()->toDateString(), null);
 
         $this->assertSame(300.0, $ledger->accountBalance($account), 'Lo anterior al corte no suma al saldo.');
+
+        // En Movimientos sí se ven, marcados y sin saldo corrido.
+        $statement = $ledger->statement($account, null, null, 500, true);
+
+        $this->assertCount(2, $statement);
+        $this->assertTrue($statement[0]['before_start']);
+        $this->assertNull($statement[0]['running_balance']);
+        $this->assertFalse($statement[1]['before_start']);
+        $this->assertSame(300.0, $statement[1]['running_balance']);
     }
 
     /**

@@ -5,8 +5,12 @@ namespace Modules\Treasury\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Inertia\Inertia;
+use Modules\Treasury\Entities\TreasuryBudget;
+use Modules\Treasury\Entities\TreasuryCategory;
 use Modules\Treasury\Entities\TreasuryCostCenter;
+use Modules\Treasury\Exceptions\TreasuryOperationException;
 use Modules\Treasury\Services\TreasuryAuditService;
+use Modules\Treasury\Services\TreasuryBudgetService;
 use Modules\Treasury\Services\TreasuryForecastService;
 use Modules\Treasury\Services\TreasuryReportService;
 
@@ -23,6 +27,7 @@ class TreasuryReportController extends Controller
         private TreasuryReportService $reports,
         private TreasuryForecastService $forecast,
         private TreasuryAuditService $audit,
+        private TreasuryBudgetService $budgets,
     ) {
     }
 
@@ -46,6 +51,14 @@ class TreasuryReportController extends Controller
             'costCenters' => $this->reports->costCenters(),
             'currencies' => $this->reports->currencies(),
             'projection' => $this->forecast->build($currency, $days),
+            'budgets' => $this->budgets->build((string) ($request->get('month') ?: now()->format('Y-m'))),
+            'budgetOptions' => [
+                'costCenters' => TreasuryCostCenter::query()->orderBy('code')->get(['id', 'code', 'name']),
+                'categories' => TreasuryCategory::query()
+                    ->whereIn('applies_to', ['expense', 'both'])
+                    ->orderBy('name')
+                    ->get(['id', 'name']),
+            ],
             'filters' => [
                 'from' => $from,
                 'to' => $to,
@@ -57,7 +70,42 @@ class TreasuryReportController extends Controller
                 'days' => $days,
             ],
             'canManageCenters' => auth()->user()?->hasPermissionTo('treasury_reportes'),
+            'canManageBudgets' => auth()->user()?->hasPermissionTo('treasury_presupuesto'),
         ]);
+    }
+
+    /**
+     * Crea o actualiza el presupuesto mensual de un centro de costo.
+     */
+    public function storeBudget(Request $request)
+    {
+        $this->authorizePermission('treasury_presupuesto');
+
+        $data = $request->validate([
+            'month' => ['required', 'regex:/^\\d{4}-(0[1-9]|1[0-2])$/'],
+            'cost_center_id' => ['required', 'integer', 'exists:treasury_cost_centers,id'],
+            'treasury_category_id' => ['nullable', 'integer', 'exists:treasury_categories,id'],
+            'currency' => ['nullable', 'string', 'size:3'],
+            'amount' => ['required', 'numeric', 'gt:0', 'max:9999999999'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        try {
+            $budget = $this->budgets->save($data, auth()->id());
+        } catch (TreasuryOperationException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', 'Presupuesto de ' . $budget->costCenter?->name . ' guardado.');
+    }
+
+    public function destroyBudget(int $id)
+    {
+        $this->authorizePermission('treasury_presupuesto');
+
+        $this->budgets->remove(TreasuryBudget::findOrFail($id), auth()->id());
+
+        return back()->with('success', 'Presupuesto eliminado. Los movimientos reales no se tocaron.');
     }
 
     public function storeCostCenter(Request $request)

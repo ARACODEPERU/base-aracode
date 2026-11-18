@@ -17,6 +17,7 @@ class CompanyBilleteraController extends Controller
             'account_number' => ['required', 'string', 'max:255'],
             'qr_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:3072'],
             'bank_account_id' => ['nullable', 'integer', 'exists:bank_accounts,id'],
+            'bank_transfer_days' => ['nullable', 'integer', 'min:0', 'max:30'],
         ]);
 
         $data = [
@@ -24,6 +25,10 @@ class CompanyBilleteraController extends Controller
             'account_name' => $request->get('account_name'),
             'account_number' => $request->get('account_number'),
             'bank_account_id' => $request->get('bank_account_id') ?: null,
+            // Sin banco vinculado no hay traslado que programar.
+            'bank_transfer_days' => $request->get('bank_account_id')
+                ? max(0, (int) $request->get('bank_transfer_days', 0))
+                : 0,
             'has_payment_link' => $request->boolean('has_payment_link'),
             'status' => $request->boolean('status'),
         ];

@@ -37,6 +37,8 @@ class TreasuryReportService
             ])->all(),
             'groups' => $data['consolidation']['groups'],
             'consolidated' => $data['consolidation']['consolidated'],
+            // Dinero restringido: se informa aparte y no suma al consolidado.
+            'detraction' => $data['consolidation']['detraction'] ?? 0.0,
             'rates' => $data['consolidation']['rates'],
             'incomplete' => $data['consolidation']['incomplete'],
             'base_currency' => $this->currency->base(),

@@ -96,6 +96,8 @@
         }],
         additional_description: null,
         forma_pago: 'Contado',
+        // Decisión de detracción: null = todavía no se eligió.
+        detraccion_auto: null,
         quotas: {
             number: 1,
             days: 15,
@@ -408,6 +410,17 @@
         window.open(url, "_blank");
     }
 
+    // Factura desde S/ 700: hay que preguntar quién hará la detracción.
+    const detractionThreshold = 700;
+    const detractionPercent = 12;
+    const requiresDetraction = computed(() =>
+        Number(formDocument.sale_documenttype_id) === 1
+        && Number(formDocument.total) >= detractionThreshold
+    );
+    const detractionAmount = computed(() =>
+        Math.round(Number(formDocument.total || 0) * detractionPercent) / 100
+    );
+
     const saveDocument = () => {
 
         formDocument.processing = true
@@ -423,6 +436,21 @@
             formDocument.processing = false;
             return;
         }
+
+        // La factura sujeta a detracción no se emite sin decidir quién la hará.
+        if (requiresDetraction.value && formDocument.detraccion_auto === null) {
+            window.alertaSistema(
+                'Falta decidir la detracción',
+                `La factura supera S/ ${detractionThreshold} y está sujeta al ${detractionPercent} % (${currencySymbol.value} ${detractionAmount.value.toFixed(2)}). Indica si el cliente depositará la detracción o si la empresa hará la auto-detracción después.`,
+                'warning'
+            );
+            formDocument.processing = false;
+            return;
+        }
+
+        formDocument.detraccion_auto = requiresDetraction.value
+            ? Boolean(formDocument.detraccion_auto)
+            : false;
 
         if(formDocument.serie){
             if(formDocument.client_dti != 6 && formDocument.sale_documenttype_id == 1){
@@ -1052,6 +1080,31 @@
                                 </tr>
                             </tfoot>
                         </table>
+                    </div>
+                    <div v-if="requiresDetraction" class="my-3 rounded-lg border border-warning/40 bg-warning/5 p-4">
+                        <p class="text-sm font-semibold text-warning">Factura sujeta a detracción</p>
+                        <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">
+                            El total supera S/ {{ detractionThreshold }}. Se detraerá el {{ detractionPercent }} %:
+                            <b>{{ currencySymbol }} {{ detractionAmount.toFixed(2) }}</b>. ¿Quién hará la detracción?
+                        </p>
+                        <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+                            <label class="flex flex-1 cursor-pointer items-start gap-2 rounded-lg border p-2.5 text-sm"
+                                :class="formDocument.detraccion_auto === false ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-700'">
+                                <input v-model="formDocument.detraccion_auto" type="radio" :value="false" class="form-radio mt-0.5" />
+                                <span>
+                                    <b>El cliente deposita</b><br />
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">Paga la detracción directo a la cuenta del Banco de la Nación.</span>
+                                </span>
+                            </label>
+                            <label class="flex flex-1 cursor-pointer items-start gap-2 rounded-lg border p-2.5 text-sm"
+                                :class="formDocument.detraccion_auto === true ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-700'">
+                                <input v-model="formDocument.detraccion_auto" type="radio" :value="true" class="form-radio mt-0.5" />
+                                <span>
+                                    <b>Haremos auto-detracción</b><br />
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">Cobramos el total y luego lo transferimos a Detracción desde Movimientos.</span>
+                                </span>
+                            </label>
+                        </div>
                     </div>
                     <div class="max-w-full py-2">
                         <div class="grid sm:grid-cols-2 items-center gap-6">

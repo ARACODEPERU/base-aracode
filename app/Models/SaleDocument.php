@@ -89,6 +89,9 @@ class SaleDocument extends Model
         'detraccion_auto',
         'detraccion_percent',
         'detraccion_amount',
+        // Referencia al contrato/cuota de Comercial que originaron el cobro.
+        'commercial_contract_id',
+        'commercial_contract_payment_id',
     ];
 
     protected $casts = [
@@ -110,6 +113,16 @@ class SaleDocument extends Model
     public function note(): HasOne
     {
         return $this->hasOne(SaleDocument::class,'document_id', 'id');
+    }
+
+    public function commercialContract(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Commercial\Entities\CommercialContract::class, 'commercial_contract_id');
+    }
+
+    public function commercialContractPayment(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Commercial\Entities\CommercialContractPayment::class, 'commercial_contract_payment_id');
     }
 
     public function invoice(): HasOne

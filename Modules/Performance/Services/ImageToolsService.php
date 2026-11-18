@@ -2,6 +2,7 @@
 
 namespace Modules\Performance\Services;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Modules\Performance\Entities\PerformanceImage;
@@ -88,6 +89,99 @@ class ImageToolsService
             'status' => 'resized',
             'before' => ['bytes' => $originalBytes, 'width' => $info[0], 'height' => $info[1]],
             'after'  => ['bytes' => $newBytes, 'width' => $info[0], 'height' => $info[1]],
+            'backup' => $backup,
+        ];
+    }
+
+    /**
+     * Reemplaza el original por el archivo que ya procesó el navegador.
+     *
+     * Se envía una sola imagen por petición. Si el archivo recibido no pesa
+     * menos que el original se descarta y la imagen queda intacta, igual que
+     * en la recompresión del servidor. El formato del archivo debe coincidir
+     * con la extensión original: cambiar de formato rompería las referencias.
+     *
+     * @return array<string, mixed>
+     */
+    public function replaceWithUpload(string $relativePath, UploadedFile $file): array
+    {
+        $absolute = $this->validPath($relativePath);
+        $extension = strtolower(pathinfo($absolute, PATHINFO_EXTENSION));
+        $family = $extension === 'jpeg' ? 'jpg' : $extension;
+
+        if (! in_array($family, ['jpg', 'png', 'webp'], true)) {
+            throw new RuntimeException('Este formato no se puede reemplazar desde el navegador.');
+        }
+
+        if ($extension === 'gif' && GifInspector::isAnimated($absolute)) {
+            return ['status' => 'skipped', 'message' => 'GIF animado: requiere Imagick para conservar la animación.'];
+        }
+
+        $detected = match ($file->getMimeType()) {
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+            default      => null,
+        };
+
+        if ($detected === null || $detected !== $family) {
+            throw new RuntimeException('El archivo enviado no coincide con el formato de la imagen original.');
+        }
+
+        $originalBytes = (int) @filesize($absolute);
+        $originalInfo = @getimagesize($absolute);
+
+        if ($originalInfo === false) {
+            throw new RuntimeException('No se pudieron leer las dimensiones de la imagen original.');
+        }
+
+        $temporary = $absolute . '.up-' . bin2hex(random_bytes(6)) . '.' . $extension;
+
+        if (! @copy($file->getRealPath(), $temporary)) {
+            throw new RuntimeException('No se pudo guardar la imagen recibida.');
+        }
+
+        clearstatcache(true, $temporary);
+
+        $newBytes = (int) @filesize($temporary);
+        $newInfo = @getimagesize($temporary);
+
+        if ($newInfo === false) {
+            @unlink($temporary);
+
+            throw new RuntimeException('El archivo recibido no es una imagen válida.');
+        }
+
+        if ($newBytes >= $originalBytes) {
+            @unlink($temporary);
+
+            return [
+                'status'  => 'unchanged',
+                'message' => 'El archivo resultante no era más liviano; se dejó el original.',
+                'before'  => ['bytes' => $originalBytes, 'width' => (int) $originalInfo[0], 'height' => (int) $originalInfo[1]],
+                'after'   => ['bytes' => $newBytes, 'width' => (int) $newInfo[0], 'height' => (int) $newInfo[1]],
+            ];
+        }
+
+        $reason = $newInfo[0] !== $originalInfo[0] || $newInfo[1] !== $originalInfo[1]
+            ? 'redimensionar'
+            : 'comprimir';
+
+        $backup = $this->backups->backup($relativePath, $reason);
+        $this->replace($temporary, $absolute);
+        $this->remember($relativePath, [
+            'bytes'            => $newBytes,
+            'width'            => (int) $newInfo[0],
+            'height'           => (int) $newInfo[1],
+            'optimized_at'     => now(),
+            'compressed_bytes' => $newBytes,
+            'backup_path'      => $backup,
+        ]);
+
+        return [
+            'status' => 'resized',
+            'before' => ['bytes' => $originalBytes, 'width' => (int) $originalInfo[0], 'height' => (int) $originalInfo[1]],
+            'after'  => ['bytes' => $newBytes, 'width' => (int) $newInfo[0], 'height' => (int) $newInfo[1]],
             'backup' => $backup,
         ];
     }
@@ -207,6 +301,33 @@ class ImageToolsService
     }
 
     /**
+     * Ruta absoluta del archivo en cuarentena, validada contra el disco.
+     *
+     * La cuarentena vive fuera de public/, así que el visor necesita esta
+     * comprobación para servir el archivo sin exponer rutas arbitrarias.
+     */
+    public function quarantineFile(string $relativePath): string
+    {
+        $state = PerformanceImage::query()
+            ->where('path', $relativePath)
+            ->whereNotNull('quarantined_at')
+            ->first();
+
+        if (! $state || ! $state->quarantine_path) {
+            throw new RuntimeException('Esta imagen no está en cuarentena.');
+        }
+
+        $absolute = str_replace('\\', '/', base_path($state->quarantine_path));
+        $base = str_replace('\\', '/', storage_path('app/performance-quarantine')) . '/';
+
+        if (! str_starts_with($absolute, $base) || ! is_file($absolute)) {
+            throw new RuntimeException('El archivo en cuarentena ya no existe.');
+        }
+
+        return $absolute;
+    }
+
+    /**
      * Devuelve una imagen en cuarentena a su ruta original.
      *
      * @return array<string, mixed>
@@ -262,6 +383,63 @@ class ImageToolsService
         clearstatcache(true, base_path($relativePath));
 
         return ['status' => 'restored'] + $result;
+    }
+
+    /**
+     * Uso del disco de copias de seguridad.
+     *
+     * @return array<string, mixed>
+     */
+    public function backupSummary(int $days): array
+    {
+        return $this->backups->summary($days);
+    }
+
+    /**
+     * Adelanta el borrado de las copias que ya superaron la retención.
+     *
+     * @return array{folders: int, files: int, bytes: int}
+     */
+    public function purgeOldBackups(int $days): array
+    {
+        return $this->backups->purgeExpired($days);
+    }
+
+    /**
+     * Elimina definitivamente un archivo en cuarentena.
+     *
+     * Solo se permite cuando lleva en cuarentena al menos los días
+     * configurados: es una salida después de ese plazo, no un borrado
+     * inmediato. Las copias de seguridad se conservan hasta su retención.
+     *
+     * @return array<string, mixed>
+     */
+    public function deleteQuarantined(string $relativePath): array
+    {
+        $state = PerformanceImage::query()
+            ->where('path', $relativePath)
+            ->whereNotNull('quarantined_at')
+            ->first();
+
+        if (! $state) {
+            throw new RuntimeException('Esta imagen no está en cuarentena.');
+        }
+
+        $days = max(1, (int) config('performance.quarantine_days', 7));
+
+        if ($state->quarantined_at->greaterThan(now()->subDays($days))) {
+            throw new RuntimeException("Solo se puede eliminar después de {$days} días en cuarentena.");
+        }
+
+        $file = $state->quarantine_path ? base_path($state->quarantine_path) : null;
+
+        if ($file && is_file($file) && ! @unlink($file)) {
+            throw new RuntimeException('No se pudo eliminar el archivo en cuarentena.');
+        }
+
+        $state->delete();
+
+        return ['status' => 'deleted', 'path' => $relativePath];
     }
 
     public function supportsAnimatedGif(): bool

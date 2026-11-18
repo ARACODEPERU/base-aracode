@@ -119,25 +119,91 @@ class ImageBackupService
     }
 
     /**
+     * Uso actual del disco de copias y cuánto de él ya superó la retención.
+     *
+     * @return array{files: int, bytes: int, folders: int, expired_files: int, expired_bytes: int, oldest: string|null, retention_days: int}
+     */
+    public function summary(int $days): array
+    {
+        $summary = [
+            'files'           => 0,
+            'bytes'           => 0,
+            'folders'         => 0,
+            'expired_files'   => 0,
+            'expired_bytes'   => 0,
+            'oldest'          => null,
+            'retention_days'  => max(1, $days),
+        ];
+
+        if (! is_dir($this->directory())) {
+            return $summary;
+        }
+
+        $limit = now()->subDays(max(1, $days))->getTimestamp();
+
+        foreach (glob($this->directory() . '/*', GLOB_ONLYDIR) ?: [] as $folder) {
+            $summary['folders']++;
+            $modified = (int) filemtime($folder);
+            $expired = $modified < $limit;
+
+            if ($summary['oldest'] === null || $modified < strtotime($summary['oldest'])) {
+                $summary['oldest'] = date('Y-m-d', $modified);
+            }
+
+            foreach (File::allFiles($folder) as $file) {
+                $size = (int) $file->getSize();
+                $summary['files']++;
+                $summary['bytes'] += $size;
+
+                if ($expired) {
+                    $summary['expired_files']++;
+                    $summary['expired_bytes'] += $size;
+                }
+            }
+        }
+
+        return $summary;
+    }
+
+    /**
+     * Borra las copias más antiguas que la retención indicada y devuelve
+     * cuántos archivos y bytes se liberaron.
+     *
+     * @return array{folders: int, files: int, bytes: int}
+     */
+    public function purgeExpired(int $days): array
+    {
+        $purged = ['folders' => 0, 'files' => 0, 'bytes' => 0];
+
+        if ($days <= 0 || ! is_dir($this->directory())) {
+            return $purged;
+        }
+
+        $limit = now()->subDays($days)->getTimestamp();
+
+        foreach (glob($this->directory() . '/*', GLOB_ONLYDIR) ?: [] as $folder) {
+            if (filemtime($folder) >= $limit) {
+                continue;
+            }
+
+            foreach (File::allFiles($folder) as $file) {
+                $purged['files']++;
+                $purged['bytes'] += (int) $file->getSize();
+            }
+
+            File::deleteDirectory($folder);
+            $purged['folders']++;
+        }
+
+        return $purged;
+    }
+
+    /**
      * Borra las copias más antiguas que la retención indicada.
      */
     public function cleanup(int $days): int
     {
-        if ($days <= 0 || ! is_dir($this->directory())) {
-            return 0;
-        }
-
-        $limit = now()->subDays($days)->getTimestamp();
-        $removed = 0;
-
-        foreach (glob($this->directory() . '/*', GLOB_ONLYDIR) ?: [] as $folder) {
-            if (filemtime($folder) < $limit) {
-                File::deleteDirectory($folder);
-                $removed++;
-            }
-        }
-
-        return $removed;
+        return $this->purgeExpired($days)['folders'];
     }
 
     public function relativePath(string $absolute): string

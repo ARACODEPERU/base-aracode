@@ -19,6 +19,7 @@ use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Modules\Purchases\Entities\PurcDocumentItems;
+use Modules\Treasury\Services\PurchaseTreasuryHooks;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 
 class PurcDocumentController extends Controller
@@ -161,7 +162,7 @@ class PurcDocumentController extends Controller
                 ]);
 
 
-                ///obtenemos los productos o servicios para insertar en los 
+                ///obtenemos los productos o servicios para insertar en los
                 ///detalles de la venta y el documento
                 $products = $request->get('items');
 
@@ -234,7 +235,7 @@ class PurcDocumentController extends Controller
                         //se tiene que quitar el igv porque el sistema trabaja con los precios
                         //incluido el igv
                         $value_unit = round($price_sale / $nfactorIGV, 2);
-                        //la base para hacer el descuento 
+                        //la base para hacer el descuento
                         $base = round($value_unit * $quantity, 2);
                         //el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
                         $factor = (($produc['discount'] * 100) / $price_sale) / 100;
@@ -242,7 +243,7 @@ class PurcDocumentController extends Controller
                         $descuento_monto = $factor * $value_unit * $quantity;
                         //a la base igv le restamos el descuento
                         $mto_base_igv = ($value_unit * $quantity) - $descuento_monto;
-                        //una ves restada la vase lo multiplicamos por el 18% vigente para sacar 
+                        //una ves restada la vase lo multiplicamos por el 18% vigente para sacar
                         //el valor total igv
                         $igv = ($mto_base_igv * $ifactorIGV);
                         //total del item
@@ -263,7 +264,7 @@ class PurcDocumentController extends Controller
                                 'monto'     => round($descuento_monto, 2)
                             );
                         } else {
-                            //el precio unitario es el mismo 
+                            //el precio unitario es el mismo
                             $unit_price = $price_sale;
                         }
 
@@ -285,7 +286,7 @@ class PurcDocumentController extends Controller
                     }
                     $total_tax = $igv + $icbper;
 
-                    //se inserta los datos al detalle del documento 
+                    //se inserta los datos al detalle del documento
                     PurcDocumentItems::create([
                         'purchase_id'               => $purchase->id,
                         'product_id'                => $product_id,
@@ -389,6 +390,10 @@ class PurcDocumentController extends Controller
                     'total_canceled'            => 0,
                 ]);
 
+                // El dinero pagado al proveedor sale de la cuenta del medio de
+                // pago usado: cada pago del formulario es un egreso del libro.
+                PurchaseTreasuryHooks::recordPurchaseExpenses($purchase, (array) $request->get('payments', []));
+
                 return $purchase;
             });
 
@@ -433,22 +438,27 @@ class PurcDocumentController extends Controller
     {
         try {
             $res = DB::transaction(function () use ($id) {
+                // Bloqueamos el documento para evitar anulaciones simultáneas.
+                $purchase = PurcDocument::whereKey($id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-                $purchase = PurcDocument::findOrFail($id);
-
+                // Si ya está anulado, no repetimos movimientos de stock ni tesorería.
                 if ($purchase->status === 'A') {
                     return $purchase;
                 }
 
-                // 'A' es el estado que el RCE usa para excluir el comprobante.
+                // Registrar la reversión de los egresos de tesorería.
+                PurchaseTreasuryHooks::voidPurchaseExpenses($purchase, 'Compra anulada');
+
+                // Marcar el documento como anulado.
                 $purchase->update([
-                    'status' => 'A'
+                    'status' => 'A',
                 ]);
 
-                $items = PurcDocumentItems::where('purchase_id', $id)->get();
+                $items = PurcDocumentItems::where('purchase_id', $purchase->id)->get();
 
                 foreach ($items as $item) {
-
                     $product = Product::find($item->product_id);
 
                     if (! $product) {
@@ -456,42 +466,48 @@ class PurcDocumentController extends Controller
                     }
 
                     if ($product->is_product) {
+                        // Registrar el movimiento inverso en el Kardex.
                         $kardex = Kardex::create([
-                            'date_of_issue' => Carbon::now()->format('Y-m-d'),
-                            'motion' => 'purchase',
-                            'product_id' => $item->product_id,
-                            'local_id' => $purchase->local_id,
-                            'quantity' => (-$item->quantity),
-                            'document_id' => $purchase->id,
-                            'document_entity' => PurcDocument::class,
-                            'description' => 'Compra Anulada'
+                            'date_of_issue'  => Carbon::now()->format('Y-m-d'),
+                            'motion'         => 'purchase',
+                            'product_id'     => $product->id,
+                            'local_id'       => $purchase->local_id,
+                            'quantity'       => -$item->quantity,
+                            'document_id'    => $purchase->id,
+                            'document_entity'=> PurcDocument::class,
+                            'description'    => 'Compra Anulada',
                         ]);
 
+                        // Registrar también la reversión de la talla, si corresponde.
                         if ($product->presentations) {
                             KardexSize::create([
                                 'kardex_id' => $kardex->id,
-                                'product_id' => $item->product_id,
-                                'local_id' => $purchase->local_id,
+                                'product_id'=> $product->id,
+                                'local_id'  => $purchase->local_id,
                                 'size'      => $item->size,
-                                'quantity'  => (-$item->quantity)
+                                'quantity'  => -$item->quantity,
                             ]);
                         }
                     }
 
+                    // Revertir el stock incorporado por la compra.
                     $product->decrement('stock', $item->quantity);
 
-                    // Solo los productos con tallas guardan el detalle por talla:
-                    // el resto conserva su columna `sizes` como estaba.
+                    // Actualizar el stock por talla únicamente para productos
+                    // que utilizan presentaciones.
                     if ($product->presentations) {
                         $sizes = json_decode((string) $product->sizes, true) ?: [];
 
-                        $sizes = array_map(fn ($size) => [
-                            'size' => $size['size'],
-                            'quantity' => $size['quantity'] - ($size['size'] === $item->size ? $item->quantity : 0),
-                        ], $sizes);
+                        $sizes = array_map(function ($size) use ($item) {
+                            if (($size['size'] ?? null) === $item->size) {
+                                $size['quantity'] = ($size['quantity'] ?? 0) - $item->quantity;
+                            }
+
+                            return $size;
+                        }, $sizes);
 
                         $product->update([
-                            'sizes' => json_encode($sizes)
+                            'sizes' => json_encode($sizes),
                         ]);
                     }
                 }
@@ -501,13 +517,13 @@ class PurcDocumentController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'El documento fue anulado'
+                'message' => 'El documento fue anulado',
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
-            ]);
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
 }

@@ -9,9 +9,12 @@ use Inertia\Inertia;
 use Modules\Treasury\Entities\TreasuryCategory;
 use Modules\Treasury\Entities\TreasuryPaymentOrder;
 use Modules\Treasury\Entities\TreasuryTransaction;
+use Modules\Treasury\Services\TreasuryAlertService;
+use Modules\Treasury\Services\TreasuryCashService;
 use Modules\Treasury\Services\TreasuryCurrencyService;
 use Modules\Treasury\Services\TreasuryLedgerService;
 use Modules\Treasury\Services\TreasurySettingsService;
+use Modules\Treasury\Services\TreasuryWalletTransferService;
 
 /**
  * Dashboard de tesorería.
@@ -27,6 +30,9 @@ class TreasuryDashboardController extends Controller
     public function __construct(
         private TreasuryLedgerService $ledger,
         private TreasuryCurrencyService $currency,
+        private TreasuryAlertService $alerts,
+        private TreasuryWalletTransferService $walletTransfers,
+        private TreasuryCashService $cash,
     ) {
     }
 
@@ -119,11 +125,16 @@ class TreasuryDashboardController extends Controller
                 'amount' => (float) $tx->amount,
                 'currency' => strtoupper((string) ($tx->currency ?: 'PEN')) ?: 'PEN',
                 'description' => $tx->description,
+                'reference' => $tx->reference,
+                'operation_number' => $tx->operation_number,
                 'category' => $tx->category?->name,
                 'category_color' => $tx->category?->color,
                 'account' => $tx->account?->displayName(),
                 'source' => $tx->source,
             ]);
+
+        // Efectivo esperado en las cajas abiertas (vive fuera del libro de bancos).
+        $cashOpen = $this->cash->openSummary();
 
         $pendingOrders = TreasuryPaymentOrder::query()
             ->open()
@@ -132,10 +143,22 @@ class TreasuryDashboardController extends Controller
 
         return Inertia::render('Treasury::Dashboard/Index', [
             'settings' => app(TreasurySettingsService::class)->summary(),
+            'alerts' => $this->alerts->build(),
             'categories' => TreasuryCategory::query()->orderBy('name')->get(['id', 'name', 'applies_to', 'color']),
             'accounts' => $accounts,
             'groups' => $data['consolidation']['groups'],
             'consolidated' => $data['consolidation']['consolidated'],
+            'detraction' => $data['consolidation']['detraction'] ?? 0.0,
+            'detractionAccount' => (function () {
+                $account = \Modules\Treasury\Entities\TreasuryAccount::query()->detraction()->active()->first();
+
+                return $account ? [
+                    'id' => $account->id,
+                    'label' => $account->displayName(),
+                    'bank_name' => $account->bank_name,
+                    'account_number' => $account->account_number,
+                ] : null;
+            })(),
             'rates' => $data['consolidation']['rates'],
             'ratesIncomplete' => $data['consolidation']['incomplete'],
             'baseCurrency' => $this->currency->base(),
@@ -147,6 +170,11 @@ class TreasuryDashboardController extends Controller
             'pendingOrders' => [
                 'count' => $pendingOrders->count(),
                 'total_base' => round($pendingOrders->sum(fn ($order) => $this->currency->toBase((float) $order->amount, $order->currency) ?? 0), 2),
+            ],
+            'walletTransfers' => $this->walletTransfers->pending(null, null, null, 10),
+            'cashOpen' => [
+                'count' => $cashOpen['count'],
+                'balance' => $cashOpen['balance'],
             ],
         ]);
     }

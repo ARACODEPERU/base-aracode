@@ -308,6 +308,55 @@ class TreasuryV2Test extends TestCase
         $this->assertSame(1, TreasuryPaymentOrder::query()->where('type', TreasuryPaymentOrder::TYPE_RECURRING)->count());
     }
 
+    public function test_la_comision_lleva_la_referencia_del_cobro_en_la_descripcion(): void
+    {
+        $account = $this->makeAccount('PEN');
+        $account->fixed_fee = 1;
+        $account->percent_fee = 3.49;
+        $account->igv_applies = true;
+        $account->save();
+
+        $ledger = app(TreasuryLedgerService::class);
+
+        $income = $ledger->registerIncome(
+            $account,
+            now()->toDateString(),
+            2500,
+            null,
+            null,
+            null,
+            'MercadoPago #987654321',
+            'Cobro de venta online',
+        );
+
+        $comision = TreasuryTransaction::query()
+            ->where('origin_type', 'treasury_commission')
+            ->where('origin_id', $income->id)
+            ->first();
+
+        $this->assertNotNull($comision);
+        $this->assertSame('Comisión de Ref. MercadoPago #987654321', $comision->description);
+        $this->assertSame(104.18, (float) $comision->amount);
+    }
+
+    public function test_la_comision_sin_referencia_usa_el_numero_del_ingreso(): void
+    {
+        $account = $this->makeAccount('PEN');
+        $account->fixed_fee = 1;
+        $account->percent_fee = 3.49;
+        $account->igv_applies = true;
+        $account->save();
+
+        $income = app(TreasuryLedgerService::class)->registerIncome($account, now()->toDateString(), 2500);
+
+        $comision = TreasuryTransaction::query()
+            ->where('origin_type', 'treasury_commission')
+            ->where('origin_id', $income->id)
+            ->first();
+
+        $this->assertSame('Comisión por ingreso #' . $income->id, $comision->description);
+    }
+
     /**
      * Cuenta de tesorería de banco en la moneda indicada.
      */

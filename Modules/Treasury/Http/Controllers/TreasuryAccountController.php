@@ -10,17 +10,21 @@ use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasuryTransaction;
+use Modules\Treasury\Entities\TreasuryWalletTransfer;
 use Modules\Treasury\Services\FeeCalculator;
 use Modules\Treasury\Services\PaymentMethodCatalogService;
 use Modules\Treasury\Services\TreasuryAccountSyncService;
+use Modules\Treasury\Services\TreasuryCashService;
 use Modules\Treasury\Services\TreasuryLedgerService;
 
 class TreasuryAccountController extends Controller
 {
     use ValidatesTreasuryRequests;
 
-    public function __construct(private TreasuryLedgerService $ledger)
-    {
+    public function __construct(
+        private TreasuryLedgerService $ledger,
+        private TreasuryCashService $cash,
+    ) {
     }
 
     public function index(TreasuryAccountSyncService $sync, PaymentMethodCatalogService $catalog)
@@ -56,6 +60,8 @@ class TreasuryAccountController extends Controller
                 'status' => $account->status,
                 'bank_account_id' => $account->bank_account_id,
                 'company_billetera_id' => $account->company_billetera_id,
+                // Días hábiles configurados para pasar el dinero de la billetera al banco.
+                'bank_transfer_days' => (int) ($account->companyBilletera?->bank_transfer_days ?? 0),
                 // Billetera con banco vinculado: su dinero vive en el banco, así que
                 // no muestra total; solo los movimientos del periodo. El banco, en
                 // cambio, suma lo que llegó por sus billeteras.
@@ -64,10 +70,19 @@ class TreasuryAccountController extends Controller
                     ? null
                     : $this->ledger->displayBalance($account),
                 'period_income' => $this->walletPeriodIncome($account),
+                // Un banco muestra además el dinero que le llegó por sus billeteras.
+                'wallets_count' => $this->linkedWalletsCount($account),
             ]);
+
+        // Efectivo esperado en cajas abiertas: se muestra junto a la cuenta de caja.
+        $cashOpen = $this->cash->openSummary();
 
         return Inertia::render('Treasury::Accounts/Index', [
             'accounts' => $accounts,
+            'cashOpen' => [
+                'count' => $cashOpen['count'],
+                'balance' => $cashOpen['balance'],
+            ],
             'bankAccounts' => BankAccount::query()->with('bank')->get()
                 ->map(fn ($item) => [
                     'id' => $item->id,
@@ -76,7 +91,50 @@ class TreasuryAccountController extends Controller
                 ]),
             'wallets' => $this->availableWallets(),
             'paymentMethods' => $this->paymentMethodsPayload(),
+            'walletTransfers' => $this->walletTransfersPayload(),
         ]);
+    }
+
+    /** Billeteras activas vinculadas a esta cuenta bancaria. */
+    private function linkedWalletsCount(TreasuryAccount $account): int
+    {
+        if ($account->type !== TreasuryAccount::TYPE_BANK || ! $account->bank_account_id) {
+            return 0;
+        }
+
+        return TreasuryAccount::query()
+            ->active()
+            ->wallets()
+            ->whereHas('companyBilletera', fn ($query) => $query->where('bank_account_id', (int) $account->bank_account_id))
+            ->count();
+    }
+
+    /**
+     * Cola de traslados billetera -> banco (pendientes y últimas ejecutadas).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function walletTransfersPayload(): array
+    {
+        return TreasuryWalletTransfer::query()
+            ->with(['walletAccount.companyBilletera.billetera', 'bankAccount.bankAccount.bank'])
+            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
+            ->orderBy('scheduled_date')
+            ->orderByDesc('id')
+            ->limit(30)
+            ->get()
+            ->map(fn (TreasuryWalletTransfer $item) => [
+                'id' => $item->id,
+                'wallet' => $item->walletAccount?->displayName() ?? 'Billetera',
+                'bank' => $item->bankAccount?->displayName() ?? 'Banco',
+                'amount' => (float) $item->amount,
+                'currency' => $item->currency,
+                'scheduled_date' => $item->scheduled_date?->format('Y-m-d'),
+                'status' => $item->status,
+                'error' => $item->error,
+                'executed_at' => $item->executed_at?->format('Y-m-d H:i'),
+            ])
+            ->all();
     }
 
     /**

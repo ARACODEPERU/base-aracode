@@ -37,6 +37,7 @@ class AcademicServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \Modules\Academic\Console\CheckExpiredSubscriptions::class,
+                \Modules\Academic\Console\CheckMercadoPagoSubscriptions::class,
             ]);
         }
     }
@@ -49,6 +50,18 @@ class AcademicServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->register(RouteServiceProvider::class);
+
+        // Alta de suscripciones recurrentes: la lógica usa la interfaz y el SDK
+        // queda detrás, para poder probarla sin llamar a MercadoPago.
+        $this->app->bind(
+            \Modules\Academic\Services\MercadoPago\SubscriptionPreapprovalGateway::class,
+            \Modules\Academic\Services\MercadoPago\MercadoPagoPreapprovalGateway::class
+        );
+
+        $this->app->bind(
+            \Modules\Academic\Services\MercadoPago\SubscriptionPaymentGateway::class,
+            \Modules\Academic\Services\MercadoPago\MercadoPagoSubscriptionPaymentGateway::class
+        );
 
         $this->registerTelegramRegistrantResolver();
         $this->registerTelegramAccountResolver();

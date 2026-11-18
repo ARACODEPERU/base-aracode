@@ -385,6 +385,8 @@ const saveSocialNetworks = () => {
         qr_image: null,
         has_payment_link: false,
         bank_account_id: null,
+        // 0 = transferencia inmediata; 1 o más = días hábiles en cola.
+        bank_transfer_days: 0,
         status: true
     });
 
@@ -396,6 +398,7 @@ const saveSocialNetworks = () => {
             formBilletera.account_name = item.account_name;
             formBilletera.account_number = item.account_number;
             formBilletera.bank_account_id = item.bank_account_id || null;
+            formBilletera.bank_transfer_days = Number(item.bank_transfer_days || 0);
             formBilletera.has_payment_link = item.has_payment_link == 1 || item.has_payment_link === true;
             formBilletera.status = item.status == 1 ? true : false;
         }
@@ -1183,6 +1186,22 @@ const saveSocialNetworks = () => {
                             <option :value="cuenta.id">{{ cuenta.bank?.full_name }} - {{ cuenta.number }}</option>
                         </template>
                     </select>
+                </div>
+                <div v-if="formBilletera.bank_account_id">
+                    <InputLabel value="Días hábiles para transferir al banco" />
+                    <input
+                        v-model.number="formBilletera.bank_transfer_days"
+                        type="number"
+                        min="0"
+                        max="30"
+                        step="1"
+                        class="form-input"
+                    />
+                    <p class="text-xs text-gray-500 mt-1">
+                        0 = inmediata: el cobro entra directo al banco. 1 o más = el dinero queda en la billetera y se
+                        transfiere al banco al cumplirse esos días hábiles.
+                    </p>
+                    <InputError :message="formBilletera.errors.bank_transfer_days" class="mt-1" />
                 </div>
                 <div>
                     <InputLabel value="Imagen QR" />

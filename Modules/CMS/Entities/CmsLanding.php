@@ -16,11 +16,13 @@ class CmsLanding extends Model
     protected $fillable = [
         'title',
         'slug',
+        'free_courses_count',
         'description_short',
         'description_long',
         'main_image',
         'data_related',
         'data_related2',
+        'utm_config',
         'additional_field1',
         'additional_field2',
         'additional_field3',
@@ -32,6 +34,8 @@ class CmsLanding extends Model
     protected $casts = [
         'data_related' => 'array',
         'data_related2' => 'array',
+        'utm_config' => 'array',
+        'free_courses_count' => 'integer',
     ];
 
     // 🔹 Accessor para decodificar JSON automáticamente

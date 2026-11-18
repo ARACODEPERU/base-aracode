@@ -124,6 +124,31 @@
 
     const puedeLiberar = computed(() => Number(props.summary.balance || 0) > 0 && props.destinations.length > 0);
 
+    // Banco y número de cuenta donde el cliente deposita la detracción.
+    const modalCuenta = ref(false);
+    const cuentaForm = useForm({
+        bank_name: props.summary.bank_name || 'Banco de la Nación',
+        account_number: props.summary.account_number || '',
+    });
+
+    const abrirCuenta = () => {
+        cuentaForm.clearErrors();
+        cuentaForm.bank_name = props.summary.bank_name || 'Banco de la Nación';
+        cuentaForm.account_number = props.summary.account_number || '';
+        modalCuenta.value = true;
+    };
+
+    const guardarCuenta = () => {
+        cuentaForm.post(route('treasury_detraction_account_update'), {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                notifyFlash(page);
+                modalCuenta.value = false;
+            },
+            onError: () => window.alertaSistema('Revisa la cuenta', 'El banco y el número no deben superar el largo permitido.', 'warning'),
+        });
+    };
+
     // Lleva a Impuestos con el mes y la cuenta de detracción ya elegidos.
     const irAPagarIgv = () => {
         router.visit(route('treasury_taxes_index', {
@@ -152,9 +177,31 @@
                         <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Cuenta restringida</h2>
                         <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
                             Las facturas desde {{ money(threshold) }} están sujetas a detracción del {{ percent }} % del total.
-                            Este dinero <strong>solo paga IGV</strong>. Liberarlo a una cuenta de la empresa o ajustar su saldo
-                            exige tu contraseña y queda en auditoría.
+                            El IGV sigue siendo 18 %: de cada S/ 100 del total facturado, S/ {{ percent }} llegan a esta
+                            cuenta para pagarlo y el resto a la cuenta de la empresa. Liberar el saldo o ajustarlo exige
+                            tu contraseña y queda en auditoría.
                         </p>
+
+                        <!-- Dónde deposita el cliente -->
+                        <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div class="rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-700">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Banco de la cuenta</p>
+                                <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                    {{ summary.bank_name || 'Banco de la Nación' }}
+                                </p>
+                            </div>
+                            <div class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-700">
+                                <div class="min-w-0">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Número de cuenta de detracciones</p>
+                                    <p class="truncate font-mono text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                        {{ summary.account_number || 'Sin registrar' }}
+                                    </p>
+                                </div>
+                                <button v-if="canManage" type="button" class="btn btn-sm btn-outline-primary whitespace-nowrap" @click="abrirCuenta">
+                                    Editar
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -239,7 +286,9 @@
                                 <th>Cliente</th>
                                 <th>%</th>
                                 <th>Tipo</th>
-                                <th class="text-right">Importe</th>
+                                <th class="text-right">Total factura</th>
+                                <th class="text-right">A la empresa</th>
+                                <th class="text-right">Detraído</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -253,10 +302,16 @@
                                     <span v-if="item.auto" class="rounded bg-warning/10 px-1.5 py-0.5 text-[11px] text-warning">Auto-detracción</span>
                                     <span v-else class="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] text-primary">Detracción</span>
                                 </td>
+                                <td class="text-right text-sm text-gray-500">
+                                    {{ item.invoice_total !== null ? money(item.invoice_total, summary.currency) : '—' }}
+                                </td>
+                                <td class="text-right text-sm text-gray-500">
+                                    {{ item.net_to_company !== null ? money(item.net_to_company, summary.currency) : '—' }}
+                                </td>
                                 <td class="text-right text-sm font-semibold">{{ money(item.amount, summary.currency) }}</td>
                             </tr>
                             <tr v-if="summary.detractions.length === 0">
-                                <td colspan="7" class="py-8 text-center text-sm text-gray-500">
+                                <td colspan="9" class="py-8 text-center text-sm text-gray-500">
                                     Todavía no hay detracciones registradas.
                                 </td>
                             </tr>
@@ -278,15 +333,20 @@
                                 <th>Fecha</th>
                                 <th>Descripción</th>
                                 <th>Referencia</th>
+                                <th>N° operación</th>
                                 <th class="text-right">Ingreso</th>
                                 <th class="text-right">Egreso</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="movement in summary.movements" :key="movement.id">
-                                <td class="whitespace-nowrap text-sm">{{ fecha(movement.date) }}</td>
+                                <td class="whitespace-nowrap text-sm">
+                                    {{ fecha(movement.date) }}
+                                    <span v-if="movement.time" class="block text-xs text-gray-500">{{ movement.time }}</span>
+                                </td>
                                 <td class="text-sm">{{ movement.description }}</td>
                                 <td class="text-sm text-gray-500">{{ movement.reference || '—' }}</td>
+                                <td class="whitespace-nowrap text-sm text-gray-500">{{ movement.operation_number || '—' }}</td>
                                 <td class="text-right text-sm text-success">
                                     <template v-if="movement.type === 'income'">{{ money(movement.amount, summary.currency) }}</template>
                                     <span v-else class="text-gray-300">—</span>
@@ -297,13 +357,40 @@
                                 </td>
                             </tr>
                             <tr v-if="summary.movements.length === 0">
-                                <td colspan="5" class="py-8 text-center text-sm text-gray-500">Sin movimientos.</td>
+                                <td colspan="6" class="py-8 text-center text-sm text-gray-500">Sin movimientos.</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+
+        <!-- Datos de la cuenta de detracciones -->
+        <ModalMedium :show="modalCuenta" :on-close="() => (modalCuenta = false)" :icon="'/img/cuenta-bancaria.png'">
+            <template #title>Cuenta de detracciones</template>
+            <template #message><span>Banco y número donde el cliente deposita el {{ percent }} %</span></template>
+            <template #content>
+                <div class="space-y-4">
+                    <div>
+                        <InputLabel value="Banco *" class="mb-1.5" />
+                        <input v-model="cuentaForm.bank_name" type="text" class="form-input w-full" placeholder="Banco de la Nación" />
+                        <InputError :message="cuentaForm.errors.bank_name" />
+                    </div>
+                    <div>
+                        <InputLabel value="Número de cuenta *" class="mb-1.5" />
+                        <input v-model="cuentaForm.account_number" type="text" class="form-input w-full font-mono" placeholder="00-000-000000" />
+                        <InputError :message="cuentaForm.errors.account_number" />
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Este número es el que se informa al cliente en la factura. La cuenta debe estar a nombre de la empresa
+                        en el Banco de la Nación.
+                    </p>
+                </div>
+            </template>
+            <template #buttons>
+                <PrimaryButton :disabled="cuentaForm.processing" @click="guardarCuenta">Guardar cuenta</PrimaryButton>
+            </template>
+        </ModalMedium>
 
         <!-- Liberación crítica -->
         <ModalMedium :show="modalLiberar" :on-close="() => (modalLiberar = false)" :icon="'/img/cuenta-bancaria.png'">

@@ -31,6 +31,9 @@ class IntegrationhubServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->register(RouteServiceProvider::class);
+
+        // Una sola instancia por petición: evita repetir la consulta del secreto.
+        $this->app->singleton(\Modules\Integrationhub\Services\IntegrationCredentialResolver::class);
     }
 
     /**

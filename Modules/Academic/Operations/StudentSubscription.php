@@ -10,12 +10,15 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentSubscription;
+use Modules\Academic\Entities\AcaSubscriptionPayment;
+use Modules\Academic\Entities\AcaSubscriptionPreapproval;
 use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\Onlineshop\Entities\OnliSale;
 use Modules\Onlineshop\Entities\OnliSaleDetail;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Modules\Academic\Emails\ConfirmPurchaseSubscription;
+use Modules\Treasury\Services\TreasuryHooks;
 
 class StudentSubscription
 {
@@ -26,7 +29,13 @@ class StudentSubscription
         $this->subscription_id = $subscription_id;
     }
 
-    public function process($response, $payment)
+    /**
+     * Registra la compra de una suscripción.
+     *
+     * Cuando el plan es recurrente, $preapproval trae la suscripción autorizada
+     * en MercadoPago y sustituye al pago único como origen de la venta.
+     */
+    public function process($response, $payment, ?AcaSubscriptionPreapproval $preapproval = null)
     {
         //dd($response);
         $subscription = AcaSubscriptionType::find($this->subscription_id);
@@ -73,11 +82,21 @@ class StudentSubscription
                 $dateEnd = null;
         }
 
+        // El precio puede venir como arreglo (cast del modelo) o como JSON.
         $amount = 0;
         if ($subscription->prices) {
-            foreach (json_decode($subscription->prices) as $price) {
-                if ($price->currency == 'PEN') {
-                    $amount = $price->amount;
+            $precios = $subscription->prices;
+
+            if (is_string($precios)) {
+                $precios = json_decode($precios) ?: [];
+            }
+
+            foreach ($precios as $price) {
+                $currency = is_array($price) ? ($price['currency'] ?? null) : ($price->currency ?? null);
+                $monto = is_array($price) ? ($price['amount'] ?? 0) : ($price->amount ?? 0);
+
+                if ($currency == 'PEN') {
+                    $amount = $monto;
                 }
             }
         }
@@ -93,6 +112,9 @@ class StudentSubscription
                 ]
             );
 
+            $mercadoPaymentId = $preapproval?->preapproval_id ?? ($payment->id ?? null);
+            $mercadoPaymentJson = json_encode($preapproval?->raw ?? $payment);
+
             $sale = OnliSale::create([
                 'module_name' => 'Academic',
                 'person_id' => $user->person_id,
@@ -107,8 +129,6 @@ class StudentSubscription
                 'response_date_approved' => Carbon::now()->format('Y-m-d'),
                 'response_payer' => json_encode($response),
                 'response_payment_method_id' => $response['payment_method_id'],
-                'mercado_payment_id' => $payment->id,
-                'mercado_payment' => json_encode($payment),
                 'utm_source'     => $response['utm_source'] ?? null,
                 'utm_medium'     => $response['utm_medium'] ?? null,
                 'utm_campaign'   => $response['utm_campaign'] ?? null,
@@ -181,6 +201,11 @@ class StudentSubscription
 
             $sale->nota_sale_id = $sale_note->id;
 
+            // Estos dos campos no están en $fillable: se asignan directo para que
+            // la venta quede ligada al pago (o al preapproval) de MercadoPago.
+            $sale->mercado_payment_id = $mercadoPaymentId;
+            $sale->mercado_payment = $mercadoPaymentJson;
+
             $sale->save();
 
             OnliSaleDetail::create([
@@ -203,6 +228,34 @@ class StudentSubscription
                 'total' => floatval($amount),
                 'entity_name_product' => AcaSubscriptionType::class
             ]);
+
+            // Tesorería: el cobro aprobado por MercadoPago entra a su cuenta. Se
+            // registra como ingreso del carrito online para que el comprobante que
+            // se emita después no vuelva a sumar el mismo dinero.
+            TreasuryHooks::recordOnlineSaleIncome(
+                $sale,
+                'Suscripción online · ' . mb_substr(trim((string) ($subscription->title ?: $subscription->name)), 0, 200)
+            );
+
+            // Cobro automático: se deja registrado el primer periodo; el cobro real
+            // de MercadoPago se concilia luego con su autorized_payment_id.
+            if ($preapproval) {
+                AcaSubscriptionPayment::firstOrCreate(
+                    [
+                        'preapproval_id' => $preapproval->preapproval_id,
+                        'date_start' => $dateStart->toDateString(),
+                    ],
+                    [
+                        'student_id' => $student->id,
+                        'subscription_id' => $this->subscription_id,
+                        'date_end' => $dateEnd ? $dateEnd->toDateString() : null,
+                        'amount' => floatval($amount),
+                        'status' => 'authorized',
+                        'source' => 'recurring',
+                        'paid_at' => Carbon::now(),
+                    ]
+                );
+            }
 
             Mail::to($sale->email)
                 ->queue(new ConfirmPurchaseSubscription($sale));

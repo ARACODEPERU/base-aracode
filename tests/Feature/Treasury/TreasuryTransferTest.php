@@ -116,7 +116,7 @@ class TreasuryTransferTest extends TestCase
         $to = $this->makeBankAccountAccount();
         $this->fund($from);
 
-        // Comisión destino: fijo 1 + 2 % de 100 = 3; IGV 18 % = 0,54.
+        // Comisión destino: fijo 1 + 2 % de 100 = 3. La comisión no lleva IGV.
         $transfer = $this->service->transfer(
             $from,
             $to,
@@ -129,8 +129,8 @@ class TreasuryTransferTest extends TestCase
         $this->assertSame(1.0, (float) $transfer->to_fixed_fee);
         $this->assertSame(2.0, (float) $transfer->to_percent_fee);
         $this->assertSame(3.0, (float) $transfer->to_fee_amount);
-        $this->assertSame(0.54, (float) $transfer->to_fee_igv);
-        $this->assertSame(96.46, (float) $transfer->net_received);
+        $this->assertSame(0.0, (float) $transfer->to_fee_igv, 'La comisión de transferencia no genera IGV.');
+        $this->assertSame(97.0, (float) $transfer->net_received);
 
         // El destino recibe el monto completo y la comisión queda como gasto aparte.
         $entrada = TreasuryTransaction::where('transfer_id', $transfer->id)
@@ -143,19 +143,19 @@ class TreasuryTransferTest extends TestCase
             ->where('treasury_account_id', $to->id)
             ->where('origin_type', 'treasury_transfer_fee')
             ->firstOrFail();
-        $this->assertSame(3.54, (float) $comision->amount);
+        $this->assertSame(3.0, (float) $comision->amount);
         $this->assertSame(3.0, (float) $comision->fee_amount);
-        $this->assertSame(0.54, (float) $comision->igv_amount);
+        $this->assertSame(0.0, (float) $comision->igv_amount);
         $this->assertSame('Comisión/mantenimiento bancario', $comision->category?->name);
     }
 
-    public function test_la_comision_del_origen_con_igv_y_el_itf_son_egresos_propios(): void
+    public function test_la_comision_del_origen_y_el_itf_son_egresos_propios_sin_igv(): void
     {
         $from = $this->makeWalletAccount('Yape');
         $to = $this->makeBankAccountAccount();
         $this->fund($from);
 
-        // Comisión origen: fijo 1 + 1 % de 1000 = 11; IGV 18 % = 1,98; ITF 0,05.
+        // Comisión origen: fijo 1 + 1 % de 1000 = 11 (sin IGV); ITF 0,05.
         $transfer = $this->service->transfer(
             $from,
             $to,
@@ -169,19 +169,19 @@ class TreasuryTransferTest extends TestCase
         );
 
         $this->assertSame(11.0, (float) $transfer->from_fee_amount);
-        $this->assertSame(1.98, (float) $transfer->from_fee_igv);
+        $this->assertSame(0.0, (float) $transfer->from_fee_igv, 'La comisión de transferencia no genera IGV.');
 
         $comision = TreasuryTransaction::where('transfer_id', $transfer->id)
             ->where('treasury_account_id', $from->id)
             ->where('origin_type', 'treasury_transfer_fee')
             ->firstOrFail();
-        $this->assertSame(12.98, (float) $comision->amount);
+        $this->assertSame(11.0, (float) $comision->amount);
         $this->assertSame(11.0, (float) $comision->fee_amount);
-        $this->assertSame(1.98, (float) $comision->igv_amount);
+        $this->assertSame(0.0, (float) $comision->igv_amount);
 
-        // Lo que sale del origen: monto + comisión + IGV + ITF.
+        // Lo que sale del origen: monto + comisión + ITF.
         $saldo = app(TreasuryLedgerService::class)->accountBalance($from->refresh());
-        $this->assertSame(5000.0 - 1000 - 12.98 - 0.05, $saldo);
+        $this->assertSame(5000.0 - 1000 - 11.0 - 0.05, $saldo);
     }
 
     public function test_anular_la_transferencia_anula_tambien_sus_gastos(): void

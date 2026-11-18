@@ -321,6 +321,41 @@
                 </ul>
             </div>
 
+            <!-- Cola de billeteras: dinero cobrado que todavía no llega al banco -->
+            <div v-if="forecast.wallet_transfers?.count" class="panel overflow-hidden p-0">
+                <div class="border-b border-gray-200 p-5 dark:border-gray-700">
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Billeteras en camino al banco</h2>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Este dinero ya está incluido en el saldo inicial: son cobros que siguen en la billetera hasta su traslado.
+                        Desde esa fecha queda disponible en el banco.
+                    </p>
+                </div>
+                <div class="table-responsive">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-800/60">
+                                <th>Traslado</th>
+                                <th>Billetera</th>
+                                <th>Banco destino</th>
+                                <th class="text-right">Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in forecast.wallet_transfers.rows" :key="item.id">
+                                <td class="whitespace-nowrap text-sm">
+                                    {{ fecha(item.scheduled_date) }}
+                                    <span v-if="item.overdue" class="ml-1 text-xs font-medium text-warning">vencido</span>
+                                    <span v-else-if="item.days === 0" class="ml-1 text-xs text-success">hoy</span>
+                                </td>
+                                <td class="text-sm">{{ item.wallet || '—' }}</td>
+                                <td class="text-sm">{{ item.bank || '—' }}</td>
+                                <td class="text-right text-sm font-semibold">{{ money(item.amount, item.currency) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Resumen -->
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                 <div class="panel p-5">

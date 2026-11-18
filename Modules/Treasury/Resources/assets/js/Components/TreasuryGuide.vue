@@ -34,20 +34,21 @@
                 'Crea las cuentas que falten con «Crear cuentas según parámetros».',
                 'Asigna cada método de pago a su cuenta para que los cobros caigan solos.',
                 'Registra el saldo inicial con su fecha real de corte.',
+                'Si la billetera tarda en pasar el dinero al banco, configura sus días hábiles: el cobro queda en la billetera y se transfiere solo en la fecha acordada.',
             ],
             evitar: [
                 'No cambies el saldo inicial sin un respaldo: altera todos los reportes.',
                 'No borres una cuenta con movimientos: el sistema la desactiva para conservar el historial.',
             ],
-            clave: 'La cuenta de Detracción no se crea ni se edita aquí: es del sistema.',
+            clave: 'La cuenta de Detracción no se crea ni se edita aquí: es del sistema. Las transferencias de billeteras con plazo aparecen en esta pantalla hasta que se ejecutan.',
         },
         transfers: {
             titulo: 'Transferencias',
-            para: 'Mueve dinero entre cuentas propias aplicando ITF y comisiones (fijas o porcentuales) con su IGV.',
+            para: 'Mueve dinero entre cuentas propias aplicando ITF y comisiones (fijas o porcentuales), sin IGV.',
             hacer: [
                 'Verifica la cuenta de origen y el saldo antes de confirmar.',
                 'Escribe una referencia reconocible: banco, operación o motivo.',
-                'Revisa el desglose de comisión e IGV antes de guardar.',
+                'Revisa el desglose de comisiones e ITF antes de guardar.',
             ],
             evitar: [
                 'No transfieras entre la misma cuenta: el sistema lo bloquea.',
@@ -62,12 +63,14 @@
                 'Registra cada gasto con su categoría y centro de costo para que los reportes sirvan.',
                 'Adjunta el comprobante cuando exista.',
                 'Filtra por fecha para revisar un periodo concreto.',
+                'Si una factura desde S/ 700 muestra «Falta detracción», usa «Hacer auto-detracción» en su cobro: el importe pasa de esa cuenta a Detracción.',
             ],
             evitar: [
                 'No dupliques movimientos que ya llegaron solos desde ventas, pagos o cobros.',
                 'No edites movimientos anulados ni de una conciliación cerrada.',
+                'No hagas la auto-detracción dos veces: la segunda intenta se rechaza.',
             ],
-            clave: 'Si un cobro no apareció, revisa «Cobros sin cuenta» antes de crearlo a mano.',
+            clave: 'Si un cobro no apareció, revisa «Cobros sin cuenta» antes de crearlo a mano. Al emitir una factura desde S/ 700 se decide si el cliente deposita la detracción o si la empresa la transfiere después desde aquí.',
         },
         payments: {
             titulo: 'Pagos',
@@ -99,15 +102,32 @@
         },
         cash: {
             titulo: 'Efectivo',
-            para: 'Ventas cobradas en efectivo y sus egresos, para cuadrar la caja del día.',
+            para: 'Ventas cobradas en efectivo, sus egresos y el arqueo de cada sesión de caja.',
             hacer: [
-                'Compáralo con el dinero físico antes de cerrar el día.',
-                'Usa el filtro de fecha para el cuadre diario.',
+                'Cuenta los billetes y monedas con «Arquear» y registra la diferencia.',
+                'Si hay faltante o sobrante, explica el motivo en la nota.',
+                'Cierra la sesión con el dinero contado cuando termines el turno.',
             ],
             evitar: [
-                'No registres movimientos aquí: esta pantalla es de solo lectura.',
+                'No cierres sin contar: el saldo final queda con lo que declares.',
+                'No intentes corregir un arqueo anterior: registra uno nuevo y explica.',
             ],
-            clave: 'Si falta efectivo, revisa los cobros vinculados a la cuenta de caja.',
+            clave: 'El arqueo es inmutable y queda auditado con tu usuario.',
+        },
+        documents: {
+            titulo: 'Cartera',
+            para: 'Cheques y letras por cobrar (de clientes) y por pagar (a proveedores), con su vencimiento.',
+            hacer: [
+                'Consulta el DNI o RUC del emisor para traer su nombre desde RENIEC o SUNAT.',
+                'Registra el número, el emisor y el vencimiento tal como figuran en el documento.',
+                'Marca «Depositado» al llevarlo al banco y «Cobrado» o «Pagado» cuando el dinero se mueva.',
+                'Si vence sin pago, márcalo «Protestado» y deja la nota.',
+            ],
+            evitar: [
+                'No lo uses como reemplazo del libro: el cobro o pago real se registra en Movimientos.',
+                'No anules para corregir: anular es definitivo y queda auditado.',
+            ],
+            clave: 'Los documentos pendientes entran solos a la previsión de caja por su vencimiento.',
         },
         collections: {
             titulo: 'Cobros sin cuenta',
@@ -126,14 +146,16 @@
             titulo: 'Conciliación',
             para: 'Compara el libro con el estado de cuenta del banco y cierra con un acta inmutable.',
             hacer: [
-                'Marca las partidas conciliadas y explica cada diferencia.',
-                'Cierra el mes después de revisar los pendientes.',
+                'Importa el extracto (CSV, Excel u OFX): el sistema propone las columnas y tú las confirmas.',
+                'Revisa la comparación: las líneas que coinciden en monto y fecha quedan aceptadas.',
+                'Registra como movimiento las líneas del banco que el libro no trae, o déjalas como partida.',
             ],
             evitar: [
+                'No apliques la importación sin revisar el mapeo: una columna mal elegida empareja mal.',
                 'No cierres con diferencias sin explicar: el acta queda inmutable.',
                 'No intentes editar movimientos de una conciliación cerrada.',
             ],
-            clave: 'Al cerrar, los movimientos del periodo quedan bloqueados para edición.',
+            clave: 'El extracto compara el banco con el libro en su rango de fechas; las líneas sin par puedes convertirlas en movimientos o dejarlas como partidas.',
         },
         periods: {
             titulo: 'Periodos',
@@ -150,8 +172,9 @@
         },
         detraction: {
             titulo: 'Detracción',
-            para: 'Cuenta restringida con el 12 % de las facturas desde S/ 700. Solo sirve para pagar IGV.',
+            para: 'Cuenta del Banco de la Nación con el 12 %, 10 % o 4 % de las facturas desde S/ 700. El IGV sigue siendo 18 % y solo se paga desde este saldo.',
             hacer: [
+                'Registra el número de cuenta para que el cliente sepa dónde depositar.',
                 'Úsala para pagar el IGV del periodo desde Impuestos.',
                 'Libera el saldo a una cuenta de la empresa cuando SUNAT lo habilite.',
                 'Si necesitas corregir el saldo, usa «Ajuste manual» con un motivo claro.',
@@ -283,6 +306,76 @@
         pistaTimer = setTimeout(ocultarPista, 5200);
     };
 
+    // ─── Ocultar el botón cuando estorba ──────────────────────────────────
+    // El botón flota sobre la esquina de la tabla y a veces tapa datos. Si el
+    // puntero descansa encima más de 4 s, el botón se desvanece para dejar ver
+    // lo que hay detrás; mientras el puntero siga en ese lugar permanece
+    // oculto y vuelve 10 s después de alejarse.
+    const MS_PARA_OCULTAR = 4000;
+    const MS_PARA_VOLVER = 10000;
+
+    const botonOculto = ref(false);
+    const refBoton = ref(null);
+    let ocultarTimer = null;
+    let reaparecerTimer = null;
+    let zonaOculta = null;
+
+    // Sigue al puntero: solo cuando sale del área que ocupaba el botón empieza
+    // la cuenta para que reaparezca.
+    function vigilarSalida(evento) {
+        if (!zonaOculta) return;
+
+        const dentro = evento.clientX >= zonaOculta.left
+            && evento.clientX <= zonaOculta.right
+            && evento.clientY >= zonaOculta.top
+            && evento.clientY <= zonaOculta.bottom;
+
+        if (dentro) return;
+
+        document.removeEventListener('mousemove', vigilarSalida);
+        reaparecerTimer = setTimeout(() => {
+            reaparecerTimer = null;
+            zonaOculta = null;
+            botonOculto.value = false;
+        }, MS_PARA_VOLVER);
+    }
+
+    const programarOcultado = () => {
+        if (typeof window === 'undefined' || botonOculto.value) return;
+
+        clearTimeout(ocultarTimer);
+        ocultarTimer = setTimeout(() => {
+            ocultarTimer = null;
+
+            if (!refBoton.value) return;
+
+            const caja = refBoton.value.getBoundingClientRect();
+            zonaOculta = { left: caja.left, top: caja.top, right: caja.right, bottom: caja.bottom };
+            botonOculto.value = true;
+            document.addEventListener('mousemove', vigilarSalida);
+        }, MS_PARA_OCULTAR);
+    };
+
+    // Si el puntero se va antes de los 4 s, el botón sigue visible.
+    const cancelarOcultado = () => {
+        clearTimeout(ocultarTimer);
+        ocultarTimer = null;
+    };
+
+    const reiniciarOcultado = () => {
+        clearTimeout(ocultarTimer);
+        clearTimeout(reaparecerTimer);
+        ocultarTimer = null;
+        reaparecerTimer = null;
+
+        if (typeof document !== 'undefined') {
+            document.removeEventListener('mousemove', vigilarSalida);
+        }
+
+        zonaOculta = null;
+        botonOculto.value = false;
+    };
+
     const mostrar = () => {
         if (!guia.value || typeof window.alertaSistema !== 'function') return;
 
@@ -315,6 +408,8 @@
                 delete document.body.dataset.aracoditoView;
             }
 
+            // Cada pestaña arranca con el botón visible.
+            reiniciarOcultado();
         },
         { immediate: true }
     );
@@ -324,24 +419,39 @@
         mostrarPista();
     });
 
-    onBeforeUnmount(ocultarPista);
+    onBeforeUnmount(() => {
+        ocultarPista();
+        reiniciarOcultado();
+    });
 </script>
 
 <template>
-    <div v-if="guia" class="fixed bottom-24 ltr:right-6 rtl:left-6 z-40 flex items-end gap-1">
-        <!-- Pista: flecha que señala el botón y desaparece sola -->
+    <div v-if="guia" class="fixed bottom-24 ltr:right-6 rtl:left-6 z-40 flex items-end gap-2">
+        <!-- Pista: flecha grande que señala el botón y desaparece sola -->
         <transition name="pista">
-            <div v-if="pistaVisible" class="pointer-events-none mb-6 flex items-center gap-1.5 rounded-lg bg-gray-900/90 px-2.5 py-1.5 text-[11px] font-medium text-white shadow-lg dark:bg-black/80">
+            <div v-if="pistaVisible && !botonOculto"
+                class="pointer-events-none mb-9 flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white shadow-xl ring-2 ring-warning/70">
                 <span>Toca aquí para la guía</span>
-                <font-awesome-icon :icon="faArrowRight" class="animate-bounce text-primary" style="transform: rotate(45deg)" />
+                <font-awesome-icon :icon="faArrowRight" class="pista-flecha text-3xl text-warning" />
             </div>
         </transition>
 
-        <button type="button" class="btn btn-primary rounded-full shadow-lg gap-2 px-4 py-3" @click="mostrar"
-            :title="`Guía de Aracodito: ${guia.titulo}`">
-            <font-awesome-icon :icon="faRobot" />
-            <span class="hidden sm:inline">Guía</span>
-        </button>
+        <div
+            ref="refBoton"
+            class="relative origin-bottom-right transition duration-300"
+            :class="botonOculto ? 'pointer-events-none scale-90 opacity-0' : 'scale-100 opacity-100'"
+            @mouseenter="programarOcultado"
+            @mouseleave="cancelarOcultado"
+        >
+            <!-- Latido alrededor del botón mientras dura la pista -->
+            <span v-if="pistaVisible && !botonOculto" class="pointer-events-none absolute inset-0 animate-ping rounded-full bg-primary/60"></span>
+
+            <button type="button" class="btn btn-primary relative rounded-full shadow-lg gap-2 px-4 py-3" @click="mostrar"
+                :title="`Guía de Aracodito: ${guia.titulo}`">
+                <font-awesome-icon :icon="faRobot" />
+                <span class="hidden sm:inline">Guía</span>
+            </button>
+        </div>
     </div>
 </template>
 
@@ -356,5 +466,21 @@
     .pista-leave-to {
         opacity: 0;
         transform: translateX(8px);
+    }
+
+    /* La flecha rebota en diagonal, hacia el botón. */
+    @keyframes pistaFlecha {
+        0%,
+        100% {
+            transform: rotate(45deg) translate(0, 0) scale(1);
+        }
+
+        50% {
+            transform: rotate(45deg) translate(4px, 4px) scale(1.18);
+        }
+    }
+
+    .pista-flecha {
+        animation: pistaFlecha 0.9s ease-in-out infinite;
     }
 </style>

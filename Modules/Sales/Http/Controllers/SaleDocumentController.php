@@ -325,6 +325,10 @@ class SaleDocumentController extends Controller
                     $typeOperation = '1001';
                 }
 
+                // Contrato y cuota de Comercial que originan el comprobante, si
+                // el comprobante se emitio desde el cronograma de un contrato.
+                [$commercialContractId, $commercialPaymentId] = $this->commercialOrigin($request);
+
                 $document = SaleDocument::create([
                     'sale_id' => $sale->id,
                     'serie_id' => $request->get('serie'),
@@ -354,11 +358,21 @@ class SaleDocumentController extends Controller
                     'user_id' => Auth::id(),
                     'additional_description' => $request->get('additional_description'),
                     'overall_total' => $request->get('total'),
+                    // Referencia (solo para mostrar) al contrato/cuota de Comercial.
+                    'commercial_contract_id' => $commercialContractId,
+                    'commercial_contract_payment_id' => $commercialPaymentId,
 
                 ]);
 
                 // Marca la factura con su estado de detracción (12 % desde S/ 700).
                 app(\Modules\Treasury\Services\TreasuryDetractionService::class)->syncDocument($document);
+
+                // Decisión tomada al emitir: el cliente deposita la detracción
+                // o la empresa la transferirá después (auto-detracción).
+                if ($request->has('detraccion_auto')) {
+                    $document->detraccion_auto = $request->boolean('detraccion_auto');
+                    $document->save();
+                }
 
                 // /obtenemos los productos o servicios para insertar en los
                 // /detalles de la venta y el documento
@@ -1387,6 +1401,34 @@ class SaleDocumentController extends Controller
     private function recordTreasuryIncomes(Sale $sale): void
     {
         TreasuryHooks::recordSaleIncomes($sale);
+    }
+
+    /**
+     * Contrato y cuota de Comercial que originan el comprobante.
+     *
+     * El cronograma de un contrato envia la cuota (commercial_payment_id) al
+     * emitir su factura o boleta; el comprobante que agrupa cuotas de un solo
+     * contrato envia su id. Son solo referencias para mostrar el origen del
+     * cobro en Tesorería.
+     *
+     * @return array{0: ?int, 1: ?int}
+     */
+    private function commercialOrigin(Request $request): array
+    {
+        $paymentClass = \Modules\Commercial\Entities\CommercialContractPayment::class;
+        $contractId = $request->get('commercial_contract_id');
+        $paymentId = $request->get('commercial_payment_id');
+
+        if (! class_exists($paymentClass)) {
+            return [null, null];
+        }
+
+        $payment = $paymentId ? $paymentClass::find((int) $paymentId) : null;
+
+        return [
+            $contractId ? (int) $contractId : ($payment?->contract_id ? (int) $payment->contract_id : null),
+            $payment?->id ? (int) $payment->id : null,
+        ];
     }
 
     /**

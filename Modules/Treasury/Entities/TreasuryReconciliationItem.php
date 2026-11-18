@@ -25,8 +25,11 @@ class TreasuryReconciliationItem extends Model
         'treasury_reconciliation_id',
         'cutoff_date',
         'description',
+        'reference',
         'amount',
         'type',
+        'source',
+        'statement_import_id',
         'status',
         'resolved_transaction_id',
         'created_by',
@@ -50,6 +53,11 @@ class TreasuryReconciliationItem extends Model
     public function resolvedTransaction(): BelongsTo
     {
         return $this->belongsTo(TreasuryTransaction::class, 'resolved_transaction_id');
+    }
+
+    public function statementImport(): BelongsTo
+    {
+        return $this->belongsTo(TreasuryStatementImport::class, 'statement_import_id');
     }
 
     public function creator(): BelongsTo

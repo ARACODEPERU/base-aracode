@@ -5,6 +5,7 @@ namespace Modules\Treasury\Services;
 use App\Models\Sale;
 use App\Models\SaleDocument;
 use Illuminate\Support\Facades\Log;
+use Modules\Onlineshop\Entities\OnliSale;
 use Modules\Sales\Entities\SaleDocumentQuota;
 use Modules\Sales\Entities\SalePaymentQuota;
 use Modules\Sales\Entities\SalePaymentSchedule;
@@ -45,6 +46,14 @@ class TreasuryHooks
      */
     public static function saleIncomeMovements(Sale $sale, string $source = TreasuryTransaction::SOURCE_AUTO): array
     {
+        // El carrito web cobra al aprobarse el pago de MercadoPago y registra su
+        // ingreso en ese momento. La nota de venta que se crea al finalizar
+        // conserva ese pago en su JSON, así que emitir después la boleta o
+        // factura no debe volver a sumar el mismo dinero al saldo.
+        if (self::comesFromPaidOnlineCart($sale)) {
+            return [];
+        }
+
         $ledger = app(TreasuryLedgerService::class);
         $payments = $ledger->normalizeSalePayments($sale->payments)->values();
 
@@ -54,6 +63,13 @@ class TreasuryHooks
 
         $document = $sale->documents()->orderByDesc('id')->first();
         [$currency, $rate] = $ledger->resolveDocumentCurrency($document);
+
+        // Comprobante emitido desde el cronograma de un contrato de Comercial:
+        // el movimiento se describe con el contrato y se liga solo para mostrarlo.
+        $contract = self::commercialContract($document);
+        $description = $contract
+            ? mb_substr('Cobro de contrato · ' . trim((string) $contract->title), 0, 250)
+            : 'Cobro de venta';
 
         $movements = [];
 
@@ -71,17 +87,45 @@ class TreasuryHooks
                 currency: $currency,
                 exchangeRate: $rate,
                 reference: self::withExchangeRateNote($payment['reference'], $currency, $rate),
-                description: 'Cobro de venta',
+                description: $description,
                 userId: $sale->user_id ? (int) $sale->user_id : null,
                 meta: [
                     'sale_id' => $sale->id,
                     'document_id' => $document?->id,
+                    'commercial_contract_id' => $contract?->id,
                 ],
                 source: $source,
             );
         }
 
         return $movements;
+    }
+
+    /**
+     * Indica si la venta nació de un carrito cuyo cobro ya está en el libro.
+     */
+    private static function comesFromPaidOnlineCart(Sale $sale): bool
+    {
+        if (! class_exists(\Modules\Onlineshop\Entities\OnliSale::class)) {
+            return false;
+        }
+
+        $onlineSaleIds = \Modules\Onlineshop\Entities\OnliSale::query()
+            ->where('nota_sale_id', $sale->id)
+            ->pluck('id')
+            ->all();
+
+        if ($onlineSaleIds === []) {
+            return false;
+        }
+
+        return TreasurySourceMovement::query()
+            ->where('source_type', 'onli_sale')
+            ->whereIn('source_id', $onlineSaleIds)
+            ->where('operation', 'cart_income')
+            ->where('status', TreasurySourceMovement::STATUS_PROCESSED)
+            ->whereNotNull('treasury_transaction_id')
+            ->exists();
     }
 
     /**
@@ -217,6 +261,60 @@ class TreasuryHooks
     }
 
     /**
+     * Ingreso de una compra online ya aprobada por MercadoPago (carrito o
+     * suscripción vendida desde la web).
+     *
+     * Se registra con el mismo origen que el carrito web (onli_sale /
+     * cart_income) para que, si después se emite la boleta o factura de la nota
+     * de venta, saleIncomeMovements reconozca que ese dinero ya está en el
+     * libro y no lo sume dos veces. Va a la cuenta de la billetera MercadoPago.
+     * Es best-effort: un fallo se registra y no interrumpe la compra.
+     */
+    public static function recordOnlineSaleIncome(OnliSale $sale, ?string $description = null): ?TreasuryTransaction
+    {
+        if (! self::enabled()) {
+            return null;
+        }
+
+        try {
+            $account = app(PaymentAccountResolver::class)->walletForName('MercadoPago');
+
+            if (! $account) {
+                Log::warning('[Treasury] No hay cuenta de MercadoPago para la venta online', [
+                    'onli_sale_id' => $sale->id,
+                ]);
+
+                return null;
+            }
+
+            $sale->refresh();
+
+            return self::dispatch(new FinancialMovement(
+                module: TreasurySourceMovement::MODULE_SALES,
+                sourceType: 'onli_sale',
+                sourceId: (int) $sale->id,
+                operation: 'cart_income',
+                type: TreasurySourceMovement::TYPE_INCOME,
+                amount: (float) $sale->total,
+                date: $sale->response_date_approved ?: now(),
+                currency: $sale->currency ?: 'PEN',
+                exchangeRate: $sale->exchange_rate ? (float) $sale->exchange_rate : null,
+                reference: $sale->mercado_payment_id ? 'MercadoPago #' . $sale->mercado_payment_id : null,
+                description: $description ?: 'Venta online - Carrito #' . $sale->id,
+                treasuryAccountId: (int) $account->id,
+                meta: ['onli_sale_id' => $sale->id],
+            ))?->treasuryTransaction;
+        } catch (\Throwable $e) {
+            Log::warning('[Treasury] No se registró el ingreso de la venta online', [
+                'onli_sale_id' => $sale->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
      * Ingreso de una venta cobrada en una cuenta de tesorería concreta.
      *
      * Las negociaciones comerciales no eligen un método de pago de ventas: el
@@ -267,7 +365,7 @@ class TreasuryHooks
                 'document_id' => $document?->id,
             ],
             source: TreasuryTransaction::SOURCE_AUTO,
-        ));
+        ))?->treasuryTransaction;
 
         if ($document) {
             self::registerDetractionAfter($income, $document, $sale->user_id ? (int) $sale->user_id : null);
@@ -293,7 +391,7 @@ class TreasuryHooks
             return null;
         }
 
-        $income = self::dispatch($movement);
+        $income = self::dispatch($movement)?->treasuryTransaction;
 
         self::registerDetractionAfter($income, $document);
 
@@ -322,7 +420,7 @@ class TreasuryHooks
             return null;
         }
 
-        $income = self::dispatch($movements[0]);
+        $income = self::dispatch($movements[0])?->treasuryTransaction;
 
         if ($document) {
             self::registerDetractionAfter($income, $document);
@@ -401,7 +499,7 @@ class TreasuryHooks
             userId: auth()->id(),
             meta: ['sale_id' => $document->sale_id, 'document_id' => $document->id],
 
-        ));
+        ))?->treasuryTransaction;
 
         self::registerDetractionAfter($income, $document);
 
@@ -830,8 +928,7 @@ class TreasuryHooks
         }
     }
 
-    private static function dispatch(FinancialMovement $movement): ?TreasuryTransaction
-
+    private static function dispatch(FinancialMovement $movement): ?TreasurySourceMovement
     {
         try {
             return app(TreasuryIntegrationService::class)->register($movement);
@@ -890,6 +987,22 @@ class TreasuryHooks
 
         // La columna description del libro es de 255 caracteres.
         return mb_substr(implode(' · ', $parts), 0, 250);
+    }
+
+    /**
+     * Contrato de Comercial vinculado al comprobante, si el comprobante se
+     * emitio desde el cronograma de un contrato. Solo se usa para la
+     * descripcion y el detalle del movimiento.
+     */
+    private static function commercialContract(?SaleDocument $document): ?object
+    {
+        $class = \Modules\Commercial\Entities\CommercialContract::class;
+
+        if (! $document || ! $document->commercial_contract_id || ! class_exists($class)) {
+            return null;
+        }
+
+        return $class::find((int) $document->commercial_contract_id);
     }
 
     /** Número visible del comprobante (serie-correlativo). */

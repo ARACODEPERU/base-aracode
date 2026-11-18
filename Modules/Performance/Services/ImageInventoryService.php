@@ -60,7 +60,9 @@ class ImageInventoryService
                 'id'               => $state->path,
                 'name'             => basename($state->path),
                 'path'             => $state->path,
-                'url'              => null,
+                // El archivo ya no está en public/: se sirve con permiso desde
+                // su copia en cuarentena para poder verlo y previsualizarlo.
+                'url'              => route('performance_images_quarantine_file', ['path' => $state->path]),
                 'folder'           => Str::after($state->path, 'public/'),
                 'bytes'            => (int) $state->bytes,
                 'width'            => $state->width,

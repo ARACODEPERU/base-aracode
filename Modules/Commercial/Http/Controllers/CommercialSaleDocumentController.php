@@ -364,6 +364,11 @@ class CommercialSaleDocumentController extends Controller
                     ], 422);
                 }
 
+                // Con cuotas de un solo contrato el comprobante queda ligado a ese
+                // contrato (y a su cuota si es una sola) solo para mostrar el origen
+                // del cobro en Tesorería. Con varios contratos no hay uno que mostrar.
+                $contractIds = collect($quotas)->pluck('quota.contract_id')->filter()->unique()->values();
+
                 $payload = [
                     'client_id' => $client->id,
                     'client_name' => $client->number.'-'.$client->full_name,
@@ -400,6 +405,8 @@ class CommercialSaleDocumentController extends Controller
                         ])->values()->all()]
                         : [],
                     'additional_description' => $data['additional_description'] ?? null,
+                    'commercial_contract_id' => $contractIds->count() === 1 ? (int) $contractIds->first() : null,
+                    'commercial_payment_id' => count($quotas) === 1 ? (int) $quotas[0]['quota']->id : null,
                 ];
 
                 $documentRequest = Request::create('/sales/saledocuments/store', 'POST', $payload);

@@ -7,6 +7,7 @@ use Modules\Treasury\Console\BackfillTreasuryCommand;
 use Modules\Treasury\Console\RetryTreasuryIntegrationCommand;
 use Modules\Treasury\Console\RunTreasuryRecurringExpenses;
 use Modules\Treasury\Console\RunTreasuryScheduledCharges;
+use Modules\Treasury\Console\RunTreasuryWalletTransfers;
 use Modules\Treasury\Services\PaymentAccountResolver;
 use Modules\Treasury\Services\TreasuryIntegrationService;
 use Modules\Treasury\Services\TreasuryLedgerService;
@@ -41,6 +42,7 @@ class TreasuryServiceProvider extends ServiceProvider
                 RetryTreasuryIntegrationCommand::class,
                 RunTreasuryScheduledCharges::class,
                 RunTreasuryRecurringExpenses::class,
+                RunTreasuryWalletTransfers::class,
             ]);
         }
 
@@ -55,6 +57,12 @@ class TreasuryServiceProvider extends ServiceProvider
                 ->timezone('America/Lima');
 
             $schedule->command('treasury:run-recurring')
+                ->everyMinute()
+                ->withoutOverlapping()
+                ->timezone('America/Lima');
+
+            // Billeteras con plazo: traslada al banco cuando llega la fecha hábil.
+            $schedule->command('treasury:run-wallet-transfers')
                 ->everyMinute()
                 ->withoutOverlapping()
                 ->timezone('America/Lima');

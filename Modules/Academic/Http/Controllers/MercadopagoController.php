@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\Academic\Operations\StudentSubscription;
+use Modules\Academic\Services\SubscriptionPreapprovalService;
 use Modules\Onlineshop\Entities\OnliSale;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
@@ -43,9 +44,18 @@ class MercadopagoController extends Controller
 
         $amount = 0;
         if ($subscription->prices) {
-            foreach (json_decode($subscription->prices) as $price) {
-                if ($price->currency == 'PEN') {
-                    $amount = $price->amount;
+            $precios = $subscription->prices;
+
+            if (is_string($precios)) {
+                $precios = json_decode($precios) ?: [];
+            }
+
+            foreach ($precios as $price) {
+                $currency = is_array($price) ? ($price['currency'] ?? null) : ($price->currency ?? null);
+                $monto = is_array($price) ? ($price['amount'] ?? 0) : ($price->amount ?? 0);
+
+                if ($currency == 'PEN') {
+                    $amount = $monto;
                 }
             }
         }
@@ -88,6 +98,51 @@ class MercadopagoController extends Controller
                 return response()->json([
                     'error' => 'Mercado Pago no genero el token de tarjeta. Recarga el formulario y vuelve a ingresar los datos de la tarjeta.'
                 ], 422);
+            }
+
+            // Plan con cobro automático: la tarjeta se autoriza con un preapproval y
+            // el primer cobro lo hace MercadoPago, sin un pago único aparte.
+            if ($sus && $sus->recurring_enabled) {
+                if ($request->get('payment_method_id') === 'yape') {
+                    return response()->json([
+                        'error' => 'Los planes con cobro automático requieren tarjeta de crédito o débito.'
+                    ], 422);
+                }
+
+                if (! Auth::check()) {
+                    return response()->json([
+                        'error' => 'Inicia sesión para activar el cobro automático de tu suscripción.'
+                    ], 401);
+                }
+
+                $person = Person::find(Auth::user()->person_id);
+                $student = AcaStudent::firstOrCreate([
+                    'person_id' => $person->id,
+                    'student_code' => $person->number,
+                ]);
+
+                $preapprovalService = app(SubscriptionPreapprovalService::class);
+
+                if ($preapprovalService->activeFor($student->id, $sus->id)) {
+                    return response()->json([
+                        'status' => 'authorized',
+                        'message' => 'Tu suscripción con cobro automático ya está activa.',
+                        'url' => route('aca_mycourses'),
+                    ]);
+                }
+
+                $preapproval = $preapprovalService->create($student, $sus, $request->all());
+
+                $sale = (new StudentSubscription($id))->process($request->all(), (object) [
+                    'id' => $preapproval->preapproval_id,
+                    'status' => 'approved',
+                ], $preapproval);
+
+                return response()->json([
+                    'status' => 'authorized',
+                    'message' => 'Suscripción activada con cobro automático',
+                    'url' => route('web_gracias_por_comprar', $sale->id),
+                ]);
             }
 
             if ($request->get('payment_method_id') == 'yape') {
@@ -158,6 +213,8 @@ class MercadopagoController extends Controller
             }
 
             return response()->json(['error' => 'Error al procesar el pago: ' . $message], 412);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         }
     }
 

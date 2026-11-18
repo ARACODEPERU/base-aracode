@@ -24,11 +24,13 @@ class TreasuryTransaction extends Model
     public const SOURCE_AUTO = 'auto';
     public const SOURCE_MANUAL = 'manual';
     public const SOURCE_BACKFILL = 'backfill';
+    public const SOURCE_STATEMENT = 'statement';
 
     protected $fillable = [
         'treasury_account_id',
         'source_wallet_account_id',
         'transaction_date',
+        'transaction_time',
         'type',
         'treasury_category_id',
         'cost_center_id',
@@ -43,6 +45,7 @@ class TreasuryTransaction extends Model
         'igv_amount',
         'itf_amount',
         'reference',
+        'operation_number',
         'description',
         'attachment_path',
         'payment_method_id',
@@ -64,6 +67,34 @@ class TreasuryTransaction extends Model
         'reconciled_at' => 'datetime',
         'voided_at' => 'datetime',
     ];
+
+    /**
+     * Normaliza la hora del movimiento a HH:MM:SS (o null si no es válida).
+     * El input del navegador envía HH:MM; los extractos suelen traer HH:MM:SS.
+     */
+    public static function normalizeTimeValue(mixed $value): ?string
+    {
+        $text = trim((string) $value);
+
+        if ($text === '') {
+            return null;
+        }
+
+        foreach (['H:i:s', 'H:i'] as $format) {
+            $parsed = \DateTime::createFromFormat($format, $text);
+
+            if ($parsed && $parsed->format($format) === $text) {
+                return $parsed->format('H:i:s');
+            }
+        }
+
+        return null;
+    }
+
+    public function setTransactionTimeAttribute(mixed $value): void
+    {
+        $this->attributes['transaction_time'] = self::normalizeTimeValue($value);
+    }
 
     protected static function booted(): void
     {

@@ -26,7 +26,10 @@
         currencies: { type: Array, default: () => ['PEN'] },
         filters: { type: Object, default: () => ({}) },
         projection: { type: Object, required: true },
+        budgets: { type: Object, default: () => ({ month: '', label: '', rows: [], totals: [], over: 0, warning: 0 }) },
+        budgetOptions: { type: Object, default: () => ({ costCenters: [], categories: [] }) },
         canManageCenters: { type: Boolean, default: false },
+        canManageBudgets: { type: Boolean, default: false },
     });
 
     const money = (value, currency = 'PEN') => {
@@ -260,6 +263,66 @@
 
     const typeLabel = (type) => (type === 'income' ? 'Ingreso' : 'Egreso');
 
+    // ---------------- Presupuesto por centro de costo ----------------
+    const budgetModal = ref(false);
+    const budgetEditing = ref(null);
+    const budgetForm = useForm({
+        month: props.budgets.month || new Date().toISOString().slice(0, 7),
+        cost_center_id: null,
+        treasury_category_id: null,
+        currency: 'PEN',
+        amount: '',
+        notes: '',
+    });
+
+    const openBudget = (row = null) => {
+        budgetEditing.value = row?.id || null;
+        budgetForm.clearErrors();
+        budgetForm.month = props.budgets.month || new Date().toISOString().slice(0, 7);
+        budgetForm.cost_center_id = row?.cost_center_id || null;
+        budgetForm.treasury_category_id = row?.category_id || null;
+        budgetForm.currency = row?.currency || props.filters.currency || 'PEN';
+        budgetForm.amount = row?.amount ?? '';
+        budgetForm.notes = row?.notes || '';
+        budgetModal.value = true;
+    };
+
+    const saveBudget = () => {
+        budgetForm.post(route('treasury_budgets_store'), {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                notifyFlash(page);
+                budgetModal.value = false;
+            },
+            onError: () => window.alertaSistema('Revisa el presupuesto', 'Elige el centro de costo e indica un monto mayor que cero.', 'warning'),
+        });
+    };
+
+    const removeBudget = async (row) => {
+        const result = await window.alertaSistema(
+            'Eliminar presupuesto',
+            `Se quitará el presupuesto de «${row.center}» (${row.category}). Los movimientos reales no se tocan.`,
+            'warning',
+            { duration: 0, showCancelButton: true, confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar' }
+        );
+
+        if (!result?.isConfirmed) return;
+
+        router.delete(route('treasury_budgets_destroy', row.id), { preserveScroll: true, onSuccess: notifyFlash });
+    };
+
+    const budgetStatusClass = (status) => ({
+        ok: 'bg-success/10 text-success',
+        warning: 'bg-warning/10 text-warning',
+        over: 'bg-danger/10 text-danger',
+    }[status] || 'bg-gray-100 text-gray-600');
+
+    const budgetBarClass = (status) => ({
+        ok: 'bg-success',
+        warning: 'bg-warning',
+        over: 'bg-danger',
+    }[status] || 'bg-primary');
+
     // ---------------- Exportación (Excel y PDF en el navegador) ----------------
     const usuario = computed(() => usePage().props.auth?.user || {});
     const exportando = ref(null);
@@ -442,6 +505,9 @@
                     <p class="text-sm opacity-80">Consolidado en {{ position.base_currency }}</p>
                     <p class="mt-2 text-2xl font-bold">{{ money(position.consolidated, position.base_currency) }}</p>
                     <p v-if="position.incomplete" class="mt-1 text-xs text-warning">Faltan tipos de cambio</p>
+                    <p v-if="position.detraction" class="mt-1 text-xs opacity-80">
+                        Aparte: {{ money(position.detraction, position.base_currency) }} en detracción (solo IGV)
+                    </p>
                 </div>
                 <div v-for="group in position.groups" :key="group.currency" class="panel p-5">
                     <p class="text-sm text-gray-500 dark:text-gray-400">Saldo en {{ group.currency }}</p>
@@ -722,6 +788,145 @@
                 </div>
             </div>
         </div>
+
+        <!-- Presupuesto por centro de costo -->
+        <div class="panel mt-5 overflow-hidden p-0">
+            <div class="flex flex-col gap-2 border-b border-gray-200 p-5 sm:flex-row sm:items-center sm:justify-between dark:border-gray-700">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Presupuesto por centro de costo · {{ budgets.label }}</h2>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Monto planificado del mes contra el gasto real del libro. La ejecución se calcula, no se guarda.
+                        <span v-if="budgets.over" class="ml-1 font-medium text-danger">{{ budgets.over }} excedido(s)</span>
+                        <span v-if="budgets.warning" class="ml-1 font-medium text-warning">{{ budgets.warning }} en alerta</span>
+                    </p>
+                </div>
+                <button v-if="canManageBudgets" type="button" class="btn btn-outline-primary" @click="openBudget()">
+                    <font-awesome-icon :icon="faPlus" class="mr-1" /> Presupuesto
+                </button>
+            </div>
+
+            <div v-if="budgets.totals.length" class="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 xl:grid-cols-4">
+                <div v-for="total in budgets.totals" :key="total.currency" class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Presupuesto {{ total.currency }}</p>
+                    <p class="mt-1 text-xl font-bold">{{ money(total.budget, total.currency) }}</p>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Ejecutado {{ money(total.executed, total.currency) }} ·
+                        <span :class="total.available < 0 ? 'text-danger' : 'text-success'">
+                            {{ total.available < 0 ? 'Excedido' : 'Disponible' }} {{ money(Math.abs(total.available), total.currency) }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-800/60">
+                        <tr>
+                            <th>Centro de costo</th>
+                            <th>Categoría</th>
+                            <th class="text-right">Presupuesto</th>
+                            <th class="text-right">Ejecutado</th>
+                            <th class="text-right">Disponible</th>
+                            <th class="min-w-[160px]">Avance</th>
+                            <th class="text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in budgets.rows" :key="row.id">
+                            <td class="text-sm font-medium">{{ row.center }}</td>
+                            <td class="text-sm">{{ row.category }}</td>
+                            <td class="text-right">{{ money(row.amount, row.currency) }}</td>
+                            <td class="text-right">{{ money(row.executed, row.currency) }}</td>
+                            <td class="text-right font-semibold" :class="row.available < 0 ? 'text-danger' : 'text-success'">
+                                {{ money(row.available, row.currency) }}
+                            </td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="h-2 w-full rounded bg-gray-100 dark:bg-gray-700">
+                                        <div
+                                            class="h-2 rounded"
+                                            :class="budgetBarClass(row.status)"
+                                            :style="{ width: Math.min(100, Number(row.usage || 0)) + '%' }"
+                                        ></div>
+                                    </div>
+                                    <span class="rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap" :class="budgetStatusClass(row.status)">
+                                        {{ row.usage === null ? '—' : row.usage + ' %' }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-right">
+                                <div v-if="canManageBudgets" class="flex justify-end gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" title="Editar" @click="openBudget(row)">
+                                        <font-awesome-icon :icon="faPen" />
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar" @click="removeBudget(row)">
+                                        <font-awesome-icon :icon="faBan" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="budgets.rows.length === 0">
+                            <td colspan="7" class="py-6 text-center text-sm text-gray-500">
+                                Sin presupuesto para {{ budgets.label }}. Crea uno para comparar contra el gasto real.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <ModalMedium :show="budgetModal" :on-close="() => (budgetModal = false)" :icon="'/img/cuenta-bancaria.png'">
+            <template #title>{{ budgetEditing ? 'Editar presupuesto' : 'Nuevo presupuesto' }}</template>
+            <template #message><span>Monto mensual de egresos para el centro de costo</span></template>
+            <template #content>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <InputLabel value="Mes *" class="mb-1.5" />
+                        <input v-model="budgetForm.month" type="month" class="form-input w-full" />
+                        <InputError :message="budgetForm.errors.month" />
+                    </div>
+                    <div>
+                        <InputLabel value="Moneda" class="mb-1.5" />
+                        <select v-model="budgetForm.currency" class="form-select w-full">
+                            <option value="PEN">Soles (PEN)</option>
+                            <option value="USD">Dólares (USD)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <InputLabel value="Centro de costo *" class="mb-1.5" />
+                        <select v-model="budgetForm.cost_center_id" class="form-select w-full">
+                            <option :value="null">Elegir centro</option>
+                            <option v-for="center in budgetOptions.costCenters" :key="center.id" :value="center.id">
+                                {{ center.code }} · {{ center.name }}
+                            </option>
+                        </select>
+                        <InputError :message="budgetForm.errors.cost_center_id" />
+                    </div>
+                    <div>
+                        <InputLabel value="Categoría" class="mb-1.5" />
+                        <select v-model="budgetForm.treasury_category_id" class="form-select w-full">
+                            <option :value="null">Todas las categorías</option>
+                            <option v-for="category in budgetOptions.categories" :key="category.id" :value="category.id">{{ category.name }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <InputLabel value="Monto *" class="mb-1.5" />
+                        <input v-model="budgetForm.amount" type="number" min="0.01" step="0.01" class="form-input w-full" />
+                        <InputError :message="budgetForm.errors.amount" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <InputLabel value="Notas" class="mb-1.5" />
+                        <textarea v-model="budgetForm.notes" rows="2" class="form-textarea w-full"></textarea>
+                    </div>
+                    <p class="text-xs text-gray-500 md:col-span-2">
+                        Si ya existe un presupuesto del mismo mes, centro, categoría y moneda, se actualiza en lugar de duplicarse.
+                    </p>
+                </div>
+            </template>
+            <template #buttons>
+                <PrimaryButton :disabled="budgetForm.processing" @click="saveBudget">Guardar presupuesto</PrimaryButton>
+            </template>
+        </ModalMedium>
 
         <ModalMedium :show="centerModal" :on-close="() => (centerModal = false)" :icon="'/img/cuenta-bancaria.png'">
             <template #title>{{ editing ? 'Editar centro de costo' : 'Nuevo centro de costo' }}</template>

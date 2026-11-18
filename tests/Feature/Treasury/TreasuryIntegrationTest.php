@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use InvalidArgumentException;
+use Modules\Onlineshop\Entities\OnliSale;
 use Modules\Sales\Entities\SaleDocumentQuota;
 use Modules\Sales\Entities\SalePaymentQuota;
 use Modules\Sales\Entities\SalePaymentScheduleDestination;
@@ -473,6 +474,69 @@ class TreasuryIntegrationTest extends TestCase
         $this->assertSame(TreasurySourceMovement::STATUS_PROCESSED, $refund->status);
         $this->assertSame(0.0, $this->balance());
         $this->assertSame(2, TreasuryTransaction::query()->count());
+    }
+
+    public function test_una_suscripcion_comprada_por_mercadopago_registra_su_ingreso_en_la_billetera(): void
+    {
+        $account = $this->makeWalletAccount('MercadoPago');
+
+        $onliSale = OnliSale::create([
+            'module_name' => 'Academic',
+            'email' => 'alumno@example.com',
+            'clie_full_name' => 'Alumno de prueba',
+            'total' => 150,
+            'response_status' => 'approved',
+            'response_date_approved' => now()->toDateString(),
+            'response_payment_method_id' => 'visa',
+            'mercado_payment_id' => '778899',
+            'currency' => 'PEN',
+        ]);
+
+        $transaction = TreasuryHooks::recordOnlineSaleIncome($onliSale, 'Suscripción online · Plan Mensual');
+
+        $this->assertNotNull($transaction);
+        $this->assertSame(150.0, (float) $transaction->amount);
+        $this->assertSame((int) $account->id, (int) $transaction->treasury_account_id);
+        $this->assertSame('Suscripción online · Plan Mensual', $transaction->description);
+
+        // El mismo cobro notificado dos veces no duplica el dinero.
+        TreasuryHooks::recordOnlineSaleIncome($onliSale);
+
+        $this->assertSame(1, TreasuryTransaction::query()->count());
+        $this->assertSame(150.0, app(TreasuryLedgerService::class)->accountBalance($account->refresh()));
+
+        $bridge = TreasurySourceMovement::query()->firstOrFail();
+        $this->assertSame('onli_sale', $bridge->source_type);
+        $this->assertSame('cart_income', $bridge->operation);
+    }
+
+    public function test_la_boleta_de_una_suscripcion_online_ya_cobrada_no_vuelve_a_sumar(): void
+    {
+        $this->makeWalletAccount('MercadoPago');
+
+        $onliSale = OnliSale::create([
+            'module_name' => 'Academic',
+            'email' => 'alumno@example.com',
+            'clie_full_name' => 'Alumno de prueba',
+            'total' => 200,
+            'response_status' => 'approved',
+            'response_date_approved' => now()->toDateString(),
+            'mercado_payment_id' => '990011',
+            'currency' => 'PEN',
+        ]);
+
+        TreasuryHooks::recordOnlineSaleIncome($onliSale, 'Suscripción online · Plan Anual');
+
+        // La boleta se emite después sobre la nota de venta que creó la compra online.
+        $sale = $this->makeSale([
+            'total' => 200,
+            'payments' => [['type' => $this->yape->id, 'amount' => 200]],
+        ]);
+        $onliSale->update(['nota_sale_id' => $sale->id]);
+        $this->makeDocument($sale);
+
+        $this->assertSame(0, TreasuryHooks::recordSaleIncomes($sale));
+        $this->assertSame(1, TreasuryTransaction::query()->count());
     }
 
     private function saleIncomeMovement(Sale $sale, int $line, float $amount): FinancialMovement

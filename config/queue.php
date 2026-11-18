@@ -38,7 +38,10 @@ return [
             'driver' => 'database',
             'table' => 'jobs',
             'queue' => 'default',
-            'retry_after' => 90,
+            // Debe superar el job más largo: las campañas académicas declaran
+            // 3600 s y los chunks de Facturador3, 600 s. Si fuera menor, el job
+            // seguiría en ejecución cuando otro worker lo tome y se duplicaría.
+            'retry_after' => 3900,
             'after_commit' => true,
         ],
 

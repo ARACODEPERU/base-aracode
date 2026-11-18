@@ -4,12 +4,14 @@ namespace Modules\Treasury\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Modules\Treasury\Entities\TreasuryAccount;
 use Modules\Treasury\Entities\TreasuryTransfer;
 use Modules\Treasury\Entities\TreasuryTransferProfile;
 use Modules\Treasury\Exceptions\TreasuryOperationException;
 use Modules\Treasury\Services\TreasuryCurrencyService;
+use Modules\Treasury\Services\TreasuryLedgerService;
 use Modules\Treasury\Services\TreasuryTransferService;
 
 /**
@@ -44,6 +46,10 @@ class TreasuryTransferController extends Controller
                 'label' => $account->displayName(),
                 'type' => $account->type,
                 'currency' => $this->currency->accountCurrency($account),
+                // Saldo que la regla de sobregiro usa para esta cuenta; la caja no se limita.
+                'balance' => $account->type === TreasuryAccount::TYPE_CASH
+                    ? null
+                    : app(TreasuryLedgerService::class)->accountBalance($account),
             ]);
 
         $transfers = TreasuryTransfer::query()
@@ -160,9 +166,19 @@ class TreasuryTransferController extends Controller
                 auth()->id(),
             );
         } catch (TreasuryOperationException $e) {
-            return back()->with('error', $e->getMessage());
+            // La operación se rechaza completa: se deja rastro para poder explicarla.
+            Log::warning('Transferencia rechazada', [
+                'user_id' => auth()->id(),
+                'from_account_id' => $from->id,
+                'to_account_id' => $to->id,
+                'amount' => $data['amount'],
+                'transfer_date' => $data['transfer_date'],
+                'motivo' => $e->getMessage(),
+            ]);
+
+            return back()->withInput()->with('error', $e->getMessage());
         } catch (\InvalidArgumentException $e) {
-            return back()->withErrors(['amount' => $e->getMessage()]);
+            return back()->withInput()->withErrors(['amount' => $e->getMessage()]);
         }
 
         return back()->with('success', 'Transferencia registrada.');

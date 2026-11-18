@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Transferencia entre dos cuentas de tesorería (por ejemplo, de Mercado Pago a BCP).
- * Guarda el desglose de comisiones (con su IGV), el ITF y, si las monedas
+ * Guarda el desglose de comisiones (sin IGV entre cuentas propias), el ITF y, si las monedas
  * difieren, el tipo de cambio y el monto realmente acreditado en el destino.
  * Cada gasto se registra además como egreso propio en el libro.
  */

@@ -37,6 +37,33 @@ class FeeCalculatorTest extends TestCase
         $this->assertSame(5.30, $result['total']);
     }
 
+    /**
+     * Importes reales de la web de MercadoPago: 3.49 % + S/ 1.00 + IGV.
+     * MercadoPago redondea las tarifas con IGV a 2 decimales (4.12 % y S/ 1.18)
+     * antes de multiplicar por el monto.
+     */
+    #[DataProvider('comisionesMercadoPago')]
+    public function test_comision_mercado_pago_coincide_con_su_web(float $monto, float $total): void
+    {
+        $calc = new FeeCalculator();
+
+        $result = $calc->commission($monto, 1.0, 3.49, true);
+
+        $this->assertSame($total, $result['total']);
+        $this->assertSame($total, round($result['comision'] + $result['igv'], 2));
+    }
+
+    public static function comisionesMercadoPago(): array
+    {
+        return [
+            'S/ 500' => [500.00, 21.78],
+            'S/ 2500' => [2500.00, 104.18],
+            'S/ 5000' => [5000.00, 207.18],
+            'S/ 8000' => [8000.00, 330.78],
+            'S/ 10000' => [10000.00, 413.18],
+        ];
+    }
+
     public function test_comision_cero_sin_igv(): void
     {
         $calc = new FeeCalculator();

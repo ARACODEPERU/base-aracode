@@ -51,7 +51,9 @@ class IntegrationhubController extends Controller
 
         return Inertia::render('Integrationhub::Integration/Index', [
             'integrations' => $integrations,
-            'filters' => request()->all('search')
+            'filters' => request()->all('search'),
+            // Estado del webhook de MercadoPago para avisar en el listado.
+            'mercadopagoWebhook' => app(\Modules\Academic\Services\MercadoPagoWebhookStatus::class)->state(),
         ]);
     }
 
@@ -105,6 +107,8 @@ class IntegrationhubController extends Controller
             'integration' => $integration,
             'apiRoutes' => $this->integrationhubApiRoutes(),
             'scheduler' => $this->schedulerState(),
+            // Estado del webhook de MercadoPago (se muestra solo en esa integración).
+            'mercadopagoWebhook' => app(\Modules\Academic\Services\MercadoPagoWebhookStatus::class)->state(),
         ]);
     }
 

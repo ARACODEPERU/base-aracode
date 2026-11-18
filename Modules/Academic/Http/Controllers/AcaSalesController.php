@@ -33,6 +33,7 @@ use Modules\Academic\Entities\AcaSubscriptionType;
 use DataTables;
 use Modules\Academic\Entities\AcaSubscriptionPayment;
 use Modules\Sales\Entities\SaleDocumentQuota;
+use Modules\Treasury\Services\TreasuryHooks;
 
 class AcaSalesController extends Controller
 {
@@ -470,6 +471,11 @@ class AcaSalesController extends Controller
                 ]);
 
                 $serie->increment('number', 1);
+
+                // Tesorería: el cobro del comprobante (curso o suscripción) entra
+                // a la cuenta del medio de pago. En crédito no hay dinero recibido,
+                // así que saleIncomeMovements no registra nada.
+                TreasuryHooks::recordSaleIncomes($sale);
 
                 return $document;
             });
