@@ -456,6 +456,8 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
                 ->name('aca_subscriptions_test_start');
             Route::post('renew', [AcaSubscriptionTestModeController::class, 'renew'])
                 ->name('aca_subscriptions_test_renew');
+            Route::post('notice', [AcaSubscriptionTestModeController::class, 'notice'])
+                ->name('aca_subscriptions_test_notice');
             Route::post('cancel', [AcaSubscriptionTestModeController::class, 'cancel'])
                 ->name('aca_subscriptions_test_cancel');
             Route::post('purge', [AcaSubscriptionTestModeController::class, 'purge'])

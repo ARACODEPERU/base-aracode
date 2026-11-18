@@ -94,6 +94,16 @@ const simularRenovacion = () => {
     );
 };
 
+const enviarAvisoPago = () => {
+    ejecutar(
+        route('aca_subscriptions_test_notice', props.subscription.id),
+        {},
+        'Enviar aviso de pago exitoso',
+        'Se encolará el correo de renovación al correo del alumno de prueba para confirmar que llega. No se cobra nada ni se extiende el acceso. ¿Continuar?',
+        'Sí, enviar aviso',
+    );
+};
+
 const eliminarSuscripcion = () => {
     ejecutar(
         route('aca_subscriptions_test_cancel', props.subscription.id),
@@ -171,6 +181,9 @@ const borrarDatos = () => {
                 <button type="button" class="btn btn-outline-primary" :disabled="trabajando" @click="simularRenovacion">
                     {{ trabajando === route('aca_subscriptions_test_renew', subscription.id) ? 'Procesando…' : 'Simular renovación' }}
                 </button>
+                <button type="button" class="btn btn-outline-success" :disabled="trabajando" @click="enviarAvisoPago">
+                    {{ trabajando === route('aca_subscriptions_test_notice', subscription.id) ? 'Enviando…' : 'Enviar aviso de pago exitoso' }}
+                </button>
                 <button type="button" class="btn btn-outline-danger" :disabled="trabajando" @click="eliminarSuscripcion">
                     Eliminar suscripción
                 </button>
@@ -183,6 +196,7 @@ const borrarDatos = () => {
         <p class="text-xs text-gray-500 mt-3">
             El primer cobro lo acredita el webhook real de MercadoPago. Si aún no tienes una URL pública configurada,
             usa «Simular renovación» para ver el registro en Tesorería, la extensión del acceso y el correo.
+            «Enviar aviso de pago exitoso» reenvía solo el correo, sin cobrar, para confirmar que llega.
             Las notificaciones recibidas aparecen abajo.
         </p>
 

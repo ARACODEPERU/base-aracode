@@ -49,6 +49,14 @@ class AcaSubscriptionTestModeController extends Controller
     }
 
     /**
+     * Envía el correo de pago exitoso para comprobar que llega.
+     */
+    public function notice($id): JsonResponse
+    {
+        return $this->run(fn (): array => $this->testMode->sendSuccessfulPaymentNotice($this->plan($id)));
+    }
+
+    /**
      * Cancela la suscripción de prueba y desactiva el acceso.
      */
     public function cancel($id): JsonResponse

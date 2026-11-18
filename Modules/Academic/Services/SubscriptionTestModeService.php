@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Modules\Academic\Emails\SubscriptionRenewed;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Entities\AcaSubscriptionPayment;
@@ -162,7 +164,11 @@ class SubscriptionTestModeService
                 throw new RuntimeException('El plan no tiene un precio en soles configurado para la prueba.');
             }
 
-            $alumno = $this->testStudent($plan, $email);
+            [
+                'student' => $alumno,
+                'created_person' => $personaCreada,
+                'created_student' => $alumnoCreado,
+            ] = $this->testStudent($plan, $email);
 
             $token = $this->cardToken($tokens);
             $respuesta = $this->createPreapproval($plan, $tokens, $token, $alumno, $monto);
@@ -187,6 +193,9 @@ class SubscriptionTestModeService
                     'payer_email' => $email,
                     'origen' => 'modo_prueba',
                     'capturado_at' => now()->toDateTimeString(),
+                    'person_id' => $alumno->person_id,
+                    'created_person' => $personaCreada,
+                    'created_student' => $alumnoCreado,
                 ],
                 'raw' => $respuesta['raw'] ?? [],
                 'last_synced_at' => now(),
@@ -298,6 +307,65 @@ class SubscriptionTestModeService
     }
 
     /**
+     * Envía el aviso de pago exitoso (correo de renovación) sin esperar un
+     * cobro real, para comprobar que el correo llega al alumno de prueba.
+     *
+     * No cobra ni extiende periodos: solo reenvía la plantilla con el último
+     * pago de prueba registrado.
+     *
+     * @return array<string, mixed>
+     */
+    public function sendSuccessfulPaymentNotice(AcaSubscriptionType $plan): array
+    {
+        $this->assertPlan($plan);
+
+        return $this->withLock($plan, function () use ($plan): array {
+            $preapproval = $this->latestTestPreapproval($plan);
+
+            if (! $preapproval) {
+                throw new RuntimeException('Primero crea una suscripción de prueba.');
+            }
+
+            $payment = AcaSubscriptionPayment::query()
+                ->where('preapproval_id', $preapproval->preapproval_id)
+                ->where('is_test', true)
+                ->latest('id')
+                ->first();
+
+            if (! $payment) {
+                throw new RuntimeException('No hay un pago de prueba para usar en el correo. Simula una renovación primero.');
+            }
+
+            $email = trim((string) ($preapproval->student?->person?->email ?: $preapproval->payer_email));
+
+            if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new RuntimeException('La suscripción de prueba no tiene un correo válido para enviar el aviso.');
+            }
+
+            Mail::to($email)->queue(new SubscriptionRenewed(
+                $preapproval,
+                $payment,
+                $preapproval->student?->person?->full_name ?: 'Estimado estudiante',
+            ));
+
+            AcaSubscriptionTestLog::record(
+                $plan->id,
+                'notice',
+                'Aviso de pago exitoso enviado a ' . $email . '.',
+                ['email' => $email, 'payment_id' => $payment->id],
+                'success',
+                $preapproval->preapproval_id,
+            );
+
+            return [
+                'email' => $email,
+                'preapproval_id' => $preapproval->preapproval_id,
+                'message' => 'Aviso de pago exitoso encolado para ' . $email . '. Revisa la bandeja y spam; el envío corre en la cola.',
+            ];
+        });
+    }
+
+    /**
      * Cancela la suscripción de prueba en MercadoPago y desactiva el acceso.
      *
      * @return array<string, mixed>
@@ -372,7 +440,22 @@ class SubscriptionTestModeService
                 }
             }
 
+            $preapprovalIds = $preapprovals->pluck('preapproval_id')->filter()->unique()->values();
+
             $studentIds = $preapprovals->pluck('student_id')->filter()->unique()->values();
+
+            // Solo se borran el alumno y la persona que nacieron con la prueba.
+            $createdStudentIds = $preapprovals
+                ->filter(fn (AcaSubscriptionPreapproval $item): bool => $this->studentWasCreatedByTest($item))
+                ->pluck('student_id')->filter()->unique()->values();
+
+            $createdPersonIds = $preapprovals
+                ->filter(fn (AcaSubscriptionPreapproval $item): bool => $this->personWasCreatedByTest($item))
+                ->map(fn (AcaSubscriptionPreapproval $item): int => $this->personIdOf($item))
+                ->filter()
+                ->unique()
+                ->values();
+
             $paymentIds = AcaSubscriptionPayment::query()
                 ->where('subscription_id', $plan->id)
                 ->where('is_test', true)
@@ -394,9 +477,11 @@ class SubscriptionTestModeService
                 'sales' => 0,
                 'treasury_reversals' => 0,
                 'students' => 0,
+                'persons' => 0,
+                'events' => 0,
             ];
 
-            DB::transaction(function () use ($plan, $preapprovals, $studentIds, $saleIds, &$resumen): void {
+            DB::transaction(function () use ($plan, $preapprovals, $preapprovalIds, $studentIds, $createdStudentIds, $createdPersonIds, $saleIds, &$resumen): void {
                 $tesoreria = app(TreasuryIntegrationService::class);
 
                 foreach ($saleIds as $saleId) {
@@ -418,11 +503,21 @@ class SubscriptionTestModeService
                     ->where('is_test', true)
                     ->delete();
 
-                if ($studentIds->isNotEmpty()) {
+                // Alumno de prueba: se borra su periodo. Alumno real usado en
+                // una prueba: solo se le quita el acceso que dejó la prueba.
+                if ($createdStudentIds->isNotEmpty()) {
                     AcaStudentSubscription::query()
-                        ->whereIn('student_id', $studentIds->all())
+                        ->whereIn('student_id', $createdStudentIds->all())
                         ->where('subscription_id', $plan->id)
                         ->delete();
+                }
+
+                $otrosStudents = $studentIds->diff($createdStudentIds);
+                if ($otrosStudents->isNotEmpty()) {
+                    AcaStudentSubscription::query()
+                        ->whereIn('student_id', $otrosStudents->all())
+                        ->where('subscription_id', $plan->id)
+                        ->update(['status' => false]);
                 }
 
                 $resumen['preapprovals'] = AcaSubscriptionPreapproval::query()
@@ -432,30 +527,43 @@ class SubscriptionTestModeService
 
                 AcaSubscriptionTestLog::query()->where('subscription_id', $plan->id)->delete();
 
-                // El alumno y la persona de prueba solo existen para esta prueba.
-                if ($studentIds->isNotEmpty()) {
-                    $personIds = AcaStudent::query()
-                        ->whereIn('id', $studentIds->all())
-                        ->pluck('person_id')
-                        ->filter()
-                        ->unique();
+                // Notificaciones de MercadoPago de estas suscripciones de prueba.
+                if ($preapprovalIds->isNotEmpty()) {
+                    $resumen['events'] = MercadoPagoEvent::query()
+                        ->whereIn('data_id', $preapprovalIds->all())
+                        ->delete();
+                }
 
-                    $resumen['students'] = AcaStudent::query()->whereIn('id', $studentIds->all())->delete();
+                if ($createdStudentIds->isNotEmpty()) {
+                    $resumen['students'] = AcaStudent::query()
+                        ->whereIn('id', $createdStudentIds->all())
+                        ->delete();
+                }
 
-                    if ($personIds->isNotEmpty()) {
-                        Person::query()->whereIn('id', $personIds->all())->delete();
+                foreach ($createdPersonIds as $personId) {
+                    // Nunca se borra una persona que quedó ligada a otro alumno.
+                    if (AcaStudent::query()->where('person_id', $personId)->exists()) {
+                        continue;
+                    }
+
+                    try {
+                        $resumen['persons'] += Person::query()->whereKey($personId)->delete();
+                    } catch (\Throwable $e) {
+                        // Si otra tabla la referencia, se conserva: no se rompe la BD.
                     }
                 }
             });
 
             return [
                 'message' => sprintf(
-                    'Datos de prueba borrados: %d suscripciones, %d pagos, %d ventas, %d ingresos revertidos y %d alumnos.',
+                    'Datos de prueba borrados: %d suscripciones, %d pagos, %d ventas, %d ingresos revertidos, %d alumnos, %d personas y %d notificaciones.',
                     $resumen['preapprovals'],
                     $resumen['payments'],
                     $resumen['sales'],
                     $resumen['treasury_reversals'],
                     $resumen['students'],
+                    $resumen['persons'],
+                    $resumen['events'],
                 ),
                 'summary' => $resumen,
             ];
@@ -464,10 +572,17 @@ class SubscriptionTestModeService
 
     /**
      * Alumno de prueba: persona y alumno reutilizables por correo.
+     *
+     * Informa además si la persona y el alumno se crearon ahora: el borrado
+     * solo elimina lo que nació con la prueba, nunca un alumno real que se
+     * haya usado para probar el flujo.
+     *
+     * @return array{student: AcaStudent, created_person: bool, created_student: bool}
      */
-    private function testStudent(AcaSubscriptionType $plan, string $email): AcaStudent
+    private function testStudent(AcaSubscriptionType $plan, string $email): array
     {
         $persona = Person::query()->where('email', $email)->first();
+        $personaCreada = false;
 
         if (! $persona) {
             $numero = 'PRUEBA-SUS-' . $plan->id . '-' . now()->format('ymdHis');
@@ -485,12 +600,81 @@ class SubscriptionTestModeService
                 'is_client' => true,
                 'status' => true,
             ]);
+
+            $personaCreada = true;
         }
 
-        return AcaStudent::firstOrCreate(
-            ['person_id' => $persona->id],
-            ['student_code' => $persona->number ?: 'PRUEBA-' . $persona->id],
-        );
+        $alumno = AcaStudent::query()->where('person_id', $persona->id)->first();
+        $alumnoCreado = false;
+
+        if (! $alumno) {
+            $alumno = AcaStudent::create([
+                'person_id' => $persona->id,
+                'student_code' => $persona->number ?: 'PRUEBA-' . $persona->id,
+            ]);
+
+            $alumnoCreado = true;
+        }
+
+        return [
+            'student' => $alumno,
+            'created_person' => $personaCreada,
+            'created_student' => $alumnoCreado,
+        ];
+    }
+
+    /**
+     * ¿El alumno nació con la prueba? En filas antiguas se usa el código con
+     * el que el modo prueba crea a sus alumnos.
+     */
+    private function studentWasCreatedByTest(AcaSubscriptionPreapproval $preapproval): bool
+    {
+        $datos = (array) $preapproval->invoice_data;
+
+        if (array_key_exists('created_student', $datos)) {
+            return (bool) $datos['created_student'];
+        }
+
+        $codigo = (string) AcaStudent::query()->whereKey($preapproval->student_id)->value('student_code');
+
+        return str_starts_with($codigo, 'PRUEBA-SUS-');
+    }
+
+    /**
+     * ¿La persona nació con la prueba? Se apoya en la marca guardada al crear
+     * la suscripción y, si falta, en el número de documento de prueba.
+     */
+    private function personWasCreatedByTest(AcaSubscriptionPreapproval $preapproval): bool
+    {
+        $datos = (array) $preapproval->invoice_data;
+
+        if (array_key_exists('created_person', $datos)) {
+            return (bool) $datos['created_person'];
+        }
+
+        $personId = $this->personIdOf($preapproval);
+
+        if ($personId <= 0) {
+            return false;
+        }
+
+        $numero = (string) Person::query()->whereKey($personId)->value('number');
+
+        return str_starts_with($numero, 'PRUEBA-SUS-');
+    }
+
+    /**
+     * Persona del alumno de la suscripción de prueba.
+     */
+    private function personIdOf(AcaSubscriptionPreapproval $preapproval): int
+    {
+        $personId = (int) data_get($preapproval->invoice_data, 'person_id', 0);
+
+        if ($personId > 0) {
+            return $personId;
+        }
+
+        return (int) AcaStudent::query()->whereKey($preapproval->student_id)->value('person_id');
     }
 
     /**
