@@ -10,11 +10,11 @@ use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\Academic\Services\MercadoPago\SubscriptionPreapprovalGateway;
 
 /**
- * Alta de la suscripción recurrente mensual en MercadoPago.
+ * Alta de la suscripción recurrente en MercadoPago (mensual, trimestral o anual).
  *
  * Usa el token de tarjeta que genera el Brick del checkout (de un solo uso) y
  * crea el preapproval con cobro inmediato. Guarda el estado local y el
- * snapshot fiscal con el que se emitirán los comprobantes de los meses
+ * snapshot fiscal con el que se emitirán los comprobantes de los periodos
  * siguientes.
  */
 class SubscriptionPreapprovalService
@@ -49,8 +49,10 @@ class SubscriptionPreapprovalService
             throw new InvalidArgumentException('El plan no tiene habilitado el cobro recurrente.');
         }
 
-        if ($plan->period !== 'Mensual') {
-            throw new InvalidArgumentException('Por ahora solo se admiten suscripciones mensuales.');
+        $months = $plan->recurringMonths();
+
+        if ($months === null) {
+            throw new InvalidArgumentException('Solo se admiten suscripciones mensuales, trimestrales o anuales.');
         }
 
         $token = trim((string) ($datos['token'] ?? ''));
@@ -86,7 +88,7 @@ class SubscriptionPreapprovalService
             'back_url' => rtrim((string) config('app.url'), '/'),
             'status' => 'authorized',
             'auto_recurring' => [
-                'frequency' => 1,
+                'frequency' => $months,
                 'frequency_type' => 'months',
                 'transaction_amount' => round($amount, 2),
                 'currency_id' => 'PEN',
@@ -101,11 +103,11 @@ class SubscriptionPreapprovalService
             'status' => $respuesta['status'],
             'amount' => round($amount, 2),
             'currency_id' => 'PEN',
-            'frequency' => 1,
+            'frequency' => $months,
             'frequency_type' => 'months',
             'billing_day' => $billingDay,
             'start_date' => $start->toDateString(),
-            'next_payment_date' => $this->nextPaymentDate($respuesta['next_payment_date'] ?? null, $start),
+            'next_payment_date' => $this->nextPaymentDate($respuesta['next_payment_date'] ?? null, $start, $months),
             'payer_email' => $email,
             'external_reference' => $externalReference,
             'invoice_data' => [
@@ -147,9 +149,9 @@ class SubscriptionPreapprovalService
     }
 
     /**
-     * Fecha del próximo cobro informada por MercadoPago o, si falta, un mes después.
+     * Fecha del próximo cobro informada por MercadoPago o, si falta, un periodo después.
      */
-    private function nextPaymentDate(?string $fecha, Carbon $inicio): string
+    private function nextPaymentDate(?string $fecha, Carbon $inicio, int $months): string
     {
         if ($fecha) {
             try {
@@ -159,7 +161,7 @@ class SubscriptionPreapprovalService
             }
         }
 
-        return $inicio->copy()->addMonth()->toDateString();
+        return $inicio->copy()->addMonths($months)->toDateString();
     }
 
     /**

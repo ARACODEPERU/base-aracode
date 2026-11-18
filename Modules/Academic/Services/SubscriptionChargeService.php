@@ -12,10 +12,10 @@ use Modules\Onlineshop\Entities\OnliSale;
 use Modules\Treasury\Services\TreasuryHooks;
 
 /**
- * Cobros mensuales de una suscripción recurrente.
+ * Cobros de una suscripción recurrente (mensual, trimestral o anual).
  *
  * Procesa el cobro autorizado que notifica MercadoPago: concilia el primer
- * cobro creado en el checkout, registra los meses siguientes (venta, ingreso
+ * cobro creado en el checkout, registra los periodos siguientes (venta, ingreso
  * en Tesorería y periodo del alumno) y avisa al alumno. Un rechazo dispara el
  * correo de primer fallo y, si la gracia ya venció, suspende la suscripción.
  *
@@ -126,7 +126,7 @@ class SubscriptionChargeService
             return 'reconciled';
         }
 
-        // Mes siguiente: periodo nuevo desde la fecha del cobro sin solapar.
+        // Periodo siguiente: arranca al terminar el cobro anterior, sin solapar.
         [$start, $end] = $this->periodFor($preapproval, $paidAt);
 
         $sale = $this->createSale($preapproval, $invoice, $amount, $paidAt);
@@ -186,7 +186,7 @@ class SubscriptionChargeService
     }
 
     /**
-     * Periodo cubierto por el cobro, sin pisar meses ya pagados.
+     * Periodo cubierto por el cobro, sin pisar periodos ya pagados.
      *
      * @return array{0: Carbon, 1: Carbon}
      */
@@ -204,7 +204,7 @@ class SubscriptionChargeService
             $start = $ultimo->date_end->copy()->addDay()->startOfDay();
         }
 
-        // Si el alumno aún tiene acceso cubierto, el mes nuevo arranca al terminar.
+        // Si el alumno aún tiene acceso cubierto, el periodo nuevo arranca al terminar.
         $suscripcion = AcaStudentSubscription::query()
             ->where('student_id', $preapproval->student_id)
             ->where('subscription_id', $preapproval->subscription_id)
@@ -218,11 +218,14 @@ class SubscriptionChargeService
             }
         }
 
-        return [$start, $start->copy()->addMonth()];
+        // La duración la manda el plan: 1 mes, 3 meses o 12 meses.
+        $months = $preapproval->subscription?->recurringMonths() ?? max(1, (int) $preapproval->frequency);
+
+        return [$start, $start->copy()->addMonths($months)];
     }
 
     /**
-     * Venta online del mes cobrado, para el ingreso en Tesorería.
+     * Venta online del periodo cobrado, para el ingreso en Tesorería.
      */
     private function createSale(AcaSubscriptionPreapproval $preapproval, array $invoice, float $amount, Carbon $paidAt): OnliSale
     {
@@ -245,9 +248,11 @@ class SubscriptionChargeService
         $sale->mercado_payment = json_encode($invoice['raw'] ?? []);
         $sale->save();
 
+        $periodo = mb_strtolower(trim((string) ($preapproval->subscription?->period ?: 'mensual')), 'UTF-8');
+
         TreasuryHooks::recordOnlineSaleIncome(
             $sale,
-            'Suscripción mensual · ' . mb_substr(trim((string) ($preapproval->subscription?->title ?: 'Plan')), 0, 200)
+            'Suscripción ' . $periodo . ' · ' . mb_substr(trim((string) ($preapproval->subscription?->title ?: 'Plan')), 0, 200)
         );
 
         return $sale;

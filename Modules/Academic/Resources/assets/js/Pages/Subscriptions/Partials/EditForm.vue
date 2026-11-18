@@ -7,7 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
 import Swal2 from 'sweetalert2';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
 import IconX from '@/Components/vristo/icon/icon-x.vue';
 import IconMinus from '@/Components/vristo/icon/icon-minus.vue';
@@ -42,9 +42,12 @@ const form = useForm({
     can_view_specialization_webinars: props.subscription.can_view_specialization_webinars == 1
 });
 
-// El cobro automático y el modo prueba solo tienen sentido en planes mensuales.
+// Periodos con cobro automático: 1, 3 o 12 meses entre cobros.
+const PERIODOS_RECURRENTES = ['Mensual', 'Trimestral', 'Anual'];
+const recurrenteDisponible = computed(() => PERIODOS_RECURRENTES.includes(form.period));
+
 watch(() => form.period, (period) => {
-    if (period !== 'Mensual') {
+    if (!PERIODOS_RECURRENTES.includes(period)) {
         form.recurring_enabled = false;
         form.test_mode = false;
     }
@@ -171,29 +174,30 @@ const removePrice = (indexToRemove) => {
             </div>
             <div class="col-span-6">
                 <div class="p-4 border border-[#888ea8] dark:border-[#1b2e4b] rounded">
-                    <label class="flex items-start gap-3 cursor-pointer" :class="{ 'opacity-60': form.period !== 'Mensual' }">
+                    <label class="flex items-start gap-3 cursor-pointer" :class="{ 'opacity-60': !recurrenteDisponible }">
                         <input
                             v-model="form.recurring_enabled"
                             type="checkbox"
                             class="form-checkbox mt-0.5"
-                            :disabled="form.period !== 'Mensual'"
+                            :disabled="!recurrenteDisponible"
                         />
                         <span>
-                            <span class="block font-medium">Cobro automático mensual con MercadoPago</span>
+                            <span class="block font-medium">Cobro automático con MercadoPago</span>
                             <span class="block text-xs text-gray-500">
-                                Cobra la tarjeta del alumno cada mes con la fecha de su alta. Solo disponible para planes mensuales
-                                y requiere el webhook de MercadoPago configurado en IntegrationHub.
+                                Cobra la tarjeta del alumno cada mes, cada 3 meses o cada año según el periodo del plan,
+                                con la fecha de su alta. Disponible para planes mensuales, trimestrales y anuales;
+                                requiere el webhook de MercadoPago configurado en IntegrationHub.
                             </span>
                         </span>
                     </label>
                     <InputError :message="form.errors.recurring_enabled" class="mt-2" />
 
-                    <label class="flex items-start gap-3 cursor-pointer mt-4 pt-4 border-t border-dashed border-[#888ea8] dark:border-[#1b2e4b]" :class="{ 'opacity-60': form.period !== 'Mensual' }">
+                    <label class="flex items-start gap-3 cursor-pointer mt-4 pt-4 border-t border-dashed border-[#888ea8] dark:border-[#1b2e4b]" :class="{ 'opacity-60': !recurrenteDisponible }">
                         <input
                             v-model="form.test_mode"
                             type="checkbox"
                             class="form-checkbox mt-0.5"
-                            :disabled="form.period !== 'Mensual'"
+                            :disabled="!recurrenteDisponible"
                         />
                         <span>
                             <span class="block font-medium">Modo prueba de cobros recurrentes</span>

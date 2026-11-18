@@ -125,10 +125,11 @@ class AcaSubscriptionTypeController extends Controller
         );
 
         $period = $request->get('period');
-        // El cobro automático solo existe para planes mensuales.
-        $recurringEnabled = $request->boolean('recurring_enabled') && $period === 'Mensual';
-        // El modo prueba también es solo mensual (la recurrencia implementada).
-        $testMode = $request->boolean('test_mode') && $period === 'Mensual';
+        // El cobro automático existe para planes mensuales, trimestrales y anuales.
+        $recurrente = in_array($period, array_keys(AcaSubscriptionType::RECURRING_PERIODS), true);
+        $recurringEnabled = $request->boolean('recurring_enabled') && $recurrente;
+        // El modo prueba usa la misma recurrencia.
+        $testMode = $request->boolean('test_mode') && $recurrente;
 
         AcaSubscriptionType::find($id)->update([
             'title' => $request->get('title'),

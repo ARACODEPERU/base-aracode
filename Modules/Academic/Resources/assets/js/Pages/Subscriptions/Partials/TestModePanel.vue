@@ -69,10 +69,23 @@ const ejecutar = async (url, payload, titulo, texto, confirmar, icono = 'questio
     }
 };
 
-const crearPrueba = () => {
+const crearPrueba = async () => {
     if (!email.value) {
         window.alertaSistema('Falta el correo', 'Escribe el correo del alumno de prueba.', 'warning');
         return;
+    }
+
+    // MercadoPago valida al pagador por correo: solo acepta el de un usuario de
+    // prueba comprador (siempre termina en @testuser.com).
+    if (!/@testuser\.com$/i.test(email.value.trim())) {
+        const seguir = await window.alertaSistema(
+            'Ese correo no parece de un usuario de prueba',
+            'MercadoPago rechaza el alta si el correo del pagador no es de una cuenta de prueba comprador (test_user_…@testuser.com). ¿Continuar de todos modos?',
+            'warning',
+            { duration: 0, showCancelButton: true, confirmButtonText: 'Continuar', cancelButtonText: 'Corregir correo' }
+        );
+
+        if (!seguir?.isConfirmed) return;
     }
 
     ejecutar(
@@ -89,7 +102,7 @@ const simularRenovacion = () => {
         route('aca_subscriptions_test_renew', props.subscription.id),
         {},
         'Simular renovación',
-        'Se acreditará el mes siguiente con el mismo flujo del webhook: venta, ingreso en Tesorería, extensión del acceso y correo de renovación. Si el primer cobro sigue pendiente, se concilia primero. ¿Continuar?',
+        'Se acreditará el periodo siguiente (1, 3 o 12 meses según el plan) con el mismo flujo del webhook: venta, ingreso en Tesorería, extensión del acceso y correo de renovación. Si el primer cobro sigue pendiente, se concilia primero. ¿Continuar?',
         'Sí, simular cobro',
     );
 };
@@ -136,6 +149,10 @@ const borrarDatos = () => {
                     Prueba el alta, el webhook, la renovación, los correos y Tesorería sin usar la cuenta real.
                     Solo se usan las credenciales de <strong>PRUEBA</strong> de MercadoPago.
                 </p>
+                <p class="text-xs text-gray-500 mt-1">
+                    El correo se pide aquí porque MercadoPago exige un <strong>pagador</strong> en toda suscripción: en la
+                    venta real se toma solo de la ficha del alumno, por eso al pagar con tarjeta nunca lo escribes.
+                </p>
             </div>
             <span class="badge bg-danger">MODO PRUEBA ACTIVO</span>
         </div>
@@ -170,13 +187,22 @@ const borrarDatos = () => {
                 <label class="text-sm font-medium">Correo del alumno de prueba</label>
                 <input v-model="email" type="email" class="form-input mt-1" placeholder="test_user_123456@testuser.com" />
                 <p class="text-xs text-gray-500 mt-1">
-                    Ahí llegarán los correos de renovación, cobro fallido o suspensión. Revisa también spam.
-                    <span class="block mt-1">
-                        Este correo viaja a MercadoPago como correo del pagador: con credenciales de prueba debe ser
-                        el de un <strong>usuario de prueba comprador</strong> (termina en <code>@testuser.com</code>).
-                        Un correo personal sin cuenta de MercadoPago hace que el alta se rechace.
-                    </span>
+                    Este correo viaja a MercadoPago como correo del <strong>pagador</strong>, no puede ser uno inventado.
                 </p>
+                <div class="text-xs text-gray-500 mt-2 p-2 rounded border border-warning bg-warning/10">
+                    <p class="font-semibold text-warning">De dónde sale este correo</p>
+                    <ol class="list-decimal ml-4 mt-1 space-y-0.5">
+                        <li>Entra a MercadoPago → <strong>Tus integraciones</strong> → tu aplicación.</li>
+                        <li>Abre <strong>Cuentas de prueba</strong> → <strong>Crear cuenta de prueba</strong>.</li>
+                        <li>Elige tipo <strong>Comprador</strong> (no Vendedor) y guarda.</li>
+                        <li>MercadoPago muestra un correo tipo <code>test_user_123456789@testuser.com</code>: pégalo aquí.</li>
+                    </ol>
+                    <p class="mt-1">
+                        No sirve tu correo personal, ni el del dueño de la aplicación o del token, ni un correo que no
+                        exista en MercadoPago: el alta se rechaza con “Resource not found”. Ahí llegarán los avisos de
+                        renovación, cobro fallido y suspensión (revisa también spam).
+                    </p>
+                </div>
             </div>
 
             <div class="col-span-2 sm:col-span-1 flex flex-wrap items-end gap-2">

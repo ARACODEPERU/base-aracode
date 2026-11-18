@@ -32,7 +32,7 @@ use RuntimeException;
  * 1. start(): crea un alumno de prueba y una suscripción (preapproval) en el
  *    ambiente de PRUEBA de MercadoPago con una tarjeta de prueba. El primer
  *    cobro queda pendiente de conciliar y lo acredita el webhook real.
- * 2. renewal(): simula el cobro del mes siguiente con el mismo servicio que usa
+ * 2. renewal(): simula el cobro del periodo siguiente con el mismo servicio que usa
  *    el webhook, para ver el registro en Tesorería, la extensión del acceso y
  *    el correo de renovación.
  * 3. cancel(): cancela la suscripción en MercadoPago y desactiva el acceso.
@@ -180,11 +180,11 @@ class SubscriptionTestModeService
                 'status' => $respuesta['status'] ?: 'pending',
                 'amount' => round($monto, 2),
                 'currency_id' => 'PEN',
-                'frequency' => 1,
+                'frequency' => $plan->recurringMonths() ?? 1,
                 'frequency_type' => 'months',
                 'billing_day' => min(28, (int) now()->format('j')),
                 'start_date' => now()->toDateString(),
-                'next_payment_date' => $this->nextPaymentDate($respuesta['next_payment_date'] ?? null),
+                'next_payment_date' => $this->nextPaymentDate($respuesta['next_payment_date'] ?? null, (int) $plan->recurringMonths()),
                 'payer_email' => $email,
                 'external_reference' => 'aca:test:student:' . $alumno->id . ':plan:' . $plan->id,
                 'invoice_data' => [
@@ -207,7 +207,7 @@ class SubscriptionTestModeService
                 'student_id' => $alumno->id,
                 'subscription_id' => $plan->id,
                 'date_start' => now()->toDateString(),
-                'date_end' => now()->copy()->addMonth()->toDateString(),
+                'date_end' => now()->copy()->addMonths((int) ($plan->recurringMonths() ?? 1))->toDateString(),
                 'amount' => round($monto, 2),
                 'preapproval_id' => $preapproval->preapproval_id,
                 'status' => 'pending',
@@ -241,7 +241,7 @@ class SubscriptionTestModeService
 
     /**
      * Simula la renovación: concilia el primer cobro si quedó pendiente y
-     * registra el mes siguiente con el mismo flujo del webhook.
+     * registra el periodo siguiente con el mismo flujo del webhook.
      *
      * @return array<string, mixed>
      */
@@ -281,7 +281,7 @@ class SubscriptionTestModeService
             $preapproval->refresh();
 
             $mensaje = in_array('charged', $resultados, true)
-                ? 'Renovación simulada: se registró el mes en Tesorería y se envió el correo de renovación.'
+                ? 'Renovación simulada: se registró el periodo en Tesorería y se envió el correo de renovación.'
                 : 'Se procesó el cobro de prueba: ' . implode(', ', $resultados) . '.';
 
             AcaSubscriptionTestLog::record(
@@ -739,7 +739,8 @@ class SubscriptionTestModeService
             'back_url' => rtrim((string) config('app.url'), '/'),
             'status' => 'authorized',
             'auto_recurring' => [
-                'frequency' => 1,
+                // Cada 1, 3 o 12 meses según el periodo del plan.
+                'frequency' => (int) $plan->recurringMonths(),
                 'frequency_type' => 'months',
                 'transaction_amount' => round($monto, 2),
                 'currency_id' => 'PEN',
@@ -885,7 +886,7 @@ class SubscriptionTestModeService
     }
 
     /**
-     * Solo planes mensuales: la recurrencia implementada es mensual.
+     * Solo planes con periodo recurrente (mensual, trimestral o anual).
      */
     private function assertPlan(AcaSubscriptionType $plan): void
     {
@@ -893,8 +894,8 @@ class SubscriptionTestModeService
             throw new RuntimeException('Activa primero el modo prueba del plan y guarda los cambios.');
         }
 
-        if ($plan->period !== 'Mensual') {
-            throw new RuntimeException('El modo prueba solo está disponible para planes mensuales.');
+        if (! $plan->supportsRecurring()) {
+            throw new RuntimeException('El modo prueba solo está disponible para planes mensuales, trimestrales o anuales.');
         }
     }
 
@@ -954,9 +955,9 @@ class SubscriptionTestModeService
     }
 
     /**
-     * Próximo cobro informado por MercadoPago o, si falta, un mes después.
+     * Próximo cobro informado por MercadoPago o, si falta, un periodo después.
      */
-    private function nextPaymentDate(?string $fecha): string
+    private function nextPaymentDate(?string $fecha, int $months = 1): string
     {
         if ($fecha) {
             try {
@@ -966,6 +967,6 @@ class SubscriptionTestModeService
             }
         }
 
-        return now()->copy()->addMonth()->toDateString();
+        return now()->copy()->addMonths(max(1, $months))->toDateString();
     }
 }

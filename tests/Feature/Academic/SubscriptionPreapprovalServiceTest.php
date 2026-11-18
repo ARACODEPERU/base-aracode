@@ -78,13 +78,50 @@ class SubscriptionPreapprovalServiceTest extends TestCase
         $this->assertCount(0, $gateway->payloads);
     }
 
-    public function test_rechaza_planes_que_no_son_mensuales(): void
+    public function test_crea_el_preapproval_trimestral_cada_tres_meses(): void
     {
-        $this->fakeGateway();
+        $gateway = $this->fakeGateway();
+        [$student, $plan] = $this->escenario(['period' => 'Trimestral']);
+
+        $preapproval = app(SubscriptionPreapprovalService::class)->create($student, $plan, [
+            'token' => 'card-token-123',
+            'payer' => ['email' => 'alumno@example.com'],
+        ]);
+
+        $this->assertSame(3, $gateway->payloads[0]['auto_recurring']['frequency']);
+        $this->assertSame('months', $gateway->payloads[0]['auto_recurring']['frequency_type']);
+        $this->assertSame(3, $preapproval->frequency);
+        $this->assertTrue(
+            $preapproval->next_payment_date->isSameDay(now()->addMonths(3)),
+            'El próximo cobro trimestral debe quedar a 3 meses: ' . $preapproval->next_payment_date
+        );
+    }
+
+    public function test_crea_el_preapproval_anual_cada_doce_meses(): void
+    {
+        $gateway = $this->fakeGateway();
         [$student, $plan] = $this->escenario(['period' => 'Anual']);
 
+        $preapproval = app(SubscriptionPreapprovalService::class)->create($student, $plan, [
+            'token' => 'card-token-123',
+            'payer' => ['email' => 'alumno@example.com'],
+        ]);
+
+        $this->assertSame(12, $gateway->payloads[0]['auto_recurring']['frequency']);
+        $this->assertSame(12, $preapproval->frequency);
+        $this->assertTrue(
+            $preapproval->next_payment_date->isSameDay(now()->addMonths(12)),
+            'El próximo cobro anual debe quedar a 12 meses: ' . $preapproval->next_payment_date
+        );
+    }
+
+    public function test_rechaza_periodos_sin_cobro_recurrente(): void
+    {
+        $this->fakeGateway();
+        [$student, $plan] = $this->escenario(['period' => 'Semestral']);
+
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('solo se admiten suscripciones mensuales');
+        $this->expectExceptionMessage('mensuales, trimestrales o anuales');
 
         app(SubscriptionPreapprovalService::class)->create($student, $plan, ['token' => 'token']);
     }
@@ -156,10 +193,12 @@ class FakePreapprovalGateway implements SubscriptionPreapprovalGateway
         $this->payloads[] = $payload;
         $id = 'preapproval-' . count($this->payloads);
 
+        $meses = (int) ($payload['auto_recurring']['frequency'] ?? 1);
+
         return [
             'id' => $id,
             'status' => 'authorized',
-            'next_payment_date' => now()->addMonth()->toIso8601String(),
+            'next_payment_date' => now()->addMonths($meses)->toIso8601String(),
             'init_point' => null,
             'raw' => ['id' => $id, 'status' => 'authorized'],
         ];

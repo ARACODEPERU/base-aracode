@@ -115,6 +115,38 @@ class SubscriptionTestModeTest extends TestCase
         });
     }
 
+    public function test_la_prueba_trimestral_cobra_cada_tres_meses(): void
+    {
+        $this->plan->update(['period' => 'Trimestral']);
+
+        $this->actingAs($this->user)
+            ->postJson(route('aca_subscriptions_test_start', $this->plan->id), ['email' => 'prueba@example.com'])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://api.mercadopago.com/preapproval'
+                && ($request['auto_recurring']['frequency'] ?? null) === 3
+                && ($request['auto_recurring']['frequency_type'] ?? null) === 'months';
+        });
+
+        $preapproval = AcaSubscriptionPreapproval::query()
+            ->where('subscription_id', $this->plan->id)
+            ->firstOrFail();
+
+        $this->assertSame(3, $preapproval->frequency);
+
+        $payment = AcaSubscriptionPayment::query()
+            ->where('subscription_id', $this->plan->id)
+            ->firstOrFail();
+
+        $this->assertSame(
+            now()->copy()->addMonths(3)->toDateString(),
+            $payment->date_end->toDateString(),
+            'El primer periodo de prueba debe cubrir 3 meses.'
+        );
+    }
+
     public function test_bloquea_si_el_token_de_prueba_es_el_de_produccion(): void
     {
         config(['services.mercadopago.test_token' => 'APP_USR-TOKEN-PRODUCCION']);
