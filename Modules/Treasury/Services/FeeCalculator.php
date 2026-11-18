@@ -7,7 +7,10 @@ use Illuminate\Validation\ValidationException;
 /**
  * Cálculo de comisiones, IGV e ITF de Tesorería.
  *
- * - Comisión simple: fijo + monto * porcentaje (+ IGV opcional sobre la comisión).
+ * - Comisión simple: fijo + monto * porcentaje (+ IGV opcional sobre la comisión),
+ *   con el mismo redondeo que usa MercadoPago: el IGV se suma al fijo y al
+ *   porcentaje redondeados a 2 decimales antes de multiplicar por el monto
+ *   (3.49 % + IGV = 4.12 % y S/ 1.00 + IGV = S/ 1.18).
  * - Fórmula: expresión aritmética con las variables permitidas
  *   (monto, fijo, porcentaje, igv). Se evalúa con un parser propio, sin eval().
  * - ITF: 0.005 % del monto de la operación, solo si el monto alcanza el umbral
@@ -45,9 +48,27 @@ class FeeCalculator
             ]);
             // En fórmula, el IGV ya va incluido en la expresión si se desea.
             $igv = 0.0;
+        } elseif ($igvApplies) {
+            // MercadoPago (y el resto de pasarelas) cobra el IGV sobre cada tarifa
+            // redondeada a 2 decimales: 3.49 % -> 4.12 % y S/ 1.00 -> S/ 1.18.
+            // Si se aplicara el 18 % al total final, una venta de S/ 2500 daría
+            // S/ 104.14 en lugar de los S/ 104.18 que cobra MercadoPago.
+            $percentWithIgv = $percentFee + round($percentFee * self::IGV_RATE, 2);
+            $fixedWithIgv = $fixedFee + round($fixedFee * self::IGV_RATE, 2);
+            $total = round(max(0, $fixedWithIgv + ($amount * $percentWithIgv / 100)), 2);
+
+            // La comisión sin IGV es el total descontando el 18 %.
+            $commission = round($total / (1 + self::IGV_RATE), 2);
+            $igv = round(max(0, $total - $commission), 2);
+
+            return [
+                'comision' => $commission,
+                'igv' => $igv,
+                'total' => round($commission + $igv, 2),
+            ];
         } else {
             $commission = $fixedFee + ($amount * $percentFee / 100);
-            $igv = $igvApplies ? $commission * self::IGV_RATE : 0.0;
+            $igv = 0.0;
         }
 
         $commission = round(max(0, $commission), 2);
