@@ -34,18 +34,73 @@
  * al cargarlo ("module is not defined in ES module scope").
  *
  * Uso:  pm2 start ecosystem.config.cjs && pm2 save
- * Logs: pm2 logs Aracode-integration-queue / pm2 logs Aracode-integration-imports
+ * Logs: pm2 logs <prefijo>-integration-queue / pm2 logs <prefijo>-integration-imports
  *
  * Si en el servidor ya existe el cron de Linux (`* * * * * php artisan
  * schedule:run`), el proceso Aracode-integration-scheduler sobra: se puede
  * borrar de este archivo y dejar solo los workers de la cola.
  *
  * Requisito: en el .env del servidor debe estar QUEUE_CONNECTION=database.
+ *
+ * Varias copias del proyecto en el mismo servidor: pm2 no admite dos procesos
+ * con el mismo nombre, así que cada instalación define en su .env
+ *
+ *     PM2_APP_NAME=aracode-cliente-a
+ *
+ * y los procesos salen como aracode-cliente-a-integration-queue, etc. Si la
+ * variable no existe se usa Aracode, que es el nombre histórico y no obliga a
+ * migrar la instalación que ya está corriendo.
  */
+const fs = require('node:fs');
+const path = require('node:path');
+
+/**
+ * Lee una clave del .env del proyecto.
+ *
+ * pm2 carga este archivo con Node, no con Laravel, así que el .env no está
+ * disponible como variable de entorno. Se lee sin dependencias (dotenv no está
+ * instalado) y se ignoran comentarios y líneas vacías.
+ */
+function leerEnv(clave) {
+    try {
+        const lineas = fs.readFileSync(path.join(__dirname, '.env'), 'utf8').split(/\r?\n/);
+
+        for (const linea of lineas) {
+            const limpia = linea.trim();
+
+            if (limpia === '' || limpia.startsWith('#')) {
+                continue;
+            }
+
+            const separador = limpia.indexOf('=');
+
+            if (separador === -1 || limpia.slice(0, separador).trim() !== clave) {
+                continue;
+            }
+
+            return limpia.slice(separador + 1).trim().replace(/^["']|["']$/g, '');
+        }
+    } catch (error) {
+        // Sin .env se usa el nombre por defecto.
+    }
+
+    return '';
+}
+
+/**
+ * Prefijo de los procesos: PM2_APP_NAME del entorno (permite probar sin tocar
+ * el .env) o del .env. Se limpia para que el nombre no tenga espacios ni
+ * caracteres que rompan `pm2 logs <nombre>`.
+ */
+const prefijo = ((process.env.PM2_APP_NAME || leerEnv('PM2_APP_NAME') || 'Aracode')
+    .trim()
+    .replace(/[^A-Za-z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '')) || 'Aracode';
+
 module.exports = {
     apps: [
         {
-            name: 'Aracode-integration-scheduler',
+            name: `${prefijo}-integration-scheduler`,
             script: 'artisan',
             interpreter: '/usr/bin/php8.5',
             args: 'schedule:work',
@@ -55,7 +110,7 @@ module.exports = {
             restart_delay: 5000,
         },
         {
-            name: 'Aracode-integration-queue',
+            name: `${prefijo}-integration-queue`,
             script: 'artisan',
             interpreter: '/usr/bin/php8.5',
             // default y exports; `--timeout` cubre los jobs que no declaran el
@@ -67,7 +122,7 @@ module.exports = {
             restart_delay: 5000,
         },
         {
-            name: 'Aracode-integration-imports',
+            name: `${prefijo}-integration-imports`,
             script: 'artisan',
             interpreter: '/usr/bin/php8.5',
             // Un solo intento: los chunks de Facturador3 marcan el job como
