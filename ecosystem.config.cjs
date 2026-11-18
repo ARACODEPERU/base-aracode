@@ -24,7 +24,7 @@ module.exports = {
         {
             name: 'Aracode-integration-scheduler',
             script: 'artisan',
-            interpreter: '/usr/bin/php8.3',
+            interpreter: '/usr/bin/php8.5',
             args: 'schedule:work',
             cwd: __dirname,
             autorestart: true,
@@ -34,7 +34,7 @@ module.exports = {
         {
             name: 'Aracode-integration-queue',
             script: 'artisan',
-            interpreter: '/usr/bin/php8.3',
+            interpreter: '/usr/bin/php8.5',
             args: 'queue:work --sleep=1 --tries=3 --max-time=3600',
             cwd: __dirname,
             autorestart: true,
