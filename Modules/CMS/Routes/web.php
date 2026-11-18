@@ -103,6 +103,14 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('cms')->gro
         ->post('one/free/course/store', [OneFreeCourseController::class, 'store'])
         ->name('cms_landing_course_free_store');
 
+    // Enlaces UTM del landing y atribucion de los leads del formulario.
+    Route::middleware(['permission:cms_landing_curso_gratis'])
+        ->put('one/free/course/{menu_id}/utm-config', [OneFreeCourseController::class, 'updateUtmConfig'])
+        ->name('cms_landing_course_free_update_utm_config');
+    Route::middleware(['permission:cms_landing_curso_gratis'])
+        ->get('one/free/course/{menu_id}/utm-stats', [OneFreeCourseController::class, 'getUtmStats'])
+        ->name('cms_landing_course_free_utm_stats');
+
     // Mensajes de Contacto
     Route::middleware(['permission:cms_mensajes_contacto'])
         ->get('contact-messages', [CmsContactMessageController::class, 'index'])->name('cms_contact_messages_list');

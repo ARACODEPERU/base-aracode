@@ -22,13 +22,16 @@ class CmsLandingRequest extends FormRequest
         return [
             'title'              => ['required', 'max:300'],
             'slug'               => ['required', 'max:500'],
+            // Cantidad de cursos gratis que muestra el landing (1 a 3).
+            'free_courses_count' => ['nullable', 'integer', 'between:1,3'],
             'description_short'  => ['required', 'max:255'],
             'description_long'   => ['nullable'],
             //'main_image'         => ['nullable', 'max:255'],
             'image'              => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'data_related'          => 'nullable|array',
             'data_related.table'    => 'required_with:data_related|string',
-            'data_related.items'    => 'required_with:data_related|array|min:1',
+            // El landing solo puede mostrar tantos cursos como se eligieron.
+            'data_related.items'    => 'required_with:data_related|array|min:1|max:'.max(1, min(3, (int) $this->input('free_courses_count', 1))),
             'data_related2'      => ['nullable'],
             'additional_field1'  => ['nullable'],
             'additional_field2'  => ['nullable'],
@@ -66,6 +69,10 @@ class CmsLandingRequest extends FormRequest
             'data_related.items.required_with' => 'Debe seleccionar al menos un ítem en data_related.',
             'data_related.items.array'   => 'El campo items debe ser una lista válida.',
             'data_related.items.min'     => 'Debe incluir al menos un ítem en la lista.',
+            'data_related.items.max'     => 'Solo puedes seleccionar tantos cursos gratis como indica la cantidad elegida (maximo 3).',
+
+            'free_courses_count.integer' => 'La cantidad de cursos gratis debe ser un número.',
+            'free_courses_count.between' => 'La cantidad de cursos gratis debe estar entre 1 y 3.',
             'data_related2.json'         => 'Los datos relacionados 2 deben estar en formato JSON.',
 
             'additional_field1.string'   => 'El campo título del formulario debe ser un texto.',

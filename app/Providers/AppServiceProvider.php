@@ -9,6 +9,7 @@ use Illuminate\Support\ServiceProvider;
 use App\Rules\SizeExistence;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 
@@ -24,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->ensureWritableStorageDirectories();
+
         Validator::extend('size_existence', function ($attribute, $value, $parameters, $validator) {
             $rule = new SizeExistence($parameters);
 
@@ -70,5 +73,56 @@ class AppServiceProvider extends ServiceProvider
                 $pdo->sqliteCreateCollation($collation, fn ($a, $b) => strcmp($a, $b));
             }
         });
+    }
+
+    /**
+     * Asegura los directorios donde el framework escribe en tiempo de ejecucion
+     * (cache de archivos, sesiones, vistas compiladas, logs y config cacheada).
+     *
+     * En despliegues que no copian carpetas vacias (git archive, rsync con
+     * exclusiones, imagenes Docker reconstruidas) esos directorios desaparecen y
+     * la primera escritura revienta con "file_put_contents(...): Failed to open
+     * stream: No such file or directory". Se recrean al arrancar y, si el sistema
+     * de archivos no lo permite, se deja el motivo en el log en lugar de dejar
+     * solo el error 500.
+     */
+    protected function ensureWritableStorageDirectories(): void
+    {
+        $directories = [
+            storage_path('framework/cache/data'),
+            storage_path('framework/sessions'),
+            storage_path('framework/views'),
+            storage_path('logs'),
+            base_path('bootstrap/cache'),
+        ];
+
+        foreach ($directories as $directory) {
+            if (is_dir($directory)) {
+                continue;
+            }
+
+            try {
+                // El enlace roto se reporta abajo: mkdir no puede reemplazarlo.
+                if (! is_link($directory)) {
+                    @mkdir($directory, 0775, true);
+                }
+            } catch (\Throwable $e) {
+                // Se informa en el log de la comprobacion siguiente.
+            }
+        }
+
+        $cacheDirectory = storage_path('framework/cache/data');
+
+        if (is_dir($cacheDirectory) && is_writable($cacheDirectory)) {
+            return;
+        }
+
+        Log::warning('El directorio de cache por archivos no existe o no es escribible; la cache (incluida la de permisos de Spatie) fallara.', [
+            'path' => $cacheDirectory,
+            'existe' => file_exists($cacheDirectory),
+            'es_enlace' => is_link($cacheDirectory),
+            'enlace_roto' => is_link($cacheDirectory) && ! is_dir($cacheDirectory),
+            'proceso' => function_exists('posix_geteuid') ? posix_geteuid() : null,
+        ]);
     }
 }
