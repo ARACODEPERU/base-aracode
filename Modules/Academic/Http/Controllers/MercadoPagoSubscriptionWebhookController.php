@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Modules\Academic\Entities\MercadoPagoEvent;
 use Modules\Academic\Services\MercadoPago\SubscriptionPaymentGateway;
+use Modules\Academic\Services\MercadoPagoWebhookHistory;
 use Modules\Academic\Services\MercadoPagoWebhookSignature;
 use Modules\Academic\Services\SubscriptionChargeService;
 use Modules\Integrationhub\Services\IntegrationCredentialResolver;
@@ -28,6 +29,23 @@ use Modules\Integrationhub\Services\IntegrationCredentialResolver;
 class MercadoPagoSubscriptionWebhookController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
+    {
+        $inicio = microtime(true);
+
+        $respuesta = $this->procesar($request);
+
+        // Cada llegada queda en el Historial de la integración MercadoPago,
+        // incluso la prueba del panel o una firma inválida: así se puede ver
+        // qué envió MercadoPago y qué le respondimos.
+        app(MercadoPagoWebhookHistory::class)->record($request, $respuesta, $inicio);
+
+        return $respuesta;
+    }
+
+    /**
+     * Valida, guarda y procesa la notificación recibida.
+     */
+    private function procesar(Request $request): JsonResponse
     {
         // Abrir la URL en el navegador envía GET: se responde un JSON corto en
         // lugar de la página de error 405 de Laravel.

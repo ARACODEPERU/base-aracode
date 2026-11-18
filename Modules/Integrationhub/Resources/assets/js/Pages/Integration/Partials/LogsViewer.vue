@@ -109,7 +109,10 @@ const getEndpointName = (endpointId) => {
 };
 
 const endpointName = (log) => {
-    return log.endpoint?.name || getEndpointName(log.endpoint_id);
+    if (log.endpoint?.name) return log.endpoint.name;
+    // Las notificaciones entrantes (webhooks) no tienen endpoint configurado.
+    if (!log.endpoint_id) return 'Webhook recibido';
+    return getEndpointName(log.endpoint_id);
 };
 
 const formatDate = (dateString) => {

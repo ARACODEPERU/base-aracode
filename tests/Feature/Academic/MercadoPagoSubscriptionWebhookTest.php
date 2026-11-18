@@ -17,6 +17,7 @@ use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\Academic\Entities\MercadoPagoEvent;
 use Modules\Academic\Services\MercadoPago\SubscriptionPaymentGateway;
 use Modules\Integrationhub\Entities\Integration;
+use Modules\Integrationhub\Entities\IntegrationExecLog;
 use Tests\TestCase;
 
 /**
@@ -234,6 +235,8 @@ class MercadoPagoSubscriptionWebhookTest extends TestCase
         $this->getJson(route('aca_mercadopago_subscription_webhook'))
             ->assertOk()
             ->assertJsonPath('active', true);
+
+        $this->assertSame('GET', data_get(IntegrationExecLog::firstOrFail()->request_payload, 'metodo'));
     }
 
     public function test_acepta_la_notificacion_de_prueba_del_panel_sin_procesarla(): void
@@ -249,6 +252,44 @@ class MercadoPagoSubscriptionWebhookTest extends TestCase
         // No se consulta el gateway ni se registra un evento de cobro.
         $this->assertSame(0, MercadoPagoEvent::count());
         $this->assertSame(0, AcaSubscriptionPayment::count());
+
+        // Pero la llegada sí queda visible en el Historial de IntegrationHub.
+        $this->assertSame('success', IntegrationExecLog::firstOrFail()->status);
+    }
+
+    public function test_registra_cada_llegada_en_el_historial_de_la_integracion(): void
+    {
+        // Prueba del panel de MercadoPago: antes no dejaba rastro.
+        $this->postJson(route('aca_mercadopago_subscription_webhook'), [
+            'action' => 'updated',
+            'type' => 'subscription_preapproval',
+            'data' => ['id' => '123456'],
+        ])->assertOk();
+
+        // Cobro con firma inválida: también se guarda, ya como fallo.
+        $this->postJson($this->urlWebhook(999), ['type' => 'subscription_authorized_payment'], [
+            'x-signature' => 'ts=123,v1=firma-falsa',
+            'x-request-id' => 'req-999',
+        ])->assertStatus(401);
+
+        $llegadas = IntegrationExecLog::orderBy('id')->get();
+        $this->assertCount(2, $llegadas);
+
+        $integracionId = (int) Integration::query()->where('name', 'MercadoPago')->value('id');
+
+        $prueba = $llegadas[0];
+        $this->assertSame($integracionId, $prueba->integration_id);
+        $this->assertSame('success', $prueba->status);
+        $this->assertSame(200, $prueba->response_status_code);
+        $this->assertSame('webhook:subscription_preapproval', $prueba->batch_id);
+        $this->assertNull($prueba->endpoint_id);
+        $this->assertSame('123456', data_get($prueba->request_payload, 'payload.data.id'));
+        $this->assertSame('ausente', data_get($prueba->request_payload, 'encabezados.x-signature'));
+
+        $invalida = $llegadas[1];
+        $this->assertSame('failed', $invalida->status);
+        $this->assertSame(401, $invalida->response_status_code);
+        $this->assertStringContainsString('firma_invalida', (string) $invalida->error_message);
     }
 
     public function test_devuelve_500_y_guarda_el_error_si_falla_la_consulta_del_cobro(): void
