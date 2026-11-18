@@ -59,30 +59,54 @@ const path = require('node:path');
  *
  * pm2 carga este archivo con Node, no con Laravel, así que el .env no está
  * disponible como variable de entorno. Se lee sin dependencias (dotenv no está
- * instalado) y se ignoran comentarios y líneas vacías.
+ * instalado). Avisa por consola del motivo cuando no encuentra el valor: en
+ * Linux lo habitual es que el .env no sea legible por el usuario que corre pm2
+ * (por ejemplo 600 y dueño www-data).
  */
 function leerEnv(clave) {
+    const ruta = path.join(__dirname, '.env');
+    let contenido;
+
     try {
-        const lineas = fs.readFileSync(path.join(__dirname, '.env'), 'utf8').split(/\r?\n/);
-
-        for (const linea of lineas) {
-            const limpia = linea.trim();
-
-            if (limpia === '' || limpia.startsWith('#')) {
-                continue;
-            }
-
-            const separador = limpia.indexOf('=');
-
-            if (separador === -1 || limpia.slice(0, separador).trim() !== clave) {
-                continue;
-            }
-
-            return limpia.slice(separador + 1).trim().replace(/^["']|["']$/g, '');
-        }
+        contenido = fs.readFileSync(ruta, 'utf8');
     } catch (error) {
-        // Sin .env se usa el nombre por defecto.
+        console.warn(`[pm2] No se pudo leer ${ruta} (${error.code || error.message}). Se usara el nombre por defecto.`);
+
+        return '';
     }
+
+    // BOM que agregan algunos editores al inicio del archivo.
+    contenido = contenido.replace(/^\uFEFF/, '');
+
+    for (const linea of contenido.split(/\r?\n/)) {
+        const limpia = linea.trim();
+
+        if (limpia === '' || limpia.startsWith('#')) {
+            continue;
+        }
+
+        // Soporta `KEY=valor`, `export KEY=valor` y espacios alrededor del `=`.
+        const sinExport = limpia.startsWith('export ') ? limpia.slice(7).trim() : limpia;
+        const separador = sinExport.indexOf('=');
+
+        if (separador === -1 || sinExport.slice(0, separador).trim() !== clave) {
+            continue;
+        }
+
+        let valor = sinExport.slice(separador + 1).trim();
+        const entreComillas = /^(['"])([\s\S]*)\1$/.exec(valor);
+
+        // Con comillas se respeta el contenido; sin comillas se corta un comentario final.
+        valor = entreComillas ? entreComillas[2] : valor.replace(/\s+#.*$/, '').trim();
+
+        if (valor === '') {
+            console.warn(`[pm2] ${clave} esta vacio en ${ruta}. Se usara el nombre por defecto.`);
+        }
+
+        return valor;
+    }
+
+    console.warn(`[pm2] ${clave} no existe en ${ruta}. Se usara el nombre por defecto.`);
 
     return '';
 }
@@ -96,6 +120,9 @@ const prefijo = ((process.env.PM2_APP_NAME || leerEnv('PM2_APP_NAME') || 'Aracod
     .trim()
     .replace(/[^A-Za-z0-9._-]+/g, '-')
     .replace(/^-+|-+$/g, '')) || 'Aracode';
+
+// Deja rastro en la salida de `pm2 start` de que valor se resolvio y de donde.
+console.log(`[pm2] prefijo de procesos: ${prefijo}`);
 
 module.exports = {
     apps: [
