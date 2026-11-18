@@ -698,7 +698,18 @@ class SubscriptionTestModeService
         ];
 
         $url = self::MP_BASE . '/v1/card_tokens?public_key=' . urlencode($credenciales['public_key']);
-        $respuesta = $this->request('post', $url, $payload);
+
+        try {
+            $respuesta = $this->request('post', $url, $payload);
+        } catch (RuntimeException $e) {
+            // El paso se indica en el mensaje: con un 404 aquí el problema está
+            // en la public key (debe ser de la misma cuenta que el access token).
+            throw new RuntimeException(
+                'No se pudo generar el token de la tarjeta de prueba con test_public_key. ' . $e->getMessage(),
+                0,
+                $e
+            );
+        }
 
         $token = (string) ($respuesta['id'] ?? '');
         if ($token === '') {
@@ -736,7 +747,17 @@ class SubscriptionTestModeService
             ],
         ];
 
-        $respuesta = $this->request('post', self::MP_BASE . '/preapproval', $payload, $credenciales['token']);
+        try {
+            $respuesta = $this->request('post', self::MP_BASE . '/preapproval', $payload, $credenciales['token']);
+        } catch (RuntimeException $e) {
+            // El paso se indica en el mensaje: aquí ya se tokenizó la tarjeta y el
+            // rechazo viene del alta de la suscripción con test_access_token.
+            throw new RuntimeException(
+                'No se pudo crear la suscripción de prueba con test_access_token. ' . $e->getMessage(),
+                0,
+                $e
+            );
+        }
 
         $id = (string) ($respuesta['id'] ?? '');
         if ($id === '') {
@@ -797,7 +818,9 @@ class SubscriptionTestModeService
                 ->filter()
                 ->first();
 
-            throw new RuntimeException('MercadoPago: ' . $mensaje . ($causa ? ' · ' . $causa : ''));
+            throw new RuntimeException(
+                'MercadoPago (HTTP ' . $respuesta->status() . '): ' . $mensaje . ($causa ? ' · ' . $causa : '')
+            );
         }
 
         return $cuerpo;
