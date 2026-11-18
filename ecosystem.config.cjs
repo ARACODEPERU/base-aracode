@@ -43,13 +43,15 @@
  * Requisito: en el .env del servidor debe estar QUEUE_CONNECTION=database.
  *
  * Varias copias del proyecto en el mismo servidor: pm2 no admite dos procesos
- * con el mismo nombre, así que cada instalación define en su .env
+ * con el mismo nombre, así que el prefijo sale del APP_NAME de cada .env
  *
- *     PM2_APP_NAME=aracode-cliente-a
+ *     APP_NAME="Demo Aracode"
  *
- * y los procesos salen como aracode-cliente-a-integration-queue, etc. Si la
- * variable no existe se usa Aracode, que es el nombre histórico y no obliga a
- * migrar la instalación que ya está corriendo.
+ * y los procesos quedan como Demo-Aracode-integration-queue, Demo-Aracode-
+ * integration-imports, etc. (se quitan espacios, acentos y caracteres raros).
+ * Si las dos copias comparten el mismo APP_NAME, cada una puede forzar su
+ * prefijo con PM2_APP_NAME, que manda sobre APP_NAME. Sin ninguna de las dos se
+ * usa Aracode, el nombre histórico.
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -116,13 +118,36 @@ function leerEnv(clave) {
  * el .env) o del .env. Se limpia para que el nombre no tenga espacios ni
  * caracteres que rompan `pm2 logs <nombre>`.
  */
-const prefijo = ((process.env.PM2_APP_NAME || leerEnv('PM2_APP_NAME') || 'Aracode')
+/**
+ * Nombre base: variable de entorno (util para probar sin tocar el .env),
+ * PM2_APP_NAME y luego APP_NAME del .env.
+ */
+let nombreBase = process.env.PM2_APP_NAME
+    || leerEnv('PM2_APP_NAME')
+    || leerEnv('APP_NAME')
+    || 'Aracode';
+
+// "Laravel" es el APP_NAME de fabrica: no identifica a la copia y haria que dos
+// instalaciones choquen en el mismo daemon de pm2.
+if (/^laravel$/i.test(nombreBase.trim())) {
+    console.warn('[pm2] APP_NAME sigue en su valor por defecto ("Laravel"). Escribe APP_NAME o PM2_APP_NAME con el nombre de esta copia; por ahora se usa Aracode.');
+    nombreBase = 'Aracode';
+}
+
+/**
+ * Nombre apto para pm2: sin acentos (Nino -> Nino, no Ni-o), sin espacios y sin
+ * simbolos que rompan `pm2 logs <nombre>`.
+ */
+const prefijo = nombreBase
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .trim()
     .replace(/[^A-Za-z0-9._-]+/g, '-')
-    .replace(/^-+|-+$/g, '')) || 'Aracode';
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'Aracode';
 
 // Deja rastro en la salida de `pm2 start` de que valor se resolvio y de donde.
-console.log(`[pm2] prefijo de procesos: ${prefijo}`);
+console.log(`[pm2] prefijo de procesos: ${prefijo}${prefijo === nombreBase ? '' : ` (desde "${nombreBase}")`}`);
 
 module.exports = {
     apps: [
