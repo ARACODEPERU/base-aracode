@@ -122,6 +122,10 @@ class TreasuryLedgerService
                 return;
             }
 
+            // La comisión se identifica con la referencia del cobro que la originó
+            // (por ejemplo "MercadoPago #1234567"); si el cobro no tiene, se usa su número.
+            $reference = trim((string) $income->reference);
+
             TreasuryTransaction::create([
                 'treasury_account_id' => $account->id,
                 'transaction_date' => $income->transaction_date,
@@ -132,7 +136,9 @@ class TreasuryLedgerService
                 'amount' => $calc['total'],
                 'fee_amount' => $calc['comision'],
                 'igv_amount' => $calc['igv'],
-                'description' => 'Comisión por ingreso #' . $income->id,
+                'description' => $reference !== ''
+                    ? 'Comisión de Ref. ' . $reference
+                    : 'Comisión por ingreso #' . $income->id,
                 'source' => TreasuryTransaction::SOURCE_AUTO,
                 'user_id' => $userId,
             ]);
