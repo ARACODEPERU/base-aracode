@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Modules\Academic\Emails\SubscriptionRenewed;
 use Modules\Academic\Entities\AcaStudent;
+use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Entities\AcaSubscriptionPayment;
 use Modules\Academic\Entities\AcaSubscriptionPreapproval;
 use Modules\Academic\Entities\AcaSubscriptionTestLog;
@@ -59,6 +60,10 @@ class SubscriptionTestModeTest extends TestCase
         $integration->auths()->updateOrCreate(
             ['field_name' => 'test_public_key'],
             ['field_value' => 'TEST-PUBLIC-KEY', 'field_type' => 'text', 'is_enabled' => true]
+        );
+        $integration->auths()->updateOrCreate(
+            ['field_name' => 'webhook_secret'],
+            ['field_value' => 'whsec_prueba', 'field_type' => 'password', 'auth_location' => 'header', 'is_enabled' => true]
         );
         $this->app->forgetInstance(IntegrationCredentialResolver::class);
 
@@ -145,6 +150,192 @@ class SubscriptionTestModeTest extends TestCase
             $payment->date_end->toDateString(),
             'El primer periodo de prueba debe cubrir 3 meses.'
         );
+    }
+
+    public function test_la_suscripcion_simulada_no_necesita_credenciales_ni_usuario_de_prueba(): void
+    {
+        // Sin credenciales de prueba: la simulación no llama a MercadoPago.
+        Integration::query()->where('name', 'MercadoPago')->firstOrFail()
+            ->auths()->whereIn('field_name', ['test_access_token', 'test_public_key'])->update(['field_value' => null]);
+        $this->app->forgetInstance(IntegrationCredentialResolver::class);
+
+        $this->actingAs($this->user)
+            ->postJson(route('aca_subscriptions_test_simulate', $this->plan->id), [
+                'email' => 'grande_josh@outlook.com',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('email', 'grande_josh@outlook.com');
+
+        Http::assertNothingSent();
+
+        $preapproval = AcaSubscriptionPreapproval::query()
+            ->where('subscription_id', $this->plan->id)
+            ->where('is_test', true)
+            ->firstOrFail();
+
+        $this->assertStringStartsWith('TEST-LOCAL-', $preapproval->preapproval_id);
+        $this->assertSame('authorized', $preapproval->status);
+        $this->assertSame(1, $preapproval->frequency);
+
+        // Primer periodo cobrado con el flujo real: pago, acceso y correo.
+        $this->assertDatabaseHas('aca_subscription_payments', [
+            'preapproval_id' => $preapproval->preapproval_id,
+            'is_test' => 1,
+            'status' => 'approved',
+        ]);
+
+        $this->assertSame(1, AcaStudentSubscription::query()
+            ->where('student_id', $preapproval->student_id)
+            ->where('subscription_id', $this->plan->id)
+            ->where('status', true)
+            ->count());
+
+        Mail::assertQueued(SubscriptionRenewed::class);
+
+        // Cancelar una simulación tampoco contacta a MercadoPago.
+        $this->actingAs($this->user)
+            ->postJson(route('aca_subscriptions_test_cancel', $this->plan->id))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        Http::assertNothingSent();
+        $this->assertSame('cancelled', $preapproval->refresh()->status);
+    }
+
+    public function test_la_suscripcion_simulada_trimestral_cubre_tres_meses(): void
+    {
+        $this->plan->update(['period' => 'Trimestral']);
+
+        $this->actingAs($this->user)
+            ->postJson(route('aca_subscriptions_test_simulate', $this->plan->id), ['email' => 'prueba@example.com'])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $preapproval = AcaSubscriptionPreapproval::query()
+            ->where('subscription_id', $this->plan->id)
+            ->firstOrFail();
+
+        $this->assertSame(3, $preapproval->frequency);
+
+        $payment = AcaSubscriptionPayment::query()
+            ->where('preapproval_id', $preapproval->preapproval_id)
+            ->firstOrFail();
+
+        $this->assertSame(
+            now()->copy()->addMonths(3)->toDateString(),
+            $payment->date_end->toDateString(),
+            'La simulación trimestral debe cubrir 3 meses.'
+        );
+    }
+
+    public function test_el_webhook_procesa_una_notificacion_firmada_de_la_suscripcion_simulada(): void
+    {
+        $this->actingAs($this->user)
+            ->postJson(route('aca_subscriptions_test_simulate', $this->plan->id), ['email' => 'prueba@example.com'])
+            ->assertOk();
+
+        $preapproval = AcaSubscriptionPreapproval::query()
+            ->where('subscription_id', $this->plan->id)
+            ->firstOrFail();
+
+        $ts = (string) now()->timestamp;
+        $requestId = 'req-simulada';
+        $manifest = "id:{$preapproval->preapproval_id};request-id:{$requestId};ts:{$ts};";
+
+        $this->postJson(
+            route('aca_mercadopago_subscription_webhook')
+                . '?data.id=' . $preapproval->preapproval_id
+                . '&type=subscription_authorized_payment',
+            [
+                'type' => 'subscription_authorized_payment',
+                'action' => 'subscription_authorized_payment.created',
+                'data' => ['id' => $preapproval->preapproval_id],
+            ],
+            [
+                'x-signature' => 'ts=' . $ts . ',v1=' . hash_hmac('sha256', $manifest, 'whsec_prueba'),
+                'x-request-id' => $requestId,
+            ],
+        )->assertOk()->assertJsonPath('result', 'charged');
+
+        // Primer periodo del alta simulada + periodo cobrado por el webhook.
+        $this->assertSame(2, AcaSubscriptionPayment::query()
+            ->where('subscription_id', $this->plan->id)
+            ->where('is_test', true)
+            ->where('status', 'approved')
+            ->count());
+    }
+
+    public function test_el_webhook_rechaza_una_notificacion_simulada_sin_firma(): void
+    {
+        $this->actingAs($this->user)
+            ->postJson(route('aca_subscriptions_test_simulate', $this->plan->id), ['email' => 'prueba@example.com'])
+            ->assertOk();
+
+        $preapproval = AcaSubscriptionPreapproval::query()
+            ->where('subscription_id', $this->plan->id)
+            ->firstOrFail();
+
+        $this->postJson(
+            route('aca_mercadopago_subscription_webhook') . '?data.id=' . $preapproval->preapproval_id,
+            ['type' => 'subscription_authorized_payment', 'data' => ['id' => $preapproval->preapproval_id]],
+        )->assertStatus(401);
+
+        $this->assertSame(1, AcaSubscriptionPayment::query()
+            ->where('subscription_id', $this->plan->id)
+            ->where('status', 'approved')
+            ->count());
+    }
+
+    public function test_el_panel_envia_una_notificacion_firmada_valida_al_webhook(): void
+    {
+        $this->actingAs($this->user)
+            ->postJson(route('aca_subscriptions_test_simulate', $this->plan->id), ['email' => 'prueba@example.com'])
+            ->assertOk();
+
+        $preapproval = AcaSubscriptionPreapproval::query()
+            ->where('subscription_id', $this->plan->id)
+            ->firstOrFail();
+
+        Http::fake([
+            route('aca_mercadopago_subscription_webhook') . '*' => Http::response([
+                'received' => true,
+                'result' => 'charged',
+            ], 200),
+        ]);
+
+        $this->actingAs($this->user)
+            ->postJson(route('aca_subscriptions_test_notify_signed', $this->plan->id))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('http_status', 200)
+            ->assertJsonPath('result', 'charged');
+
+        Http::assertSent(function ($request) use ($preapproval) {
+            // parse_str convertiría «data.id» en «data_id»: se lee la query a mano.
+            $query = (string) parse_url($request->url(), PHP_URL_QUERY);
+            preg_match('/(?:^|&)data\.id=([^&]*)/', $query, $coincidencia);
+            $dataId = urldecode($coincidencia[1] ?? '');
+            if ($dataId !== $preapproval->preapproval_id) {
+                return false;
+            }
+
+            $signature = (string) ($request->header('x-signature')[0] ?? '');
+            $requestId = (string) ($request->header('x-request-id')[0] ?? '');
+
+            if (! preg_match('/ts=(\d+),v1=([a-f0-9]+)/', $signature, $partes)) {
+                return false;
+            }
+
+            $manifest = "id:{$dataId};request-id:{$requestId};ts:{$partes[1]};";
+
+            return hash_equals(hash_hmac('sha256', $manifest, 'whsec_prueba'), $partes[2]);
+        });
+
+        $this->assertDatabaseHas('aca_subscription_test_logs', [
+            'subscription_id' => $this->plan->id,
+            'action' => 'webhook',
+        ]);
     }
 
     public function test_bloquea_si_el_token_de_prueba_es_el_de_produccion(): void

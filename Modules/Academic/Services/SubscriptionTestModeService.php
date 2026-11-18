@@ -32,6 +32,10 @@ use RuntimeException;
  * 1. start(): crea un alumno de prueba y una suscripción (preapproval) en el
  *    ambiente de PRUEBA de MercadoPago con una tarjeta de prueba. El primer
  *    cobro queda pendiente de conciliar y lo acredita el webhook real.
+ *    startSimulated(): alternativa sin MercadoPago. Crea la misma suscripción
+ *    con un id local (TEST-LOCAL-…) y cobra el primer periodo con el servicio
+ *    de cobros, así se prueban Tesorería, correo y acceso con cualquier correo
+ *    (MercadoPago exige un usuario de prueba comprador para el alta real).
  * 2. renewal(): simula el cobro del periodo siguiente con el mismo servicio que usa
  *    el webhook, para ver el registro en Tesorería, la extensión del acceso y
  *    el correo de renovación.
@@ -240,6 +244,120 @@ class SubscriptionTestModeService
     }
 
     /**
+     * Alta simulada: suscripción y primer cobro sin llamar a MercadoPago.
+     *
+     * Sirve cuando el alta real se rechaza porque el pagador no es un usuario
+     * de prueba comprador. No necesita credenciales ni tarjeta: la suscripción
+     * queda con un id local y el primer periodo se cobra con el mismo servicio
+     * que usa el webhook, así se ven la venta, el ingreso en Tesorería, el
+     * acceso del alumno y el correo de renovación.
+     *
+     * @return array<string, mixed>
+     */
+    public function startSimulated(AcaSubscriptionType $plan, string $email): array
+    {
+        $this->assertPlan($plan);
+
+        $email = trim($email);
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException('Escribe un correo válido para el alumno de prueba.');
+        }
+
+        return $this->withLock($plan, function () use ($plan, $email): array {
+            $existente = AcaSubscriptionPreapproval::query()
+                ->where('subscription_id', $plan->id)
+                ->where('is_test', true)
+                ->whereIn('status', ['authorized', 'pending'])
+                ->latest('id')
+                ->first();
+
+            if ($existente) {
+                return [
+                    'already' => true,
+                    'preapproval_id' => $existente->preapproval_id,
+                    'message' => 'Ya hay una suscripción de prueba vigente para este plan. Usa «Simular renovación» o elimínala primero.',
+                ];
+            }
+
+            $monto = $this->preapprovals->amount($plan);
+            if ($monto <= 0) {
+                throw new RuntimeException('El plan no tiene un precio en soles configurado para la prueba.');
+            }
+
+            [
+                'student' => $alumno,
+                'created_person' => $personaCreada,
+                'created_student' => $alumnoCreado,
+            ] = $this->testStudent($plan, $email);
+
+            $meses = max(1, (int) ($plan->recurringMonths() ?? 1));
+
+            $preapproval = AcaSubscriptionPreapproval::create([
+                'student_id' => $alumno->id,
+                'subscription_id' => $plan->id,
+                'preapproval_id' => 'TEST-LOCAL-' . Str::upper(Str::random(12)),
+                'status' => 'authorized',
+                'amount' => round($monto, 2),
+                'currency_id' => 'PEN',
+                'frequency' => $meses,
+                'frequency_type' => 'months',
+                'billing_day' => min(28, (int) now()->format('j')),
+                'start_date' => now()->toDateString(),
+                'next_payment_date' => $this->nextPaymentDate(null, $meses),
+                'payer_email' => $email,
+                'external_reference' => 'aca:test:student:' . $alumno->id . ':plan:' . $plan->id,
+                'invoice_data' => [
+                    'document_type' => 'DNI',
+                    'ruc' => '12345678',
+                    'payer_email' => $email,
+                    'origen' => 'modo_prueba_simulado',
+                    'capturado_at' => now()->toDateTimeString(),
+                    'person_id' => $alumno->person_id,
+                    'created_person' => $personaCreada,
+                    'created_student' => $alumnoCreado,
+                ],
+                'raw' => ['modo_prueba' => true, 'simulada' => true],
+                'last_synced_at' => now(),
+                'is_test' => true,
+            ]);
+
+            // Primer periodo cobrado con el flujo real: venta, Tesorería,
+            // acceso del alumno y correo de renovación.
+            $resultado = $this->charges->handleAuthorizedPayment(
+                $this->syntheticInvoice($preapproval, 'TEST-FIRST-' . $preapproval->id)
+            );
+
+            $preapproval->refresh();
+
+            AcaSubscriptionTestLog::record(
+                $plan->id,
+                'created',
+                'Suscripción simulada creada (sin MercadoPago). Primer periodo procesado: ' . $resultado . '.',
+                [
+                    'preapproval_id' => $preapproval->preapproval_id,
+                    'email' => $email,
+                    'amount' => round($monto, 2),
+                    'result' => $resultado,
+                ],
+                'success',
+                $preapproval->preapproval_id,
+            );
+
+            return [
+                'already' => false,
+                'simulated' => true,
+                'preapproval_id' => $preapproval->preapproval_id,
+                'status' => $preapproval->status,
+                'email' => $email,
+                'amount' => round($monto, 2),
+                'result' => $resultado,
+                'message' => 'Suscripción simulada creada (' . $preapproval->preapproval_id . ') y primer periodo aprobado. '
+                    . 'Revisa el acceso del alumno, Tesorería y el correo. No se llamó a MercadoPago.',
+            ];
+        });
+    }
+
+    /**
      * Simula la renovación: concilia el primer cobro si quedó pendiente y
      * registra el periodo siguiente con el mismo flujo del webhook.
      *
@@ -302,6 +420,122 @@ class SubscriptionTestModeService
                 'results' => $resultados,
                 'email' => $preapproval->student?->person?->email,
                 'message' => $mensaje . ' Revisa también la carpeta de spam.',
+            ];
+        });
+    }
+
+    /**
+     * Envía una notificación firmada a la URL pública del webhook.
+     *
+     * Comprueba de punta a punta la ruta HTTP: URL alcanzable, x-signature con
+     * el webhook_secret, registro en mercadopago_events y en el Historial de la
+     * integración. Si la suscripción de prueba es simulada (TEST-LOCAL-…), el
+     * webhook además procesa el cobro sintético y se ven venta, Tesorería,
+     * acceso y correo. Con una suscripción real de MercadoPago solo se valida
+     * la firma, porque el cobro lo entrega MercadoPago.
+     *
+     * @return array<string, mixed>
+     */
+    public function sendSignedTestNotification(AcaSubscriptionType $plan): array
+    {
+        $this->assertPlan($plan);
+
+        return $this->withLock($plan, function () use ($plan): array {
+            $preapproval = $this->latestTestPreapproval($plan);
+
+            if (! $preapproval) {
+                throw new RuntimeException('Primero crea una suscripción de prueba.');
+            }
+
+            if ($preapproval->status === 'cancelled') {
+                throw new RuntimeException('La suscripción de prueba está cancelada. Elimínala y crea otra.');
+            }
+
+            $secret = $this->hubValue('webhook_secret')
+                ?: trim((string) config('services.mercadopago.webhook_secret'));
+
+            if ($secret === '') {
+                throw new RuntimeException(
+                    'Falta el webhook_secret: cárgalo en IntegrationHub → MercadoPago. Sin ese valor el webhook rechaza toda notificación con 401.'
+                );
+            }
+
+            $simulada = str_starts_with((string) $preapproval->preapproval_id, 'TEST-LOCAL-');
+            $tipo = $simulada ? 'subscription_authorized_payment' : 'subscription_preapproval';
+            $dataId = (string) $preapproval->preapproval_id;
+
+            $ts = (string) now()->getTimestampMs();
+            $requestId = (string) Str::uuid();
+            $manifest = "id:{$dataId};request-id:{$requestId};ts:{$ts};";
+
+            $url = route('aca_mercadopago_subscription_webhook');
+
+            $payload = [
+                'id' => random_int(100000000000, 999999999999),
+                'live_mode' => false,
+                'type' => $tipo,
+                'action' => $tipo . '.created',
+                'data' => ['id' => $dataId],
+            ];
+
+            try {
+                $respuesta = Http::withHeaders([
+                    'x-signature' => 'ts=' . $ts . ',v1=' . hash_hmac('sha256', $manifest, $secret),
+                    'x-request-id' => $requestId,
+                ])->acceptJson()->asJson()->timeout(20)->post(
+                    $url . '?' . http_build_query(['data.id' => $dataId, 'type' => $tipo]),
+                    $payload,
+                );
+            } catch (\Illuminate\Http\Client\ConnectionException $e) {
+                throw new RuntimeException(
+                    'No se pudo conectar con el webhook en ' . $url . ': ' . $e->getMessage()
+                    . ' Si estás en local con «php artisan serve» (un solo proceso), la petición se queda esperando:',
+                    0,
+                    $e
+                );
+            }
+
+            $estado = $respuesta->status();
+            $cuerpo = (array) $respuesta->json();
+            $resultado = (string) ($cuerpo['result'] ?? ($cuerpo['simulation'] ?? false ? 'simulation' : ''));
+            $detalle = (string) ($cuerpo['message'] ?? '');
+
+            AcaSubscriptionTestLog::record(
+                $plan->id,
+                'webhook',
+                'Notificación firmada enviada al webhook: HTTP ' . $estado
+                    . ($resultado !== '' ? ' · ' . $resultado : '')
+                    . ($detalle !== '' ? ' · ' . $detalle : '') . '.',
+                [
+                    'url' => $url,
+                    'http_status' => $estado,
+                    'result' => $resultado,
+                    'data_id' => $dataId,
+                    'simulada' => $simulada,
+                ],
+                $respuesta->successful() ? 'success' : 'error',
+                $preapproval->preapproval_id,
+            );
+
+            if (! $respuesta->successful()) {
+                throw new RuntimeException(
+                    'El webhook respondió HTTP ' . $estado
+                    . ($detalle !== '' ? ': ' . $detalle : '.')
+                    . ' Revisa el Historial de IntegrationHub → MercadoPago para ver el detalle.'
+                );
+            }
+
+            $mensaje = $simulada
+                ? 'Notificación firmada aceptada (HTTP ' . $estado . ', ' . ($resultado ?: 'procesada') . '). Se procesó el cobro simulado: revisa Tesorería, el acceso y el correo.'
+                : 'Notificación firmada aceptada (HTTP ' . $estado . '). La firma y la URL del webhook funcionan; el cobro real lo envía MercadoPago.';
+
+            return [
+                'url' => $url,
+                'http_status' => $estado,
+                'result' => $resultado,
+                'simulated' => $simulada,
+                'preapproval_id' => $preapproval->preapproval_id,
+                'message' => $mensaje,
             ];
         });
     }
@@ -777,10 +1011,17 @@ class SubscriptionTestModeService
 
     /**
      * Cancela el preapproval en el ambiente de prueba.
+     *
+     * Las suscripciones simuladas no existen en MercadoPago: no hay nada que
+     * cancelar en remoto.
      */
     private function cancelRemote(AcaSubscriptionPreapproval $preapproval): void
     {
         if (! $preapproval->preapproval_id) {
+            return;
+        }
+
+        if (str_starts_with((string) $preapproval->preapproval_id, 'TEST-LOCAL-')) {
             return;
         }
 

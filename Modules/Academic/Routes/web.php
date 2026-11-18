@@ -454,8 +454,12 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->group(function () {
             Route::post('start', [AcaSubscriptionTestModeController::class, 'start'])
                 ->name('aca_subscriptions_test_start');
+            Route::post('simulate', [AcaSubscriptionTestModeController::class, 'simulate'])
+                ->name('aca_subscriptions_test_simulate');
             Route::post('renew', [AcaSubscriptionTestModeController::class, 'renew'])
                 ->name('aca_subscriptions_test_renew');
+            Route::post('notify-signed', [AcaSubscriptionTestModeController::class, 'notifySigned'])
+                ->name('aca_subscriptions_test_notify_signed');
             Route::post('notice', [AcaSubscriptionTestModeController::class, 'notice'])
                 ->name('aca_subscriptions_test_notice');
             Route::post('cancel', [AcaSubscriptionTestModeController::class, 'cancel'])

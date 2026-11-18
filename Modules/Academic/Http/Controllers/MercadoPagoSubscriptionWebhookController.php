@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Modules\Academic\Entities\AcaSubscriptionPreapproval;
 use Modules\Academic\Entities\MercadoPagoEvent;
 use Modules\Academic\Services\MercadoPago\SubscriptionPaymentGateway;
 use Modules\Academic\Services\MercadoPagoWebhookHistory;
@@ -25,6 +27,11 @@ use Modules\Integrationhub\Services\IntegrationCredentialResolver;
  * fijo (data.id = 123456, type = subscription_preapproval) SIN firma; esa
  * petición se acepta con 200 para que la prueba de la URL pase, pero no se
  * procesa nada: no hay cobro ni consulta al gateway.
+ *
+ * Una notificación firmada con data.id = TEST-LOCAL-… corresponde a una
+ * suscripción simulada del modo prueba: se procesa con un cobro sintético, sin
+ * consultar a MercadoPago, para comprobar la ruta HTTP completa (firma, evento,
+ * venta, Tesorería, acceso y correo).
  */
 class MercadoPagoSubscriptionWebhookController extends Controller
 {
@@ -105,6 +112,12 @@ class MercadoPagoSubscriptionWebhookController extends Controller
         }
 
         if (! ctype_digit($dataId)) {
+            // Suscripción simulada del modo prueba: no existe en MercadoPago,
+            // así que el cobro se arma con los datos locales.
+            if (str_starts_with($dataId, 'TEST-LOCAL-')) {
+                return $this->procesarSuscripcionSimulada($evento, $dataId);
+            }
+
             $evento->forceFill(['processed_at' => now(), 'error' => 'data.id no numérico'])->save();
 
             return response()->json(['received' => true, 'ignored' => true]);
@@ -112,6 +125,69 @@ class MercadoPagoSubscriptionWebhookController extends Controller
 
         try {
             $invoice = app(SubscriptionPaymentGateway::class)->authorizedPayment((int) $dataId);
+            $resultado = app(SubscriptionChargeService::class)->handleAuthorizedPayment($invoice);
+
+            $evento->forceFill(['processed_at' => now()])->save();
+
+            return response()->json(['received' => true, 'result' => $resultado]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            $evento->forceFill(['error' => mb_substr($e->getMessage(), 0, 1000)])->save();
+
+            return response()->json(['message' => 'No se pudo procesar la notificación.'], 500);
+        }
+    }
+
+    /**
+     * Procesa una notificación firmada de una suscripción simulada.
+     *
+     * Solo se acepta la firma válida (ya comprobada antes de llegar aquí) y una
+     * suscripción marcada como prueba; nada de esto toca dinero real.
+     *
+     * @param  MercadoPagoEvent  $evento  Fila ya creada para esta notificación.
+     */
+    private function procesarSuscripcionSimulada(MercadoPagoEvent $evento, string $dataId): JsonResponse
+    {
+        $preapproval = AcaSubscriptionPreapproval::query()
+            ->where('preapproval_id', $dataId)
+            ->where('is_test', true)
+            ->first();
+
+        if (! $preapproval) {
+            $evento->forceFill([
+                'processed_at' => now(),
+                'error' => 'Suscripción simulada no encontrada',
+            ])->save();
+
+            return response()->json([
+                'received' => true,
+                'ignored' => true,
+                'message' => 'No existe una suscripción simulada con ese id.',
+            ], 404);
+        }
+
+        try {
+            $monto = (float) $preapproval->amount;
+
+            $invoice = [
+                'id' => 'TEST-WEBHOOK-' . Str::upper(Str::random(10)),
+                'preapproval_id' => $preapproval->preapproval_id,
+                'status' => 'approved',
+                'transaction_amount' => $monto,
+                'currency_id' => $preapproval->currency_id,
+                'debit_date' => now()->toIso8601String(),
+                'payment' => [
+                    'id' => 'TEST-PAY-' . Str::upper(Str::random(10)),
+                    'status' => 'approved',
+                    'transaction_amount' => $monto,
+                ],
+                'raw' => [
+                    'modo_prueba' => true,
+                    'notificacion_firmada' => true,
+                ],
+            ];
+
             $resultado = app(SubscriptionChargeService::class)->handleAuthorizedPayment($invoice);
 
             $evento->forceFill(['processed_at' => now()])->save();

@@ -97,6 +97,39 @@ const crearPrueba = async () => {
     );
 };
 
+/**
+ * Alta simulada: no llama a MercadoPago, así que no exige un usuario de prueba
+ * comprador. Sirve para probar Tesorería, acceso y correo con cualquier correo.
+ */
+const crearSimulada = async () => {
+    if (!email.value) {
+        window.alertaSistema('Falta el correo', 'Escribe el correo del alumno de prueba.', 'warning');
+        return;
+    }
+
+    ejecutar(
+        route('aca_subscriptions_test_simulate', props.subscription.id),
+        { email: email.value },
+        'Crear suscripción simulada',
+        'Se creará un alumno de prueba y la suscripción en el sistema, sin llamar a MercadoPago. El primer periodo se cobra de forma simulada: venta, ingreso en Tesorería, acceso del alumno y correo de renovación. ¿Continuar?',
+        'Sí, simular suscripción',
+    );
+};
+
+/**
+ * Envía una notificación firmada a la URL real del webhook, como lo haría
+ * MercadoPago. Con una suscripción simulada procesa el cobro completo.
+ */
+const enviarNotificacionFirmada = () => {
+    ejecutar(
+        route('aca_subscriptions_test_notify_signed', props.subscription.id),
+        {},
+        'Enviar notificación firmada al webhook',
+        'Se enviará un POST a la URL pública del webhook con la firma x-signature calculada con el webhook_secret, como lo hace MercadoPago. Si la suscripción es simulada, se procesa el cobro completo (venta, Tesorería, acceso y correo); si es una suscripción real, solo se comprueba la firma y la recepción. ¿Continuar?',
+        'Sí, enviar notificación',
+    );
+};
+
 const simularRenovacion = () => {
     ejecutar(
         route('aca_subscriptions_test_renew', props.subscription.id),
@@ -122,7 +155,7 @@ const eliminarSuscripcion = () => {
         route('aca_subscriptions_test_cancel', props.subscription.id),
         {},
         'Eliminar suscripción de prueba',
-        'Se cancelará la suscripción en MercadoPago y se desactivará el acceso del alumno de prueba. Los registros quedan para poder revisarlos. ¿Continuar?',
+        'Se cancelará la suscripción (en MercadoPago si se creó allí) y se desactivará el acceso del alumno de prueba. Los registros quedan para poder revisarlos. ¿Continuar?',
         'Sí, eliminar suscripción',
         'warning',
     );
@@ -147,7 +180,8 @@ const borrarDatos = () => {
                 <h5 class="font-semibold text-lg dark:text-white-light">Modo prueba de cobros recurrentes</h5>
                 <p class="text-sm mt-1">
                     Prueba el alta, el webhook, la renovación, los correos y Tesorería sin usar la cuenta real.
-                    Solo se usan las credenciales de <strong>PRUEBA</strong> de MercadoPago.
+                    El alta real usa solo las credenciales de <strong>PRUEBA</strong> de MercadoPago; la
+                    <strong>suscripción simulada</strong> no llama a MercadoPago y funciona con cualquier correo.
                 </p>
                 <p class="text-xs text-gray-500 mt-1">
                     El correo se pide aquí porque MercadoPago exige un <strong>pagador</strong> en toda suscripción: en la
@@ -159,9 +193,10 @@ const borrarDatos = () => {
 
         <!-- Credenciales de prueba -->
         <div v-if="!listo()" class="mt-4 p-4 rounded border border-warning bg-warning/10">
-            <p class="font-semibold text-warning">Faltan las credenciales de prueba</p>
+            <p class="font-semibold text-warning">Faltan las credenciales de prueba (solo para el alta real)</p>
             <p class="text-sm mt-1">
-                Carga en IntegrationHub → MercadoPago los campos
+                La suscripción simulada funciona igual sin ellas. Para el alta real en MercadoPago, carga en
+                IntegrationHub → MercadoPago los campos
                 <code>test_access_token</code> y <code>test_public_key</code>.
                 <span class="block mt-1">
                     Nunca uses el access token de producción: el panel se bloquea si coincide con el de producción.
@@ -222,11 +257,57 @@ const borrarDatos = () => {
                     Borrar datos de prueba
                 </button>
             </div>
+
+            <!-- Alternativa sin MercadoPago -->
+            <div class="col-span-2 p-4 rounded border border-info bg-info/10">
+                <p class="font-semibold text-info">¿MercadoPago rechaza el alta? Usa la suscripción simulada</p>
+                <p class="text-sm mt-1">
+                    Crea la suscripción dentro del sistema, sin llamar a MercadoPago: no pide usuario de prueba
+                    comprador ni tarjeta, y acepta el correo que quieras. El primer periodo se cobra con el mismo
+                    flujo del webhook, así ves la venta, el ingreso en Tesorería, el acceso del alumno y el correo.
+                </p>
+                <button
+                    type="button"
+                    class="btn btn-outline-info mt-3"
+                    :disabled="trabajando"
+                    @click="crearSimulada"
+                >
+                    {{ trabajando === route('aca_subscriptions_test_simulate', subscription.id) ? 'Creando…' : 'Crear suscripción simulada (sin MercadoPago)' }}
+                </button>
+                <p class="text-xs text-gray-500 mt-2">
+                    No llama al webhook ni cancela nada en MercadoPago: solo reproduce el cobro. Los avisos a
+                    MercadoPago y el alta con tarjeta se siguen probando con el botón principal.
+                </p>
+
+                <hr class="my-4 border-info/30" />
+
+                <p class="font-semibold text-info">Probar el webhook de verdad</p>
+                <p class="text-sm mt-1">
+                    Envía una notificación <strong>firmada</strong> (x-signature con el <code>webhook_secret</code>) a la
+                    URL pública del webhook, como lo hace MercadoPago. Sirve para comprobar que la URL responde, que
+                    la firma valida y que la llegada queda en el Historial de la integración. Con una suscripción
+                    simulada además procesa el cobro completo.
+                </p>
+                <button
+                    type="button"
+                    class="btn btn-outline-info mt-3"
+                    :disabled="trabajando"
+                    @click="enviarNotificacionFirmada"
+                >
+                    {{ trabajando === route('aca_subscriptions_test_notify_signed', subscription.id) ? 'Enviando…' : 'Enviar notificación firmada al webhook' }}
+                </button>
+                <p class="text-xs text-gray-500 mt-2">
+                    Necesita el <code>webhook_secret</code> cargado en IntegrationHub → MercadoPago. En local, si usas
+                    «php artisan serve» con un solo proceso, la petición a la propia URL puede quedarse esperando:
+                    pruébalo en el servidor o con varios workers.
+                </p>
+            </div>
         </div>
 
         <p class="text-xs text-gray-500 mt-3">
-            El primer cobro lo acredita el webhook real de MercadoPago. Si aún no tienes una URL pública configurada,
-            usa «Simular renovación» para ver el registro en Tesorería, la extensión del acceso y el correo.
+            En el alta real, el primer cobro lo acredita el webhook de MercadoPago. Si aún no tienes una URL pública
+            configurada, crea la suscripción simulada o usa «Simular renovación» para ver el registro en Tesorería,
+            la extensión del acceso y el correo.
             «Enviar aviso de pago exitoso» reenvía solo el correo, sin cobrar, para confirmar que llega.
             Las notificaciones recibidas aparecen abajo.
         </p>

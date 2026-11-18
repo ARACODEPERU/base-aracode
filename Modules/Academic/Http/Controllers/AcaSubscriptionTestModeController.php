@@ -25,6 +25,9 @@ class AcaSubscriptionTestModeController extends Controller
 
     /**
      * Crea el alumno y la suscripción de prueba en MercadoPago.
+     *
+     * Exige que el correo sea de un usuario de prueba comprador; si MercadoPago
+     * lo rechaza, simulate() hace el alta sin salir del sistema.
      */
     public function start(Request $request, $id): JsonResponse
     {
@@ -41,11 +44,42 @@ class AcaSubscriptionTestModeController extends Controller
     }
 
     /**
+     * Alta simulada: suscripción y primer cobro sin llamar a MercadoPago.
+     *
+     * No usa credenciales ni exige un usuario de prueba comprador: sirve para
+     * probar Tesorería, correo y acceso con cualquier correo.
+     */
+    public function simulate(Request $request, $id): JsonResponse
+    {
+        $request->validate([
+            'email' => ['required', 'email', 'max:150'],
+        ], [
+            'email.required' => 'Escribe el correo del alumno de prueba.',
+            'email.email' => 'El correo del alumno de prueba no es válido.',
+        ]);
+
+        return $this->run(function () use ($request, $id): array {
+            return $this->testMode->startSimulated($this->plan($id), (string) $request->get('email'));
+        });
+    }
+
+    /**
      * Simula el cobro del mes siguiente.
      */
     public function renew($id): JsonResponse
     {
         return $this->run(fn (): array => $this->testMode->simulateRenewal($this->plan($id)));
+    }
+
+    /**
+     * Envía una notificación firmada a la URL pública del webhook.
+     *
+     * Valida de punta a punta la ruta HTTP y la firma; con una suscripción
+     * simulada además procesa el cobro completo.
+     */
+    public function notifySigned($id): JsonResponse
+    {
+        return $this->run(fn (): array => $this->testMode->sendSignedTestNotification($this->plan($id)));
     }
 
     /**
