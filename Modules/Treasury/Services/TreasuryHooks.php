@@ -303,7 +303,7 @@ class TreasuryHooks
                 description: $description ?: 'Venta online - Carrito #' . $sale->id,
                 treasuryAccountId: (int) $account->id,
                 meta: ['onli_sale_id' => $sale->id],
-            ));
+            ))?->treasuryTransaction;
         } catch (\Throwable $e) {
             Log::warning('[Treasury] No se registró el ingreso de la venta online', [
                 'onli_sale_id' => $sale->id,
@@ -365,7 +365,7 @@ class TreasuryHooks
                 'document_id' => $document?->id,
             ],
             source: TreasuryTransaction::SOURCE_AUTO,
-        ));
+        ))?->treasuryTransaction;
 
         if ($document) {
             self::registerDetractionAfter($income, $document, $sale->user_id ? (int) $sale->user_id : null);
@@ -391,7 +391,7 @@ class TreasuryHooks
             return null;
         }
 
-        $income = self::dispatch($movement);
+        $income = self::dispatch($movement)?->treasuryTransaction;
 
         self::registerDetractionAfter($income, $document);
 
@@ -420,7 +420,7 @@ class TreasuryHooks
             return null;
         }
 
-        $income = self::dispatch($movements[0]);
+        $income = self::dispatch($movements[0])?->treasuryTransaction;
 
         if ($document) {
             self::registerDetractionAfter($income, $document);
@@ -499,7 +499,7 @@ class TreasuryHooks
             userId: auth()->id(),
             meta: ['sale_id' => $document->sale_id, 'document_id' => $document->id],
 
-        ));
+        ))?->treasuryTransaction;
 
         self::registerDetractionAfter($income, $document);
 
@@ -928,8 +928,7 @@ class TreasuryHooks
         }
     }
 
-    private static function dispatch(FinancialMovement $movement): ?TreasuryTransaction
-
+    private static function dispatch(FinancialMovement $movement): ?TreasurySourceMovement
     {
         try {
             return app(TreasuryIntegrationService::class)->register($movement);
