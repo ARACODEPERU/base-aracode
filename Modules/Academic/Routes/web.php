@@ -1218,7 +1218,8 @@ Route::middleware(['auth'])->put('mercadopago/{id}/academic', [MercadopagoContro
     ->name('aca_mercadopago_processpayment');
 
 // Webhook público de suscripciones: la autenticación es la firma x-signature.
-Route::post('academic/mercadopago/subscriptions/webhook', MercadoPagoSubscriptionWebhookController::class)
+// Acepta GET solo para comprobar desde el navegador que la URL está activa.
+Route::match(['get', 'post'], 'academic/mercadopago/subscriptions/webhook', MercadoPagoSubscriptionWebhookController::class)
     ->name('aca_mercadopago_subscription_webhook');
 
 Route::middleware(['auth'])->get('academic/virtual-classroom', [AcaVirtualClassroomController::class, 'index'])

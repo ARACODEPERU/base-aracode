@@ -229,6 +229,28 @@ class MercadoPagoSubscriptionWebhookTest extends TestCase
             ->assertStatus(401);
     }
 
+    public function test_la_url_responde_a_get_para_confirmar_que_esta_activa(): void
+    {
+        $this->getJson(route('aca_mercadopago_subscription_webhook'))
+            ->assertOk()
+            ->assertJsonPath('active', true);
+    }
+
+    public function test_acepta_la_notificacion_de_prueba_del_panel_sin_procesarla(): void
+    {
+        // Payload fijo del botón "Simular notificación": sin firma y con data.id ficticio.
+        $this->postJson(route('aca_mercadopago_subscription_webhook'), [
+            'action' => 'updated',
+            'type' => 'subscription_preapproval',
+            'entity' => 'preapproval',
+            'data' => ['id' => '123456'],
+        ])->assertOk()->assertJsonPath('simulation', true);
+
+        // No se consulta el gateway ni se registra un evento de cobro.
+        $this->assertSame(0, MercadoPagoEvent::count());
+        $this->assertSame(0, AcaSubscriptionPayment::count());
+    }
+
     public function test_devuelve_500_y_guarda_el_error_si_falla_la_consulta_del_cobro(): void
     {
         // Sin entrada en el gateway falso, authorizedPayment() lanza excepción.
