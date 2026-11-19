@@ -113,31 +113,20 @@
             },
             allowOutsideClick: () => !Swal.isLoading(),
             backdrop: true
-        }).then((result) => {
+        }).then(async (result) => {
             const data = result.value && result.value.data;
 
-            if (result.isConfirmed && data && data.manual) {
-                window.alertaSistema(
-                    'No se pudo enviar a SUNAT',
+            // Fallo de SUNAT o posible duplicado (1033): el comprobante queda
+            // pendiente y se muestra el error original una sola vez.
+            if (result.isConfirmed && data && (data.manual || data.duplicate)) {
+                await window.alertaSistema(
+                    data.duplicate ? 'Comprobante posiblemente registrado' : 'No se pudo enviar a SUNAT',
                     data.message,
-                    'error',
+                    data.duplicate ? 'warning' : 'error',
                     { duration: 0 }
-                ).then(() => {
-                    refreshTable();
-                });
+                );
 
-                return;
-            }
-
-            if (result.isConfirmed && data && data.duplicate) {
-                window.alertaSistema(
-                    'Comprobante posiblemente registrado',
-                    data.message,
-                    'warning',
-                    { duration: 0 }
-                ).then(() => {
-                    refreshTable();
-                });
+                refreshTable();
 
                 return;
             }

@@ -42,12 +42,12 @@ class SunatResilience
     public const CODE_CONNECTION = 'CONNECTION';
 
     /** Mensaje alternativo cuando SUNAT no responde por red o indisponibilidad. */
-    public const FRIENDLY_QUEUED = 'El comprobante se registró correctamente, pero no se pudo enviar a SUNAT en este '
+    public const FRIENDLY_MANUAL = 'El comprobante se registró correctamente, pero no se pudo enviar a SUNAT en este '
         .'momento. Quedó pendiente para que lo reenvíes manualmente. Puedes entregar la constancia interna al cliente.';
 
     /**
      * El certificado digital es un problema local, no de SUNAT. El comprobante
-     * igual queda en cola para reenviarlo cuando se restaure el archivo.
+     * igual queda pendiente para reenviarlo cuando se restaure el archivo.
      */
     public const FRIENDLY_CERTIFICATE = 'El comprobante se registró correctamente, pero el problema no es SUNAT: '
         .'no se pudo cargar el certificado digital del emisor. Revisa que el certificado esté cargado en la '
@@ -185,7 +185,7 @@ class SunatResilience
         }
 
         return $this->isAvailabilityFailure($kind, $technical)
-            ? self::FRIENDLY_QUEUED
+            ? self::FRIENDLY_MANUAL
             : self::FRIENDLY_UNCONFIRMED;
     }
 
@@ -224,7 +224,7 @@ class SunatResilience
 
     /**
      * Clasifica un fallo de red. Todo lo que no sea HTTP/red/SUNAT caído se
-     * considera rechazo de negocio (no reintentable automáticamente).
+     * considera rechazo de negocio (no reintentable).
      *
      * @return array{retryable: bool, kind: string}
      */
@@ -310,29 +310,41 @@ class SunatResilience
     }
 
     /**
-     * Deja el comprobante en cola de reintento (documentos antiguos).
+     * El comprobante no llegó a enviarse por un problema local (datos, XML,
+     * configuración). Queda pendiente y conserva el error original.
+     *
+     * @return array{success: bool, duplicate: bool, manual: bool, code: string, message: string, notes: null}
      */
-    public function markQueued(SaleDocument $document, string $kind, string $technical): void
+    public function markPreparationFailure(SaleDocument $document, Throwable $e): array
     {
-        if (! $this->supportsQueueColumns()) {
-            return;
-        }
+        $technical = get_class($e).': '.$e->getMessage();
 
-        $attempts = ((int) ($document->sunat_retry_attempts ?? 0)) + 1;
+        $document->invoice_status = 'Pendiente';
+        $document->invoice_response_code = self::CODE_CONNECTION;
+        $document->invoice_response_description = $technical;
+        $document->invoice_notes = null;
 
-        $document->forceFill([
-            'sunat_send_status' => 'reintento',
-            'sunat_retry_attempts' => $attempts,
-            'sunat_last_attempt_at' => now(),
-            'sunat_next_retry_at' => now()->addMinutes($this->backoffMinutes($attempts)),
-            'sunat_last_error' => mb_substr($technical, 0, 2000),
-            'sunat_response_kind' => mb_substr($kind, 0, 30),
+        $this->markPendingManual($document, self::KIND_UNKNOWN, $technical);
+        $document->save();
+
+        Log::warning('SUNAT: no se pudo preparar el comprobante para el envío', [
+            'document_id' => $document->id,
+            'error' => mb_substr($technical, 0, 500),
         ]);
+
+        return [
+            'success' => false,
+            'duplicate' => false,
+            'manual' => true,
+            'code' => self::CODE_CONNECTION,
+            'message' => $technical,
+            'notes' => null,
+        ];
     }
 
     /**
      * Código 1033: el comprobante posiblemente ya está registrado en SUNAT.
-     * Sale de la cola automática (queda como "revisar") para no reenviarlo.
+     * No se reenvía automáticamente; queda como "revisar" para no duplicarlo.
      */
     public function markDuplicate(SaleDocument $document, string $code): void
     {
@@ -369,14 +381,6 @@ class SunatResilience
             'sunat_last_error' => null,
             'sunat_response_kind' => $accepted ? null : self::KIND_BUSINESS,
         ]);
-    }
-
-    /**
-     * Backoff exponencial acotado: 5, 10, 20, 40, 80, 160 y 240 minutos.
-     */
-    public function backoffMinutes(int $attempts): int
-    {
-        return (int) min(240, 5 * (2 ** min(max($attempts - 1, 0), 6)));
     }
 
     public function supportsQueueColumns(): bool

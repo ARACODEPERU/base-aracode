@@ -642,6 +642,9 @@
             customClass: 'sweet-alerts',
             preConfirm: () => {
                 return axios.get(route('saledocuments_send', [document.id,document.invoice_type_doc]), { timeout: 30000 }).then((res) => {
+                    if (res.data.manual) {
+                        return res;
+                    }
                     if (!res.data.success) {
                         var cadena = `Error código: ${res.data.code}<br>Descripción:${res.data.message}`;
                         let notes = res.data.notes;
@@ -654,8 +657,25 @@
                 });
             },
             allowOutsideClick: () => !Swal2.isLoading()
-        }).then((result) => {
-            if (result.isConfirmed) {
+        }).then(async (result) => {
+            const data = result.value && result.value.data;
+
+            if (result.isConfirmed && data && data.manual) {
+                await window.alertaSistema(
+                    'No se pudo enviar a SUNAT',
+                    data.message,
+                    'error',
+                    { duration: 0 }
+                );
+
+                emit('saved');
+
+                return;
+            }
+
+            // Solo un envío aceptado muestra el aviso de éxito; el fallo ya se
+            // mostró en el mensaje de validación.
+            if (result.isConfirmed && data && data.success) {
                 var cadena = "";
                 let array = JSON.parse(result.value.data.notes);
                 for (var i = 0; i < array.length; i++) {

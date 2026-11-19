@@ -69,14 +69,15 @@ class GuiaRemision
             $see->setService($util->getGuiaService());
         } catch (Throwable $e) {
             $guia->status = GuiaRemisionModel::STATUS_CONTINGENCIA;
-            $guia->sunat_send_status = 'reintento';
+            // No hay cola automática: la guía queda pendiente de reenvío manual.
+            $guia->sunat_send_status = 'manual';
             // getSee() falla por certificado o configuración local, no porque
             // SUNAT esté caído.
             $guia->response_description = SunatResilience::FRIENDLY_LOCAL_SETUP;
             $guia->notes = json_encode(['error' => mb_substr($e->getMessage(), 0, 1500)], JSON_UNESCAPED_UNICODE);
             $guia->save();
 
-            return $this->payload($guia, ['success' => true, 'queued' => true, 'message' => SunatResilience::FRIENDLY_LOCAL_SETUP]);
+            return $this->payload($guia, ['success' => false, 'manual' => true, 'message' => SunatResilience::FRIENDLY_LOCAL_SETUP]);
         }
 
         $send = $resilience->sendWith($see, $despatch, $util);
@@ -126,15 +127,17 @@ class GuiaRemision
         $guia->response_code = mb_substr((string) ($res->getError()?->getCode() ?? ''), 0, 10);
         $guia->response_description = $failure['friendly'];
         $guia->notes = json_encode(['error' => $failure['technical'], 'kind' => $failure['kind']], JSON_UNESCAPED_UNICODE);
-        $guia->sunat_send_status = $failure['retryable'] ? 'reintento' : 'rechazado';
+        // Fallo reintentable: la guía queda pendiente para que el usuario la
+        // reenvíe a mano, con el error original visible.
+        $guia->sunat_send_status = $failure['retryable'] ? 'manual' : 'rechazado';
         $guia->status = $failure['retryable']
             ? GuiaRemisionModel::STATUS_CONTINGENCIA
             : GuiaRemisionModel::STATUS_RECHAZADO;
         $guia->save();
 
         return $this->payload($guia, [
-            'success' => $failure['retryable'],
-            'queued' => $failure['retryable'],
+            'success' => false,
+            'manual' => $failure['retryable'],
             'message' => $failure['friendly'],
         ]);
     }
@@ -386,7 +389,7 @@ class GuiaRemision
     {
         return array_merge([
             'success' => $guia->status === GuiaRemisionModel::STATUS_ACEPTADO,
-            'queued' => $guia->status === GuiaRemisionModel::STATUS_CONTINGENCIA,
+            'manual' => $guia->sunat_send_status === 'manual',
             'status' => $guia->status,
             'code' => $guia->response_code,
             'message' => $guia->response_description,

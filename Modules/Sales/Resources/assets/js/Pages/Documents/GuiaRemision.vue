@@ -4,7 +4,6 @@
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import { router } from '@inertiajs/vue3';
     import { reactive, ref } from 'vue';
-    import Swal from 'sweetalert2';
 
     const props = defineProps({
         guias: { type: Object, default: () => ({}) },
@@ -89,64 +88,91 @@
             .then((res) => {
                 saving.value = false;
 
+                if (res.data.manual) {
+                    showModal.value = false;
+                    resetForm();
+                    // La guía quedó registrada y pendiente: el error original se
+                    // mantiene visible hasta que el usuario lo cierre.
+                    Promise.resolve(window.alertaSistema(
+                        'Guía registrada; pendiente de envío',
+                        res.data.message ?? '',
+                        'warning',
+                        { duration: 0 }
+                    )).then(() => router.reload());
+
+                    return;
+                }
+
                 if (res.data.success) {
                     showModal.value = false;
                     resetForm();
-                    Swal.fire({
-                        title: res.data.queued ? 'Guía registrada en contingencia' : 'Guía generada',
-                        text: res.data.message ?? 'La guía se registró correctamente.',
-                        icon: res.data.queued ? 'warning' : 'success',
-                    });
-                    router.reload();
-                } else {
-                    Swal.fire({ title: 'SUNAT rechazó la guía', text: res.data.message ?? '', icon: 'error' });
+                    Promise.resolve(window.alertaSistema(
+                        'Guía generada',
+                        res.data.message ?? 'La guía se registró correctamente.',
+                        'success'
+                    )).then(() => router.reload());
+
+                    return;
                 }
+
+                // Rechazo de SUNAT: no se reenvía solo.
+                window.alertaSistema('SUNAT rechazó la guía', res.data.message ?? '', 'error', { duration: 0 });
             })
             .catch((error) => {
                 saving.value = false;
                 errors.value = error.response?.data?.errors ?? {};
 
                 const firstError = Object.values(errors.value)[0];
-                Swal.fire({
-                    title: 'Revisa los datos',
-                    text: Array.isArray(firstError) ? firstError[0] : (error.response?.data?.message ?? 'No se pudo registrar la guía.'),
-                    icon: 'warning',
-                });
+                window.alertaSistema(
+                    'Revisa los datos',
+                    Array.isArray(firstError) ? firstError[0] : (error.response?.data?.message ?? 'No se pudo registrar la guía.'),
+                    'warning'
+                );
             });
     };
 
-    const send = (guia) => {
-        Swal.fire({
-            title: 'Enviar guía a SUNAT',
-            text: `${guia.serie}-${guia.correlativo}`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Enviar',
-            cancelButtonText: 'Cancelar',
-        }).then((result) => {
-            if (!result.isConfirmed) return;
+    const send = async (guia) => {
+        const result = await window.alertaSistema(
+            'Enviar guía a SUNAT',
+            `${guia.serie}-${guia.correlativo}`,
+            'question',
+            {
+                duration: 0,
+                showCancelButton: true,
+                confirmButtonText: 'Enviar',
+                cancelButtonText: 'Cancelar',
+            }
+        );
 
-            axios.get(route('guias_remision_send', guia.id)).then((res) => {
-                Swal.fire({
-                    title: res.data.success ? 'Envío procesado' : 'Envío rechazado',
-                    text: res.data.message ?? '',
-                    icon: res.data.success ? 'success' : 'error',
-                });
-                router.reload();
-            }).catch((error) => {
-                Swal.fire({ title: 'Error', text: error.response?.data?.message ?? 'No se pudo enviar la guía.', icon: 'error' });
-            });
-        });
+        if (!result?.isConfirmed) return;
+
+        try {
+            const res = await axios.get(route('guias_remision_send', guia.id));
+            const data = res.data || {};
+
+            Promise.resolve(window.alertaSistema(
+                data.success ? 'Guía enviada a SUNAT' : (data.manual ? 'Guía pendiente de envío' : 'Envío rechazado'),
+                data.message ?? '',
+                data.success ? 'success' : (data.manual ? 'warning' : 'error'),
+                data.manual ? { duration: 0 } : {}
+            )).then(() => router.reload());
+        } catch (error) {
+            window.alertaSistema(
+                'Error',
+                error.response?.data?.message ?? 'No se pudo enviar la guía.',
+                'error',
+                { duration: 0 }
+            );
+        }
     };
 
     const check = (guia) => {
         axios.get(route('guias_remision_check', guia.id)).then((res) => {
-            Swal.fire({
-                title: 'Consulta de ticket',
-                text: res.data.message ?? '',
-                icon: res.data.success ? 'success' : 'info',
-            });
-            router.reload();
+            Promise.resolve(window.alertaSistema(
+                'Consulta de ticket',
+                res.data.message ?? '',
+                res.data.success ? 'success' : 'info'
+            )).then(() => router.reload());
         });
     };
 
@@ -154,24 +180,34 @@
         window.open(route('guias_remision_download', [guia.id, type]), '_blank');
     };
 
-    const destroy = (guia) => {
-        Swal.fire({
-            title: '¿Eliminar guía?',
-            text: `${guia.serie}-${guia.correlativo}`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Eliminar',
-            cancelButtonText: 'Cancelar',
-        }).then((result) => {
-            if (!result.isConfirmed) return;
+    const destroy = async (guia) => {
+        const result = await window.alertaSistema(
+            '¿Eliminar guía?',
+            `${guia.serie}-${guia.correlativo}`,
+            'warning',
+            {
+                duration: 0,
+                showCancelButton: true,
+                confirmButtonText: 'Eliminar',
+                cancelButtonText: 'Cancelar',
+            }
+        );
 
-            axios.get(route('guias_remision_destroy', guia.id)).then((res) => {
-                Swal.fire({ title: 'Guía eliminada', text: res.data.message ?? '', icon: 'success' });
-                router.reload();
-            }).catch((error) => {
-                Swal.fire({ title: 'No se puede eliminar', text: error.response?.data?.message ?? '', icon: 'error' });
-            });
-        });
+        if (!result?.isConfirmed) return;
+
+        try {
+            const res = await axios.get(route('guias_remision_destroy', guia.id));
+
+            Promise.resolve(window.alertaSistema('Guía eliminada', res.data.message ?? '', 'success'))
+                .then(() => router.reload());
+        } catch (error) {
+            window.alertaSistema(
+                'No se puede eliminar',
+                error.response?.data?.message ?? '',
+                'error',
+                { duration: 0 }
+            );
+        }
     };
 </script>
 

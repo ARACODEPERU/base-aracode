@@ -46,6 +46,9 @@ class Factura
     }
     public function create($document_id)
     {
+        $document = null;
+        $res = null;
+
         try {
             $document = SaleDocument::with(['quotas' => function ($query) {
                 $query->orderBy('due_date', 'asc'); // Ordena las cuotas por fecha de pago ascendente
@@ -116,15 +119,10 @@ class Factura
                 $codeError = $error->getCode();
                 $originalMessage = $error->getMessage();
                 $messageError = $originalMessage;
-                $connectionErrorCodes = [130, 131, 132, 133, 134, 135, 136, 137, 138, 139];
+                $status = 'Rechazada';
 
-                // Error 0109 - SUNAT autenticación no disponible
-                if ($codeError === '0109' || stripos($messageError, '0109') !== false) {
-                    $status = 'Pendiente';
-                    $messageError = "SUNAT no responde (error {$codeError}). El comprobante quedará pendiente para reintento automático. Detalle: {$originalMessage}";
-                }
                 // Error 2223 - Archivo ya presentado, intentar recuperar CDR
-                elseif ($codeError === '2223' || stripos($messageError, '2223') !== false) {
+                if ($codeError === '2223' || stripos($messageError, '2223') !== false) {
                     $ticket = $res->getTicket();
                     if (!$ticket) {
                         preg_match('/ticket[:\s]+([A-Z0-9\-]+)/i', $messageError, $matches);
@@ -156,33 +154,19 @@ class Factura
                             $messageError = "Error al consultar ticket recuperado (error {$codeError}): ".$e->getMessage().". Detalle SUNAT: {$originalMessage}";
                         }
                     } else {
-                        if (in_array((int)$codeError, $connectionErrorCodes) || (int)$codeError === -1) {
-                            $status = 'Error de Conexión';
-                        } else {
-                            $status = 'Rechazada';
-                        }
+                        $status = 'Pendiente';
+                        $messageError = "El archivo ya fue presentado (error {$codeError}) pero no se pudo recuperar la constancia. Detalle: {$originalMessage}";
                     }
                 }
-                // Error HTTP - SUNAT respondió con error HTTP (ej: 502 Bad Gateway, 400 Bad Request)
-                elseif (!is_numeric($codeError) && strtolower($codeError) === 'http') {
-                    $status = 'Pendiente';
-                    $messageError = "SUNAT respondió con error HTTP ({$originalMessage}). Es probable que SUNAT esté presentando picos de sobrecarga. Reintente más tarde. Si el error persiste, verifique: credenciales SOL, certificado digital o datos del XML.";
-                }
-                // Otros errores numéricos
+                // Cualquier otro fallo conserva el detalle original. Si es
+                // reintentable, la rama de abajo lo deja pendiente/manual.
                 else {
-                    $code = (int)$codeError;
-                    if (in_array($code, $connectionErrorCodes) || $code === -1) {
-                        $status = 'Error de Conexión';
-                        $messageError = "SUNAT no responde (error {$codeError}). El comprobante está en espera para reintento automático. Detalle: {$originalMessage}";
-                    } else {
-                        $status = 'Rechazada';
-                        $messageError = "Error de SUNAT (error {$codeError}). Detalle: {$originalMessage}";
-                    }
+                    $status = 'Rechazada';
+                    $messageError = "Error de SUNAT (error {$codeError}). Detalle: {$originalMessage}";
                 }
             }
             // Resultado no exitoso: 1033 se revisa, lo reintentable queda
             // pendiente para reenvío manual y el rechazo de negocio sale de él.
-            $queued = false;
             $duplicate = false;
             $manual = false;
 
@@ -207,7 +191,6 @@ class Factura
                 // pasó. No se encola: el reenvío es manual.
                 $messageError = $failure['technical'];
                 $notes = null;
-                $queued = false;
                 $manual = true;
 
                 $resilience->markPendingManual($document, $failure['kind'], $failure['technical']);
@@ -219,8 +202,24 @@ class Factura
                     'kind' => $failure['kind'],
                     'technical' => mb_substr((string) $failure['technical'], 0, 500),
                 ]);
+            } elseif (! $res->isSuccess() && $failure !== null && ! $failure['retryable'] && $status === 'Pendiente') {
+                // 2223: SUNAT ya tenía el archivo, pero no se pudo recuperar la
+                // constancia. Queda pendiente para revisión manual.
+                $status = 'Pendiente';
+                $notes = null;
+                $manual = true;
+
+                $resilience->markPendingManual($document, SunatResilience::KIND_UNKNOWN, (string) $messageError);
+
+                Log::warning('SUNAT: comprobante pendiente para revisión manual', [
+                    'document_id' => $document->id,
+                    'comprobante' => trim($document->invoice_serie.'-'.$document->invoice_correlative),
+                    'tipo' => $document->invoice_type_doc,
+                    'technical' => mb_substr((string) $messageError, 0, 500),
+                ]);
             } elseif ($res->isSuccess()) {
-                $resilience->markSent($document, (string) $codeError === '0');
+                // Un CDR con observaciones (2325) también es una aceptación.
+                $resilience->markSent($document, $status !== 'Rechazada');
             } elseif ($failure !== null && ! $failure['retryable']) {
                 // Rechazo de negocio: no se reintenta solo. Si el caso 2223
                 // recuperó un CDR aceptado, se marca como aceptado.
@@ -235,16 +234,26 @@ class Factura
             $document->save();
 
             return array(
-                'success' => $res->isSuccess() || $queued,
-                'queued' => $queued,
+                'success' => $res->isSuccess(),
                 'duplicate' => $duplicate,
                 'manual' => $manual,
                 'code' => $codeError,
                 'message' => $messageError,
                 'notes' => $notes,
             );
-        } catch (\Exception $e) {
-            return array('success' => false, 'code' => 0, 'message' => $e->getMessage(), 'notes' => 'Error de falta de datos en el sistema');
+        } catch (\Throwable $e) {
+            if ($document instanceof SaleDocument && (! $res || ! $res->isSuccess())) {
+                return app(SunatResilience::class)->markPreparationFailure($document, $e);
+            }
+
+            return array(
+                'success' => false,
+                'duplicate' => false,
+                'manual' => false,
+                'code' => SunatResilience::CODE_CONNECTION,
+                'message' => get_class($e).': '.$e->getMessage(),
+                'notes' => null,
+            );
         }
     }
 
