@@ -22,7 +22,7 @@ class SunatResilienceTest extends TestCase
         return [
             'timeout' => ['HTTP', 'cURL error 28: Operation timed out after 30001 milliseconds', SunatResilience::KIND_TIMEOUT],
             'curl' => [null, 'cURL error 7: Failed to connect to e-factura.sunat.gob.pe: Connection refused', SunatResilience::KIND_CURL],
-            'bad gateway' => ['HTTP', 'Bad Request', SunatResilience::KIND_HTTP],
+            'bad gateway' => ['HTTP', '502 Bad Gateway', SunatResilience::KIND_HTTP],
             'servicio no disponible' => ['0109', 'El servicio no se encuentra disponible', SunatResilience::KIND_SUNAT_UNAVAILABLE],
             'codigo soap' => ['132', 'El sistema no puede responder su solicitud. (No se pudo grabar escribir en el archivo zip)', SunatResilience::KIND_SUNAT_UNAVAILABLE],
             'sin detalle' => [null, '', SunatResilience::KIND_UNKNOWN],
@@ -58,6 +58,87 @@ class SunatResilienceTest extends TestCase
         $this->assertSame(SunatResilience::KIND_BUSINESS, $result['kind']);
     }
 
+    public function test_el_1033_se_informa_como_posiblemente_registrado_y_no_se_reintenta(): void
+    {
+        $resultado = new class
+        {
+            public function isSuccess(): bool
+            {
+                return false;
+            }
+
+            public function getError(): \Greenter\Model\Response\Error
+            {
+                return new \Greenter\Model\Response\Error(
+                    '1033',
+                    'El comprobante fue registrado previamente con otros datos'
+                );
+            }
+
+            public function getCdrResponse()
+            {
+                return null;
+            }
+
+            public function getCdrZip()
+            {
+                return null;
+            }
+
+            public function getTicket()
+            {
+                return null;
+            }
+        };
+
+        $failure = $this->resilience()->describeFailure(SunatSendOutcome::fromResult($resultado));
+
+        $this->assertFalse($failure['retryable']);
+        $this->assertSame(SunatResilience::KIND_DUPLICATE, $failure['kind']);
+        $this->assertStringContainsString('posiblemente ya fue registrado', $failure['friendly']);
+        $this->assertStringContainsString('No se reenviará automáticamente', $failure['friendly']);
+        $this->assertStringNotContainsString('SUNAT no está respondiendo', $failure['friendly']);
+    }
+
+    public function test_solo_las_fallas_de_red_o_indisponibilidad_dicen_que_sunat_no_responde(): void
+    {
+        foreach ([
+            [SunatResilience::KIND_TIMEOUT, 'cURL error 28: timed out'],
+            [SunatResilience::KIND_CURL, 'Connection refused'],
+            [SunatResilience::KIND_SUNAT_UNAVAILABLE, 'El servicio no se encuentra disponible'],
+            [SunatResilience::KIND_HTTP, 'HTTP 500 Internal Server Error'],
+            [SunatResilience::KIND_HTTP, 'HTTP 503 Service Unavailable'],
+        ] as [$kind, $technical]) {
+            $failure = $this->resilience()->describeFailure($this->exceptionOutcome($kind, $technical));
+
+            $this->assertSame(SunatResilience::FRIENDLY_QUEUED, $failure['friendly'], $kind);
+        }
+
+        foreach ([
+            [SunatResilience::KIND_SOAP, 'SoapFault: Error interno'],
+            [SunatResilience::KIND_HTTP, 'HTTP 400 Bad Request'],
+            [SunatResilience::KIND_UNKNOWN, 'Error no identificado'],
+        ] as [$kind, $technical]) {
+            $failure = $this->resilience()->describeFailure($this->exceptionOutcome($kind, $technical));
+
+            $this->assertSame(SunatResilience::FRIENDLY_UNCONFIRMED, $failure['friendly'], $kind);
+            $this->assertStringNotContainsString('SUNAT no está respondiendo', $failure['friendly'], $kind);
+        }
+    }
+
+    private function exceptionOutcome(string $kind, string $technical): SunatSendOutcome
+    {
+        return SunatSendOutcome::fromException(
+            new \Exception($technical),
+            [
+                'retryable' => true,
+                'kind' => $kind,
+                'technical' => $technical,
+                'code' => SunatResilience::CODE_CONNECTION,
+            ]
+        );
+    }
+
     public function test_un_certificado_ausente_avisa_que_el_problema_es_local(): void
     {
         $outcome = SunatSendOutcome::fromException(
@@ -90,7 +171,7 @@ class SunatResilienceTest extends TestCase
         $mensaje = SunatResilience::FRIENDLY_QUEUED;
 
         $this->assertStringContainsString('se registró correctamente', $mensaje);
-        $this->assertStringContainsString('cola', $mensaje);
+        $this->assertStringContainsString('manualmente', $mensaje);
         $this->assertStringNotContainsString('cURL', $mensaje);
         $this->assertStringNotContainsString('Exception', $mensaje);
     }

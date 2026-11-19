@@ -86,6 +86,15 @@
             showLoaderOnConfirm: true,
             preConfirm: () => {
                 return axios.get(route('saledocuments_send', [document.document_id,document.invoice_type_doc]), { timeout: 120000 }).then((res) => {
+                    // 1033: no es un fallo de envío; se muestra como advertencia.
+                    if (res.data.duplicate) {
+                        return res;
+                    }
+                    // Fallo de SUNAT: queda pendiente para reenvío manual y se
+                    // muestra el error original en el aviso de resultado.
+                    if (res.data.manual) {
+                        return res;
+                    }
                     if (!res.data.success) {
                         var cadena = `Error código: ${res.data.code}<br>Descripción:${res.data.message}`;
                         let notes = res.data.notes;
@@ -105,6 +114,34 @@
             allowOutsideClick: () => !Swal.isLoading(),
             backdrop: true
         }).then((result) => {
+            const data = result.value && result.value.data;
+
+            if (result.isConfirmed && data && data.manual) {
+                window.alertaSistema(
+                    'No se pudo enviar a SUNAT',
+                    data.message,
+                    'error',
+                    { duration: 0 }
+                ).then(() => {
+                    refreshTable();
+                });
+
+                return;
+            }
+
+            if (result.isConfirmed && data && data.duplicate) {
+                window.alertaSistema(
+                    'Comprobante posiblemente registrado',
+                    data.message,
+                    'warning',
+                    { duration: 0 }
+                ).then(() => {
+                    refreshTable();
+                });
+
+                return;
+            }
+
             if (result.isConfirmed && result.value && result.value.data && result.value.data.success) {
                 var cadena = "";
                 let array = JSON.parse(result.value.data.notes || '[]');
@@ -272,6 +309,17 @@
             formHead.reset();
             displayEditDocument.value = false ;
             refreshTable();
+        }).catch((error) => {
+            // Sin este catch el modal se quedaba cargando ante un 500.
+            formHead.processing = false;
+
+            const errores = error.response?.data?.errors;
+            const primerError = errores ? Object.values(errores)[0] : null;
+            const mensaje = Array.isArray(primerError)
+                ? primerError[0]
+                : (primerError || error.response?.data?.message || 'No se pudo guardar el documento. Revisa los datos e inténtalo de nuevo.');
+
+            window.alertaSistema('No se pudo guardar', mensaje, 'error');
         });
     }
 
@@ -552,7 +600,13 @@
                         </div>
                         <span v-if="props.rowData.invoice_status">
                             <small>Estado Sunat:</small>
-                            {{ props.rowData.invoice_status }}
+                            <span
+                                v-if="props.rowData.invoice_status === 'Posiblemente registrado'"
+                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 border border-yellow-300"
+                            >
+                                {{ props.rowData.invoice_status }}
+                            </span>
+                            <template v-else>{{ props.rowData.invoice_status }}</template>
                         </span>
                     </template>
                 </DataTable>

@@ -31,7 +31,7 @@ class SunatQueueStatusTest extends TestCase
             'cURL error 28: Operation timed out after 30001 milliseconds'
         );
 
-        $documento->invoice_status = 'Pendiente de Reintento';
+        $documento->invoice_status = 'Pendiente';
         $documento->invoice_response_description = SunatResilience::FRIENDLY_QUEUED;
 
         // El backoff lo dejaría para dentro de 5 minutos; aquí se adelanta
@@ -41,7 +41,7 @@ class SunatQueueStatusTest extends TestCase
 
         $documento->refresh();
 
-        $this->assertSame('Pendiente de Reintento', $documento->invoice_status);
+        $this->assertSame('Pendiente', $documento->invoice_status);
         $this->assertSame('reintento', $documento->sunat_send_status);
         $this->assertSame(1, $documento->sunat_retry_attempts);
         $this->assertSame(SunatResilience::KIND_TIMEOUT, $documento->sunat_response_kind);
@@ -68,7 +68,7 @@ class SunatQueueStatusTest extends TestCase
         $resilience->markQueued($documento, SunatResilience::KIND_SUNAT_UNAVAILABLE, 'Error transitorio');
         $documento->save();
 
-        // SUNAT respondió un rechazo definitivo (por ejemplo, código 1033).
+        // SUNAT respondió un rechazo definitivo de negocio (por ejemplo, 2017).
         $resilience->markSent($documento->refresh(), false);
         $documento->save();
 
@@ -77,6 +77,32 @@ class SunatQueueStatusTest extends TestCase
         $this->assertSame('rechazado', $documento->sunat_send_status);
         $this->assertNull($documento->sunat_next_retry_at);
 
+        $salida = Artisan::call('sunat:retry-queue', ['--dry-run' => true]);
+        $this->assertSame(0, $salida);
+        $this->assertStringContainsString('No hay comprobantes pendientes', Artisan::output());
+    }
+
+    public function test_el_1033_sale_de_la_cola_como_posiblemente_registrado(): void
+    {
+        $documento = $this->document();
+        $resilience = app(SunatResilience::class);
+
+        $resilience->markQueued($documento, SunatResilience::KIND_TIMEOUT, 'timeout');
+        $documento->save();
+
+        // En el reintento SUNAT responde 1033: ya estaría registrado.
+        $resilience->markDuplicate($documento->refresh(), '1033');
+        $documento->invoice_status = 'Posiblemente registrado';
+        $documento->save();
+        $documento->refresh();
+
+        $this->assertSame('Posiblemente registrado', $documento->invoice_status);
+        $this->assertSame('revisar', $documento->sunat_send_status);
+        $this->assertNull($documento->sunat_next_retry_at);
+        $this->assertSame(SunatResilience::KIND_DUPLICATE, $documento->sunat_response_kind);
+        $this->assertStringContainsString('1033', (string) $documento->sunat_last_error);
+
+        // No vuelve a aparecer en la cola automática.
         $salida = Artisan::call('sunat:retry-queue', ['--dry-run' => true]);
         $this->assertSame(0, $salida);
         $this->assertStringContainsString('No hay comprobantes pendientes', Artisan::output());

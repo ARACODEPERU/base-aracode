@@ -81,13 +81,9 @@ class Kernel extends ConsoleKernel
                     ->dailyAt('07:30')
                     ->timezone('America/Lima');
 
-        // Resiliencia SUNAT: reenvia cada 5 minutos los comprobantes que quedaron
-        // en cola por timeout / error cURL / 5xx. El backoff por comprobante lo
-        // controla el propio comando (sunat_next_retry_at).
-        $schedule->command('sunat:retry-queue')
-                    ->everyFiveMinutes()
-                    ->withoutOverlapping()
-                    ->timezone('America/Lima');
+        // El reenvío de comprobantes con error de SUNAT es manual. El comando
+        // `php artisan sunat:retry-queue` queda disponible para ejecutarlo a mano,
+        // pero no se programa para no reenviar sin intervención del usuario.
 
         // Consulta asincrona de tickets de resumenes diarios y bajas: SUNAT
         // procesa en segundo plano, asi que el estado se resuelve aqui.

@@ -85,23 +85,38 @@ class Boleta
             //return array('success' => $res->isSuccess(), 'details' => $this->util->getErrorResponse($res->getError()));
 
         }
-        // Fallo de red / SUNAT caído: la boleta queda en cola y la venta se
-        // considera registrada (se reenvía con sunat:retry-queue).
+        // Resultado no exitoso: 1033 se revisa, lo reintentable queda
+        // pendiente para reenvío manual y el rechazo de negocio sale de él.
         $queued = false;
+        $duplicate = false;
+        $manual = false;
 
-        if (! $res->isSuccess() && $failure !== null && $failure['retryable']) {
-            $status = 'Pendiente de Reintento';
-            // El texto depende del motivo: no es lo mismo SUNAT caído que un
-            // certificado local que no se pudo cargar.
+        if (! $res->isSuccess() && $failure !== null && $failure['kind'] === SunatResilience::KIND_DUPLICATE) {
+            // 1033: el comprobante posiblemente ya está registrado. No se
+            // reenvía automáticamente; queda para revisar la constancia.
+            $status = 'Posiblemente registrado';
             $messageError = $failure['friendly'];
             $notes = null;
-            $queued = true;
+            $duplicate = true;
 
-            $resilience->markQueued($document, $failure['kind'], $failure['technical']);
+            $resilience->markDuplicate($document, (string) $codeError);
 
-            // Motivo técnico real de la cola para soporte; el cajero solo ve
-            // el mensaje amigable.
-            Log::warning('SUNAT: comprobante en cola', [
+            Log::warning('SUNAT: comprobante posiblemente ya registrado', [
+                'document_id' => $document->id,
+                'comprobante' => trim($document->invoice_serie.'-'.$document->invoice_correlative),
+                'codigo' => (string) $codeError,
+            ]);
+        } elseif (! $res->isSuccess() && $failure !== null && $failure['retryable']) {
+            $status = 'Pendiente';
+            // Se muestra el error original; no se encola, el reenvío es manual.
+            $messageError = $failure['technical'];
+            $notes = null;
+            $queued = false;
+            $manual = true;
+
+            $resilience->markPendingManual($document, $failure['kind'], $failure['technical']);
+
+            Log::warning('SUNAT: comprobante pendiente para envío manual', [
                 'document_id' => $document->id,
                 'comprobante' => trim($document->invoice_serie.'-'.$document->invoice_correlative),
                 'tipo' => $document->invoice_type_doc,
@@ -125,6 +140,8 @@ class Boleta
         return array(
             'success' => $res->isSuccess() || $queued,
             'queued' => $queued,
+            'duplicate' => $duplicate,
+            'manual' => $manual,
             'code' => $codeError,
             'message' => $messageError,
             'notes' => $notes,

@@ -455,7 +455,7 @@ const displaySearchLoading = ref(false);
         { code: '2064', description: 'El comprobante fue rechazado por SUNAT', type: 'error' },
         { code: '130-139', description: 'Errores de conexi\u00f3n con SUNAT (timeout, servidor ca\u00eddo, etc.)', type: 'error' },
         { code: '-1', description: 'Timeout - SUNAT no respondi\u00f3 a tiempo', type: 'error' },
-        { code: '1033', description: 'Error interno del servicio SUNAT', type: 'error' },
+        { code: '1033', description: 'El comprobante posiblemente ya est\u00e1 registrado con otros datos (revisar CDR)', type: 'warning' },
     ];
 
     const retrySummary = (id, index) => {
