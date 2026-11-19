@@ -6,7 +6,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
-import PriceNoteEditor from '../../Components/PriceNoteEditor.vue';
+import PriceNoteEditor from '../../../Components/PriceNoteEditor.vue';
 import { ref, watch } from 'vue';
 import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
 import IconX from '@/Components/vristo/icon/icon-x.vue';
