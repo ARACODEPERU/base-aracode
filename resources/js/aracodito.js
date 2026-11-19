@@ -697,8 +697,36 @@ function speak(message) {
     // apagar la animación de la voz nueva.
     const token = ++speechToken;
     const utterance = new Utterance(message);
-    const lang = (typeof document !== 'undefined' && document.documentElement.lang) || (typeof navigator !== 'undefined' ? navigator.language : '') || 'es-ES';
+    const config = getUserConfig();
+    const voces = typeof synth.getVoices === 'function' ? synth.getVoices() : [];
+
+    // La voz guardada es propia del equipo; si no existe, se usa la primera
+    // voz en español que ofrezca el navegador.
+    const elegida = config.aracodito_tts_voice
+        ? voces.find((voz) => voz.name === config.aracodito_tts_voice)
+        : null;
+    const enEspanol = voces.find((voz) => String(voz.lang || '').toLowerCase().startsWith('es'));
+    const voz = elegida || enEspanol || null;
+
+    // Velocidad y tono permiten crear efectos (robot, niño) con la misma voz.
+    const numero = (valor, defecto, minimo, maximo) => {
+        const n = Number(valor);
+        return Number.isFinite(n) ? Math.min(maximo, Math.max(minimo, n)) : defecto;
+    };
+
+    const lang = (voz && voz.lang)
+        || (typeof document !== 'undefined' && document.documentElement.lang)
+        || (typeof navigator !== 'undefined' ? navigator.language : '')
+        || 'es-ES';
+
     utterance.lang = lang;
+
+    if (voz) {
+        utterance.voice = voz;
+    }
+
+    utterance.rate = numero(config.aracodito_tts_rate, 1, 0.5, 2);
+    utterance.pitch = numero(config.aracodito_tts_pitch, 1, 0, 2);
 
     const finish = () => {
         if (token === speechToken && root) {

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Ai\Services\AiManager;
 use Modules\Ai\Support\EnmascaradorDatos;
+use Modules\Ai\Support\AccesoIa;
+use Modules\Ai\Support\GuiaSistema;
 use Modules\Ai\Support\MapaSistema;
 use Throwable;
 
@@ -29,10 +31,10 @@ class AracoditoController extends Controller
             'ruta' => 'nullable|string|max:255',
         ]);
 
-        if (! $request->user()?->aracodito_ia_enabled) {
+        if (! AccesoIa::disponible($request->user())) {
             return response()->json([
                 'success' => false,
-                'message' => 'Aracodito con IA no está activado en tu cuenta.',
+                'message' => 'Aracodito con IA no está habilitado para tu rol.',
             ], 403);
         }
 
@@ -46,6 +48,7 @@ class AracoditoController extends Controller
             ->implode("\n");
 
         $instrucciones = (string) config('ai.aracodito.instrucciones', '')
+            . "\n\n" . GuiaSistema::texto()
             . "\n\nPantalla actual: " . (($data['ruta'] ?? '') !== '' ? $data['ruta'] : 'no indicada')
             . "\n\nPantallas que este usuario puede abrir:\n" . ($mapa !== '' ? $mapa : '(sin pantallas)')
             . "\n\nSi varias pantallas de la lista se parecen, elige la que use exactamente las palabras de la pregunta;"

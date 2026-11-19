@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
@@ -24,9 +24,50 @@ for (const parameter of props.parameters) {
     valores[parameter.code] = parameter.is_secret ? '' : parameter.value ?? '';
 }
 
+const page = usePage();
+const esAdmin = computed(() => (page.props.auth?.roles || []).includes('admin'));
+
 const guardando = ref(false);
 const guardandoRoles = ref(false);
+const guardandoRolesIa = ref(false);
 const limitesRoles = reactive((props.roles || []).map((role) => ({ ...role })));
+
+// El rol admin siempre conserva el acceso y no se puede desmarcar.
+const normalizarRolesIa = (roles) =>
+    (roles || []).map((role) => ({
+        name: role.name,
+        aracodito_ia: role.name === 'admin' ? true : Boolean(role.aracodito_ia),
+    }));
+
+const rolesIa = ref(normalizarRolesIa(props.roles));
+
+const guardarRolesIa = async () => {
+    if (guardandoRolesIa.value) {
+        return;
+    }
+
+    guardandoRolesIa.value = true;
+
+    try {
+        const { data } = await axios.post(route('ai_configuracion_aracodito_ia'), {
+            roles: rolesIa.value.filter((role) => role.aracodito_ia).map((role) => role.name),
+        });
+
+        rolesIa.value = normalizarRolesIa(data.roles);
+        window.alertaSistema('Acceso a IA actualizado', data.message, 'success');
+    } catch (error) {
+        const errores = error.response?.data?.errors || {};
+        const primero = Object.values(errores).flat()[0];
+
+        window.alertaSistema(
+            'No se pudo guardar el acceso',
+            primero || error.response?.data?.message || 'Revisa los roles e intenta nuevamente.',
+            'error'
+        );
+    } finally {
+        guardandoRolesIa.value = false;
+    }
+};
 
 const guardarRoles = async () => {
     if (guardandoRoles.value) {
@@ -306,6 +347,48 @@ const guardar = async () => {
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <div v-if="esAdmin" class="panel">
+                    <div class="flex flex-col gap-2 border-b border-gray-200 p-5 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold">Acceso a Aracodito IA</h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Solo el rol admin ve el interruptor de IA en su perfil. Los roles marcados usan
+                                Aracodito IA sin interruptor propio; al desmarcarlos pierden el acceso de inmediato.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            class="btn btn-primary shrink-0"
+                            :disabled="guardandoRolesIa"
+                            @click="guardarRolesIa"
+                        >
+                            <span
+                                v-if="guardandoRolesIa"
+                                class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+                            ></span>
+                            {{ guardandoRolesIa ? 'Guardando...' : 'Guardar acceso' }}
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2 p-5 sm:grid-cols-2 lg:grid-cols-3">
+                        <label
+                            v-for="role in rolesIa"
+                            :key="role.name"
+                            class="flex items-center gap-2 text-sm"
+                        >
+                            <input
+                                v-model="role.aracodito_ia"
+                                type="checkbox"
+                                class="form-checkbox"
+                                :disabled="role.name === 'admin'"
+                            />
+                            <span>{{ role.name }}</span>
+                            <span v-if="role.name === 'admin'" class="text-xs text-gray-500 dark:text-gray-400">
+                                (siempre)
+                            </span>
+                        </label>
                     </div>
                 </div>
 

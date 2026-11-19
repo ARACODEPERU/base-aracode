@@ -31,11 +31,9 @@ const permisos = computed(() => page.props.auth?.permissions || []);
 const ubicacion = computed(() => ubicacionActual(ruta.value, permisos.value));
 const guias = computed(() => guiasDePantalla(ruta.value));
 
-const iaDisponible = computed(() => {
-    const activo = Boolean(page.props.auth?.user?.aracodito_ia_enabled);
-
-    return activo && permisos.value.includes('ia_aracodito');
-});
+// El servidor calcula el acceso: rol habilitado por el administrador y, en
+// el rol admin, su interruptor personal del perfil.
+const iaDisponible = computed(() => Boolean(page.props.aracoditoIaDisponible));
 
 // La voz solo se usa si la cuenta tiene Aracodito y el audio activos.
 const audioActivo = computed(() => Boolean(
@@ -64,8 +62,17 @@ const callar = () => {
 // el botón de Aracodito en esas pantallas.
 const oculto = computed(() => /^\/treasury(\/|$)/.test(ruta.value));
 
+// Guía funcional que comparte el servidor (misma que usa la IA). Permite
+// responder procesos como el odontograma aunque la IA no esté disponible.
+const conceptosGuia = computed(() => page.props.aracoditoGuia || []);
+
 const resultados = computed(() =>
-    buscarTemas({ permisos: permisos.value, ruta: ruta.value, consulta: consulta.value })
+    buscarTemas({
+        permisos: permisos.value,
+        ruta: ruta.value,
+        consulta: consulta.value,
+        conceptos: conceptosGuia.value,
+    })
 );
 
 const temasVisibles = computed(() => {

@@ -31,6 +31,7 @@ Route::prefix('ai')->middleware(['auth', 'verified'])->group(function () {
         Route::get('configuracion', [AiConfiguracionController::class, 'index'])->name('ai_configuracion');
         Route::post('configuracion', [AiConfiguracionController::class, 'update'])->name('ai_configuracion_update');
         Route::post('configuracion/roles', [AiConfiguracionController::class, 'updateRoles'])->name('ai_configuracion_roles');
+        Route::post('configuracion/aracodito-ia', [AiConfiguracionController::class, 'updateAracoditoIa'])->name('ai_configuracion_aracodito_ia');
     });
 
     Route::middleware('permission:ia_consumo')->group(function () {

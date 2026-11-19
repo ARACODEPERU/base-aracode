@@ -274,11 +274,22 @@ export function ubicacionActual(url, permisos = []) {
  * Sin consulta devuelve las guías de la pantalla actual más las generales.
  * Con consulta ordena por coincidencias: primero la pregunta, luego el resto.
  */
-export function buscarTemas({ permisos = [], ruta = '/', consulta = '', limite = 12 } = {}) {
+export function buscarTemas({ permisos = [], ruta = '/', consulta = '', limite = 12, conceptos = [] } = {}) {
+    // conceptos viene de la guía del servidor (GuiaSistema): sirve para
+    // responder dudas de proceso aunque la IA no esté disponible.
+    const temasGuia = (conceptos || []).map((concepto) => ({
+        id: `guia-${concepto.clave}`,
+        pregunta: concepto.pregunta,
+        palabras: concepto.palabras || [],
+        respuesta: concepto.respuesta,
+        url: concepto.url || null,
+    }));
+
     const temas = [
         ...AYUDA_SISTEMA,
         ...AYUDA_SALUD_GENERAL,
         ...guiasDePantalla(ruta),
+        ...temasGuia,
         ...temasDelMenu(permisos),
     ];
 
