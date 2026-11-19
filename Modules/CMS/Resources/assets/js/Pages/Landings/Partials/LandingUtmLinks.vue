@@ -108,13 +108,13 @@
         })
             .then(() => {
                 if (!silent) {
-                    window.alertaSistema('Guardado', 'Configuracion UTM guardada.', 'success', { duration: 1500 });
+                    window.alertaSistema('Guardado', 'Configuración UTM guardada.', 'success', { duration: 1500 });
                 }
                 loadStats();
             })
             .catch(() => {
                 if (!silent) {
-                    window.alertaSistema('Error', 'No se pudo guardar la configuracion.', 'error');
+                    window.alertaSistema('Error', 'No se pudo guardar la configuración.', 'error');
                 }
             })
             .finally(() => { savingConfig.value = false; });
@@ -151,9 +151,9 @@
         { key: 'google_ads', label: 'Google Ads' },
         { key: 'cpc', label: 'CPC' },
         { key: 'social', label: 'Social' },
-        { key: 'organic', label: 'Organico' },
+        { key: 'organic', label: 'Orgánico' },
         { key: 'email', label: 'Email' },
-        { key: 'referrer', label: 'Otra pagina' },
+        { key: 'referrer', label: 'Otra página' },
     ];
 
     const stats = ref(props.utmStats || { subscribers: [], social_detail: [], referrer_detail: [] });
@@ -288,7 +288,7 @@
         const ok = await copyText(url);
 
         if (ok) {
-            window.alertaSistema('Copiado', 'El enlace se copio al portapapeles.', 'success', { duration: 1500 });
+            window.alertaSistema('Copiado', 'El enlace se copió al portapapeles.', 'success', { duration: 1500 });
         } else {
             window.alertaSistema('Error', 'No se pudo copiar el enlace.', 'error');
         }
@@ -320,7 +320,7 @@
         <!-- Aviso si falta el slug -->
         <div v-if="!slug" class="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400 text-sm">
             <i class="fa-solid fa-triangle-exclamation mr-1"></i>
-            El landing aun no tiene url amigable (slug). Guarda primero la configuracion general para generar los enlaces UTM.
+            El landing aún no tiene url amigable (slug). Guarda primero la configuración general para generar los enlaces UTM.
         </div>
 
         <!-- RESUMEN DE LEADS -->
@@ -330,8 +330,7 @@
                     Leads del formulario por canal
                     <span class="text-sm font-normal text-gray-500 dark:text-gray-400">(personas que enviaron el formulario)</span>
                     <HelpTip
-                        text="Cuenta los envios del formulario que llegaron con la campana del landing o desde su url. Se pueden filtrar por fechas."
-                        width="w-72"
+                        text="Cuenta los envíos del formulario que llegaron con la campaña del landing o desde su url. Se pueden filtrar por fechas."
                     />
                 </h3>
                 <div class="flex items-center gap-2">
@@ -356,7 +355,7 @@
                 </div>
             </div>
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Envios atribuidos a la campana <code class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">{{ config.campaign || defaultCampaign }}</code> y a este landing.
+                Envíos atribuidos a la campaña <code class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">{{ config.campaign || defaultCampaign }}</code> y a este landing.
             </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
@@ -365,7 +364,7 @@
                     <div class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ totalLeads }}</div>
                 </div>
                 <div class="p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Campana</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Campaña</div>
                     <div class="mt-1 text-sm font-semibold text-gray-900 dark:text-white break-all">{{ stats.campaign || config.campaign }}</div>
                 </div>
             </div>
@@ -426,7 +425,7 @@
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                             </svg>
-                                            Ver mas... ({{ referrers.length - referrerLimit }} mas)
+                                            Ver más... ({{ referrers.length - referrerLimit }} más)
                                         </button>
                                     </td>
                                 </tr>
@@ -453,15 +452,15 @@
             <div class="flex flex-wrap items-end gap-3">
                 <div class="flex-1 min-w-[220px]">
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                        Nombre de campana (utm_campaign)
-                        <HelpTip text="Nombre interno de la campana. Agrupa todas las visitas y leads de este landing; se usa en todos los enlaces." width="w-72" />
+                        Nombre de campaña (utm_campaign)
+                        <HelpTip text="Nombre interno de la campaña. Agrupa todas las visitas y leads de este landing; se usa en todos los enlaces." />
                     </label>
                     <input v-model="config.campaign" type="text" class="form-input" placeholder="landing_curso_gratis" />
                 </div>
                 <div class="flex-[2] min-w-[280px]">
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                         URL base del landing
-                        <HelpTip text="Direccion publica del landing. Verificala antes de copiar los enlaces: se usa como base de todos los canales." width="w-72" />
+                        <HelpTip text="Dirección pública del landing. Verifícala antes de copiar los enlaces: se usa como base de todos los canales." />
                     </label>
                     <input v-model="config.base_url" type="text" class="form-input" :placeholder="suggestedBaseUrl" />
                 </div>
@@ -473,7 +472,7 @@
                     Guardar configuracion
                 </button>
             </div>
-            <p class="mt-2 text-xs text-gray-400">La campana se usa en todos los enlaces. Verifica la URL base antes de copiar los links.</p>
+            <p class="mt-2 text-xs text-gray-400">La campaña se usa en todos los enlaces. Verifica la URL base antes de copiar los links.</p>
         </div>
 
         <!-- ENLACES -->
@@ -481,10 +480,10 @@
             <div>
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">
                     Enlaces UTM por canal
-                    <HelpTip text="Cada canal genera una url con utm_source, utm_medium y utm_campaign. Copiala y pegala en la publicacion de ese canal." width="w-72" />
+                    <HelpTip text="Cada canal genera una url con utm_source, utm_medium y utm_campaign. Cópiala y pégala en la publicación de ese canal." />
                 </h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    URLs listas para usar en tus campanas de marketing. Copia y pegala en la configuracion de cada canal.
+                    URLs listas para usar en tus campañas de marketing. Copia y pégala en la configuración de cada canal.
                 </p>
             </div>
             <button @click="copyAllUrls" class="btn btn-primary text-xs uppercase" title="Copia canal, origen y url de los canales activos, listo para pegar en Excel">

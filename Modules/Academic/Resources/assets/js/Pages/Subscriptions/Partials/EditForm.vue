@@ -30,6 +30,7 @@ const form = useForm({
     description: props.subscription.description,
     details: props.subscription.details,
     prices: props.subscription.prices,
+    show_dollar_price: props.subscription.show_dollar_price == 1,
     status: props.subscription.status == 1 ? true : false,
     period: props.subscription.period,
     recurring_enabled: props.subscription.recurring_enabled == 1,
@@ -313,6 +314,17 @@ const removePrice = (indexToRemove) => {
 
                         </template>
                     </div>
+
+                    <label class="flex items-start gap-3 cursor-pointer mt-4 pt-4 border-t border-dashed border-[#888ea8] dark:border-[#1b2e4b]">
+                        <input v-model="form.show_dollar_price" type="checkbox" class="form-checkbox mt-0.5" />
+                        <span>
+                            <span class="block font-medium">Mostrar precio en dólares</span>
+                            <span class="block text-xs text-gray-500">
+                                Si lo desactivas, la vista de suscripciones muestra solo el precio en soles,
+                                aunque el monto en USD esté registrado en el plan.
+                            </span>
+                        </span>
+                    </label>
                 </div>
             </div>
         </template>
