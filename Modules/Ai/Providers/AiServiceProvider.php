@@ -2,8 +2,12 @@
 
 namespace Modules\Ai\Providers;
 
+use App\Models\Parameter;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Ai\Console\CheckAiBudget;
+use Modules\Ai\Observers\ParameterObserver;
 
 class AiServiceProvider extends ServiceProvider
 {
@@ -22,6 +26,11 @@ class AiServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
+
+        // Los ajustes de IA viven en la tabla parameters (IA-...). Cualquier
+        // guardado o borrado invalida la cache para que el modulo y la
+        // pantalla de Parametros vean siempre el mismo valor.
+        Parameter::observe(ParameterObserver::class);
     }
 
     /**
@@ -37,7 +46,9 @@ class AiServiceProvider extends ServiceProvider
      */
     protected function registerCommands(): void
     {
-        // $this->commands([]);
+        $this->commands([
+            CheckAiBudget::class,
+        ]);
     }
 
     /**
@@ -45,10 +56,12 @@ class AiServiceProvider extends ServiceProvider
      */
     protected function registerCommandSchedules(): void
     {
-        // $this->app->booted(function () {
-        //     $schedule = $this->app->make(Schedule::class);
-        //     $schedule->command('inspire')->hourly();
-        // });
+        // Revisa el presupuesto cada hora; el comando solo registra una alerta
+        // nueva cuando cambia el nivel (aviso o excedido).
+        $this->app->booted(function () {
+            $schedule = $this->app->make(Schedule::class);
+            $schedule->command('ai:presupuesto')->hourly();
+        });
     }
 
     /**

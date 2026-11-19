@@ -1168,6 +1168,8 @@ function hide(reason = 'close') {
 const Aracodito = {
     showMessage,
     hide,
+    speak,
+    stopSpeaking,
     applyStyle,
     getStyle: () => currentStyle,
     getSprite,

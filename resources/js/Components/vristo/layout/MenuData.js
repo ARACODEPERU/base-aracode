@@ -22,6 +22,7 @@ import menuIntegrationhub from 'Modules/Integrationhub/Resources/assets/js/Menu.
 import menuCommercial from 'Modules/Commercial/Resources/assets/js/Menu.js';
 import menuTreasury from 'Modules/Treasury/Resources/assets/js/Menu.js';
 import menuPerformance from 'Modules/Performance/Resources/assets/js/Menu.js';
+import menuAi from 'Modules/Ai/Resources/assets/js/Menu.js';
 
 const MenuData = ref([
     {
@@ -74,6 +75,7 @@ const MenuData = ref([
     menuIntegrationhub,
     menuCommercial,
     menuTreasury,
-    menuPerformance
+    menuPerformance,
+    menuAi
 ]);
 export default MenuData;
