@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\DB;
@@ -268,6 +269,13 @@ class AcaSubscriptionTypeController extends Controller
             'id' => $plan->id,
             'title' => $plan->title,
             'description' => $plan->description,
+            // La vista pinta el HTML ya saneado por el modelo; el texto plano
+            // se mantiene para listados, comprobantes y webhooks.
+            'description_markup' => $this->descriptionMarkup($plan->description_html, $plan->description),
+            'price_note' => $plan->price_note,
+            // Sin formato guardado el texto se subraya por defecto.
+            'price_note_is_plain' => $this->priceNoteIsPlain($plan->price_note),
+            'price_note_below' => $plan->price_note_below,
             'period' => $plan->period,
             'recurring' => (bool) $plan->recurring_enabled,
             'details' => collect($plan->details ?? [])
@@ -286,6 +294,29 @@ class AcaSubscriptionTypeController extends Controller
                 'can_view_specialization_webinars' => (bool) $plan->can_view_specialization_webinars,
             ],
         ];
+    }
+
+    /**
+     * HTML seguro de la descripción: se usa el HTML saneado cuando tiene
+     * etiquetas y, si no, el texto plano escapado.
+     */
+    private function descriptionMarkup(?string $html, ?string $plain): ?string
+    {
+        $html = trim((string) $html);
+
+        if ($html === '') {
+            return filled($plain) ? e($plain) : null;
+        }
+
+        return strip_tags($html) !== $html ? $html : e($html);
+    }
+
+    /**
+     * Un texto de precio sin etiquetas se pinta subrayado por defecto.
+     */
+    private function priceNoteIsPlain(?string $html): bool
+    {
+        return filled($html) && strip_tags((string) $html) === (string) $html;
     }
 
     /**
@@ -386,35 +417,11 @@ class AcaSubscriptionTypeController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        //dd($request->all());
-        $this->validate(
-            $request,
-            [
-                'title' => 'required',
-                'description' => 'required',
-                'details.*.label' => 'required',
-                'prices.0.currency' => 'required',
-                'prices.0.amount' => 'required',
-                'period' => 'required'
-            ]
-        );
+        $request->merge(['title' => trim((string) $request->get('title'))]);
 
-        AcaSubscriptionType::create([
-            'title' => $request->get('title'),
-            'usine' => $request->get('usine'),
-            'description' => $request->get('description'),
-            'details' => $request->get('details'),
-            'prices' => $request->get('prices'),
-            'show_dollar_price' => $request->boolean('show_dollar_price'),
-            'status' => $request->get('status') ?? false,
-            'period' => $request->get('period'),
-            'order_number' => $request->get('order_number'),
-            'access_all_courses' => $request->boolean('access_all_courses'),
-            'access_specialization_programs' => $request->boolean('access_specialization_programs'),
-            'access_all_webinars' => $request->boolean('access_all_webinars'),
-            'can_view_specialization_zooms' => $request->boolean('can_view_specialization_zooms'),
-            'can_view_specialization_webinars' => $request->boolean('can_view_specialization_webinars'),
-        ]);
+        $this->validateSubscription($request);
+
+        AcaSubscriptionType::create($this->subscriptionPayload($request));
 
         return redirect()->route('aca_subscriptions_list')
             ->with('message', __('Creado con éxito'));
@@ -452,46 +459,152 @@ class AcaSubscriptionTypeController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->validate(
-            $request,
-            [
-                'title' => 'required',
-                'description' => 'required',
-                'details.*.label' => 'required',
-                'prices.0.currency' => 'required',
-                'prices.0.amount' => 'required',
-                'prices.0.detail' => 'required',
-                'period' => 'required',
-                'recurring_enabled' => 'nullable|boolean',
-                'test_mode' => 'nullable|boolean'
-            ]
-        );
+        $request->merge(['title' => trim((string) $request->get('title'))]);
+
+        $this->validateSubscription($request, (int) $id);
 
         $period = $request->get('period');
         // El cobro automático existe para planes mensuales, trimestrales y anuales.
         $recurrente = in_array($period, array_keys(AcaSubscriptionType::RECURRING_PERIODS), true);
-        $recurringEnabled = $request->boolean('recurring_enabled') && $recurrente;
-        // El modo prueba usa la misma recurrencia.
-        $testMode = $request->boolean('test_mode') && $recurrente;
 
-        AcaSubscriptionType::find($id)->update([
-            'title' => $request->get('title'),
+        AcaSubscriptionType::findOrFail($id)->update($this->subscriptionPayload($request) + [
+            'period' => $period,
+            'recurring_enabled' => $request->boolean('recurring_enabled') && $recurrente,
+            // El modo prueba usa la misma recurrencia.
+            'test_mode' => $request->boolean('test_mode') && $recurrente,
+        ]);
+
+        return redirect()->route('aca_subscriptions_list')
+            ->with('message', __('Actualizado con éxito'));
+    }
+
+    /**
+     * Reglas de los datos del plan, con el HTML de la descripción ya acotado.
+     */
+    private function validateSubscription(Request $request, ?int $id = null): void
+    {
+        $this->validate(
+            $request,
+            [
+                'title' => ['required', 'string', 'max:100', $this->uniqueTitleRule($id)],
+                'description_html' => [
+                    'required',
+                    'string',
+                    'max:10000',
+                    function (string $attribute, $value, $fail) {
+                        if ($this->descriptionLineCount($value) > 3) {
+                            $fail('La descripción admite como máximo 3 líneas.');
+                        }
+                    },
+                ],
+                'details.*.label' => 'required',
+                'price_note' => 'nullable|string|max:2000',
+                'price_note_below' => 'nullable|string|max:2000',
+                'prices.0.currency' => 'required',
+                'prices.0.amount' => 'required',
+                'prices.0.detail' => $id === null ? 'nullable' : 'required',
+                'period' => 'required',
+                'recurring_enabled' => 'nullable|boolean',
+                'test_mode' => 'nullable|boolean',
+            ],
+            [
+                'title.required' => 'El título del plan es obligatorio.',
+                'description_html.required' => 'La descripción del plan es obligatoria.',
+            ]
+        );
+    }
+
+    /**
+     * No permite crear un plan con un título que ya exista. Los planes
+     * históricos que ya compartían título se pueden guardar sin renombrarlos.
+     */
+    private function uniqueTitleRule(?int $id): \Closure
+    {
+        return function (string $attribute, $value, $fail) use ($id) {
+            $title = trim((string) $value);
+
+            if ($title === '') {
+                return;
+            }
+
+            $existing = AcaSubscriptionType::where('title', $title)->first();
+
+            if (! $existing) {
+                return;
+            }
+
+            if ($id !== null && (int) $existing->id === $id) {
+                return;
+            }
+
+            if ($id !== null && trim((string) AcaSubscriptionType::find($id)?->title) === $title) {
+                return;
+            }
+
+            $fail('Ya existe un plan con ese título. Los planes no pueden llamarse igual: usa un nombre diferente.');
+        };
+    }
+
+    /**
+     * Datos que se guardan en el plan; el texto plano de la descripción se
+     * deriva del HTML para no romper listados, comprobantes ni webhooks.
+     */
+    private function subscriptionPayload(Request $request): array
+    {
+        return [
+            'title' => (string) $request->get('title'),
             'usine' => $request->get('usine'),
-            'description' => $request->get('description'),
+            'description' => $this->plainDescription($request->get('description_html')),
+            'description_html' => $request->get('description_html'),
             'details' => $request->get('details'),
             'prices' => $request->get('prices'),
-            'show_dollar_price' => $request->boolean('show_dollar_price'),
+            'price_note' => $request->get('price_note'),
+            'price_note_below' => $request->get('price_note_below'),
             'status' => $request->get('status') ?? false,
-            'period' => $period,
-            'recurring_enabled' => $recurringEnabled,
-            'test_mode' => $testMode,
+            // Si el formulario no envía la casilla, el precio en dólares se muestra.
+            'show_dollar_price' => $request->has('show_dollar_price')
+                ? $request->boolean('show_dollar_price')
+                : true,
+            'period' => $request->get('period'),
             'order_number' => $request->get('order_number'),
+        ] + $this->accessFlagsFromRequest($request);
+    }
+
+    /**
+     * El acceso depende solo de estos checks, no del nombre del plan.
+     */
+    private function accessFlagsFromRequest(Request $request): array
+    {
+        return [
             'access_all_courses' => $request->boolean('access_all_courses'),
             'access_specialization_programs' => $request->boolean('access_specialization_programs'),
             'access_all_webinars' => $request->boolean('access_all_webinars'),
             'can_view_specialization_zooms' => $request->boolean('can_view_specialization_zooms'),
             'can_view_specialization_webinars' => $request->boolean('can_view_specialization_webinars'),
-        ]);
+        ];
+    }
+
+    /**
+     * Líneas escritas del HTML (los bloques y los <br> cuentan como saltos).
+     */
+    private function descriptionLineCount(?string $html): int
+    {
+        $html = preg_replace('#<(?:div|p|h[1-6]|li|blockquote)\b[^>]*>#i', '<br>', (string) $html);
+        $html = preg_replace('#</(?:div|p|h[1-6]|li|blockquote)>#i', '', (string) $html);
+        $text = rtrim(strip_tags(preg_replace('#<br\s*/?>#i', "\n", (string) $html)));
+
+        return $text === '' ? 1 : count(explode("\n", $text));
+    }
+
+    /**
+     * Texto plano de la descripción para la columna de compatibilidad.
+     */
+    private function plainDescription(?string $html): ?string
+    {
+        $text = preg_replace('#<br\s*/?>#i', ' ', (string) $html);
+        $text = trim((string) preg_replace('/\s+/u', ' ', strip_tags((string) $text)));
+
+        return $text === '' ? null : Str::limit($text, 300, '');
     }
 
     /**

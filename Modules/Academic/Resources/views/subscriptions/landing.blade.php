@@ -290,7 +290,17 @@ h2 em,h1 em{font-style:normal;color:var(--red)}
 .plan .flag{position:absolute;top:-14px;left:26px;background:var(--navy);color:var(--white);font-size:11px;font-weight:800;letter-spacing:.14em;padding:6px 10px;border-radius:6px}
 .plan h3{font-size:28px;color:var(--navy)}
 .plan .users{font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--red);margin-top:4px}
-.plan .for{font-size:14.5px;color:var(--muted);margin-top:8px;min-height:46px}
+.plan .for{font-size:14.5px;line-height:1.55;color:var(--muted);margin-top:8px;min-height:46px}
+.plan .for b,.plan .for strong{font-weight:900}
+/* Texto libre encima del precio: tenue, pequeño y subrayado cuando no tiene formato. */
+.plan .before{font-size:13px;line-height:1.45;font-weight:600;color:#6C6E86;margin-bottom:8px;overflow-wrap:break-word}
+.plan .before.plain{text-decoration:underline}
+.plan .before b,.plan .before strong{font-weight:800}
+/* Texto libre debajo del precio. */
+.plan .after{font-size:13px;line-height:1.45;font-weight:600;color:#6C6E86;margin-top:10px;overflow-wrap:break-word}
+.plan .after b,.plan .after strong{font-weight:800}
+.plan.star .before,.plan.star .after{color:var(--onnavy)}
+@media (max-width:640px){.plan .for{min-height:0}}
 .plan .pl{border-top:1px solid var(--line);margin-top:18px;padding-top:18px}
 .plan .was{font-size:13px;color:var(--muted);font-weight:600}
 .plan .was s{color:#8A8CA3}
@@ -635,10 +645,13 @@ h2 em,h1 em{font-style:normal;color:var(--red)}
         @endif
         <h3>{{ $plan['title'] }}</h3>
         <div class="users">{{ $plan['period'] ?: 'SUSCRIPCIÓN' }}</div>
-        @if($plan['description'])
-          <div class="for">{{ $plan['description'] }}</div>
+        @if(filled($plan['description_markup']))
+          <div class="for">{!! $plan['description_markup'] !!}</div>
         @endif
         <div class="pl">
+          @if(filled($plan['price_note']))
+            <div class="before{{ $plan['price_note_is_plain'] ? ' plain' : '' }}">{!! $plan['price_note'] !!}</div>
+          @endif
           @if($plan['pen'])
             <div class="amt"><small>S/ </small>{{ $plan['pen']['formatted'] }}</div>
             @if($plan['pen']['detail'])
@@ -653,6 +666,9 @@ h2 em,h1 em{font-style:normal;color:var(--red)}
           @endif
           @if(! $plan['pen'] && ! $plan['usd'])
             <div class="was">Precio a consultar</div>
+          @endif
+          @if(filled($plan['price_note_below']))
+            <div class="after">{!! $plan['price_note_below'] !!}</div>
           @endif
           @if($plan['recurring'])
             <span class="save">Cobro automático</span>

@@ -141,7 +141,21 @@
         }
         .plan h3 { font-size: 27px; color: var(--navy); }
         .plan .users { font-size: 12px; font-weight: 800; letter-spacing: .14em; color: var(--red); margin-top: 4px; text-transform: uppercase; }
-        .plan .for { font-size: 14.5px; color: var(--muted); margin-top: 10px; min-height: 46px; }
+        .plan .for { font-size: 14.5px; line-height: 1.55; color: var(--muted); margin-top: 10px; min-height: 46px; }
+        .plan .for b, .plan .for strong { font-weight: 900; }
+        /* Texto libre encima del precio: tenue, pequeño y subrayado cuando no tiene formato. */
+        .plan .before {
+            font-size: 13px; line-height: 1.45; font-weight: 600; color: #6C6E86;
+            margin-bottom: 8px; overflow-wrap: break-word;
+        }
+        .plan .before.plain { text-decoration: underline; }
+        .plan .before b, .plan .before strong { font-weight: 800; }
+        /* Texto libre debajo del precio. */
+        .plan .after {
+            font-size: 13px; line-height: 1.45; font-weight: 600; color: #6C6E86;
+            margin-top: 10px; overflow-wrap: break-word;
+        }
+        .plan .after b, .plan .after strong { font-weight: 800; }
         .plan .pl { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 18px; }
         .plan .cur { display: flex; align-items: baseline; gap: 5px; }
         .plan .cur + .cur { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
@@ -164,7 +178,7 @@
         }
         .plan.star .flag { background: var(--red); }
         .plan.star h3, .plan.star .amt, .plan.star .sym { color: var(--white); }
-        .plan.star .for, .plan.star .per { color: var(--onnavy); }
+        .plan.star .for, .plan.star .per, .plan.star .before, .plan.star .after { color: var(--onnavy); }
         .plan.star .pl { border-color: rgba(255, 255, 255, .18); }
         .plan.star .cur + .cur { border-color: rgba(255, 255, 255, .18); }
         .plan.star .save { background: rgba(255, 255, 255, .14); color: var(--white); }
@@ -357,11 +371,15 @@
                                 @endif
                                 <h3>{{ $plan['title'] }}</h3>
                                 <div class="users">{{ $plan['period'] ?: 'Suscripción' }}</div>
-                                @if($plan['description'])
-                                    <p class="for">{{ $plan['description'] }}</p>
+                                @if(filled($plan['description_markup']))
+                                    <p class="for">{!! $plan['description_markup'] !!}</p>
                                 @endif
 
                                 <div class="pl">
+                                    @if(filled($plan['price_note']))
+                                        <div class="before{{ $plan['price_note_is_plain'] ? ' plain' : '' }}">{!! $plan['price_note'] !!}</div>
+                                    @endif
+
                                     @if($plan['pen'])
                                         <div class="cur">
                                             <span class="sym">S/</span>
@@ -384,6 +402,10 @@
 
                                     @if(! $plan['pen'] && ! $plan['usd'])
                                         <div class="amt consultar">Precio a consultar</div>
+                                    @endif
+
+                                    @if(filled($plan['price_note_below']))
+                                        <div class="after">{!! $plan['price_note_below'] !!}</div>
                                     @endif
 
                                     @if($plan['recurring'])
