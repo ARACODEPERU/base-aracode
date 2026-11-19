@@ -14,11 +14,19 @@ class HealActivity extends Model
         'actor_person_id',
         'actor_display',
         'activity_type',
+        'category',
         'subject_type',
         'subject_id',
         'patient_id',
         'patient_display',
         'metadata',
+        'request_id',
+        'route',
+        'http_method',
+        'before_hash',
+        'after_hash',
+        'previous_hash',
+        'entry_hash',
         'ip',
         'user_agent',
     ];
@@ -26,6 +34,22 @@ class HealActivity extends Model
     protected $casts = [
         'metadata' => 'array',
     ];
+
+    /**
+     * El registro de auditoría es de solo lectura: una vez escrito no se
+     * puede modificar ni borrar desde la aplicación. Las purgas por retención
+     * se hacen con consultas masivas en el comando correspondiente.
+     */
+    protected static function booted(): void
+    {
+        static::updating(function () {
+            throw new \RuntimeException('El registro de auditoría no se puede modificar.');
+        });
+
+        static::deleting(function () {
+            throw new \RuntimeException('El registro de auditoría no se puede eliminar desde la aplicación.');
+        });
+    }
 
     public function actor(): MorphTo
     {
@@ -71,6 +95,11 @@ class HealActivity extends Model
             'signed' => 'Firma',
             'cancelled' => 'Anulación',
             'restored' => 'Restauración',
+            'anonymized' => 'Anonimización',
+            'deactivated' => 'Desactivación',
+            'viewed' => 'Consulta',
+            'exported' => 'Exportación',
+            'retention_purge' => 'Purga por retención',
             default => ucfirst($this->activity_type),
         };
     }

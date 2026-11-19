@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { Link, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import Pagination from '@/Components/Pagination.vue';
@@ -27,6 +27,10 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    categories: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 const selectedActivityId = ref(null);
@@ -35,6 +39,7 @@ const showDetailModal = ref(false);
 const filters = useForm({
     search: props.filters.search || '',
     activity_type: props.filters.activity_type || '',
+    category: props.filters.category || '',
     date_from: props.filters.date_from || '',
     date_to: props.filters.date_to || '',
 });
@@ -46,6 +51,12 @@ const badgeClass = (type) => ({
     signed: 'bg-primary',
     cancelled: 'bg-warning',
     restored: 'bg-secondary',
+    anonymized: 'bg-danger',
+    deactivated: 'bg-warning',
+    viewed: 'bg-info',
+    exported: 'bg-primary',
+    sign_failed: 'bg-danger',
+    retention_purge: 'bg-secondary',
 }[type] || 'bg-secondary');
 
 const activityTypeLabel = (type) => props.activityTypes[type] || type;
@@ -88,12 +99,20 @@ const closeDetail = () => {
 };
 
 const hasActiveFilters = computed(() => {
-    return filters.search || filters.activity_type || filters.date_from || filters.date_to;
+    return filters.search || filters.activity_type || filters.category || filters.date_from || filters.date_to;
 });
+
+// La exportación respeta los filtros aplicados; el backend la audita.
+const exportar = () => {
+    window.location.href = route('heal_activities_export', filters.data());
+};
 </script>
 
 <template>
     <AppLayout title="Registro de Actividades">
+        <Head>
+            <meta name="aracodito-view" content="new" />
+        </Head>
         <div class="flex items-center justify-between">
             <Navigation :routeModule="route('health_dashboard')" :titleModule="'Salud'">
                 <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
@@ -113,6 +132,9 @@ const hasActiveFilters = computed(() => {
                         <span class="text-warning">Solo lectura — no se puede modificar ni eliminar.</span>
                     </p>
                 </div>
+                <button type="button" class="btn btn-outline-primary" @click="exportar">
+                    Exportar CSV
+                </button>
             </div>
 
             <!-- Filters -->
@@ -132,6 +154,13 @@ const hasActiveFilters = computed(() => {
                         <select v-model="filters.activity_type" class="form-select" @change="search">
                             <option value="">Todos</option>
                             <option v-for="(label, type) in activityTypes" :key="type" :value="type">{{ label }}</option>
+                        </select>
+                    </div>
+                    <div class="w-44">
+                        <InputLabel value="Categoría" />
+                        <select v-model="filters.category" class="form-select" @change="search">
+                            <option value="">Todas</option>
+                            <option v-for="(label, category) in categories" :key="category" :value="category">{{ label }}</option>
                         </select>
                     </div>
                     <div class="w-44">

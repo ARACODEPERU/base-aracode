@@ -14,7 +14,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Modules\Health\Entities\HealAttention;
 use Modules\Health\Entities\HealDoctor;
 use Modules\Health\Rules\PeruMobile;
 use Modules\Health\Support\HealthPhoneNumber;
@@ -65,7 +67,8 @@ class DoctorController extends Controller
             }
             $doctors->orderBy($attribute, $sort_order);
         } else {
-            $doctors->latest();
+            // Calificado: con el join, latest() sería ambiguo entre tablas.
+            $doctors->latest('heal_doctors.created_at');
         }
 
         $doctors = $doctors->paginate(10)->onEachSide(2);
@@ -111,8 +114,13 @@ class DoctorController extends Controller
             $request,
             [
                 'document_type_id'  => 'required',
-                'number'            => 'required|max:12',
-                'number'            => 'unique:people,number,' . $update_id . ',id,document_type_id,' . $request->get('document_type_id'),
+                // Clave unica: antes el segundo 'number' anulaba el unique.
+                'number'            => [
+                    'required',
+                    'max:12',
+                    Rule::unique('people', 'number')
+                        ->where(fn ($query) => $query->where('document_type_id', $request->get('document_type_id'))),
+                ],
                 'telephone'         => ['required', new PeruMobile()],
                 'email'             => 'required|max:255|unique:people,email',
                 'address'           => 'required|max:255',
@@ -267,8 +275,13 @@ class DoctorController extends Controller
             $request,
             [
                 'document_type_id'  => 'required',
-                'number'            => 'required|max:12',
-                'number'            => 'unique:people,number,' . $update_id . ',id,document_type_id,' . $request->get('document_type_id'),
+                'number'            => [
+                    'required',
+                    'max:12',
+                    Rule::unique('people', 'number')
+                        ->where(fn ($query) => $query->where('document_type_id', $request->get('document_type_id')))
+                        ->ignore($update_id),
+                ],
                 'telephone'         => ['required', new PeruMobile()],
                 'email'             => 'required|max:255|unique:people,email,' . $update_id . ',id',
                 'address'           => 'required|max:255',
@@ -391,6 +404,7 @@ class DoctorController extends Controller
         $permissions = [
             'heal_dashboard',
             'heal_pacientes_listado',
+            'heal_pacientes_editar',
             'heal_atenciones_listado',
             'heal_atenciones_nuevo',
             'heal_atenciones_editar',
@@ -462,6 +476,48 @@ class DoctorController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $doctor = HealDoctor::with(['person', 'user'])->findOrFail($id);
+
+        // Un doctor con atenciones firmadas no se elimina: la firma es parte
+        // de la historia clinica y debe seguir siendo verificable.
+        $atencionesFirmadas = HealAttention::where('doctor_id', $doctor->id)
+            ->whereNotNull('signed_at')
+            ->count();
+
+        if ($atencionesFirmadas > 0) {
+            $mensaje = 'No se puede eliminar al doctor: tiene ' . $atencionesFirmadas
+                . ' atención(es) firmada(s). Desactiva su acceso en su lugar.';
+
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $mensaje], 409);
+            }
+
+            return redirect()->route('heal_doctors_list')->with('error', $mensaje);
+        }
+
+        DB::transaction(function () use ($doctor) {
+            if ($doctor->user) {
+                // Se conserva el usuario para auditoria, pero sin acceso.
+                $doctor->user->update(['status' => false]);
+            }
+
+            $doctor->registrarActividad('deactivated', [
+                'motivo'    => 'Eliminación de doctor: se desactivó su usuario',
+                'user_id'   => $doctor->user_id,
+                'person_id' => $doctor->person_id,
+            ]);
+
+            $doctor->delete();
+        });
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Doctor eliminado y su usuario desactivado.',
+            ]);
+        }
+
+        return redirect()->route('heal_doctors_list')
+            ->with('message', 'Doctor eliminado y su usuario desactivado.');
     }
 }

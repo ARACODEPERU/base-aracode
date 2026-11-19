@@ -432,6 +432,15 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->get('subscriptions/showcase', 'AcaSubscriptionTypeController@showcase')
         ->name('aca_subscriptions_showcase');
 
+    // Enlaces UTM de la landing de suscripciones y atribución de las ventas.
+    Route::middleware(['middleware' => 'permission:aca_suscripciones'])
+        ->get('subscriptions/utm-stats', 'AcaSubscriptionTypeController@getUtmStats')
+        ->name('aca_subscriptions_utm_stats');
+
+    Route::middleware(['middleware' => 'permission:aca_suscripciones_editar'])
+        ->put('subscriptions/utm-config', 'AcaSubscriptionTypeController@updateUtmConfig')
+        ->name('aca_subscriptions_utm_config');
+
     Route::middleware(['middleware' => 'permission:aca_suscripciones_nuevo'])
         ->get('subscriptions/create', 'AcaSubscriptionTypeController@create')
         ->name('aca_subscriptions_create');

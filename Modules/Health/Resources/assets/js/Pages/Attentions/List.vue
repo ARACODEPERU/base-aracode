@@ -3,7 +3,7 @@ import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import Pagination from '@/Components/Pagination.vue';
 import ModalLarge from '@/Components/ModalLarge.vue';
-import { Link, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import IconSearch from '@/Components/vristo/icon/icon-search.vue';
 import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
@@ -235,6 +235,9 @@ const deleteAttention = (attention) => {
 
 <template>
     <AppLayout title="Atenciones">
+        <Head>
+            <meta name="aracodito-view" content="new" />
+        </Head>
         <PendingSignatureReminder :items="pendingSignatures" />
 
         <div class="flex items-center justify-between">

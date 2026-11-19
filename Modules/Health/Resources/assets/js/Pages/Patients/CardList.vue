@@ -1,7 +1,6 @@
 <script setup>
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import { ref, onMounted } from 'vue';
-    import Swal from 'sweetalert2';
     import ModalLarge from '@/Components/ModalLarge.vue';
     import IconUserPlus from '@/Components/vristo/icon/icon-user-plus.vue';
     import IconListCheck from '@/Components/vristo/icon/icon-list-check.vue';
@@ -15,7 +14,7 @@
     import IconCalendar from '@/Components/vristo/icon/icon-calendar.vue';
     import IconCaretDown from '@/Components/vristo/icon/icon-caret-down.vue';
     import IconDollarSignCircle from '@/Components/vristo/icon/icon-dollar-sign-circle.vue';
-    import { useForm, Link } from '@inertiajs/vue3';
+    import { useForm, Link, Head, router } from '@inertiajs/vue3';
     import VueCollapsible from 'vue-height-collapsible/vue3';
 
     const accordians3 = ref(0);
@@ -46,23 +45,45 @@
         form.get(route('heal_patients_list'));
     };
 
-    const deleteUser = (user = null) => {
+    // Baja lógica con anonimización: la historia clínica se conserva y la
+    // acción queda registrada en la auditoría del módulo.
+    const deleteUser = async (id) => {
+        const borrar = async () => {
+            const res = await axios.delete(route('heal_patients_destroy', id));
 
-    };
+            if (!res.data?.success) {
+                throw new Error(res.data?.message || 'No se pudo eliminar el paciente.');
+            }
 
-    const showMessage = (msg = '', type = 'success') => {
-        const toast = Swal.mixin({
-            toast: true,
-            position: 'top',
-            showConfirmButton: false,
-            timer: 3000,
-            customClass: { container: 'toast' },
-        });
-        toast.fire({
-            icon: type,
-            title: msg,
-            padding: '10px 20px',
-        });
+            router.visit(route('heal_patients_list'), { replace: true, method: 'get' });
+
+            return {
+                message: 'El paciente se dio de baja y sus datos personales se anonimizaron.',
+                type: 'success',
+            };
+        };
+
+        const result = await window.alertaSistema(
+            'Eliminar paciente',
+            'El paciente se dará de baja y sus datos personales se anonimizarán. La historia clínica se conserva para auditoría.',
+            'warning',
+            {
+                duration: 0,
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                loadingText: 'Eliminando paciente...',
+                showLoaderOnConfirm: true,
+                onConfirm: borrar,
+                preConfirm: borrar,
+            }
+        );
+
+        if (!result?.isConfirmed) return;
+        if (window.alertaSistema.enAracodito?.()) return;
+        if (result.value) {
+            window.alertaSistema('Paciente eliminado', result.value.message, 'success');
+        }
     };
 
     const displayModalAppointments = ref(false);
@@ -93,6 +114,9 @@
 </script>
 <template>
     <AppLayout title="Pacientes">
+        <Head>
+            <meta name="aracodito-view" content="new" />
+        </Head>
         <ul class="flex space-x-2 rtl:space-x-reverse">
             <li>
                 <a href="javascript:;" class="text-primary hover:underline">Salud</a>
@@ -180,7 +204,7 @@
                                                 <font-awesome-icon :icon="faClock" />
                                             </button>
                                             <tippy target="citass" placement="bottom">Citas</tippy>
-                                            <button v-tippy:eliminar type="button" class="btn btn-sm btn-outline-danger" @click="deleteUser(contact.person_id)">
+                                            <button v-tippy:eliminar type="button" class="btn btn-sm btn-outline-danger" @click="deleteUser(contact.id)">
                                                 <font-awesome-icon :icon="faTrash" />
                                             </button>
                                             <tippy target="eliminar" placement="bottom">Eliminar</tippy>

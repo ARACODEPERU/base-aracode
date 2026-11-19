@@ -19,7 +19,9 @@ class PermissionsHealthTableSeeder extends Seeder
      */
     public function run()
     {
-        $role = Role::find(1);
+        // El rol administrador se busca por nombre: el id 1 no es estable
+        // entre instalaciones.
+        $role = Role::whereIn('name', ['webAdmin', 'Administrador', 'admin', 'Admin'])->first();
 
         $modulo = Modulo::firstOrCreate(
             ['identifier' => 'M009'],
@@ -77,6 +79,9 @@ class PermissionsHealthTableSeeder extends Seeder
         $doctorPermissionNames = [
             'heal_dashboard',
             'heal_pacientes_listado',
+            // El listado de pacientes muestra "Editar" sin gating: el rol
+            // necesita el permiso para que la ruta de edición no devuelva 403.
+            'heal_pacientes_editar',
             'heal_atenciones_listado',
             'heal_atenciones_nuevo',
             'heal_atenciones_editar',

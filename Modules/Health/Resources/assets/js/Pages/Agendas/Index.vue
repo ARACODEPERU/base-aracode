@@ -2,7 +2,7 @@
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Dialog, DialogOverlay, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { router, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import Multiselect from '@suadelabs/vue3-multiselect';
 import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
 import Swal from 'sweetalert2';
@@ -988,6 +988,9 @@ onBeforeUnmount(() => {
 
 <template>
     <AppLayout title="Agendas">
+        <Head>
+            <meta name="aracodito-view" content="new" />
+        </Head>
         <PendingSignatureReminder :items="pendingSignatures" />
 
         <ul class="flex space-x-2 rtl:space-x-reverse">

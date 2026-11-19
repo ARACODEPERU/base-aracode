@@ -12,6 +12,8 @@ use Inertia\Inertia;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\DB;
 use Modules\Academic\Entities\AcaSubscriptionType;
+use Modules\Academic\Entities\AcaSubscriptionUtmSetting;
+use Modules\Onlineshop\Entities\OnliSale;
 
 class AcaSubscriptionTypeController extends Controller
 {
@@ -22,12 +24,193 @@ class AcaSubscriptionTypeController extends Controller
     public function index()
     {
         $subscriptions = AcaSubscriptionType::orderBy('order_number')->get();
+        $utmConfig = AcaSubscriptionUtmSetting::config();
 
         return Inertia::render('Academic::Subscriptions/List', [
             'subscriptions' => $subscriptions,
             // Aviso del webhook necesario para los planes con cobro automático.
             'mercadopagoWebhook' => app(\Modules\Academic\Services\MercadoPagoWebhookStatus::class)->state(),
+            // Generador de enlaces UTM y atribución de las suscripciones vendidas.
+            'utmConfig' => $utmConfig,
+            'utmStats' => $this->subscriptionUtmStats(),
+            'utmLandingUrl' => route('aca_subscriptions_landing'),
+            'utmDefaultCampaign' => $this->defaultSubscriptionCampaign($utmConfig),
         ]);
+    }
+
+    /**
+     * Landing pública de suscripciones con el diseño de LandingSuscripcion.
+     *
+     * Muestra todo el contenido de la plantilla y, en la sección de planes,
+     * solo los tipos de suscripción activos. Los enlaces UTM llegan a esta URL
+     * y el script de atribución guarda el origen para el checkout.
+     */
+    public function landing()
+    {
+        $plans = AcaSubscriptionType::where('status', '1')
+            ->orderBy('order_number')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (AcaSubscriptionType $plan) => $this->presentPlan($plan));
+
+        $featured = $plans->first(fn (array $plan) => $plan['pen'] !== null) ?? $plans->first();
+
+        return view('academic::subscriptions.landing', [
+            'plans' => $plans,
+            'featured' => $featured,
+            'included' => $this->commonBenefits($plans),
+        ]);
+    }
+
+    /**
+     * Nombre de campaña por defecto de la landing de suscripciones.
+     */
+    private function defaultSubscriptionCampaign(array $config): string
+    {
+        return trim((string) ($config['campaign'] ?? '')) ?: 'suscripcion_academy';
+    }
+
+    /**
+     * Guarda la campaña y los canales de los enlaces UTM.
+     */
+    public function updateUtmConfig(Request $request)
+    {
+        $this->validate(
+            $request,
+            [
+                'campaign' => 'nullable|string|max:255',
+                'channels' => 'nullable|array',
+                'channels.*.id' => 'required|string|max:100',
+                'channels.*.utm_source' => 'required|string|max:100',
+                'channels.*.utm_medium' => 'required|string|max:100',
+                'channels.*.term' => 'nullable|string|max:500',
+                'channels.*.content' => 'nullable|string|max:500',
+                'channels.*.active' => 'nullable|boolean',
+            ]
+        );
+
+        $config = AcaSubscriptionUtmSetting::store([
+            'campaign' => trim((string) $request->get('campaign')) ?: 'suscripcion_academy',
+            'channels' => $request->get('channels') ?? [],
+        ]);
+
+        return response()->json(['success' => true, 'config' => $config]);
+    }
+
+    /**
+     * Estadísticas de atribución de las suscripciones vendidas: personas, su
+     * origen de tráfico y el plan que eligieron.
+     */
+    public function getUtmStats(Request $request)
+    {
+        $dates = $request->get('dates');
+        $start = null;
+        $end = null;
+
+        if ($dates) {
+            if (str_contains($dates, ' to ') || str_contains($dates, ' a ')) {
+                $separator = str_contains($dates, ' to ') ? ' to ' : ' a ';
+                [$start, $end] = explode($separator, $dates);
+            } else {
+                $start = $end = $dates;
+            }
+        }
+
+        return response()->json($this->subscriptionUtmStats($start, $end));
+    }
+
+    /**
+     * Ventas de suscripción (onli_sales con detalle de AcaSubscriptionType)
+     * agrupadas por origen, canal y plan, con el detalle de cada persona.
+     */
+    private function subscriptionUtmStats($start = null, $end = null): array
+    {
+        $planTitles = AcaSubscriptionType::pluck('title', 'id');
+
+        $query = OnliSale::query()
+            ->whereHas('details', function ($q) {
+                $q->where('entitie', AcaSubscriptionType::class);
+            })
+            ->with(['details' => function ($q) {
+                $q->where('entitie', AcaSubscriptionType::class);
+            }])
+            ->orderByDesc('created_at');
+
+        if ($start && $end) {
+            $query->whereDate('created_at', '>=', $start)
+                ->whereDate('created_at', '<=', $end);
+        }
+
+        $sales = $query->get();
+
+        $sources = [];
+        $channels = [];
+        $plans = [];
+        $rows = [];
+
+        foreach ($sales as $sale) {
+            $detail = $sale->details->first();
+            $planTitle = $planTitles[$detail->item_id ?? null] ?? 'Suscripción eliminada';
+            $source = $sale->traffic_source ?: 'organic';
+            $channelKey = trim(($sale->utm_source ?: 'sin_utm') . '|' . ($sale->utm_medium ?: ''), '|');
+            $amount = (float) ($sale->total ?? 0);
+
+            $sources[$source] = [
+                'key' => $source,
+                'total' => ($sources[$source]['total'] ?? 0) + 1,
+                'amount' => ($sources[$source]['amount'] ?? 0) + $amount,
+            ];
+
+            $channels[$channelKey] = [
+                'key' => $channelKey,
+                'utm_source' => $sale->utm_source ?: '',
+                'utm_medium' => $sale->utm_medium ?: '',
+                'total' => ($channels[$channelKey]['total'] ?? 0) + 1,
+                'amount' => ($channels[$channelKey]['amount'] ?? 0) + $amount,
+            ];
+
+            $plans[$planTitle] = [
+                'key' => $planTitle,
+                'plan_id' => $detail->item_id ?? null,
+                'total' => ($plans[$planTitle]['total'] ?? 0) + 1,
+                'amount' => ($plans[$planTitle]['amount'] ?? 0) + $amount,
+            ];
+
+            $rows[] = [
+                'id' => $sale->id,
+                'date' => optional($sale->created_at)->format('d/m/Y H:i'),
+                'name' => $sale->clie_full_name ?: 'Sin nombre',
+                'email' => $sale->email ?: '',
+                'plan' => $planTitle,
+                'amount' => $amount,
+                'status' => $sale->response_status,
+                'traffic_source' => $source,
+                'utm_source' => $sale->utm_source ?: '',
+                'utm_medium' => $sale->utm_medium ?: '',
+                'utm_campaign' => $sale->utm_campaign ?: '',
+                'utm_content' => $sale->utm_content ?: '',
+                'landing_url' => $sale->landing_url ?: '',
+            ];
+        }
+
+        $sortDesc = fn (array $a, array $b) => $b['total'] <=> $a['total'];
+        usort($sources, $sortDesc);
+        usort($channels, $sortDesc);
+        usort($plans, $sortDesc);
+
+        return [
+            'totals' => [
+                'count' => count($rows),
+                'amount' => array_sum(array_column($rows, 'amount')),
+                'plans' => count($plans),
+                'people' => collect($rows)->filter(fn ($row) => $row['email'] !== '')->unique('email')->count(),
+            ],
+            'sources' => array_values($sources),
+            'channels' => array_values($channels),
+            'plans' => array_values($plans),
+            // El detalle de cada venta se envía acotado; las sumas usan todas.
+            'sales' => array_slice($rows, 0, 200),
+        ];
     }
 
     /**

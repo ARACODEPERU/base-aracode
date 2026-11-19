@@ -30,6 +30,8 @@
     import { esModoAlumno } from '@/utils/modoAlumno';
     // Guía de Aracodito por pestaña de Tesorería (solo actúa en /treasury).
     import TreasuryGuide from 'Modules/Treasury/Resources/assets/js/Components/TreasuryGuide.vue';
+    // Aracodito: ayuda global, visible en todas las pantallas del sistema.
+    import AracoditoAyuda from '@/Components/aracodito/AracoditoAyuda.vue';
 
     const store = useAppStore();
     const page = usePage();
@@ -225,6 +227,7 @@
             </div>
         </div>
         <TreasuryGuide />
+        <AracoditoAyuda />
         <ChatBox />
         <ForcePinChange />
         <OrganizationAccessAlert />

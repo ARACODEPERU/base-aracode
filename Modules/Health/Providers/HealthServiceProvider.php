@@ -50,6 +50,8 @@ class HealthServiceProvider extends ServiceProvider
                 \Modules\Health\Console\SendHealthAppointmentNotices::class,
                 \Modules\Health\Console\SyncGoogleCalendar::class,
                 \Modules\Health\Console\RefreshGoogleCalendarChannel::class,
+                \Modules\Health\Console\VerifyHealthAudit::class,
+                \Modules\Health\Console\PurgeHealthAudit::class,
             ]);
         }
     }

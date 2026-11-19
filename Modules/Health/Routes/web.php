@@ -27,32 +27,72 @@ use Modules\Health\Http\Controllers\Odontology\HealOdoAppointmentController;
 
 Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
     Route::get('dashboard', 'HealthController@index')->name('health_dashboard');
-    Route::get('patients', 'HealPatientController@index')->name('heal_patients_list');
-    Route::get('patients/create', 'HealPatientController@create')->name('heal_patients_create');
-    Route::post('patients/store', 'HealPatientController@store')->name('heal_patients_store');
-    Route::get('patients/edit/{id}', 'HealPatientController@edit')->name('heal_patients_edit');
-    Route::post('patients/update', 'HealPatientController@update')->name('heal_patients_update');
-    Route::delete('patients/destroy/{id}', 'HealPatientController@destroy')->name('heal_patients_destroy');
-    Route::get('patients/panel/{id}', 'HealPatientController@patientPanel')->name('heal_patients_panel');
 
-    Route::get('doctor', 'DoctorController@index')->name('heal_doctors_list');
-    Route::get('doctor/create', 'DoctorController@create')->name('heal_doctors_create');
-    Route::post('doctor/store', 'DoctorController@store')->name('heal_doctors_store');
-    Route::get('doctor/edit/{id}', 'DoctorController@edit')->name('heal_doctors_edit');
-    Route::post('doctor/update', 'DoctorController@update')->name('heal_doctors_update');
-    Route::delete('doctor/destroy/{id}', 'DoctorController@destroy')->name('heal_doctors_destroy');
-    Route::get('patients/appointments/{id}/todos', 'HealPatientController@appointments')->name('heal_patients_appointments');
-    Route::get('patients/medical/{id}/record', 'HealHistoryController@patientStory')->name('heal_patients_story');
-    Route::get('clinical-records', [HealHistoryController::class, 'clinicalRecords'])->name('heal_clinical_records_list');
-    Route::get('clinical-records/{patient}', [HealHistoryController::class, 'clinicalRecordShow'])->name('heal_clinical_records_show');
-    Route::get('agendas', [HealAgendaController::class, 'index'])->name('heal_agendas_list');
-    Route::get('agendas/day', [HealAgendaController::class, 'day'])->name('heal_agendas_day');
-    Route::get('agendas/availability', [HealAgendaController::class, 'availability'])->name('heal_agendas_availability');
-    Route::post('agendas/appointments/store', [HealAgendaController::class, 'storeAppointment'])->name('heal_agendas_appointments_store');
-    Route::post('agendas/appointments/move', [HealAgendaController::class, 'moveAppointment'])->name('heal_agendas_appointments_move');
+    // Pacientes: listado y consulta (panel, citas, historia). El permiso es el
+    // mismo que exige el menú, no solo la sesión.
+    Route::middleware(['permission:heal_pacientes_listado'])->group(function () {
+        Route::get('patients', 'HealPatientController@index')->name('heal_patients_list');
+        Route::get('patients/panel/{id}', 'HealPatientController@patientPanel')->name('heal_patients_panel');
+        Route::get('patients/appointments/{id}/todos', 'HealPatientController@appointments')->name('heal_patients_appointments');
+        Route::post('patients/search', 'HealPatientController@searchPatient')->name('heal_patients_search');
+        Route::get('patients/medical/{id}/record', 'HealHistoryController@patientStory')->name('heal_patients_story');
+        Route::get('patients/vitals/last/{id}', [HealHistoryController::class, 'lastVitalSigns'])->name('heal_patients_vitals_last');
+        Route::get('clinical-records', [HealHistoryController::class, 'clinicalRecords'])->name('heal_clinical_records_list');
+        Route::get('clinical-records/{patient}', [HealHistoryController::class, 'clinicalRecordShow'])->name('heal_clinical_records_show');
+    });
 
-    // Parámetros de Salud: enlace de Google Calendar por doctor (cada doctor ve el suyo; el admin, todos).
-    Route::get('parametros', [HealParametersController::class, 'index'])->name('heal_parameters');
+    Route::middleware(['permission:heal_pacientes_nuevo'])->group(function () {
+        Route::get('patients/create', 'HealPatientController@create')->name('heal_patients_create');
+        Route::post('patients/store', 'HealPatientController@store')->name('heal_patients_store');
+    });
+
+    Route::middleware(['permission:heal_pacientes_editar'])->group(function () {
+        Route::get('patients/edit/{id}', 'HealPatientController@edit')->name('heal_patients_edit');
+        Route::post('patients/update', 'HealPatientController@update')->name('heal_patients_update');
+    });
+
+    // Baja lógica con anonimización: permiso propio de eliminación.
+    Route::delete('patients/destroy/{id}', 'HealPatientController@destroy')
+        ->middleware('permission:heal_pacientes_eliminar')
+        ->name('heal_patients_destroy');
+
+    // Doctores.
+    Route::middleware(['permission:heal_doctores_listado'])->group(function () {
+        Route::get('doctor', 'DoctorController@index')->name('heal_doctors_list');
+    });
+
+    Route::middleware(['permission:heal_doctores_nuevo'])->group(function () {
+        Route::get('doctor/create', 'DoctorController@create')->name('heal_doctors_create');
+        Route::post('doctor/store', 'DoctorController@store')->name('heal_doctors_store');
+    });
+
+    Route::middleware(['permission:heal_doctores_editar'])->group(function () {
+        Route::get('doctor/edit/{id}', 'DoctorController@edit')->name('heal_doctors_edit');
+        Route::post('doctor/update', 'DoctorController@update')->name('heal_doctors_update');
+        Route::post('doctor/{doctor}/access-reset', [HealAttentionController::class, 'sendDoctorAccessReset'])->name('heal_doctors_access_reset');
+    });
+
+    Route::delete('doctor/destroy/{id}', 'DoctorController@destroy')
+        ->middleware('permission:heal_doctores_eliminar')
+        ->name('heal_doctors_destroy');
+
+    // Agenda: el listado y la consulta de horarios usan el permiso de citas.
+    Route::middleware(['permission:heal_citas_listado'])->group(function () {
+        Route::get('agendas', [HealAgendaController::class, 'index'])->name('heal_agendas_list');
+        Route::get('agendas/day', [HealAgendaController::class, 'day'])->name('heal_agendas_day');
+        Route::get('agendas/availability', [HealAgendaController::class, 'availability'])->name('heal_agendas_availability');
+
+        // Parámetros de Salud: cada doctor ve su enlace de Google Calendar; el admin, todos.
+        Route::get('parametros', [HealParametersController::class, 'index'])->name('heal_parameters');
+    });
+
+    Route::post('agendas/appointments/store', [HealAgendaController::class, 'storeAppointment'])
+        ->middleware('permission:heal_citas_nuevo')
+        ->name('heal_agendas_appointments_store');
+
+    Route::post('agendas/appointments/move', [HealAgendaController::class, 'moveAppointment'])
+        ->middleware('permission:heal_citas_editar')
+        ->name('heal_agendas_appointments_move');
 
     // Avisos de citas (recordatorios a pacientes por SMS).
     Route::middleware(['permission:heal_avisos'])->group(function () {
@@ -91,23 +131,30 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
         Route::post('disconnect/{doctor}', [HealDoctorGoogleCalendarController::class, 'disconnect'])->name('heal_doctor_google_disconnect');
     });
 
-    Route::post('patients/search', 'HealPatientController@searchPatient')->name('heal_patients_search');
+    // Atenciones: lectura con el permiso del menú; escritura con el suyo.
+    Route::middleware(['permission:heal_atenciones_listado'])->group(function () {
+        Route::get('attentions', [HealAttentionController::class, 'index'])->name('heal_attentions_list');
+        Route::get('attentions/patients/{patient}/summary', [HealAttentionController::class, 'patientSummary'])->name('heal_attentions_patient_summary');
+        Route::get('attentions/cie10/search', [HealAttentionController::class, 'searchCie10'])->name('heal_attentions_cie10_search');
+    });
 
-    Route::post('allergies/store', 'HealAllergyPatientController@store')->name('heal_allergies_store');
-    Route::delete('allergies/{id}/destroy', 'HealAllergyPatientController@destroy')->name('heal_allergies_destroy');
-    Route::get('patients/vitals/last/{id}', [HealHistoryController::class, 'lastVitalSigns'])->name('heal_patients_vitals_last');
+    Route::middleware(['permission:heal_atenciones_nuevo'])->group(function () {
+        Route::get('attentions/create', [HealAttentionController::class, 'create'])->name('heal_attentions_create');
+        Route::post('attentions/store', [HealAttentionController::class, 'store'])->name('heal_attentions_store');
+    });
 
-    Route::get('attentions', [HealAttentionController::class, 'index'])->name('heal_attentions_list');
-    Route::get('attentions/create', [HealAttentionController::class, 'create'])->name('heal_attentions_create');
-    Route::get('attentions/patients/{patient}/summary', [HealAttentionController::class, 'patientSummary'])->name('heal_attentions_patient_summary');
-    Route::get('attentions/cie10/search', [HealAttentionController::class, 'searchCie10'])->name('heal_attentions_cie10_search');
-    Route::post('attentions/{id}/sign', [HealAttentionController::class, 'sign'])->name('heal_attentions_sign');
-    Route::post('doctor/signature-pin', [HealAttentionController::class, 'updateDoctorPin'])->name('heal_doctors_pin_update');
-    Route::post('doctor/{doctor}/access-reset', [HealAttentionController::class, 'sendDoctorAccessReset'])->name('heal_doctors_access_reset');
-    Route::post('attentions/store', [HealAttentionController::class, 'store'])->name('heal_attentions_store');
-    Route::get('attentions/{id}/edit', [HealAttentionController::class, 'edit'])->name('heal_attentions_edit');
-    Route::put('attentions/{id}/update', [HealAttentionController::class, 'update'])->name('heal_attentions_update');
-    Route::delete('attentions/{id}/destroy', [HealAttentionController::class, 'destroy'])->name('heal_attentions_destroy');
+    Route::middleware(['permission:heal_atenciones_editar'])->group(function () {
+        Route::post('attentions/{id}/sign', [HealAttentionController::class, 'sign'])->name('heal_attentions_sign');
+        Route::post('doctor/signature-pin', [HealAttentionController::class, 'updateDoctorPin'])->name('heal_doctors_pin_update');
+        Route::get('attentions/{id}/edit', [HealAttentionController::class, 'edit'])->name('heal_attentions_edit');
+        Route::put('attentions/{id}/update', [HealAttentionController::class, 'update'])->name('heal_attentions_update');
+        Route::post('allergies/store', 'HealAllergyPatientController@store')->name('heal_allergies_store');
+        Route::delete('allergies/{id}/destroy', 'HealAllergyPatientController@destroy')->name('heal_allergies_destroy');
+    });
+
+    Route::delete('attentions/{id}/destroy', [HealAttentionController::class, 'destroy'])
+        ->middleware('permission:heal_atenciones_eliminar')
+        ->name('heal_attentions_destroy');
 
     // Cobros y catálogo de procedimientos. El permiso es el mismo que exige el
     // menú de la pantalla (heal_atenciones_listado): antes la ruta quedaba solo
@@ -131,6 +178,7 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
 
     Route::middleware(['role:admin|Administrador|webAdmin'])->prefix('admin')->group(function () {
         Route::get('activities', [HealActivityController::class, 'index'])->name('heal_activities_list');
+        Route::get('activities/export', [HealActivityController::class, 'export'])->name('heal_activities_export');
         Route::get('activities/{id}', [HealActivityController::class, 'show'])->name('heal_activities_show');
 
         // Settings / Configuration
@@ -145,7 +193,9 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
 
     });
 
-    // PDF Reports (outside admin middleware — accessible to doctors)
-    Route::get('attentions/{id}/pdf', [HealAttentionPdfController::class, 'download'])->name('heal_attentions_pdf');
-    Route::get('attentions/{id}/prescription', [HealAttentionPdfController::class, 'prescription'])->name('heal_attentions_prescription');
+    // PDF Reports (accessible to doctors with attention permissions)
+    Route::middleware(['permission:heal_atenciones_listado'])->group(function () {
+        Route::get('attentions/{id}/pdf', [HealAttentionPdfController::class, 'download'])->name('heal_attentions_pdf');
+        Route::get('attentions/{id}/prescription', [HealAttentionPdfController::class, 'prescription'])->name('heal_attentions_prescription');
+    });
 });

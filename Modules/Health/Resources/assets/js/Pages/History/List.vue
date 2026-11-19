@@ -1,5 +1,5 @@
 <script setup>
-import { Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import Pagination from '@/Components/Pagination.vue';
@@ -68,6 +68,9 @@ const formatDate = (value) => {
 
 <template>
     <AppLayout title="Historias Clínicas">
+        <Head>
+            <meta name="aracodito-view" content="new" />
+        </Head>
         <Navigation :routeModule="route('health_dashboard')" :titleModule="'Salud'">
             <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
                 <span>Historias Clínicas</span>
