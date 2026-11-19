@@ -80,15 +80,23 @@ class SunatRetryQueue extends Command
                 continue;
             }
 
-            if (! empty($result['success'])) {
+            // "success" también es true cuando el comprobante se guardó en
+            // cola (la venta no se bloquea), así que primero se revisa "queued".
+            if (! empty($result['queued'])) {
+                $queued++;
+                $this->warn($label.': sigue en cola, se reintentará.');
+            } elseif (! empty($result['success'])) {
                 $sent++;
                 $this->info($label.': enviado correctamente.');
-            } elseif (! empty($result['queued'])) {
-                $queued++;
-                $this->warn($label.': SUNAT sigue sin responder, se reintentará.');
             } else {
                 $manual++;
-                $this->error($label.': rechazado por SUNAT: '.($result['message'] ?? 'sin detalle'));
+                $document->refresh();
+
+                if ($document->sunat_send_status === 'revisar') {
+                    $this->warn($label.': posiblemente ya registrado en SUNAT, revisar constancia (CDR).');
+                } else {
+                    $this->error($label.': rechazado por SUNAT: '.($result['message'] ?? 'sin detalle'));
+                }
             }
         }
 

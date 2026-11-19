@@ -116,12 +116,12 @@ class Factura
                 $codeError = $error->getCode();
                 $originalMessage = $error->getMessage();
                 $messageError = $originalMessage;
-                $connectionErrorCodes = [130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 1033];
+                $connectionErrorCodes = [130, 131, 132, 133, 134, 135, 136, 137, 138, 139];
 
                 // Error 0109 - SUNAT autenticación no disponible
                 if ($codeError === '0109' || stripos($messageError, '0109') !== false) {
-                    $status = 'Pendiente de Reintento';
-                    $messageError = "SUNAT no responde (error {$codeError}). El comprobante quedará pendiente para reintento manual. Detalle: {$originalMessage}";
+                    $status = 'Pendiente';
+                    $messageError = "SUNAT no responde (error {$codeError}). El comprobante quedará pendiente para reintento automático. Detalle: {$originalMessage}";
                 }
                 // Error 2223 - Archivo ya presentado, intentar recuperar CDR
                 elseif ($codeError === '2223' || stripos($messageError, '2223') !== false) {
@@ -148,15 +148,15 @@ class Factura
                                     $notes = json_encode($cdr->getNotes(), JSON_UNESCAPED_UNICODE);
                                 }
                             } else {
-                                $status = 'Pendiente de Reintento';
+                                $status = 'Pendiente';
                                 $messageError = "El archivo ya fue presentado (error {$codeError}) pero no se pudo recuperar la constancia. Ticket: {$ticket}. Detalle: {$originalMessage}";
                             }
                         } catch (\Exception $e) {
-                            $status = 'Pendiente de Reintento';
+                            $status = 'Pendiente';
                             $messageError = "Error al consultar ticket recuperado (error {$codeError}): ".$e->getMessage().". Detalle SUNAT: {$originalMessage}";
                         }
                     } else {
-                        if (in_array((int)$codeError, $connectionErrorCodes) || (int)$codeError === -1 || (int)$codeError === 0) {
+                        if (in_array((int)$codeError, $connectionErrorCodes) || (int)$codeError === -1) {
                             $status = 'Error de Conexión';
                         } else {
                             $status = 'Rechazada';
@@ -165,13 +165,13 @@ class Factura
                 }
                 // Error HTTP - SUNAT respondió con error HTTP (ej: 502 Bad Gateway, 400 Bad Request)
                 elseif (!is_numeric($codeError) && strtolower($codeError) === 'http') {
-                    $status = 'Pendiente de Reintento';
+                    $status = 'Pendiente';
                     $messageError = "SUNAT respondió con error HTTP ({$originalMessage}). Es probable que SUNAT esté presentando picos de sobrecarga. Reintente más tarde. Si el error persiste, verifique: credenciales SOL, certificado digital o datos del XML.";
                 }
                 // Otros errores numéricos
                 else {
                     $code = (int)$codeError;
-                    if (in_array($code, $connectionErrorCodes) || $code === -1 || $code === 0) {
+                    if (in_array($code, $connectionErrorCodes) || $code === -1) {
                         $status = 'Error de Conexión';
                         $messageError = "SUNAT no responde (error {$codeError}). El comprobante está en espera para reintento automático. Detalle: {$originalMessage}";
                     } else {
@@ -180,23 +180,39 @@ class Factura
                     }
                 }
             }
-            // Fallo de red / SUNAT caído: el comprobante queda en cola y el
-            // cajero ve un mensaje amigable en lugar de un error críptico.
+            // Resultado no exitoso: 1033 se revisa, lo reintentable queda
+            // pendiente para reenvío manual y el rechazo de negocio sale de él.
             $queued = false;
+            $duplicate = false;
+            $manual = false;
 
-            if (! $res->isSuccess() && $failure !== null && $failure['retryable']) {
-                $status = 'Pendiente de Reintento';
-                // El texto depende del motivo: no es lo mismo SUNAT caído que
-                // un certificado local que no se pudo cargar.
+            if (! $res->isSuccess() && $failure !== null && $failure['kind'] === SunatResilience::KIND_DUPLICATE) {
+                // 1033: SUNAT indica que el comprobante ya estaría registrado.
+                // No se reenvía solo; se deja para revisar la constancia (CDR).
+                $status = 'Posiblemente registrado';
                 $messageError = $failure['friendly'];
                 $notes = null;
-                $queued = true;
+                $duplicate = true;
 
-                $resilience->markQueued($document, $failure['kind'], $failure['technical']);
+                $resilience->markDuplicate($document, (string) $codeError);
 
-                // Deja en el log el motivo técnico real de la cola: el cajero ve
-                // el mensaje amigable, soporte necesita el detalle.
-                Log::warning('SUNAT: comprobante en cola', [
+                Log::warning('SUNAT: comprobante posiblemente ya registrado', [
+                    'document_id' => $document->id,
+                    'comprobante' => trim($document->invoice_serie.'-'.$document->invoice_correlative),
+                    'codigo' => (string) $codeError,
+                ]);
+            } elseif (! $res->isSuccess() && $failure !== null && $failure['retryable']) {
+                $status = 'Pendiente';
+                // Se muestra el error original para que el usuario sepa qué
+                // pasó. No se encola: el reenvío es manual.
+                $messageError = $failure['technical'];
+                $notes = null;
+                $queued = false;
+                $manual = true;
+
+                $resilience->markPendingManual($document, $failure['kind'], $failure['technical']);
+
+                Log::warning('SUNAT: comprobante pendiente para envío manual', [
                     'document_id' => $document->id,
                     'comprobante' => trim($document->invoice_serie.'-'.$document->invoice_correlative),
                     'tipo' => $document->invoice_type_doc,
@@ -206,9 +222,9 @@ class Factura
             } elseif ($res->isSuccess()) {
                 $resilience->markSent($document, (string) $codeError === '0');
             } elseif ($failure !== null && ! $failure['retryable']) {
-                // SUNAT respondió un rechazo de negocio (por ejemplo 1033): no
-                // se reintenta solo y sale de la cola para no repetirlo siempre.
-                $resilience->markSent($document, false);
+                // Rechazo de negocio: no se reintenta solo. Si el caso 2223
+                // recuperó un CDR aceptado, se marca como aceptado.
+                $resilience->markSent($document, $status === 'Aceptada');
             }
 
             $document->invoice_response_code = $codeError;
@@ -221,6 +237,8 @@ class Factura
             return array(
                 'success' => $res->isSuccess() || $queued,
                 'queued' => $queued,
+                'duplicate' => $duplicate,
+                'manual' => $manual,
                 'code' => $codeError,
                 'message' => $messageError,
                 'notes' => $notes,

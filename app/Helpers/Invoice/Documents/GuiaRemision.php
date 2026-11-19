@@ -70,11 +70,13 @@ class GuiaRemision
         } catch (Throwable $e) {
             $guia->status = GuiaRemisionModel::STATUS_CONTINGENCIA;
             $guia->sunat_send_status = 'reintento';
-            $guia->response_description = SunatResilience::FRIENDLY_QUEUED;
+            // getSee() falla por certificado o configuración local, no porque
+            // SUNAT esté caído.
+            $guia->response_description = SunatResilience::FRIENDLY_LOCAL_SETUP;
             $guia->notes = json_encode(['error' => mb_substr($e->getMessage(), 0, 1500)], JSON_UNESCAPED_UNICODE);
             $guia->save();
 
-            return $this->payload($guia, ['success' => true, 'queued' => true, 'message' => SunatResilience::FRIENDLY_QUEUED]);
+            return $this->payload($guia, ['success' => true, 'queued' => true, 'message' => SunatResilience::FRIENDLY_LOCAL_SETUP]);
         }
 
         $send = $resilience->sendWith($see, $despatch, $util);

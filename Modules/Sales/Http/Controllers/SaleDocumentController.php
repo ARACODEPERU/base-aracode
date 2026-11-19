@@ -663,7 +663,7 @@ class SaleDocumentController extends Controller
 
         switch ($type) {
             case '01':
-                $factura = new Factura;
+                $factura = app(Factura::class);
                 $result = $factura->create($id);
                 break;
             case '03':
@@ -690,6 +690,10 @@ class SaleDocumentController extends Controller
             'success' => $result['success'],
             // Enviado a la cola de reintento por falla de red de SUNAT.
             'queued' => $result['queued'] ?? false,
+            // 1033: el comprobante posiblemente ya está registrado.
+            'duplicate' => $result['duplicate'] ?? false,
+            // Fallo de SUNAT: queda pendiente y se reenvía manualmente.
+            'manual' => $result['manual'] ?? false,
             'code' => $result['code'],
             'message' => $result['message'],
             'notes' => $result['notes'],
@@ -1065,7 +1069,8 @@ class SaleDocumentController extends Controller
                     'detraccion' => false,
                     'detraccion_auto' => false,
                     'detraccion_percent' => null,
-                    'detraccion_amount' => null,
+                    // La columna es NOT NULL con default 0; null provoca un 500.
+                    'detraccion_amount' => 0,
                 ])->save();
             }
         }
