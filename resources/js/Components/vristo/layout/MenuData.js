@@ -57,7 +57,7 @@ const MenuData = ref([
         fullPage: true,
     },
     menuConfig,
-    //menuPurchases,
+    menuPurchases,
     menuSales[0],
     menuSales[1],
     menuSales[2],

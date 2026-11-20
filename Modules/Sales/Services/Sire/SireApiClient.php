@@ -4,6 +4,7 @@ namespace Modules\Sales\Services\Sire;
 
 use App\Models\Company;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -109,6 +110,23 @@ class SireApiClient
     }
 
     /**
+     * Llamada POST sin cuerpo, para las acciones que solo llevan el período en
+     * la ruta (aceptar propuesta).
+     *
+     * @param  array<string, mixed>  $query
+     * @return array<string, mixed>
+     */
+    public function post(
+        Company $company,
+        string $path,
+        array $query,
+        string $action,
+        ?SireSubmission $submission = null
+    ): array {
+        return $this->json($this->enviar($company, 'POST', $path, $query, $action, $submission), []);
+    }
+
+    /**
      * @param  array<string, mixed>  $query
      */
     private function enviar(
@@ -119,6 +137,114 @@ class SireApiClient
         string $action,
         ?SireSubmission $submission
     ): Response {
+        $url = self::API_BASE . $path;
+
+        return $this->ejecutar(
+            $company,
+            $method,
+            $path,
+            $action,
+            $submission,
+            fn (PendingRequest $peticion) => $method === 'GET'
+                ? $peticion->get($url, $query)
+                : $peticion->post($url, $query)
+        );
+    }
+
+    /**
+     * Sube el ZIP de la propuesta como reemplazo.
+     *
+     * Primero intenta el alta TUS (POST sin cuerpo y luego PATCH del archivo),
+     * que es el flujo que documenta SUNAT. Si el endpoint no devuelve
+     * `Location`, envía el ZIP en un POST simple con los mismos metadatos: el
+     * manual no lo aclara y algunos integradores lo aceptan así.
+     *
+     * @param  array<string, string>  $metadatos
+     * @return array<string, mixed>
+     */
+    public function subir(
+        Company $company,
+        string $path,
+        string $contenido,
+        array $metadatos,
+        string $action,
+        ?SireSubmission $submission = null
+    ): array {
+        $url = self::API_BASE . $path;
+        $meta = $this->codificarMetadatos($metadatos);
+        $alta = null;
+
+        try {
+            $alta = $this->ejecutar(
+                $company,
+                'POST',
+                $path,
+                $action . '_alta',
+                $submission,
+                fn (PendingRequest $peticion) => $peticion
+                    ->withHeaders([
+                        'Tus-Resumable' => '1.0.0',
+                        'Upload-Length' => (string) strlen($contenido),
+                        'Upload-Metadata' => $meta,
+                    ])
+                    ->post($url)
+            );
+        } catch (SireApiException) {
+            // El endpoint puede no aceptar el alta TUS; se prueba el envío
+            // directo antes de devolver el error.
+            $alta = null;
+        }
+
+        $location = $alta !== null ? (string) $alta->header('Location') : '';
+
+        if ($location !== '') {
+            $respuesta = $this->ejecutar(
+                $company,
+                'PATCH',
+                $path,
+                $action,
+                $submission,
+                fn (PendingRequest $peticion) => $peticion
+                    ->withHeaders([
+                        'Tus-Resumable' => '1.0.0',
+                        'Upload-Offset' => '0',
+                        'Upload-Metadata' => $meta,
+                    ])
+                    ->withBody($contenido, 'application/offset+octet-stream')
+                    ->patch($location)
+            );
+
+            return $this->json($respuesta, $this->json($alta, []));
+        }
+
+        $respuesta = $this->ejecutar(
+            $company,
+            'POST',
+            $path,
+            $action,
+            $submission,
+            fn (PendingRequest $peticion) => $peticion
+                ->withHeaders(['Upload-Metadata' => $meta])
+                ->withBody($contenido, 'application/zip')
+                ->post($url)
+        );
+
+        return $this->json($respuesta, []);
+    }
+
+    /**
+     * Ejecuta una petición con token, renovación por 401 y reintentos.
+     *
+     * @param  callable(PendingRequest): Response  $peticion
+     */
+    private function ejecutar(
+        Company $company,
+        string $method,
+        string $path,
+        string $action,
+        ?SireSubmission $submission,
+        callable $peticion
+    ): Response {
         $renovado = false;
 
         for ($intento = 1; $intento <= self::MAX_INTENTOS; $intento++) {
@@ -126,11 +252,7 @@ class SireApiClient
             $inicio = microtime(true);
 
             try {
-                $request = Http::withToken($token)->acceptJson()->timeout(60);
-
-                $respuesta = $method === 'GET'
-                    ? $request->get(self::API_BASE . $path, $query)
-                    : $request->post(self::API_BASE . $path, $query);
+                $respuesta = $peticion(Http::withToken($token)->acceptJson()->timeout(60));
             } catch (ConnectionException $e) {
                 $this->registrar(
                     $company,
@@ -207,6 +329,33 @@ class SireApiClient
             [],
             $submission?->ticket
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $respaldo
+     * @return array<string, mixed>
+     */
+    private function json(Response $respuesta, array $respaldo): array
+    {
+        $json = $respuesta->json();
+
+        return is_array($json) && $json !== [] ? $json : $respaldo;
+    }
+
+    /**
+     * Cabecera `Upload-Metadata` del protocolo TUS: clave y valor en base64.
+     *
+     * @param  array<string, string>  $metadatos
+     */
+    private function codificarMetadatos(array $metadatos): string
+    {
+        $partes = [];
+
+        foreach ($metadatos as $clave => $valor) {
+            $partes[] = $clave . ' ' . base64_encode((string) $valor);
+        }
+
+        return implode(',', $partes);
     }
 
     private function solicitarToken(Company $company, ?SireSubmission $submission): string

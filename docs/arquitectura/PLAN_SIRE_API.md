@@ -239,8 +239,40 @@ Decisiones de implementación:
   del servidor (`txt`/`zip` redirigen con error). En el RCE se acepta el total sin las no gravadas
   porque las operaciones gratuitas no suman al total.
 
-Pendiente para la Fase B: comparador propuesta vs. ERP, ZIP + metadatos TUS, reemplazo, aceptación
-con confirmación explícita y reintento manual seguro.
+### 8.1 Fase B (entregada)
+
+Comparación, reemplazo y aceptación desde la misma pantalla, sin salir del ERP.
+
+| Pieza | Ubicación |
+|---|---|
+| Comparador propuesta vs. ERP | `Modules/Sales/Services/Sire/SireComparadorService.php` |
+| Reemplazo, aceptación y consulta de estado | `Modules/Sales/Services/Sire/SirePresentacionService.php` |
+| Subida del ZIP (TUS y respaldo directo) y POST sin cuerpo | `Modules/Sales/Services/Sire/SireApiClient.php` |
+| Acciones por registro | `SirePresentacionController`, rutas `sire_rvie_ventas_comparar`, `_reemplazar`, `_aceptar`, `_estado` (y sus pares de compras) |
+| Pantalla | `Pages/Sire/Registro.vue`, sección «Presentar el período» |
+| Pruebas | `tests/Feature/Sire/SireComparadorTest.php`, `SirePresentacionTest.php` |
+
+Decisiones de implementación:
+
+- La comparación empareja por tipo + serie + número y reporta comprobantes que SUNAT tiene y el ERP no,
+  comprobantes del ERP que SUNAT no tiene y diferencias de fecha, documento, nombre, base, IGV, total,
+  moneda y tipo de cambio. Los importes se comparan con dos céntimos de tolerancia.
+- Si no hay propuesta descargada, la comparación la pide a SUNAT (solo lectura).
+- El reemplazo nunca sale si el validador encontró errores. Si existe una propuesta descargada se compara
+  antes de enviar; con diferencias, la pantalla exige la confirmación «Enviar con diferencias»
+  (`aceptar_diferencias`).
+- La subida intenta el alta TUS (`POST` sin cuerpo + `PATCH` con `Upload-Offset: 0`) y, si el endpoint no
+  devuelve `Location`, envía el ZIP en un `POST` simple con `Upload-Metadata`. El manual no aclara cuál
+  acepta SUNAT, así que la primera prueba real debe revisar la bitácora para confirmar el camino usado.
+- Aceptar propuesta es una llamada aparte, también con confirmación explícita y ticket.
+- No hay reintento automático del reemplazo: si se pierde la respuesta, se consulta el estado del ticket
+  guardado antes de volver a enviar.
+
+Validación local: las 57 pruebas de `tests/Feature/Sire` pasan (14 nuevas para comparador y presentación)
+con `Http::fake`; no se ha hecho ninguna escritura real en SUNAT.
+
+Pendiente real: la primera prueba con credenciales del contribuyente, empezando por comparar (solo lectura)
+antes de reemplazar, y confirmar si el endpoint de subida acepta el alta TUS o el POST directo.
 
 ## 9. Riesgos
 

@@ -38,6 +38,7 @@ use Modules\Sales\Http\Controllers\SaleSummaryController;
 use Modules\Sales\Http\Controllers\SerieController;
 use Modules\Sales\Http\Controllers\ServicesController;
 use Modules\Sales\Http\Controllers\SireConfiguracionController;
+use Modules\Sales\Http\Controllers\SirePresentacionController;
 use Modules\Sales\Http\Controllers\SirePropuestaController;
 use Modules\Sales\Http\Controllers\SireRceComprasController;
 use Modules\Sales\Http\Controllers\SireRvieVentasController;
@@ -286,6 +287,12 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
         Route::get('sire/rvie-ventas/zip', [SireRvieVentasController::class, 'zip'])->name('sire_rvie_ventas_zip');
         // Solo lectura: descarga la propuesta de SUNAT, no envía reemplazos.
         Route::post('sire/rvie-ventas/propuesta', [SirePropuestaController::class, 'ventas'])->name('sire_rvie_ventas_propuesta');
+
+        // Comparación, reemplazo y aceptación de la propuesta (escritura en SUNAT).
+        Route::post('sire/rvie-ventas/comparar', [SirePresentacionController::class, 'comparar'])->defaults('tipo', 'ventas')->name('sire_rvie_ventas_comparar');
+        Route::post('sire/rvie-ventas/estado', [SirePresentacionController::class, 'estado'])->defaults('tipo', 'ventas')->name('sire_rvie_ventas_estado');
+        Route::post('sire/rvie-ventas/reemplazar', [SirePresentacionController::class, 'reemplazar'])->defaults('tipo', 'ventas')->middleware('permission:sire_api')->name('sire_rvie_ventas_reemplazar');
+        Route::post('sire/rvie-ventas/aceptar', [SirePresentacionController::class, 'aceptar'])->defaults('tipo', 'ventas')->middleware('permission:sire_api')->name('sire_rvie_ventas_aceptar');
     });
 
     // SIRE: registro de compras electrónico (RCE) del período.
@@ -294,6 +301,11 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
         Route::get('sire/rce-compras/txt', [SireRceComprasController::class, 'txt'])->name('sire_rce_compras_txt');
         Route::get('sire/rce-compras/zip', [SireRceComprasController::class, 'zip'])->name('sire_rce_compras_zip');
         Route::post('sire/rce-compras/propuesta', [SirePropuestaController::class, 'compras'])->name('sire_rce_compras_propuesta');
+
+        Route::post('sire/rce-compras/comparar', [SirePresentacionController::class, 'comparar'])->defaults('tipo', 'compras')->name('sire_rce_compras_comparar');
+        Route::post('sire/rce-compras/estado', [SirePresentacionController::class, 'estado'])->defaults('tipo', 'compras')->name('sire_rce_compras_estado');
+        Route::post('sire/rce-compras/reemplazar', [SirePresentacionController::class, 'reemplazar'])->defaults('tipo', 'compras')->middleware('permission:sire_api')->name('sire_rce_compras_reemplazar');
+        Route::post('sire/rce-compras/aceptar', [SirePresentacionController::class, 'aceptar'])->defaults('tipo', 'compras')->middleware('permission:sire_api')->name('sire_rce_compras_aceptar');
     });
 
     Route::middleware(['middleware' => 'permission:acco_dashboard'])
