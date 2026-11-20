@@ -117,6 +117,9 @@ class ProfileController extends Controller
             'aracodito_audio_enabled' => ['sometimes', 'boolean'],
             'aracodito_ia_enabled' => ['sometimes', 'boolean'],
             'aracodito_style' => ['sometimes', 'string', 'in:classic,pixel,futbol'],
+            'aracodito_tts_voice' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'aracodito_tts_rate' => ['sometimes', 'numeric', 'min:0.5', 'max:2'],
+            'aracodito_tts_pitch' => ['sometimes', 'numeric', 'min:0', 'max:2'],
         ]);
 
         $user = $request->user();
@@ -125,10 +128,28 @@ class ProfileController extends Controller
         // cuando el interruptor no viene en la petición (valor apagado).
         $user->aracodito_enabled = $request->boolean('aracodito_enabled');
         $user->aracodito_audio_enabled = $request->boolean('aracodito_audio_enabled');
-        $user->aracodito_ia_enabled = $request->boolean('aracodito_ia_enabled');
+        // Solo el rol admin puede activar o desactivar la IA. Para los demás
+        // roles el acceso lo define el permiso ia_aracodito que asigna admin.
+        if (\Modules\Ai\Support\AccesoIa::esAdmin($user)) {
+            $user->aracodito_ia_enabled = $request->boolean('aracodito_ia_enabled');
+        }
         // Si la petición no envía el estilo, se conserva el elegido. Los usuarios
         // anteriores a esta opción quedan en el estilo clásico.
         $user->aracodito_style = $request->input('aracodito_style', $user->aracodito_style ?: 'classic');
+
+        // Voz del TTS: el nombre es propio de cada equipo. Si no existe en
+        // otro navegador, aracodito.js usa la primera voz en español.
+        if ($request->has('aracodito_tts_voice')) {
+            $user->aracodito_tts_voice = $request->input('aracodito_tts_voice') ?: null;
+        }
+
+        if ($request->filled('aracodito_tts_rate')) {
+            $user->aracodito_tts_rate = round((float) $request->input('aracodito_tts_rate'), 2);
+        }
+
+        if ($request->has('aracodito_tts_pitch')) {
+            $user->aracodito_tts_pitch = round((float) $request->input('aracodito_tts_pitch'), 2);
+        }
 
         $user->save();
 

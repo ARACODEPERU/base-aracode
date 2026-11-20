@@ -6,7 +6,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
-import Swal2 from 'sweetalert2';
+import PriceNoteEditor from '../../../Components/PriceNoteEditor.vue';
 import { computed, ref, watch } from 'vue';
 import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
 import IconX from '@/Components/vristo/icon/icon-x.vue';
@@ -27,7 +27,10 @@ const props = defineProps({
 const form = useForm({
     title: props.subscription.title,
     usine: props.subscription.usine || '',
-    description: props.subscription.description,
+    // Los planes antiguos solo tienen texto plano: se usa como valor inicial.
+    description_html: props.subscription.description_html || props.subscription.description || '',
+    price_note: props.subscription.price_note || '',
+    price_note_below: props.subscription.price_note_below || '',
     details: props.subscription.details,
     prices: props.subscription.prices,
     show_dollar_price: props.subscription.show_dollar_price == 1,
@@ -59,13 +62,7 @@ const updateSubscription = () => {
         errorBag: 'updateSubscription',
         preserveScroll: true,
         onSuccess: () => {
-            Swal2.fire({
-                title: 'Enhorabuena',
-                text: 'Actualizado correctamente',
-                icon: 'success',
-                padding: '2em',
-                customClass: 'sweet-alerts',
-            });
+            window.alertaSistema('Enhorabuena', 'Actualizado correctamente', 'success');
         },
     });
 }
@@ -157,14 +154,21 @@ const removePrice = (indexToRemove) => {
                     </button>
                 </div>
             </div>
-            <div class="col-span-4">
-                <InputLabel for="description" value="Descripción *" />
-                <TextInput
-                    id="description"
-                    v-model="form.description"
-                    type="text"
+            <div class="col-span-6">
+                <InputLabel value="Descripción *" />
+                <p class="text-xs text-gray-500 mb-2">
+                    Aparece debajo del título del plan en la página de suscripciones. Escribe lo que quieras, por
+                    ejemplo «1 Usuario (Para contadores independientes y profesionales en empresa).». Selecciona
+                    todo o parte del texto y usa la barra para cambiar el tamaño, el color, la negrita, la cursiva,
+                    el subrayado o el tachado. Usa Enter para separar hasta 3 líneas.
+                </p>
+                <PriceNoteEditor
+                    id="description_html"
+                    v-model="form.description_html"
+                    placeholder="1 Usuario (Para contadores independientes y profesionales en empresa)."
+                    :max-lines="3"
                 />
-                <InputError :message="form.errors.description" class="mt-2" />
+                <InputError :message="form.errors.description_html" class="mt-2" />
             </div>
 
             <div class="col-span-6">
@@ -281,6 +285,33 @@ const removePrice = (indexToRemove) => {
                             </div>
                             <InputError :message="form.errors[`details.${ixdex}.label`]" class="mt-2" />
                         </template>
+                    </div>
+                </div>
+            </div>
+            <div class="col-span-6">
+                <div class="p-4 border border-[#888ea8] dark:border-[#1b2e4b] rounded space-y-5">
+                    <div>
+                        <h5 class="font-semibold text-lg dark:text-white-light mb-1">Texto encima del precio (opcional)</h5>
+                        <p class="text-xs text-gray-500 mb-2">
+                            Esto irá encima del precio actual en la página de planes. Puedes escribir lo que quieras,
+                            por ejemplo «Antes S/ 1800» o «El precio subirá el 25 de Noviembre S/ 1950». Selecciona
+                            todo o parte del texto y usa la barra para cambiar el color, la letra, el subrayado o el
+                            tachado.
+                        </p>
+                        <PriceNoteEditor v-model="form.price_note" placeholder="Antes S/ 1800" />
+                        <p class="text-xs text-gray-500 mt-1">Si lo dejas vacío, el plan no muestra nada encima del precio.</p>
+                        <InputError :message="form.errors.price_note" class="mt-2" />
+                    </div>
+                    <div>
+                        <h5 class="font-semibold text-lg dark:text-white-light mb-1">Texto debajo del precio (opcional)</h5>
+                        <p class="text-xs text-gray-500 mb-2">
+                            Esto irá debajo del precio actual en la página de planes. Escribe lo que quieras, por
+                            ejemplo «Precio válido hasta el 24 de Noviembre» o «Incluye IGV». Selecciona todo o parte
+                            del texto y usa la barra para cambiar el color, la letra, el subrayado o el tachado.
+                        </p>
+                        <PriceNoteEditor v-model="form.price_note_below" placeholder="Precio válido hasta el 24 de Noviembre" />
+                        <p class="text-xs text-gray-500 mt-1">Si lo dejas vacío, el plan no muestra nada debajo del precio.</p>
+                        <InputError :message="form.errors.price_note_below" class="mt-2" />
                     </div>
                 </div>
             </div>

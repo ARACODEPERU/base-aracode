@@ -604,7 +604,7 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
 
     const sendPromptGeminiAI = () => {
         formIaconsulta.processing = true;
-        const url = import.meta.env.VITE_SOCKET_IO_SERVER + '/api/ai/basicquestion'; // Cambia por la URL de tu API
+        const url = route('crm_application_ai_prompt_send_message');
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         formIaconsulta.csrfToken = csrfToken;
 
@@ -614,8 +614,12 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
             },
             timeout: 0,
         }).then((result) => {
+            if (!result.data.success) {
+                showMessage(result.data.message || 'No se pudo consultar la IA.', 'error')
+                displayModalAi.value = false
+                return
+            }
             formIaconsulta.respond = result.data.responseText
-            //zformIaconsulta.respond = clearHTMLdelimiters(result.data.responseText)
             openModalRespuestaAI()
         }).finally(()=>{
             formIaconsulta.processing = false;;
@@ -737,7 +741,7 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
     const censorLoader = ref(false);
     const sendCensorTextGeminiAI = () => {
         censorLoader.value = true;
-        const url = import.meta.env.VITE_SOCKET_IO_SERVER + '/api/ai/basiccensortext'; // Cambia por la URL de tu API
+        const url = route('crm_gemini_censor_and_store');
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         formIaconsulta.csrfToken = csrfToken;
         formIaconsulta.routeBackend = route('crm_chat_frequently_questions_store');

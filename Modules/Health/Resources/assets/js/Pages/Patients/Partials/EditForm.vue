@@ -8,7 +8,6 @@ import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
 import CropperImage from '@/Components/CropperImage.vue';
 import SelectCities from '@/Components/SelectCities.vue';
-import Swal2 from 'sweetalert2';
 import { ref, watch } from 'vue';
 
 const props = defineProps({
@@ -62,12 +61,7 @@ const updatePatient = () => {
         errorBag: 'updatePatient',
         preserveScroll: true,
         onSuccess: () => {
-            Swal2.fire({
-                title: 'Enhorabuena',
-                text: 'Se Actualizó correctamente',
-                icon: 'success',
-            });
-            //form.reset()
+            window.alertaSistema('Paciente actualizado', 'Se guardaron los datos del paciente.', 'success');
         },
     });
 }

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Modules\Health\Entities\HealAttention;
 use Modules\Health\Entities\HealSetting;
+use Modules\Health\Support\HealthAudit;
 
 class HealAttentionPdfController extends Controller
 {
@@ -23,6 +24,9 @@ class HealAttentionPdfController extends Controller
             'treatments',
             'cie10',
         ])->findOrFail($id);
+
+        // Consultar un documento clínico deja rastro auditable.
+        $this->registrarConsulta($attention, 'pdf_atencion');
 
         $settings = HealSetting::first();
         $extra = $settings?->settings ?? [];
@@ -40,15 +44,15 @@ class HealAttentionPdfController extends Controller
             $vitalSigns['blood_pressure'] = ($attention->blood_pressure_systolic ?? '—') . '/' . ($attention->blood_pressure_diastolic ?? '—');
         }
         if ($attention->heart_rate) $vitalSigns['heart_rate'] = $attention->heart_rate . ' lpm';
-        if ($attention->temperature) $vitalSigns['temperature'] = $attention->temperature . ' °C';
-        if ($attention->oxygen_saturation) $vitalSigns['oxygen_saturation'] = $attention->oxygen_saturation . '%';
+        if ($attention->respiratory_rate) $vitalSigns['respiratory_rate'] = $attention->respiratory_rate . ' rpm';
         if ($attention->weight) $vitalSigns['weight'] = $attention->weight . ' kg';
         if ($attention->height) $vitalSigns['height'] = $attention->height . ' cm';
+        if ($attention->body_mass_index) $vitalSigns['body_mass_index'] = $attention->body_mass_index . ' kg/m²';
 
         $diagnosis = collect();
         if ($attention->patient_story) $diagnosis->push("**Relato del paciente:**\n" . $attention->patient_story);
         if ($attention->diagnosis) $diagnosis->push("**Diagnóstico:**\n" . $attention->diagnosis);
-        if ($attention->cie10) $diagnosis->push("**CIE-10:** " . $attention->cie10->code . ' - ' . $attention->cie10->description);
+        if ($attention->cie10) $diagnosis->push("**CIE-10:** " . $attention->cie10->cie10x . ' - ' . $attention->cie10->description);
 
         $treatmentLines = collect();
         if ($attention->treatments) {
@@ -78,9 +82,7 @@ class HealAttentionPdfController extends Controller
             'printFooter' => $extra['print_footer'] ?? 'Documento generado por el sistema de gestión de salud.',
             'generatedAt' => Carbon::now()->format('d/m/Y H:i'),
             'patientName' => $attention->patient?->person?->full_name ?? '—',
-            'patientDoc' => $attention->patient?->person?->document_type
-                ? $attention->patient->person->document_type . ': ' . ($attention->patient->person->document_number ?? '—')
-                : '—',
+            'patientDoc' => $this->documentoPaciente($attention),
             'doctorName' => $attention->doctor?->person?->full_name ?? '—',
             'doctorSpecialty' => $attention->doctor?->specialty ?? '—',
             'attentionDate' => $attention->attention_at?->format('d/m/Y H:i') ?? '—',
@@ -109,6 +111,10 @@ class HealAttentionPdfController extends Controller
             'doctor.person',
             'treatments',
         ])->findOrFail($id);
+
+        $this->registrarConsulta($attention, 'receta');
+
+        $this->registrarConsulta($attention, 'receta');
 
         $settings = HealSetting::first();
         $extra = $settings?->settings ?? [];
@@ -185,6 +191,40 @@ class HealAttentionPdfController extends Controller
         }
 
         return $pdf->stream($fileName);
+    }
+
+    /**
+     * Documento de identidad del paciente con el tipo real del catalogo.
+     */
+    private function documentoPaciente(HealAttention $attention): string
+    {
+        $persona = $attention->patient?->person;
+
+        if (!$persona) {
+            return '—';
+        }
+
+        $tipo = $persona->identityDocumentType?->description;
+        $numero = $persona->number ?: '—';
+
+        return $tipo ? $tipo . ': ' . $numero : $numero;
+    }
+
+    /**
+     * Registra la consulta del documento clínico (categoría access).
+     */
+    private function registrarConsulta(HealAttention $attention, string $documento): void
+    {
+        HealthAudit::record('viewed', [
+            'subject' => $attention,
+            'patient_id' => (int) $attention->patient_id,
+            'category' => HealthAudit::CATEGORY_ACCESS,
+            'metadata' => [
+                'documento' => $documento,
+                'attention_id' => $attention->id,
+                'subject_name' => 'Atención #' . $attention->id,
+            ],
+        ]);
     }
 
     private function prescriptionData(HealAttention $attention, ?HealSetting $settings, array $extra, ?string $logoUrl): array

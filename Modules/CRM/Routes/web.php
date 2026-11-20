@@ -150,9 +150,18 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('crm')->gro
         ->get('application-ai-prompt', [CrmIaController::class, 'clientDashboard'])
         ->name('crm_application_ai_prompt');
 
+    /*
+     * Gemini se llama ahora desde PHP (antes iba al servidor Node) para poder
+     * registrar tokens y costo. El guardado en Banco de Consultas se hace en
+     * el mismo endpoint de censura.
+     */
     Route::middleware(['middleware' => 'permission:crm_clientes_preguntas_ia'])
-        ->post('application-ai-prompt/send/messages/geminiai', [CrmIaController::class, 'sendMessage'])
+        ->post('application-ai-prompt/send/messages/geminiai', [CrmIaController::class, 'geminiQuestionService'])
         ->name('crm_application_ai_prompt_send_message');
+
+    Route::middleware(['middleware' => 'permission:crm_clientes_preguntas_ia'])
+        ->post('application-ai-prompt/respond/messages/geminiai', [CrmIaController::class, 'geminiCensorAndStoreService'])
+        ->name('crm_gemini_censor_and_store');
 
     Route::middleware(['middleware' => 'permission:crm_clientes_preguntas_ia|crm_chat_asistente'])
         ->post('application-ai-prompt/send/messages/openai', [CrmIaController::class, 'basicQuestionService'])

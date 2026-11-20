@@ -120,6 +120,12 @@ Route::get('/news', [LandingController::class, 'blog'])->name('blog_main');
 Route::get('/terms', [LandingController::class, 'terms'])->name('terms_main');
 Route::get('/computer/store', [LandingController::class, 'computerStore'])->name('index_computer_store');
 Route::get('/prices/academic', [LandingController::class, 'academicPrices'])->name('academic_prices');
+
+// Landing pública de suscripciones: todo el contenido de la plantilla y solo
+// los planes activos. Es el destino de los enlaces UTM generados en el panel
+// (Académico → Tipo de suscripción).
+Route::get('/suscripciones', [\Modules\Academic\Http\Controllers\AcaSubscriptionTypeController::class, 'landing'])
+    ->name('aca_subscriptions_landing');
 // Ruta amigable por slug; si llega un id numerico antiguo redirige a su slug.
 Route::get('/curso-descripcion/{slug}', [WebPageController::class, 'cursodescripcion'])->name('web_curso_descripcion');
 

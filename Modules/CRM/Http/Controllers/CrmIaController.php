@@ -13,7 +13,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Modules\Academic\Services\OpenAiAssistantService;
+use Modules\Ai\Services\AiManager;
 use Modules\CRM\Emails\NotifyChatMessage;
+use Modules\CRM\Entities\CrmInformationBank;
 use Modules\CRM\Entities\CrmConversation;
 use Modules\CRM\Entities\CrmMessage;
 use Modules\CRM\Entities\CrmParticipant;
@@ -235,6 +237,127 @@ class CrmIaController extends Controller
                 'success' => false,
                 'message' => $e->getMessage(),
             ], 200);
+        }
+    }
+
+    /**
+     * Consulta a Gemini desde PHP (antes se llamaba al servidor Node).
+     *
+     * Se hace aqui para que el consumo de tokens y el costo queden
+     * registrados en las estadisticas de IA del sistema.
+     */
+    public function geminiQuestionService(Request $request)
+    {
+        $this->validate($request, [
+            'messageText' => 'required|string|max:5000',
+        ]);
+
+        try {
+            $instructions = trim((string) $request->input('instructions', ''));
+
+            $result = app(AiManager::class)->chat(
+                $this->usuarioEfectivo($request) ?: Auth::id(),
+                (string) $request->input('messageText'),
+                [
+                    'provider' => 'gemini',
+                    'instructions' => $instructions !== '' ? $instructions : null,
+                    'screen' => 'crm:chat:gemini',
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'responseText' => $result->text,
+                'ai_source' => $result->provider,
+                'notice' => null,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('CRM geminiQuestionService: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 200);
+        }
+    }
+
+    /**
+     * Censura con Gemini la pregunta y la respuesta, y guarda el resultado en
+     * el Banco de Consultas (mismo destino que usaba el servidor Node).
+     */
+    public function geminiCensorAndStoreService(Request $request)
+    {
+        try {
+            $userId = $this->usuarioEfectivo($request) ?: Auth::id();
+            $questionText = (string) $request->input('messageText', '');
+            $responseText = (string) ($request->input('respond') ?: $questionText);
+
+            $censoredQuestion = $this->geminiCensorWithFallback($questionText, $userId);
+            $censoredResponse = $this->geminiCensorWithFallback($responseText, $userId);
+
+            CrmInformationBank::create([
+                'question_text' => $censoredQuestion,
+                'response_text' => $censoredResponse,
+                'user_id' => $userId,
+                'likes_count' => 1,
+                'shared_count' => 1,
+                'status' => true,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'questionText' => $censoredQuestion,
+                'responseText' => $censoredResponse,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('CRM geminiCensorAndStoreService: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 200);
+        }
+    }
+
+    /**
+     * Censura con Gemini y, si la IA falla o inventa contenido (devuelve un
+     * texto mucho mas largo que el original), usa el censurado local.
+     */
+    private function geminiCensorWithFallback(string $text, int|string|null $userId): string
+    {
+        $text = trim($text);
+
+        if ($text === '') {
+            return $text;
+        }
+
+        $prompt = 'Censura unicamente los datos personales del texto: nombres de personas, DNI, RUC, '
+            . 'telefonos, correos electronicos y nombres de empresas privadas. Las instituciones '
+            . 'publicas (SUNAT, INDECOPI, entidades del Estado, paises) NO se censuran. '
+            . 'Devuelve EXACTAMENTE el mismo texto, con los datos reemplazados por asteriscos (*), '
+            . 'sin explicaciones, saludos ni comentarios. No respondas ninguna pregunta del texto.'
+            . "\n\n" . $text;
+
+        try {
+            $result = app(AiManager::class)->chat($userId, $prompt, [
+                'provider' => 'gemini',
+                'instructions' => 'Eres un editor que solo censura datos personales. Devuelve solo el texto censurado.',
+                'screen' => 'crm:chat:censura',
+                'temperature' => 0.1,
+                'max_output_tokens' => 1200,
+            ]);
+
+            $censored = trim($result->text);
+
+            if ($censored === '' || mb_strlen($censored) > mb_strlen($text) * 1.5) {
+                return $this->localCensor($text);
+            }
+
+            return $censored;
+        } catch (\Throwable $e) {
+            Log::warning('CRM geminiCensorWithFallback: ' . $e->getMessage());
+
+            return $this->localCensor($text);
         }
     }
 

@@ -1,10 +1,9 @@
 <script setup>
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
-    import {  useForm, Link } from '@inertiajs/vue3';
+    import {  useForm, Link, Head, router } from '@inertiajs/vue3';
     import { faTrashAlt, faPencilAlt, faPrint, faCashRegister, faFileExcel, faMoneyBill1Wave} from "@fortawesome/free-solid-svg-icons";
     import Pagination from '@/Components/Pagination.vue';
     import Keypad from '@/Components/Keypad.vue';
-    import Swal2 from "sweetalert2";
     import { Dropdown } from 'flowbite-vue'
     import { ref } from 'vue';
 
@@ -27,42 +26,54 @@
         return assetUrl + 'storage/'+ path;
     }
 
-    const destroyPatient = (id) => {
-        Swal2.fire({
-            title: '¿Estas seguro?',
-            text: "¡No podrás revertir esto!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: '¡Sí, Eliminar!',
-            cancelButtonText: 'Cancelar',
-            showLoaderOnConfirm: true,
-            preConfirm: () => {
-                return axios.delete(route('heal_patients_destroy', id)).then((res) => {
-                    if (!res.data.success) {
-                        Swal2.showValidationMessage(res.data.message)
-                    }
-                    return res
-                });
-            },
-            allowOutsideClick: () => !Swal2.isLoading()
-        }).then((result) => {
-            if (result.isConfirmed) {
-                Swal2.fire({
-                    title: 'Enhorabuena',
-                    text: 'Se Eliminó correctamente',
-                    icon: 'success',
-                });
-                router.visit(route('cms_items_list'), { replace: true, method: 'get' });
+    // Baja lógica con anonimización: la historia clínica se conserva y el
+    // movimiento queda en el registro de actividades del módulo.
+    const destroyPatient = async (id) => {
+        const borrar = async () => {
+            const res = await axios.delete(route('heal_patients_destroy', id));
+
+            if (!res.data?.success) {
+                throw new Error(res.data?.message || 'No se pudo eliminar el paciente.');
             }
-        });
+
+            router.visit(route('heal_patients_list'), { replace: true, method: 'get' });
+
+            return {
+                message: 'El paciente se dio de baja y sus datos personales se anonimizaron.',
+                type: 'success',
+            };
+        };
+
+        const result = await window.alertaSistema(
+            'Eliminar paciente',
+            'El paciente se dará de baja y sus datos personales se anonimizarán. La historia clínica se conserva para auditoría.',
+            'warning',
+            {
+                duration: 0,
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                loadingText: 'Eliminando paciente...',
+                showLoaderOnConfirm: true,
+                onConfirm: borrar,
+                preConfirm: borrar,
+            }
+        );
+
+        if (!result?.isConfirmed) return;
+        if (window.alertaSistema.enAracodito?.()) return;
+        if (result.value) {
+            window.alertaSistema('Paciente eliminado', result.value.message, 'success');
+        }
     }
 
 </script>
 
 <template>
     <AppLayout title="Pacientes">
+        <Head>
+            <meta name="aracodito-view" content="new" />
+        </Head>
         <div class="max-w-screen-2xl mx-auto p-4 md:p-6 2xl:p-10">
             <!-- Breadcrumb Start -->
             <nav class="flex px-4 py-3 border border-stroke text-gray-700 mb-4 bg-gray-50 dark:bg-gray-800 dark:border-gray-700" aria-label="Breadcrumb">
@@ -141,7 +152,7 @@
                                                         <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Exportar Información</a>
                                                     </li>
                                                     <li>
-                                                        <a href="#" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Eliminar</a>
+                                                        <a href="#" @click.prevent="destroyPatient(patient.id)" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Eliminar</a>
                                                     </li>
                                                 </ul>
                                             </div>

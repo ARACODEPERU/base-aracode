@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\Ai\Services\AiUsageRecorder;
 use RuntimeException;
 use Throwable;
 
@@ -493,10 +494,42 @@ class OpenAiAssistantService
             $payload['previous_response_id'] = $previousResponseId;
         }
 
-        return $this->client()
+        $response = $this->client()
             ->post('/responses', $payload)
             ->throw()
             ->json();
+
+        $this->recordUsage($userId, $response);
+
+        return $response;
+    }
+
+    /**
+     * Registra el consumo de la consulta para las estadisticas de IA.
+     *
+     * El registro nunca debe romper la respuesta: si la tabla no existe o
+     * falla la escritura se deja el aviso en el log y se continua.
+     */
+    private function recordUsage(int|string $userId, array $response): void
+    {
+        $usage = $response['usage'] ?? null;
+
+        if (!is_array($usage)) {
+            return;
+        }
+
+        try {
+            app(AiUsageRecorder::class)->recordTokens(
+                $userId,
+                'openai',
+                (string) ($response['model'] ?? config('academic.openai.model', 'gpt-4.1-mini')),
+                (int) ($usage['input_tokens'] ?? 0),
+                (int) ($usage['output_tokens'] ?? 0),
+                'academico:consulta'
+            );
+        } catch (Throwable $exception) {
+            Log::warning('Academic OpenAI usage record: ' . $exception->getMessage());
+        }
     }
 
     private function isPreviousResponseError(array $errorPayload): bool

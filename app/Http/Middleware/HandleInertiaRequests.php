@@ -127,6 +127,15 @@ class HandleInertiaRequests extends Middleware
             // El frontend no guarda este estado: lo recibe en cada respuesta, así
             // que sobrevive a los reloads que vuelven a montar las directivas.
             'superEditor' => fn () => $this->superEditorState($request),
+            // Guía funcional breve de Aracodito: la misma que recibe la IA,
+            // disponible para el catálogo estático cuando la IA no responde.
+            'aracoditoGuia' => fn () => $request->user() && class_exists(\Modules\Ai\Support\GuiaSistema::class)
+                ? \Modules\Ai\Support\GuiaSistema::paraUsuario($request->user())
+                : [],
+            // Acceso efectivo a la IA de Aracodito (rol + interruptor admin).
+            'aracoditoIaDisponible' => fn () => $request->user() && class_exists(\Modules\Ai\Support\AccesoIa::class)
+                ? \Modules\Ai\Support\AccesoIa::disponible($request->user())
+                : false,
             'csrf_token' => fn () => csrf_token(),
             'health' => function () use ($request) {
                 $user = $request->user();

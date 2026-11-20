@@ -63,7 +63,10 @@ class HealAgendaController extends Controller
     {
         $selectedDate = $this->normalizeDate($request->get('date')) ?? now()->toDateString();
         $currentDoctor = $this->currentDoctor();
-        $selectedDoctorId = (int) ($request->get('doctor_id') ?: ($currentDoctor?->id ?: HealDoctor::query()->value('id')));
+        // Un doctor sin permiso para elegir solo puede ver su propia agenda.
+        $selectedDoctorId = $this->canChooseDoctor()
+            ? (int) ($request->get('doctor_id') ?: ($currentDoctor?->id ?: HealDoctor::query()->value('id')))
+            : (int) $this->currentDoctorOrFail()->id;
 
         return Inertia::render('Health::Agendas/Index', [
             'doctors' => $this->doctorOptions(),
@@ -95,7 +98,8 @@ class HealAgendaController extends Controller
             'days' => ['nullable', 'integer', 'min:1', 'max:7'],
         ]);
 
-        $doctorId = (int) $data['doctor_id'];
+        // Un doctor no puede consultar la agenda de otro.
+        $doctorId = $this->resolveAgendaDoctorId((int) $data['doctor_id']);
         $startDate = $data['date'];
         $days = (int) ($data['days'] ?? 1);
 
@@ -128,7 +132,7 @@ class HealAgendaController extends Controller
 
         $duration = (int) ($data['duration_minutes'] ?? self::SLOT_MINUTES);
 
-        $doctorId = (int) $data['doctor_id'];
+        $doctorId = $this->resolveAgendaDoctorId((int) $data['doctor_id']);
         $this->expireMissedAppointments($doctorId, $data['date']);
 
         return response()->json([
@@ -210,11 +214,16 @@ class HealAgendaController extends Controller
         ]);
 
         $appointmentId = (int) $data['appointment_id'];
-        $doctorId = (int) $data['doctor_id'];
+        $doctorId = $this->resolveAgendaDoctorId((int) $data['doctor_id']);
         $newStart = Carbon::parse($data['date'] . ' ' . $data['time'])->seconds(0);
         $newEnd = $newStart->copy()->addMinutes((int) $data['duration_minutes']);
 
         $appointment = DentAppointment::findOrFail($appointmentId);
+
+        // Un doctor solo puede reprogramar sus propias citas.
+        if (!$this->canChooseDoctor() && (int) $appointment->doctor_id !== $doctorId) {
+            abort(403, 'No puedes reprogramar una cita de otro doctor.');
+        }
 
         if ($appointment->status !== '1') {
             throw ValidationException::withMessages([
@@ -562,6 +571,34 @@ class HealAgendaController extends Controller
         }
 
         return $value ? (int) $value : null;
+    }
+
+    /**
+     * Valida que el doctor pedido sea el propio cuando el usuario no puede
+     * elegir doctor (los administradores sí pueden mover agendas).
+     */
+    private function resolveAgendaDoctorId(int $doctorId): int
+    {
+        if ($this->canChooseDoctor()) {
+            return $doctorId;
+        }
+
+        $propio = $this->currentDoctorOrFail();
+
+        abort_unless((int) $propio->id === $doctorId, 403, 'No puedes consultar la agenda de otro doctor.');
+
+        return (int) $propio->id;
+    }
+
+    private function currentDoctorOrFail(): HealDoctor
+    {
+        $doctor = $this->currentDoctor();
+
+        if (!$doctor) {
+            abort(403, 'Tu usuario no está vinculado a un doctor.');
+        }
+
+        return $doctor;
     }
 
     private function resolveAppointmentDoctorId(Request $request): int

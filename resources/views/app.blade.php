@@ -70,11 +70,18 @@
         // argumentos separados. Por eso el array se arma aparte.
         @php
             $aracoditoUser = auth()->user();
+            // La IA se habilita por rol; el servidor decide el acceso efectivo.
+            $aracoditoIaDisponible = $aracoditoUser && class_exists(\Modules\Ai\Support\AccesoIa::class)
+                ? \Modules\Ai\Support\AccesoIa::disponible($aracoditoUser)
+                : false;
             $aracoditoConfig = [
                 'aracodito_enabled' => (bool) ($aracoditoUser?->aracodito_enabled ?? false),
                 'aracodito_audio_enabled' => (bool) ($aracoditoUser?->aracodito_audio_enabled ?? false),
-                'aracodito_ia_enabled' => (bool) ($aracoditoUser?->aracodito_ia_enabled ?? false),
+                'aracodito_ia_enabled' => $aracoditoIaDisponible,
                 'aracodito_style' => $aracoditoUser?->aracodito_style ?? 'classic',
+                'aracodito_tts_voice' => $aracoditoUser?->aracodito_tts_voice,
+                'aracodito_tts_rate' => (float) ($aracoditoUser?->aracodito_tts_rate ?? 1),
+                'aracodito_tts_pitch' => (float) ($aracoditoUser?->aracodito_tts_pitch ?? 1),
             ];
         @endphp
         window.USER_CONFIG = @json($aracoditoConfig);

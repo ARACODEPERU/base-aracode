@@ -11,6 +11,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Modules\Health\Entities\HealPatient;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -57,7 +58,8 @@ class HealPatientController extends Controller
             }
             $patients->orderBy($attribute, $sort_order);
         } else {
-            $patients->latest();
+            // Calificado: con el join, latest() sería ambiguo entre tablas.
+            $patients->latest('heal_patients.created_at');
         }
 
         $patients = $patients->paginate(10)->onEachSide(2);
@@ -106,11 +108,21 @@ class HealPatientController extends Controller
             $request,
             [
                 'document_type_id'  => 'required',
-                'number'            => 'required|max:12',
-                'number'            => 'unique:people,number,' . $update_id . ',id,document_type_id,' . $request->get('document_type_id'),
+                // El documento es unico por tipo: antes habia dos claves 'number'
+                // y PHP se quedaba solo con la ultima, sin el unique.
+                'number'            => [
+                    'required',
+                    'max:12',
+                    Rule::unique('people', 'number')
+                        ->where(fn ($query) => $query->where('document_type_id', $request->get('document_type_id'))),
+                ],
                 'telephone'         => ['required', new PeruMobile()],
-                'email'             => 'required|max:255|unique:people,email',
-                'email'             => 'required|max:255|unique:users,email',
+                'email'             => [
+                    'required',
+                    'max:255',
+                    Rule::unique('people', 'email'),
+                    Rule::unique('users', 'email'),
+                ],
                 'address'           => 'required|max:255',
                 'ubigeo'            => 'required|max:255',
                 'birthdate'         => 'required|',
@@ -224,8 +236,13 @@ class HealPatientController extends Controller
             $request,
             [
                 'document_type_id'  => 'required',
-                'number'            => 'required|max:12',
-                'number'            => 'unique:people,number,' . $update_id . ',id,document_type_id,' . $request->get('document_type_id'),
+                'number'            => [
+                    'required',
+                    'max:12',
+                    Rule::unique('people', 'number')
+                        ->where(fn ($query) => $query->where('document_type_id', $request->get('document_type_id')))
+                        ->ignore($update_id),
+                ],
                 'telephone'         => ['required', new PeruMobile()],
                 'email'             => 'required|max:255',
                 'address'           => 'required|max:255',
@@ -268,6 +285,11 @@ class HealPatientController extends Controller
         HealPatient::where('person_id', $update_id)->update([
             'patient_code'  => $request->get('number')
         ]);
+
+        // Sin respuesta, Inertia recibe un cuerpo vacio y el formulario no
+        // sabe si el cambio se guardo.
+        return redirect()->route('heal_patients_edit', $update_id)
+            ->with('message', 'Paciente actualizado con éxito');
     }
 
     /**
@@ -277,7 +299,61 @@ class HealPatientController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $patient = HealPatient::with('person')->findOrFail($id);
+
+        // Baja logica + anonimizacion: la historia clinica y la traza de
+        // auditoria se conservan, pero los datos personales dejan de
+        // identificar al paciente (politica de retencion de 5 años).
+        DB::transaction(function () use ($patient) {
+            $person = $patient->person;
+
+            $datosAnteriores = $person ? [
+                'full_name' => $person->full_name,
+                'number'    => $person->number,
+                'email'     => $person->email,
+                'telephone' => $person->telephone,
+                'address'   => $person->address,
+            ] : [];
+
+            if ($person) {
+                $person->fill([
+                    'short_name'      => 'Paciente',
+                    'names'           => 'Paciente',
+                    'father_lastname' => 'Anonimizado',
+                    'mother_lastname' => '',
+                    'full_name'       => 'Paciente anonimizado ' . $person->id,
+                    'number'          => 'ANON' . $person->id,
+                    'email'           => 'anonimo' . $person->id . '@anonimo.local',
+                    'telephone'       => null,
+                    'address'         => null,
+                    'image'           => null,
+                    'description'     => 'Paciente anonimizado por eliminación',
+                ])->save();
+            }
+
+            $patient->patient_code = 'ANON-' . $patient->id;
+            $patient->save();
+
+            // Queda registrado que hubo anonimizacion y que datos se retiraron,
+            // sin volver a guardar los valores personales.
+            $patient->registrarActividad('anonymized', [
+                'motivo'          => 'Eliminación de paciente: baja lógica con anonimización',
+                'campos_retirados' => array_keys($datosAnteriores),
+            ]);
+
+            // SoftDeletes: se conserva la fila y el evento queda auditado.
+            $patient->delete();
+        });
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Paciente eliminado y sus datos personales anonimizados.',
+            ]);
+        }
+
+        return redirect()->route('heal_patients_list')
+            ->with('message', 'Paciente eliminado y sus datos personales anonimizados.');
     }
 
     public function patientPanel($id)
@@ -310,11 +386,13 @@ class HealPatientController extends Controller
     {
         $search = $request->get('search');
 
+        // Limite defensivo: el buscador no debe devolver la tabla completa.
         $patients = HealPatient::with('person')
             ->whereHas('person', function ($query) use ($search) {
                 $query->where('full_name', 'like', '%' . $search . '%')
                     ->orWhere('number', $search);
             })
+            ->limit(50)
             ->get();
 
         if (count($patients) > 0) {

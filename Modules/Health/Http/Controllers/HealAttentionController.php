@@ -48,7 +48,8 @@ class HealAttentionController extends Controller
             })
             ->latest('created_at')
             ->latest('id')
-            ->paginate(request('per_page', 10))
+            // Tope de página: evita que un cliente pida miles de atenciones.
+            ->paginate(min(100, max(5, (int) request('per_page', 10))))
             ->onEachSide(2)
             ->withQueryString();
 
@@ -292,7 +293,16 @@ class HealAttentionController extends Controller
             ]);
         }
 
+        if (!$attention->doctor?->signature_pin_hash) {
+            throw ValidationException::withMessages([
+                'pin' => 'El doctor no tiene un PIN de firma configurado. Configúralo antes de firmar.',
+            ]);
+        }
+
         if (!$this->pinMatches($attention->doctor, $request->get('pin'))) {
+            // El intento fallido también queda auditado.
+            $this->audit('sign_failed', $attention, null, ['motivo' => 'PIN incorrecto'], $request);
+
             throw ValidationException::withMessages([
                 'pin' => 'El PIN del doctor no es correcto.',
             ]);
@@ -363,7 +373,7 @@ class HealAttentionController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Se envió el correo de restablecimiento y el PIN volvió temporalmente a 1234.',
+            'message' => 'Se envió el correo de restablecimiento. El doctor debe configurar un nuevo PIN antes de volver a firmar.',
         ]);
     }
 
@@ -847,8 +857,9 @@ class HealAttentionController extends Controller
             return false;
         }
 
+        // Sin PIN configurado no hay firma posible: se acabó el 1234 por defecto.
         if (!$doctor->signature_pin_hash) {
-            return $pin === '1234';
+            return false;
         }
 
         return Hash::check($pin, $doctor->signature_pin_hash);

@@ -2,7 +2,7 @@
 import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
 import EditForm from './Partials/EditForm.vue';
 import TestModePanel from './Partials/TestModePanel.vue';
-import { Link } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 
 defineProps({
@@ -27,6 +27,9 @@ defineProps({
 
 <template>
     <AppLayout title="Editar">
+        <Head>
+            <meta name="aracodito-view" content="new" />
+        </Head>
         <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'">
             <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
                 <Link :href="route('aca_subscriptions_list')" class="text-primary hover:underline">Tipo de suscripcion</Link>

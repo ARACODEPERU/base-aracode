@@ -4,6 +4,7 @@
     import iconArrowLeft from '@/Components/vristo/icon/icon-arrow-left.vue';
     import { Link, router } from '@inertiajs/vue3';
     import Swal from 'sweetalert2';
+    import SubscriptionUtmLinks from './Partials/SubscriptionUtmLinks.vue';
 
     defineProps({
         subscriptions: {
@@ -13,6 +14,22 @@
         mercadopagoWebhook: {
             type: Object,
             default: () => ({})
+        },
+        utmConfig: {
+            type: Object,
+            default: () => ({ campaign: '', channels: [] })
+        },
+        utmStats: {
+            type: Object,
+            default: () => ({ totals: {}, sources: [], channels: [], plans: [], sales: [] })
+        },
+        utmLandingUrl: {
+            type: String,
+            default: ''
+        },
+        utmDefaultCampaign: {
+            type: String,
+            default: 'suscripcion_academy'
         }
     });
 
@@ -148,6 +165,14 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Enlaces UTM por red social y datos de atribución de las ventas. -->
+            <SubscriptionUtmLinks
+                :utm-config="utmConfig"
+                :utm-stats="utmStats"
+                :landing-url="utmLandingUrl"
+                :default-campaign="utmDefaultCampaign"
+            />
         </div>
     </AppLayout>
 </template>
