@@ -90,6 +90,12 @@ class PersonUserPersistenceVerifier
             return false;
         }
 
+        // Las columnas booleanas llegan de la BD como "0"/"1" (sin cast en el modelo),
+        // y (string) false es "": se comparan como booleanos para no fallar en falso.
+        if (is_bool($expected)) {
+            return is_scalar($actual) && filter_var($actual, FILTER_VALIDATE_BOOLEAN) === $expected;
+        }
+
         if ($actual instanceof \DateTimeInterface) {
             $actual = $actual->format('Y-m-d H:i:s');
         }
