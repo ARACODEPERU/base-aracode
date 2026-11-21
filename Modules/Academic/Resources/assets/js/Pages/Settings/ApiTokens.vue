@@ -18,11 +18,14 @@ const props = defineProps({
     mcpUrl: { type: String, default: '' },
     storeUrl: { type: String, default: '' },
     revokeUrl: { type: String, default: '' },
+    lifetimes: { type: Array, default: () => [] },
+    defaultLifetime: { type: String, default: '3_meses' },
 });
 
 const form = useForm({
     name: '',
     abilities: ['academic:read'],
+    expires_in: props.defaultLifetime || '3_meses',
 });
 
 const saving = ref(false);
@@ -72,6 +75,18 @@ const detallesPermisos = {
 const tieneEscritura = computed(() => form.abilities.includes('academic:write'));
 const tieneActivos = computed(() => form.abilities.includes('academic:write_active'));
 const tieneAutonomia = computed(() => form.abilities.includes('academic:autonomous'));
+
+// Texto que explica la vigencia elegida antes de crear el token.
+const textoVigencia = computed(() => {
+    const opcion = props.lifetimes.find((item) => item.value === form.expires_in);
+    const etiqueta = (opcion?.label || '').toLowerCase();
+
+    if (form.expires_in === 'indefinido') {
+        return 'El token no vence. Úsalo solo en un equipo de confianza y revócalo cuando deje de usarse.';
+    }
+
+    return `El token dejará de servir en ${etiqueta}. Después hay que crear otro.`;
+});
 
 function alternarAbility(ability) {
     if (form.abilities.includes(ability)) {
@@ -126,6 +141,7 @@ async function crearToken() {
         const { data } = await axios.post(props.storeUrl, {
             name: form.name.trim(),
             abilities: form.abilities,
+            expires_in: form.expires_in,
         });
 
         nuevoToken.value = data.token;
@@ -281,10 +297,30 @@ async function revocar(token) {
                             puede seguir mostrando sus propios avisos.
                         </p>
                     </div>
+
+                    <div class="rounded border border-gray-200 p-4 dark:border-gray-700 lg:col-span-2">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                            <div class="w-full sm:max-w-xs">
+                                <h6 class="text-sm font-semibold dark:text-white-light">3. Vigencia</h6>
+                                <p class="mt-1 text-xs text-gray-500">Cuánto tiempo podrá conectarse el agente con este token.</p>
+                                <select v-model="form.expires_in" class="form-select mt-3">
+                                    <option v-for="opcion in lifetimes" :key="opcion.value" :value="opcion.value">
+                                        {{ opcion.label }}
+                                    </option>
+                                </select>
+                            </div>
+                            <p
+                                class="text-xs sm:max-w-md"
+                                :class="form.expires_in === 'indefinido' ? 'text-warning' : 'text-gray-500'"
+                            >
+                                {{ textoVigencia }}
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p class="text-xs text-gray-500">El token vence a los 90 días. Se muestra una sola vez.</p>
+                    <p class="text-xs text-gray-500">El token se muestra una sola vez: guárdalo en el cliente MCP.</p>
                     <button type="button" class="btn btn-primary" :disabled="saving" @click="crearToken">
                         {{ saving ? 'Creando…' : 'Crear token' }}
                     </button>

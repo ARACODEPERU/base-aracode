@@ -5,8 +5,10 @@ namespace Modules\Academic\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Modules\Academic\Support\McpTokenLifetime;
 
 /**
  * Pantalla de tokens del servidor MCP: cada persona crea el suyo, lo copia una
@@ -16,9 +18,6 @@ class AcaApiTokenController extends Controller
 {
     /** Abilities que se pueden asignar desde la pantalla. */
     private const ABILITIES = ['academic:read', 'academic:write', 'academic:write_active', 'academic:autonomous'];
-
-    /** Vida del token emitido desde la pantalla: 90 días. */
-    private const TOKEN_DAYS = 90;
 
     public function index(Request $request)
     {
@@ -38,6 +37,9 @@ class AcaApiTokenController extends Controller
         return Inertia::render('Academic::Settings/ApiTokens', [
             'tokens' => $tokens,
             'abilities' => self::ABILITIES,
+            // Vigencias que ofrece el desplegable y la que viene marcada.
+            'lifetimes' => McpTokenLifetime::paraVista(),
+            'defaultLifetime' => McpTokenLifetime::POR_DEFECTO,
             'mcpUrl' => url('/mcp/academic'),
             'storeUrl' => route('aca_api_tokens_store'),
             'revokeUrl' => route('aca_api_tokens'),
@@ -53,9 +55,11 @@ class AcaApiTokenController extends Controller
             'name' => 'required|string|max:80',
             'abilities' => 'required|array|min:1',
             'abilities.*' => 'in:' . implode(',', self::ABILITIES),
+            'expires_in' => ['required', 'string', Rule::in(McpTokenLifetime::claves())],
         ], [], [
             'name' => 'nombre del token',
             'abilities' => 'permisos del token',
+            'expires_in' => 'vigencia del token',
         ]);
 
         // El permiso absoluto no sirve sin escritura: se exige la combinación
@@ -86,15 +90,24 @@ class AcaApiTokenController extends Controller
 
         RateLimiter::hit($llave, 3600);
 
+        // «indefinido» produce un vencimiento nulo: Sanctum lo trata como un
+        // token que no caduca.
+        $vence = McpTokenLifetime::vencimiento($datos['expires_in']);
+
         $token = $request->user()->createToken(
             trim($datos['name']),
             array_values($datos['abilities']),
-            now()->addDays(self::TOKEN_DAYS)
+            $vence
         );
+
+        $vigencia = mb_strtolower(McpTokenLifetime::etiqueta($datos['expires_in']));
 
         return response()->json([
             'token' => $token->plainTextToken,
-            'message' => 'Token creado. Cópialo ahora: no se vuelve a mostrar.',
+            'expires_at' => optional($vence)->format('Y-m-d'),
+            'message' => $vence
+                ? 'Token creado con vigencia de ' . $vigencia . ': vence el ' . $vence->format('d/m/Y') . '. Cópialo ahora: no se vuelve a mostrar.'
+                : 'Token creado sin vencimiento. Cópialo ahora: no se vuelve a mostrar.',
         ]);
     }
 

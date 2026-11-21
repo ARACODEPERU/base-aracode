@@ -31,11 +31,34 @@ El comando recibe el **correo**, no el id del usuario. Salida:
 
 ```
 Token creado para admin@gmail.com con abilities: academic:read, academic:write
+Vigencia: 3 meses (vence el 2027-02-19)
 
 1|Xk3...token...9fQ
 
 Guárdalo ahora: no se vuelve a mostrar. Úsalo como "Authorization: Bearer <token>".
 ```
+
+### Vigencia del token
+
+`--expires` decide cuánto dura el token. Sin el parámetro se aplica **3 meses** (90 días), la misma vida que tenían los tokens anteriores al selector.
+
+| Valor | Duración |
+| --- | --- |
+| `1_semana` | 7 días |
+| `2_semanas` | 14 días |
+| `1_mes` | 30 días |
+| `2_meses` | 60 días |
+| `3_meses` | 90 días (por defecto) |
+| `6_meses` | 180 días |
+| `1_anio` | 365 días |
+| `2_anios` | 730 días |
+| `indefinido` | No vence: se guarda con `expires_at` nulo |
+
+```bash
+php artisan mcp:token admin@gmail.com --name=Claude-Code --expires=2_semanas
+```
+
+La misma lista aparece en el desplegable de la pantalla **Académico → Tokens de API**; el vencimiento se guarda en `personal_access_tokens.expires_at` y Sanctum rechaza el token cuando la fecha pasa.
 
 ### Abilities válidas
 
