@@ -118,6 +118,7 @@ class AcaCourseController extends Controller
             'modalities' => $modalities,
             'types' => $types,
             'coursesActive' => AcaCourse::where('status', true)->count(),
+            'canPreview' => (bool) Auth::user()?->hasAnyRole(['admin', 'Administrador']),
             'filters' => request()->all(),
         ]);
     }

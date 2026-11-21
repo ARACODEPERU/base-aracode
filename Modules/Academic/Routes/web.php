@@ -185,11 +185,36 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->get('courses', 'AcaCourseController@index')
         ->name('aca_courses_list');
 
+    // Vista previa del curso para administradores (no registra avance real).
+    Route::middleware(['middleware' => 'role:admin|Administrador'])
+        ->get('courses/preview/{id}', [\Modules\Academic\Http\Controllers\AcaCoursePreviewController::class, 'show'])
+        ->name('aca_courses_preview');
+
+    Route::middleware(['middleware' => 'role:admin|Administrador'])
+        ->get('courses/preview/{id}/module/{moduleId}', [\Modules\Academic\Http\Controllers\AcaCoursePreviewController::class, 'module'])
+        ->name('aca_courses_preview_module');
+
     Route::middleware(['middleware' => 'permission:aca_cursos_nuevo'])
         ->get('courses/create', 'AcaCourseController@create')
         ->name('aca_courses_create');
 
     Route::post('courses/store', 'AcaCourseController@store')->name('aca_courses_store');
+
+    /*
+     * Tokens de API del servidor MCP: cada persona administra los suyos y los
+     * usa en Claude Code, Claude Desktop o Freebuff.
+     */
+    Route::middleware(['middleware' => 'permission:aca_cursos_editar'])
+        ->get('api-tokens', 'AcaApiTokenController@index')
+        ->name('aca_api_tokens');
+
+    Route::post('api-tokens', 'AcaApiTokenController@store')->name('aca_api_tokens_store');
+    Route::delete('api-tokens/{id}', 'AcaApiTokenController@destroy')->name('aca_api_tokens_destroy');
+
+    // Auditoría de las llamadas de los agentes al servidor MCP.
+    Route::middleware(['middleware' => 'permission:aca_mcp_admin'])
+        ->get('mcp-audit', 'AcaMcpAuditController@index')
+        ->name('aca_mcp_audit');
 
     /*
      * Mantenedor de Categorias / Tipo / Sector / Modalidad de cursos. Solo

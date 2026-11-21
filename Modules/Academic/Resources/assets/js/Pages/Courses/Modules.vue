@@ -1140,6 +1140,7 @@
                                                                 <option value="3">Link videoconferencia</option>
                                                                 <option value="5">Webinar (YouTube/Vimeo)</option>
                                                                 <option value="2">Subir Archivo</option>
+                                                                <option value="6">Texto / HTML</option>
                                                                 <option value="4">Examen</option>
                                                             </select>
                                                             <div class="text-danger text-sm mt-1" v-if="contentForm.errors.is_file">{{ contentForm.errors.is_file }}</div>
@@ -1188,7 +1189,7 @@
                                                                 <template v-if="conte.is_file == 0" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:outline-none focus:ring-gray-100 focus:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700">
                                                                     <div v-html="modifiedContent(conte.content)" class="m-0"></div>
                                                                 </template>
-                                                                <template v-else-if="conte.is_file == 5">
+                                                                <template v-else-if="conte.is_file == 5 || conte.is_file == 6">
                                                                     <div v-html="modifiedContent(conte.content)" class="m-0"></div>
                                                                 </template>
                                                                 <a v-else-if="conte.is_file == 1" :href="conte.content" target="_blank" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:outline-none focus:ring-gray-100 focus:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700">

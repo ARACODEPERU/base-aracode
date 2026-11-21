@@ -41,6 +41,10 @@
         coursesActive: {
             type: Number,
             default: 0,
+        },
+        canPreview: {
+            type: Boolean,
+            default: false,
         }
     });
 
@@ -583,6 +587,15 @@
                                             >
                                                 <font-awesome-icon :icon="faEye" class="text-lg" />
                                                 <span class="text-[10px] font-medium">Info</span>
+                                            </Link>
+
+                                            <!-- Vista previa como alumno (solo admin/Administrador) -->
+                                            <Link v-if="canPreview" :href="route('aca_courses_preview', course.id)"
+                                                class="flex flex-col items-center gap-1 px-3 py-2 min-w-[70px] text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 rounded-lg transition-all"
+                                                v-tippy="{content: 'Vista previa como alumno', placement: 'top'}"
+                                            >
+                                                <font-awesome-icon :icon="faEye" class="text-lg" />
+                                                <span class="text-[10px] font-medium">Vista previa</span>
                                             </Link>
 
                                             <!-- Módulos -->

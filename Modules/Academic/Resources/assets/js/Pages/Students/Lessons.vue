@@ -1,17 +1,35 @@
 <script  setup>
     import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
-    import { ref } from 'vue';
+    import { computed, ref } from 'vue';
     import VueCollapsible from 'vue-height-collapsible/vue3';
-    import { Link, useForm, router } from '@inertiajs/vue3';
+    import { Head, Link, useForm, router } from '@inertiajs/vue3';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    import CoursePreviewBar from '../../Components/CoursePreviewBar.vue';
 
 
     const props = defineProps({
         course: {
             type: Object,
             default: () => ({}),
-        }
+        },
+        preview: {
+            type: Object,
+            default: null,
+        },
     });
+
+    const breadcrumbs = computed(() => [
+        { route: props.preview ? props.preview.back_url : route('aca_mycourses'), title: 'Cursos' },
+        { title: props.course.course.description },
+    ]);
+
+    const moduleUrl = (module) => props.preview
+        ? route('aca_courses_preview_module', {
+            id: props.preview.course_id,
+            moduleId: module.id,
+            mode: props.preview.mode,
+        })
+        : route('aca_mycourses_lesson_themes', module.id);
 
 
     const baseUrl = assetUrl;
@@ -25,11 +43,12 @@
 
 <template>
     <AppLayout :title="course.course.description">
+        <Head v-if="preview">
+            <meta name="aracodito-view" content="new" />
+        </Head>
+        <CoursePreviewBar v-if="preview" :preview="preview" />
         <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
-            :data="[
-                {route: route('aca_mycourses'), title: 'Cursos'},
-                {title: course.course.description}
-            ]"
+            :data="breadcrumbs"
         />
         <div class="pt-5 space-y-8 relative">
             <!-- Header Moderno del Curso -->
@@ -74,7 +93,7 @@
             <div class="mx-auto max-w-7xl">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
                     <template v-for="(module, index) in course.modules" :key="module.id">
-                        <Link :href="route('aca_mycourses_lesson_themes', module.id)"
+                        <Link :href="moduleUrl(module)"
                               class="group relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] overflow-hidden">
 
                             <!-- Icono del Módulo -->
@@ -136,6 +155,22 @@
                             </div>
                         </Link>
                     </template>
+                </div>
+
+                <div v-if="!course.modules || course.modules.length === 0" class="mt-8 rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                    <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                        <svg class="h-8 w-8 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385V4.804zM10.5 4c1.255 0 2.443.29 3.5.804v10A7.968 7.968 0 0014.5 14c-1.255 0-2.443-.29-3.5-.804V4.804z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        {{ preview && !preview.has_access ? 'Este plan no incluye el curso' : 'Este curso aún no tiene módulos' }}
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        {{ preview && !preview.has_access
+                            ? preview.access_reason
+                            : 'Cuando se agreguen módulos aparecerán aquí, igual que los ve el alumno.' }}
+                    </p>
                 </div>
             </div>
         </div>
