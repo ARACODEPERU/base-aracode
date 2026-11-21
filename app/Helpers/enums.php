@@ -21,7 +21,13 @@ if (!function_exists('getEnumValues')) {
                         ->pluck($column)
                         ->toArray();
         } else {
-            $result = DB::select("SHOW COLUMNS FROM {$table} WHERE Field = '{$column}'");
+            try {
+                $result = DB::select("SHOW COLUMNS FROM {$table} WHERE Field = '{$column}'");
+            } catch (\Throwable $excepcion) {
+                // Motores sin SHOW COLUMNS (sqlite en las pruebas): sin lista, el
+                // llamador deja pasar cualquier valor en lugar de romper.
+                return [];
+            }
 
             if (empty($result)) {
                 return [];

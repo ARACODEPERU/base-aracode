@@ -141,6 +141,20 @@ const capacitacionGroup = {
             permissions: "aca_category_sector_type_modality",
         },
         {
+            route: route("aca_api_tokens"),
+            status: false,
+            text: "Tokens de API (IA)",
+            icom: faTableList,
+            permissions: "aca_cursos_editar",
+        },
+        {
+            route: route("aca_mcp_audit"),
+            status: false,
+            text: "Auditoría IA",
+            icom: faFlask,
+            permissions: "aca_mcp_admin",
+        },
+        {
             route: route("aca_notifications"),
             status: false,
             text: "Notificaciones",
@@ -795,6 +809,20 @@ if (isColegioConCapacitaciones) {
             text: "Categorías/Tipo/Sector",
             icom: faTags,
             permissions: "aca_category_sector_type_modality",
+        },
+        {
+            route: route("aca_api_tokens"),
+            status: false,
+            text: "Tokens de API (IA)",
+            icom: faTableList,
+            permissions: "aca_cursos_editar",
+        },
+        {
+            route: route("aca_mcp_audit"),
+            status: false,
+            text: "Auditoría IA",
+            icom: faFlask,
+            permissions: "aca_mcp_admin",
         },
         {
             route: route("aca_certificate_list"),

@@ -18,6 +18,12 @@ class Kernel extends ConsoleKernel
                     ->dailyAt('00:00')
                     ->timezone('America/Lima');
 
+        // Limpieza del servidor MCP del Académico: códigos OAuth usados o
+        // vencidos y auditoría antigua, para que las tablas no crezcan sin tope.
+        $schedule->command('academic:prune-mcp-data')
+                    ->dailyAt('03:10')
+                    ->timezone('America/Lima');
+
         // Tarea de ventas: Se ejecutará unos minutos DESPUÉS de la tarea académica.
         // Sugiero 10 minutos para dar tiempo a que la primera finalice.
         $schedule->command('sales:daily-tasks')

@@ -262,6 +262,7 @@ const destroyContent = (index,id) => {
                                 <select v-model="formContents.is_file" class="form-select disabled:pointer-events-none disabled:bg-[#eee] dark:disabled:bg-[#1b2e4b] text-white-dark">
                                     <option value="1">Link de archivo</option>
                                     <option value="0">Iframe de video</option>
+                                    <option value="6">Texto / HTML</option>
                                     <option value="5">Webinar (YouTube/Vimeo)</option>
                                 </select>
                             </div>
@@ -324,6 +325,10 @@ const destroyContent = (index,id) => {
                                             <div class="flex items-center">
                                                 <input v-model="content.is_file" id="default-radio-2" type="radio" value="0" name="default-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                                 <label for="default-radio-2" class="ms-2 ml-1 text-sm font-medium text-gray-900 dark:text-gray-300">Iframe de video</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input v-model="content.is_file" id="default-radio-6" type="radio" value="6" name="default-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                                <label for="default-radio-6" class="ms-2 ml-1 text-sm font-medium text-gray-900 dark:text-gray-300">Texto / HTML</label>
                                             </div>
                                         </div>
                                     </template>

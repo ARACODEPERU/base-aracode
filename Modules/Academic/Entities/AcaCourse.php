@@ -16,6 +16,9 @@ class AcaCourse extends Model
 
     protected $fillable = [
         'status',
+        // Origen del registro y huella de la clave de idempotencia del agente MCP.
+        'created_via',
+        'idempotency_key',
         'description',
         'slug',
         'usine',

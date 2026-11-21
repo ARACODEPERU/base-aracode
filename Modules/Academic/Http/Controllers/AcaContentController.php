@@ -38,7 +38,8 @@ class AcaContentController extends Controller
 
         if ($request->get('is_file') == 2) {
             $file = $request->file('content');
-            $allowedExtensions = ['pdf', 'xlsx', 'xls'];
+            // Mismas extensiones que acepta el MCP: PDF, Excel y Word.
+            $allowedExtensions = ['pdf', 'xlsx', 'xls', 'doc', 'docx'];
             //dd($file->extension());
             if ($file && in_array($file->extension(), $allowedExtensions)) {
                 $destination = 'uploads/courses/content';
@@ -47,7 +48,7 @@ class AcaContentController extends Controller
                 $content->content = $path;
                 $content->save();
             } else {
-                $errorFile = 'Solo se permiten archivos PDF o Excel.';
+                $errorFile = 'Solo se permiten archivos PDF, Excel o Word.';
                 $success = false;
             }
         } else {

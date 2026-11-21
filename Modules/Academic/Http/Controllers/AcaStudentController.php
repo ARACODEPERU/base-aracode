@@ -36,6 +36,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Modules\Academic\Entities\AcaCertificate;
+use Modules\Academic\Entities\AcaContent;
 use Modules\Academic\Entities\AcaStudentExam;
 use Modules\Academic\Entities\AcaStudentHistory;
 use Modules\Academic\Entities\AcaSubscriptionPayment;
@@ -862,38 +863,40 @@ class AcaStudentController extends Controller
 
     public function courseLessons($id)
     {
-        //dd($id);
-        // Obtener el curso con relaciones
-        $course = AcaCourse::with(['modules.themes.contents'])->where('id', $id)->first();
+        return Inertia::render('Academic::Students/Lessons', $this->courseLessonsData((int) $id));
+    }
 
-        // Verificar si existe el curso
-        if (!$course) {
+    /**
+     * Arma el listado de módulos con el mismo formato que usa el alumno.
+     * La vista previa omite la validación de matrícula.
+     *
+     * @return array<string, mixed>
+     */
+    public function courseLessonsData(int $id, bool $skipAccessCheck = false): array
+    {
+        $course = AcaCourse::with(['modules.themes.contents'])->find($id);
+
+        if (! $course) {
             abort(404, 'Curso no encontrado.');
         }
 
-        // Verificar si el estudiante está matriculado
-        $studentId = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
+        if (! $skipAccessCheck) {
+            $studentId = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
+            $user = Auth::user();
+            $isEnrolled = $user->hasAnyRole(['admin', 'Docente', 'Administrador']);
 
-        $isEnrolled = false;
+            if ($studentId) {
+                $isEnrolled = $this->checkCourseAccess($studentId, $id);
+            }
 
-        $user = Auth::user();
-        if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
-            $isEnrolled = true;
-        }
-
-        if($studentId){
-            $isEnrolled = $this->checkCourseAccess($studentId, $id);
-        }
-
-        // Denegar acceso si no está matriculado y el curso no es gratis
-        if (!$isEnrolled) {
-
-            abort(403, 'No tienes acceso a este curso.');
+            if (! $isEnrolled) {
+                abort(403, 'No tienes acceso a este curso.');
+            }
         }
 
         $courseSummary = [
-            'course' => $course->only(['id', 'description']), // o los campos que desees
-            'modules' => []
+            'course' => $course->only(['id', 'description']),
+            'modules' => [],
         ];
 
         foreach ($course->modules as $module) {
@@ -905,7 +908,8 @@ class AcaStudentController extends Controller
                 foreach ($theme->contents as $content) {
                     if ($content->is_file == 1 || $content->is_file == 2) {
                         $totalFiles++;
-                    } elseif ($content->type == 0) {
+                    } elseif ($content->is_file == 3 || $content->is_file == 5
+                        || ($content->is_file == 0 && str_contains((string) $content->content, '<iframe'))) {
                         $totalVideos++;
                     }
                 }
@@ -921,52 +925,87 @@ class AcaStudentController extends Controller
             ];
         }
 
-        return Inertia::render('Academic::Students/Lessons', [
-            'course' => $courseSummary
-        ]);
+        return ['course' => $courseSummary];
     }
 
     public function courseLessonThemes($id)
     {
-        // Verificar si el estudiante está matriculado
-        $studentId = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
-        $personId = Auth::user()->person_id;
+        return Inertia::render('Academic::Students/Themes', $this->courseLessonThemesData((int) $id));
+    }
+
+    /**
+     * Datos de un módulo con los mismos filtros que ve el alumno.
+     *
+     * Cuando $preview llega informado no consulta matrículas reales ni
+     * historial: usa la simulación elegida y deja los intentos de examen vacíos.
+     *
+     * @param  array<string, mixed>|null  $preview
+     * @return array<string, mixed>
+     */
+    public function courseLessonThemesData(int $id, ?array $preview = null): array
+    {
+        $isPreview = $preview !== null;
+        $user = Auth::user();
+        $studentId = $isPreview
+            ? null
+            : AcaStudent::where('person_id', $user->person_id)->value('id');
+        // En la vista previa se usa un person_id que no existe para no arrastrar
+        // el historial real del administrador.
+        $personId = $isPreview ? 0 : $user->person_id;
 
         $module = AcaModule::with([
             'teacher.person',
-            'exam.student_exams' => function ($query) use ($studentId) {
-                // Filtramos para que dentro del examen solo cargue los del alumno logueado
-                $query->where('student_id', $studentId);
-            },
-            'mockExam.questions',
-            'mockExam.student_exams' => function ($query) use ($studentId) {
-                // Cargar también los simulacros del alumno logueado
-                $query->where('student_id', $studentId);
-            },
-            'themes' => function ($query) use ($personId) {
-                $query->orderBy('position')
-                    ->with(['contents', 'comments.user'])
-                    // Cargar historial del estudiante filtrado por person_id
-                    ->with(['student_history' => function ($q) use ($personId) {
-                        $q->where('person_id', $personId);
+            'exam' => function ($query) use ($studentId, $isPreview) {
+                if ($isPreview) {
+                    $query->with('questions.answers');
+                } else {
+                    $query->with(['student_exams' => function ($query) use ($studentId) {
+                        $query->where('student_id', $studentId);
                     }]);
-            }
-        ])
-        ->findOrFail($id);
+                }
+            },
+            'mockExam.questions' => function ($query) use ($isPreview) {
+                if ($isPreview) {
+                    $query->with('answers');
+                }
+            },
+            'mockExam.student_exams' => function ($query) use ($studentId) {
+                $query->where('student_id', $studentId);
+            },
+            'themes' => function ($query) use ($personId, $isPreview) {
+                $query->orderBy('position')
+                    ->with([
+                        'comments.user',
+                        'contents' => function ($query) use ($isPreview) {
+                            if ($isPreview) {
+                                $query->with('exam.questions.answers');
+                            }
+                        },
+                        'student_history' => function ($query) use ($personId) {
+                            $query->where('person_id', $personId);
+                        },
+                    ]);
+            },
+        ])->findOrFail($id);
+
+        if ($isPreview) {
+            $module->exam?->setRelation('student_exams', collect());
+            $module->mock_exam?->setRelation('student_exams', collect());
+        }
 
         // Serializar fechas en ISO 8601 con zona horaria (-05:00) para que `new Date()`
         // en el frontend calcule instantes correctos sin importar la zona del navegador.
         if ($module->exam) {
-            $module->exam->date_start_iso = Carbon::parse($module->exam->date_start)->toIso8601String();
-            $module->exam->date_end_iso = Carbon::parse($module->exam->date_end)->toIso8601String();
+            $module->exam->date_start_iso = $module->exam->date_start ? Carbon::parse($module->exam->date_start)->toIso8601String() : null;
+            $module->exam->date_end_iso = $module->exam->date_end ? Carbon::parse($module->exam->date_end)->toIso8601String() : null;
             $module->exam->student_exams->each(function ($se) {
                 $se->started_at = $se->started_at ? Carbon::parse($se->started_at)->toIso8601String() : null;
                 $se->finished_at = $se->finished_at ? Carbon::parse($se->finished_at)->toIso8601String() : null;
             });
         }
         if ($module->mock_exam) {
-            $module->mock_exam->date_start_iso = Carbon::parse($module->mock_exam->date_start)->toIso8601String();
-            $module->mock_exam->date_end_iso = Carbon::parse($module->mock_exam->date_end)->toIso8601String();
+            $module->mock_exam->date_start_iso = $module->mock_exam->date_start ? Carbon::parse($module->mock_exam->date_start)->toIso8601String() : null;
+            $module->mock_exam->date_end_iso = $module->mock_exam->date_end ? Carbon::parse($module->mock_exam->date_end)->toIso8601String() : null;
             $module->mock_exam->student_exams->each(function ($se) {
                 $se->started_at = $se->started_at ? Carbon::parse($se->started_at)->toIso8601String() : null;
                 $se->finished_at = $se->finished_at ? Carbon::parse($se->finished_at)->toIso8601String() : null;
@@ -994,70 +1033,53 @@ class AcaStudentController extends Controller
         $isMatriculated = false;
         $isSpecializationCourse = strcasecmp($course->type_description, 'Programas de Especialización') === 0;
 
-        $user = Auth::user();
-        if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
+        if ($isPreview) {
             $isEnrolled = true;
+            $contentPermissions = $preview['permissions'] ?? $contentPermissions;
+            $isMatriculated = (bool) ($preview['is_matriculated'] ?? false);
+        } else {
+            $user = Auth::user();
+            if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
+                $isEnrolled = true;
+            }
+
+            if ($studentId) {
+                $isEnrolled = $this->checkCourseAccess($studentId, $course->id);
+                $contentPermissions = SubscriptionContentPermissions::forStudent($studentId);
+                $isMatriculated = AcaCapRegistration::where('student_id', $studentId)
+                    ->where('course_id', $course->id)
+                    ->exists();
+            }
+
+            // Denegar acceso si no está matriculado y el curso no es gratis
+            if (! $isEnrolled) {
+                abort(403, 'No tienes acceso a este curso.');
+            }
         }
 
-        if($studentId){
-            $isEnrolled = $this->checkCourseAccess($studentId, $course->id);
-            $contentPermissions = SubscriptionContentPermissions::forStudent($studentId);
-            $isMatriculated = AcaCapRegistration::where('student_id', $studentId)
-                ->where('course_id', $course->id)
-                ->exists();
-        }
+        $canSeeAllContents = $isPreview
+            ? (bool) ($preview['show_all'] ?? false)
+            : $user->hasAnyRole(['admin', 'Docente', 'Administrador']);
 
-        // Denegar acceso si no está matriculado y el curso no es gratis
-        if (!$isEnrolled) {
-            abort(403, 'No tienes acceso a este curso.');
-        }
-
-        // Filtrar contenido según reglas de acceso
-        $module->themes->each(function ($theme) use ($contentPermissions, $isMatriculated, $isSpecializationCourse, $user) {
-            $theme->contents = $theme->contents->filter(function ($content) use ($contentPermissions, $isMatriculated, $isSpecializationCourse, $user) {
-                // Admin/Docentes ven todo
-                if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
-                    return true;
-                }
-
-                // Zoom/Meet (is_file = 3)
-                if ($content->is_file == 3) {
-                    // En Programas de Especialización solo lo ven los matriculados
-                    // o las suscripciones con el permiso habilitado.
-                    if ($isSpecializationCourse && ! $isMatriculated && ! $contentPermissions[SubscriptionContentPermissions::CAN_VIEW_SPECIALIZATION_ZOOMS]) {
-                        return false;
-                    }
-                    // Matriculados y cursos normales SÍ ven Zoom/Meet
-                    return true;
-                }
-
-                // Webinars (is_file = 5)
-                if ($content->is_file == 5) {
-                    // Matriculados NO ven webinars (ellos tienen Zoom/Meet en vivo)
-                    if ($isMatriculated) {
-                        return false;
-                    }
-                    // En Programas de Especialización solo con el permiso habilitado
-                    if ($isSpecializationCourse) {
-                        return $contentPermissions[SubscriptionContentPermissions::CAN_VIEW_SPECIALIZATION_WEBINARS];
-                    }
-                    // Fuera de especialización se mantiene el comportamiento de siempre
-                    return true;
-                }
-
-                // Todo lo demás (videos, PDFs, links, exámenes) siempre visible
-                return true;
+        // Filtrar contenido según reglas de acceso. Se usa setRelation para que
+        // Eloquent serialice la colección filtrada y no la relación original.
+        $module->themes->each(function ($theme) use ($contentPermissions, $isMatriculated, $isSpecializationCourse, $canSeeAllContents) {
+            $contents = $theme->contents->filter(function ($content) use ($contentPermissions, $isMatriculated, $isSpecializationCourse, $canSeeAllContents) {
+                return $this->canViewStudentContent($content, $contentPermissions, $isMatriculated, $isSpecializationCourse, $canSeeAllContents);
             })->values();
+
+            $theme->setRelation('contents', $contents);
         });
 
-        // Recalcular progreso después del filtrado
-        $module->themes->each(function ($theme) {
-            $totalContents = $theme->contents->reject(fn($c) => $c->is_file == 4)->count();
-            $viewedContents = $theme->student_history->unique('content_id')->count();
+        // Recalcular progreso después del filtrado. En la vista previa el
+        // progreso se calcula en el navegador para no tocar el historial real.
+        $module->themes->each(function ($theme) use ($isPreview) {
+            $totalContents = $theme->contents->reject(fn ($c) => $c->is_file == 4)->count();
+            $viewedContents = $isPreview ? 0 : $theme->student_history->unique('content_id')->count();
             $theme->progress = $totalContents > 0 ? round(($viewedContents / $totalContents) * 100) : 0;
         });
 
-        return Inertia::render('Academic::Students/Themes', [
+        return [
             'course' => $course,
             'module' => $module,
             'previousModule' => $previousModule,
@@ -1065,7 +1087,53 @@ class AcaStudentController extends Controller
             'canViewSpecializationZooms' => $contentPermissions[SubscriptionContentPermissions::CAN_VIEW_SPECIALIZATION_ZOOMS],
             'canViewSpecializationWebinars' => $contentPermissions[SubscriptionContentPermissions::CAN_VIEW_SPECIALIZATION_WEBINARS],
             'isSpecializationCourse' => $isSpecializationCourse,
-        ]);
+        ];
+    }
+
+    /**
+     * Mismas reglas de visibilidad que aplica el alumno a cada contenido.
+     *
+     * @param  array<string, bool>  $contentPermissions
+     */
+    private function canViewStudentContent(
+        AcaContent $content,
+        array $contentPermissions,
+        bool $isMatriculated,
+        bool $isSpecializationCourse,
+        bool $canSeeAllContents
+    ): bool {
+        if ($canSeeAllContents) {
+            return true;
+        }
+
+        // Zoom/Meet (is_file = 3)
+        if ($content->is_file == 3) {
+            // En Programas de Especialización solo lo ven los matriculados
+            // o las suscripciones con el permiso habilitado.
+            if ($isSpecializationCourse && ! $isMatriculated && ! $contentPermissions[SubscriptionContentPermissions::CAN_VIEW_SPECIALIZATION_ZOOMS]) {
+                return false;
+            }
+
+            return true;
+        }
+
+        // Webinars (is_file = 5)
+        if ($content->is_file == 5) {
+            // Matriculados NO ven webinars (ellos tienen Zoom/Meet en vivo)
+            if ($isMatriculated) {
+                return false;
+            }
+
+            // En Programas de Especialización solo con el permiso habilitado
+            if ($isSpecializationCourse) {
+                return $contentPermissions[SubscriptionContentPermissions::CAN_VIEW_SPECIALIZATION_WEBINARS];
+            }
+
+            return true;
+        }
+
+        // Todo lo demás (videos, PDFs, links, exámenes) siempre visible
+        return true;
     }
 
     public function invoice($id, $installments = 'not')

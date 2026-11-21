@@ -31,3 +31,7 @@ public/robots.txt
 *.swo
 *.swx
 /LandingSuscripcion/*
+
+# Configuración local de MCP (contiene el token Bearer del servidor del Académico)
+/.agents/mcp.json
+/mcp/*.local.*

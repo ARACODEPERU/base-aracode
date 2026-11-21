@@ -63,6 +63,19 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
+        // Servidor MCP del Académico: un agente encadena muchas llamadas al
+        // armar un curso, así que el tope por minuto es holgado y el de la
+        // hora frena a un cliente mal configurado que reintenta en bucle. Cada
+        // límite lleva su sufijo en la clave para no compartir contador.
+        RateLimiter::for('mcp', function (Request $request) {
+            $llave = $request->user()?->id ?: $request->ip();
+
+            return [
+                Limit::perMinute(60)->by($llave . ':minuto'),
+                Limit::perHour(600)->by($llave . ':hora'),
+            ];
+        });
+
         // Formulario de contacto (la página y el modal «Solicitar Asesoría»
         // comparten este destino). Dos topes por IP en lugar de uno solo: el de
         // minuto corta la ráfaga de un bot y el de hora frena al que va despacio

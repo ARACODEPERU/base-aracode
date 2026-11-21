@@ -1,7 +1,8 @@
 <script  setup>
     import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
     import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
-    import { Link, useForm, router } from '@inertiajs/vue3';
+    import { Head, Link, useForm, router } from '@inertiajs/vue3';
+    import CoursePreviewBar from '../../Components/CoursePreviewBar.vue';
     import IconSend from '@/Components/vristo/icon/icon-send.vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import IconTrash from '@/Components/vristo/icon/icon-trash.vue';
@@ -33,7 +34,26 @@
             type: Object,
             default: null,
         },
+        preview: {
+            type: Object,
+            default: null,
+        },
     });
+
+    const coursesUrl = computed(() => props.preview?.back_url || route('aca_mycourses'));
+    const courseUrl = computed(() => props.preview?.course_url || route('aca_mycourses_lessons', props.course.id));
+    const moduleUrl = (module) => props.preview
+        ? route('aca_courses_preview_module', {
+            id: props.preview.course_id,
+            moduleId: module.id,
+            mode: props.preview.mode,
+        })
+        : route('aca_mycourses_lesson_themes', module.id);
+    const breadcrumbs = computed(() => [
+        { route: coursesUrl.value, title: 'Cursos' },
+        { route: courseUrl.value, title: props.course.description },
+        { title: props.module.description },
+    ]);
 
     const themeSelected = ref([]);
     const displayModalVideo = ref(false);
@@ -42,6 +62,37 @@
     const default_theme_id = ref(null);
     const contentsData = ref(null);
     const commentsData = ref(null);
+    const previewExam = ref(null);
+
+    // Progreso local de la vista previa: no toca aca_student_history.
+    const previewViewedIds = () => {
+        if (!props.preview) return new Set();
+
+        try {
+            const saved = JSON.parse(localStorage.getItem(props.preview.progress_key) || '[]');
+            return new Set((Array.isArray(saved) ? saved : []).map((id) => Number(id)));
+        } catch (error) {
+            return new Set();
+        }
+    };
+
+    const refreshPreviewProgress = () => {
+        if (!props.preview) return;
+
+        const viewed = previewViewedIds();
+        (props.module.themes || []).forEach((theme) => {
+            const contents = (theme.contents || []).filter((content) => Number(content.is_file) !== 4);
+            const done = contents.filter((content) => viewed.has(Number(content.id))).length;
+            theme.progress = contents.length ? Math.round((done / contents.length) * 100) : 0;
+        });
+    };
+
+    refreshPreviewProgress();
+
+    const onPreviewProgressReset = (event) => {
+        if (!props.preview || event.detail?.key !== props.preview.progress_key) return;
+        refreshPreviewProgress();
+    };
 
     // Datos del examen del módulo
     const moduleExam = ref(null);
@@ -334,6 +385,11 @@
     };
 
     const openCertificatePreview = async () => {
+        if (props.preview) {
+            window.alertaSistema('Vista previa', 'La descarga de certificados no está disponible en la vista previa.', 'info');
+            return;
+        }
+
         previewLoading.value = true;
         try {
             const response = await axios.get(route('aca_module_certificate_download', props.module.id), {
@@ -498,16 +554,21 @@
         if (studentExam.value && !studentExam.value.finished_at && studentExam.value.started_at) {
             startElapsedTimer();
         }
+
+        window.addEventListener('academic-preview-progress-reset', onPreviewProgressReset);
     });
 
     onUnmounted(() => {
         stopElapsedTimer();
+        window.removeEventListener('academic-preview-progress-reset', onPreviewProgressReset);
     });
 
     if(props.module.themes.length > 0){
         default_theme_id.value = props.module.themes[0].id;
         contentsData.value = props.module.themes[0].contents;
-        //commentsData = props.module.themes[0].comments;
+        if (props.preview) {
+            commentsData.value = props.module.themes[0].comments || [];
+        }
     }
 
     const formComment = useForm({
@@ -541,7 +602,12 @@
     const comments = ref([]);
     const commentsLoading = ref(false);
 
-    const getComment = (id) => {
+    const getComment = (id, theme = null) => {
+        if (props.preview) {
+            commentsData.value = theme?.comments || [];
+            return;
+        }
+
         commentsLoading.value = true;
         axios.get(route('aca_lesson_comments',id)).then((res) => {
             return res.data.comments;
@@ -552,6 +618,11 @@
     }
 
     const createComment = () => {
+        if (props.preview) {
+            window.alertaSistema('Vista previa', 'Los comentarios son de solo lectura en la vista previa.', 'info');
+            return;
+        }
+
         formComment.post(route('aca_lesson_comments_store'), {
             errorBag: 'createComment',
             preserveScroll: true,
@@ -571,6 +642,11 @@
     }
 
     const editComment = (comment, index) => {
+        if (props.preview) {
+            window.alertaSistema('Vista previa', 'Los comentarios son de solo lectura en la vista previa.', 'info');
+            return;
+        }
+
         commentsData.value[index]['loading'] = true;
         axios.put(route('aca_lesson_comments_update',comment.id),comment).then((res) => {
             commentsData.value[index]['loading'] = false;
@@ -596,6 +672,11 @@
     };
 
     const destroyComment = (comment,index) => {
+        if (props.preview) {
+            window.alertaSistema('Vista previa', 'Los comentarios son de solo lectura en la vista previa.', 'info');
+            return;
+        }
+
         Swal2.fire({
             title: '¿Estas seguro?',
             text: "¡No podrás revertir esto!",
@@ -645,14 +726,34 @@
         selectedTab.value = theme.id
         themeSelected.value = theme;
         formComment.theme_id = theme.id
-        getComment(theme.id);
+        getComment(theme.id, theme);
     }
 
     const getPath = (path) => {
         return baseUrl + 'storage/'+ path;
     }
 
+    // El tipo 0 es el frame de video del mantenedor. Los textos del MCP se
+    // guardan con tipo 6; los textos antiguos con tipo 0 se detectan por su
+    // contenido para que no se muestren como si fueran un video.
+    const isVideoFrame = (content) => Number(content.is_file) === 0 && /<iframe/i.test(String(content.content || ''));
+    const isTextContent = (content) => Number(content.is_file) === 6 || (Number(content.is_file) === 0 && !isVideoFrame(content));
+
     const saveStudentHistory = (content) => {
+        if (props.preview) {
+            try {
+                const viewed = previewViewedIds();
+                if (Number(content.is_file) !== 4) {
+                    viewed.add(Number(content.id));
+                }
+                localStorage.setItem(props.preview.progress_key, JSON.stringify([...viewed]));
+                refreshPreviewProgress();
+            } catch (error) {
+                // El navegador puede bloquear localStorage; la vista sigue funcionando.
+            }
+            return;
+        }
+
         let history = {
             course_id: props.course.id,
             module_id: props.module.id,
@@ -667,7 +768,27 @@
         });
     }
 
+    const openPreviewExam = (exam) => {
+        if (!exam) {
+            window.alertaSistema('Examen no disponible', 'Este contenido no tiene un examen asociado.', 'warning');
+            return;
+        }
+
+        previewExam.value = exam;
+    };
+
+    const handleExamLink = (exam, event) => {
+        if (!props.preview) return;
+
+        event.preventDefault();
+        openPreviewExam(exam);
+    };
+
     const openExamSolve = (content,title = 'Exam', w = 800, h = 600) => {
+        if (props.preview) {
+            openPreviewExam(content.exam);
+            return;
+        }
 
         const url = route('aca_student_exam_solve',content.id);
         const left = (window.innerWidth / 2) - (w / 2);
@@ -692,12 +813,12 @@
 </script>
 <template>
     <AppLayout :title="course.description">
+        <Head v-if="preview">
+            <meta name="aracodito-view" content="new" />
+        </Head>
+        <CoursePreviewBar v-if="preview" :preview="preview" />
         <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
-            :data="[
-                {route: route('aca_mycourses'), title: 'Cursos'},
-                {route: route('aca_mycourses_lessons',course.id), title: course.description},
-                {title: module.description}
-            ]"
+            :data="breadcrumbs"
         />
         <div class="pt-5 space-y-8 relative">
             <!-- Header Premium del Módulo -->
@@ -708,7 +829,7 @@
                         <div class="flex justify-center sm:justify-end min-w-[150px]">
                             <Link
                                 v-if="previousModule"
-                                :href="route('aca_mycourses_lesson_themes', previousModule.id)"
+                                :href="moduleUrl(previousModule)"
                                 class="inline-flex items-center gap-2 px-4 py-1.5 bg-white text-blue-700 border border-blue-200 rounded-full font-bold shadow-lg transition hover:bg-blue-50 hover:border-blue-300 dark:bg-gray-900 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-gray-800"
                             >
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -726,7 +847,7 @@
                         <div class="flex justify-center sm:justify-start min-w-[150px]">
                             <Link
                                 v-if="nextModule"
-                                :href="route('aca_mycourses_lesson_themes', nextModule.id)"
+                                :href="moduleUrl(nextModule)"
                                 class="inline-flex items-center gap-2 px-4 py-1.5 bg-white text-blue-700 border border-blue-200 rounded-full font-bold shadow-lg transition hover:bg-blue-50 hover:border-blue-300 dark:bg-gray-900 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-gray-800"
                             >
                                 Modulo siguiente
@@ -807,7 +928,7 @@
                         </div>
                         <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl p-3 text-center min-w-[100px] shadow-md border border-gray-200 dark:border-gray-600">
                             <div class="text-xl font-bold text-purple-600 dark:text-purple-400">
-                                {{ module.themes?.reduce((sum, t) => sum + (t.contents?.filter(c => c.is_file == 0 || c.is_file == 3).length || 0), 0) || 0 }}
+                                {{ module.themes?.reduce((sum, t) => sum + (t.contents?.filter(c => isVideoFrame(c) || c.is_file == 3 || c.is_file == 5).length || 0), 0) || 0 }}
                             </div>
                             <div class="text-xs text-gray-600 dark:text-gray-400 font-medium">Videos</div>
                         </div>
@@ -1030,6 +1151,7 @@
                                     <Link
                                         v-else-if="!studentExam || studentExam.status === 'pendiente'"
                                         :href="route('aca_student_module_exam_solve', moduleExam.id)"
+                                        @click="handleExamLink(moduleExam, $event)"
                                         class="w-full bg-red-500 hover:bg-red-600 text-white text-center py-2.5 px-4 rounded-lg text-sm font-medium transition-colors"
                                     >
                                         Resolver Examen
@@ -1039,6 +1161,7 @@
                                     <Link
                                         v-else-if="canRetakeExam()"
                                         :href="route('aca_student_module_exam_solve', moduleExam.id)"
+                                        @click="handleExamLink(moduleExam, $event)"
                                         class="w-full bg-blue-500 hover:bg-blue-600 text-white text-center py-2.5 px-4 rounded-lg text-sm font-medium transition-colors"
                                     >
                                         Repetir Examen {{ moduleExam.attempts === 0 ? '(Ilimitados)' : '(' + (moduleExam.attempts - studentExam.attempts_used) + ' intentos)' }}
@@ -1170,6 +1293,7 @@
                                     <div class="mt-3">
                                         <Link
                                             :href="route('aca_student_module_exam_solve', moduleMockExam.id)"
+                                            @click="handleExamLink(moduleMockExam, $event)"
                                             class="w-full bg-amber-500 hover:bg-amber-600 text-white text-center py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
                                         >
                                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 640 512">
@@ -1220,8 +1344,43 @@
                             <template v-if="contentsData && contentsData.length > 0">
                                 <template v-for="(content, key) in contentsData" :key="content.id">
 
+                                    <!-- Texto / HTML -->
+                                    <template v-if="isTextContent(content)">
+                                        <div class="group bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-900/20 dark:to-violet-900/20 rounded-xl p-5 border border-indigo-200 dark:border-indigo-800/30 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
+                                            <div class="flex items-start gap-4">
+                                                <div class="bg-indigo-500 text-white p-3 rounded-xl group-hover:scale-110 transition-transform shadow-md">
+                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 2v10h8V8h-3a1 1 0 01-1-1V4H6z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                </div>
+
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2 mb-2">
+                                                        <span class="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2 py-1 rounded-full text-xs font-semibold">
+                                                            CONTENIDO
+                                                        </span>
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">Lectura</span>
+                                                    </div>
+                                                    <h3 class="text-base font-bold text-gray-900 dark:text-white mb-3">
+                                                        {{ content.description }}
+                                                    </h3>
+                                                    <div class="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300" v-html="content.content"></div>
+                                                    <button @click="saveStudentHistory(content)"
+                                                        type="button"
+                                                        class="mt-4 bg-gradient-to-r from-indigo-500 to-violet-500 text-white px-4 py-2 rounded-lg font-medium text-sm hover:from-indigo-600 hover:to-violet-600 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        Marcar como leído
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+
                                     <!-- Link de Archivo -->
-                                    <template v-if="content.is_file == 1">
+                                    <template v-else-if="content.is_file == 1">
                                         <div class="group bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl p-5 border border-blue-200 dark:border-blue-800/30 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
                                             <div class="flex items-center gap-4">
                                                 <!-- Icono -->
@@ -1265,7 +1424,7 @@
                                         </div>
                                     </template>
                                     <!-- Video Embebido -->
-                                    <template v-else-if="content.is_file == 0">
+                                    <template v-else-if="content.is_file == 0 && isVideoFrame(content)">
                                         <div class="group bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-5 border border-green-200 dark:border-green-800/30 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
                                             <div class="flex items-center gap-4">
                                                 <!-- Icono -->
@@ -1625,7 +1784,7 @@
             <div v-if="previousModule || nextModule" class="flex flex-wrap justify-center gap-3">
                 <Link
                     v-if="previousModule"
-                    :href="route('aca_mycourses_lesson_themes', previousModule.id)"
+                    :href="moduleUrl(previousModule)"
                     class="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold shadow-lg transition hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl"
                 >
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -1635,7 +1794,7 @@
                 </Link>
                 <Link
                     v-if="nextModule"
-                    :href="route('aca_mycourses_lesson_themes', nextModule.id)"
+                    :href="moduleUrl(nextModule)"
                     class="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold shadow-lg transition hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl"
                 >
                     Modulo siguiente
@@ -1675,6 +1834,80 @@
             </div>
             </Dialog>
         </TransitionRoot>
+
+        <!-- Modal de examen de la vista previa (solo lectura) -->
+        <div v-if="previewExam" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+            <div class="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-gray-900">
+                <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-700">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                            Vista previa · Solo lectura
+                        </span>
+                        <h2 class="text-lg font-bold text-gray-900 dark:text-white">
+                            {{ previewExam.description || 'Examen' }}
+                        </h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            {{ previewExam.questions?.length || 0 }} preguntas
+                            · {{ previewExam.duration_minutes || 0 }} minutos
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        class="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                        @click="previewExam = null"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
+                    <div
+                        v-for="(question, index) in previewExam.questions || []"
+                        :key="question.id"
+                        class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <div class="mb-2 flex items-start justify-between gap-3">
+                            <span class="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                                Pregunta {{ index + 1 }}
+                            </span>
+                            <span class="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                                {{ question.score }} pts
+                            </span>
+                        </div>
+                        <p class="whitespace-pre-line text-sm text-gray-900 dark:text-white">
+                            {{ question.description }}
+                        </p>
+                        <ul class="mt-3 space-y-2">
+                            <li
+                                v-for="answer in question.answers || []"
+                                :key="answer.id"
+                                class="flex items-start justify-between gap-3 rounded-lg border px-3 py-2 text-sm"
+                                :class="answer.correct
+                                    ? 'border-green-300 bg-green-50 text-green-900 dark:border-green-700 dark:bg-green-900/30 dark:text-green-100'
+                                    : 'border-gray-200 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200'"
+                            >
+                                <span>{{ answer.description }}</span>
+                                <span v-if="answer.correct" class="shrink-0 text-xs font-bold uppercase">
+                                    Correcta
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div v-if="!previewExam.questions?.length" class="py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                        Este examen no tiene preguntas registradas.
+                    </div>
+                </div>
+
+                <div class="flex justify-end border-t border-gray-200 px-5 py-4 dark:border-gray-700">
+                    <button type="button" class="btn btn-primary" @click="previewExam = null">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- Modal Certificado (Konva.js) -->
         <div

@@ -1252,7 +1252,8 @@
             '2': 'PDF',
             '3': 'Videollamada',
             '4': 'Examen',
-            '5': 'Webinar'
+            '5': 'Webinar',
+            '6': 'Texto'
         };
         return types[type] || 'Archivo';
     };
@@ -1264,7 +1265,8 @@
             '2': { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-700', badge: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300' },
             '3': { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-700', badge: 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300' },
             '4': { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', border: 'border-red-200 dark:border-red-700', badge: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
-            '5': { bg: 'bg-teal-50 dark:bg-teal-900/20', text: 'text-teal-600 dark:text-teal-400', border: 'border-teal-200 dark:border-teal-700', badge: 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300' }
+            '5': { bg: 'bg-teal-50 dark:bg-teal-900/20', text: 'text-teal-600 dark:text-teal-400', border: 'border-teal-200 dark:border-teal-700', badge: 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300' },
+            '6': { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-600 dark:text-indigo-400', border: 'border-indigo-200 dark:border-indigo-700', badge: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' }
         };
         return classes[type] || classes['0'];
     };
@@ -1737,6 +1739,7 @@
                                     <option value="3">Link videoconferencia</option>
                                     <option value="5">Webinar (YouTube/Vimeo)</option>
                                     <option value="2">Subir Archivo</option>
+                                    <option value="6">Texto / HTML</option>
                                     <!-- <option value="4">Examen</option> -->
                                 </select>
                                 <div class="text-danger text-sm mt-1" v-if="contentForm.errors.is_file">{{ contentForm.errors.is_file }}</div>
@@ -1794,7 +1797,7 @@
                                         <template v-if="conte.is_file == 0" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:outline-none focus:ring-gray-100 focus:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700">
                                             <div v-html="modifiedContent(conte.content)" class="m-0"></div>
                                         </template>
-                                        <template v-else-if="conte.is_file == 5">
+                                        <template v-else-if="conte.is_file == 5 || conte.is_file == 6">
                                             <div v-html="modifiedContent(conte.content)" class="m-0"></div>
                                         </template>
                                         <a v-else-if="conte.is_file == 1" :href="conte.content" target="_blank" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:outline-none focus:ring-gray-100 focus:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700">
