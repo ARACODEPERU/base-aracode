@@ -234,6 +234,8 @@ En la pantalla de consentimiento la persona elige los scopes (`academic:read`, `
 
 Freebuff acepta servidores remotos HTTP con cabeceras, en el formato estándar `mcpServers`.
 
+**Freebuff no necesita `mcp-remote` ni Node.** Su cliente habla Streamable HTTP directamente, así que el servidor se declara con `type`, `url` y `headers`. `mcp-remote` es un puente stdio → HTTP que Claude Desktop necesita porque solo habla stdio; aquí solo añadiría un proceso `npx` por sesión y un punto de fallo. Un bloque con `command`/`args`/`env` también se ejecuta en Freebuff, pero no es la vía recomendada.
+
 ### 6.1 Solo este proyecto
 
 Archivo `.agents/mcp.json` en la raíz del repositorio:
@@ -282,6 +284,8 @@ Si al añadirlo responde `Couldn't connect to that MCP server: its address could
 | Síntoma | Causa | Solución |
 | --- | --- | --- |
 | `401 {"message":"Unauthenticated."}` | Falta la cabecera o el token es de otro entorno | Revisar `Authorization: Bearer <token>` y que el token no sea de producción |
+| Conecta en local pero con el dominio responde `401` | Los tokens viven en la base de datos de cada entorno: uno creado en `base_aracode.test` no existe en el demo ni en producción | Crear el token en el entorno al que se conecta (`Académico → Tokens de API` o `mcp:token` allí) |
+| `403` al conectar por el dominio | El cliente cayó al flujo OAuth y el usuario con sesión no tiene `aca_cursos_nuevo` ni `aca_cursos_editar` | Dar permisos de cursos a ese usuario o conectar con un token Sanctum en la cabecera `Authorization` |
 | `400 Bad Request` con HTML de Apache | Cabecera mal formada por espacios en `args` (Claude Desktop en Windows) | Usar `Authorization:${VAR}` + `env`, o `--header-file` |
 | `Non-HTTPS URLs are only allowed for localhost or when --allow-http flag is provided` | El puente `mcp-remote` rechaza `http://` fuera de localhost | Añadir `--allow-http` a los `args` |
 | `El token no tiene la ability [academic:write]` | Se generó solo con lectura | Volver a ejecutar `mcp:token` con la ability correcta |
@@ -291,6 +295,8 @@ Si al añadirlo responde `Couldn't connect to that MCP server: its address could
 | `Couldn't connect to that MCP server: its address couldn't be found. Check the URL.` | La URL usa `base_aracode.test`, que solo existe en el `hosts` de Windows y el cliente MCP no lo resuelve | Cambiar la URL a `http://localhost/base_aracode/public/mcp/academic` |
 | El cliente no conecta y `curl` sí | El cliente corre en otro equipo o en la nube y `base_aracode.test` no resuelve allí | Usar la URL de `localhost` o un dominio público |
 | No aparecen las herramientas en Freebuff | El servidor no fue aprobado todavía | Settings → MCP, revisar y aprobar |
+| Conecta en Claude con `mcp-remote` pero no en Freebuff | Se pegó el bloque `command`/`args`/`env` de Claude, o falta aprobar el servidor | Usar `type`/`url`/`headers` (sin `mcp-remote`) y aprobar en Settings → MCP |
+| `401` con un token correcto pegado | Falta el prefijo `Bearer ` o el token perdió el `id\|` de Sanctum | Enviar `Authorization: Bearer 12\|abc...` completo, sin duplicar `Bearer` |
 
 ## 9. Seguridad, auditoría y rotación
 
