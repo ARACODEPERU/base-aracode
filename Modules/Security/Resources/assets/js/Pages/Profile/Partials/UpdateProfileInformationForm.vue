@@ -29,12 +29,83 @@ const form = useForm({
     avatar_preview:  user.avatar ? getImage(user.avatar) : null,
 });
 
+// La foto del perfil se reduce en el navegador antes de subirla: una foto de
+// celular pesa varios MB y, enviada tal cual, hacía que el servidor descartara
+// el envío sin guardar el avatar.
+const MAX_AVATAR_DIMENSION = 1024;
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+
 function submit() {
-  form.post(route('profile.update'))
+    // avatar_preview solo sirve para la vista previa: no se envía al servidor
+    // (antes viajaba como base64 y duplicaba el peso de la petición).
+    form.transform(({ avatar_preview, ...data }) => data).post(route('profile.update'));
 }
 
 const triggerFileInput = () => {
     fileInput.value.click();
+}
+
+async function onFileSelected(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    if (file.type && !file.type.startsWith('image/')) {
+        form.setError('avatar', 'Selecciona una imagen PNG, JPG o WEBP.');
+        return;
+    }
+
+    form.clearErrors('avatar');
+    const optimized = await optimizeImage(file);
+
+    if (optimized.size > MAX_AVATAR_BYTES) {
+        form.setError('avatar', 'La foto no debe superar 5 MB.');
+        event.target.value = '';
+        return;
+    }
+
+    form.avatar = optimized;
+}
+
+// Redimensiona la imagen a 1024 px como maximo y la convierte a JPG
+function optimizeImage(file) {
+    return new Promise((resolve) => {
+        const objectUrl = URL.createObjectURL(file);
+        const image = new Image();
+
+        image.onload = () => {
+            const scale = Math.min(1, MAX_AVATAR_DIMENSION / Math.max(image.width, image.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(image.width * scale);
+            canvas.height = Math.round(image.height * scale);
+
+            const context = canvas.getContext('2d');
+            // Fondo blanco para que los PNG con transparencia no salgan en negro
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(objectUrl);
+
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    resolve(file);
+                    return;
+                }
+
+                const name = (file.name || 'avatar').replace(/\.[^.]+$/, '') + '.jpg';
+                resolve(new File([blob], name, { type: 'image/jpeg' }));
+            }, 'image/jpeg', 0.85);
+        };
+
+        // Si el navegador no puede leer la imagen se sube el archivo original
+        image.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve(file);
+        };
+
+        image.src = objectUrl;
+    });
 }
 
 watch(() => form.avatar, (newValue) => {
@@ -44,9 +115,6 @@ watch(() => form.avatar, (newValue) => {
             form.avatar_preview = e.target.result;
         };
         reader.readAsDataURL(newValue);
-    } else {
-        // Puedes manejar el caso en el que newValue no sea un objeto File válido
-        console.error("El objeto no es un archivo válido.");
     }
 });
 </script>
@@ -68,10 +136,10 @@ watch(() => form.avatar, (newValue) => {
                         <font-awesome-icon :icon="faCloudArrowUp" class="mr-1" />
                         Foto
                     </button>
-                    <input accept=".png, .jpg, .jpeg"                  
-                        type="file" 
+                    <input accept="image/png, image/jpeg, image/webp"
+                        type="file"
                         ref="fileInput"
-                        @input="form.avatar = $event.target.files[0]"
+                        @change="onFileSelected"
                         class="hidden"
                     />
                 </div>
@@ -91,6 +159,7 @@ watch(() => form.avatar, (newValue) => {
                     <label for="information">Información</label>
                     <input v-model="form.information" id="information" type="text" class="form-input" />
                     <InputError class="mt-2" :message="form.errors.information" />
+                    <InputError class="mt-2" :message="form.errors.avatar" />
                 </div>
                 <div class="sm:col-span-2 mt-3 w-full flex justify-end">
                     <progress v-if="form.progress" :value="form.progress.percentage" max="100" class="mr-4" style="height: 10px;">
