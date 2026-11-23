@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="refresh" content="0;url='http://base-aracode.test/security/profile'" />
+
+        <title>Redirecting to http://base-aracode.test/security/profile</title>
+    </head>
+    <body>
+        Redirecting to <a href="http://base-aracode.test/security/profile">http://base-aracode.test/security/profile</a>.
+    </body>
+</html>
