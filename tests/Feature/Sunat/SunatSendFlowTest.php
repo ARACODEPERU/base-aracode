@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Sunat;
 
+use App\Helpers\Invoice\Documents\Boleta;
 use App\Helpers\Invoice\Documents\Factura;
 use App\Helpers\Invoice\Sunat\SunatResilience;
 use App\Helpers\Invoice\Sunat\SunatSendOutcome;
@@ -14,7 +15,6 @@ use Greenter\Model\DocumentInterface;
 use Greenter\Model\Response\Error;
 use Greenter\Model\Sale\Invoice;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 /**
@@ -43,7 +43,6 @@ class SunatSendFlowTest extends TestCase
 
         $response->assertOk()->assertJson([
             'success' => false,
-            'queued' => false,
             'duplicate' => true,
             'manual' => false,
             'code' => '1033',
@@ -61,9 +60,6 @@ class SunatSendFlowTest extends TestCase
         $this->assertSame('duplicado', $documento->sunat_response_kind);
         $this->assertStringContainsString('1033', (string) $documento->sunat_last_error);
         $this->assertSame(0, (int) $documento->sunat_retry_attempts);
-
-        $this->assertSame(0, Artisan::call('sunat:retry-queue', ['--dry-run' => true]));
-        $this->assertStringContainsString('No hay comprobantes pendientes', Artisan::output());
     }
 
     public function test_un_fallo_de_sunat_queda_pendiente_sin_encolarse_y_muestra_el_error_original(): void
@@ -84,7 +80,6 @@ class SunatSendFlowTest extends TestCase
 
         $response->assertOk()->assertJson([
             'success' => false,
-            'queued' => false,
             'manual' => true,
             'code' => '0109',
         ]);
@@ -102,9 +97,70 @@ class SunatSendFlowTest extends TestCase
         $this->assertSame('sunat_no_disponible', $documento->sunat_response_kind);
         $this->assertStringContainsString('0109', (string) $documento->sunat_last_error);
         $this->assertSame(0, (int) $documento->sunat_retry_attempts);
+    }
 
-        $this->assertSame(0, Artisan::call('sunat:retry-queue', ['--dry-run' => true]));
-        $this->assertStringContainsString('No hay comprobantes pendientes', Artisan::output());
+    public function test_un_error_al_preparar_la_factura_la_deja_pendiente_y_muestra_el_error_original(): void
+    {
+        $this->empresaDemo();
+        $this->reiniciarUtil();
+
+        $user = User::factory()->create();
+        $documento = $this->documento($user);
+
+        $this->app->instance(Factura::class, $this->facturaQueFallaAlPreparar());
+
+        $response = $this->actingAs($user)->get(route('saledocuments_send', [$documento->id, '01']));
+
+        $response->assertOk()->assertJson([
+            'success' => false,
+            'duplicate' => false,
+            'manual' => true,
+            'code' => SunatResilience::CODE_CONNECTION,
+        ]);
+
+        $this->assertStringContainsString('Falta el distrito del cliente', $response->json('message'));
+
+        $documento->refresh();
+
+        $this->assertSame('Pendiente', $documento->invoice_status);
+        $this->assertSame(1, (int) $documento->status);
+        $this->assertStringContainsString('Falta el distrito del cliente', (string) $documento->invoice_response_description);
+        $this->assertSame('manual', $documento->sunat_send_status);
+        $this->assertNull($documento->sunat_next_retry_at);
+        $this->assertSame(SunatResilience::KIND_UNKNOWN, $documento->sunat_response_kind);
+        $this->assertStringContainsString('Falta el distrito del cliente', (string) $documento->sunat_last_error);
+    }
+
+    public function test_un_error_al_preparar_la_boleta_la_deja_pendiente_y_muestra_el_error_original(): void
+    {
+        $this->empresaDemo();
+        $this->reiniciarUtil();
+
+        $user = User::factory()->create();
+        $documento = $this->documento($user, '03', 'B001');
+
+        $this->app->instance(Boleta::class, $this->boletaQueFallaAlPreparar());
+
+        $response = $this->actingAs($user)->get(route('saledocuments_send', [$documento->id, '03']));
+
+        $response->assertOk()->assertJson([
+            'success' => false,
+            'duplicate' => false,
+            'manual' => true,
+            'code' => SunatResilience::CODE_CONNECTION,
+        ]);
+
+        $this->assertStringContainsString('Falta el distrito del cliente', $response->json('message'));
+
+        $documento->refresh();
+
+        $this->assertSame('Pendiente', $documento->invoice_status);
+        $this->assertSame(1, (int) $documento->status);
+        $this->assertStringContainsString('Falta el distrito del cliente', (string) $documento->invoice_response_description);
+        $this->assertSame('manual', $documento->sunat_send_status);
+        $this->assertNull($documento->sunat_next_retry_at);
+        $this->assertSame(SunatResilience::KIND_UNKNOWN, $documento->sunat_response_kind);
+        $this->assertStringContainsString('Falta el distrito del cliente', (string) $documento->sunat_last_error);
     }
 
     protected function tearDown(): void
@@ -151,6 +207,26 @@ class SunatSendFlowTest extends TestCase
                         return 'F001-1';
                     }
                 };
+            }
+        };
+    }
+
+    private function facturaQueFallaAlPreparar(): Factura
+    {
+        return new class extends Factura {
+            public function setDocument($document, $tipDet = '022', $ipMeP = '001')
+            {
+                throw new \RuntimeException('Falta el distrito del cliente');
+            }
+        };
+    }
+
+    private function boletaQueFallaAlPreparar(): Boleta
+    {
+        return new class extends Boleta {
+            public function setDocument($document, $tipDet = '022', $ipMeP = '001')
+            {
+                throw new \RuntimeException('Falta el distrito del cliente');
             }
         };
     }
@@ -204,7 +280,7 @@ class SunatSendFlowTest extends TestCase
         };
     }
 
-    private function documento(User $user): SaleDocument
+    private function documento(User $user, string $tipo = '01', string $serie = 'F001'): SaleDocument
     {
         $sale = Sale::create([
             'user_id' => $user->id,
@@ -222,8 +298,8 @@ class SunatSendFlowTest extends TestCase
             'sale_id' => $sale->id,
             'serie_id' => 1,
             'number' => '1',
-            'invoice_type_doc' => '01',
-            'invoice_serie' => 'F001',
+            'invoice_type_doc' => $tipo,
+            'invoice_serie' => $serie,
             'invoice_correlative' => '1',
             'invoice_type_currency' => 'PEN',
             'invoice_broadcast_date' => now()->toDateString(),

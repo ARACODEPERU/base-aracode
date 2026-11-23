@@ -53,6 +53,13 @@ class Person extends Model
         'foreign_city'
     ];
 
+    // Columnas booleanas: se castean para que no lleguen como "0"/"1" desde la BD.
+    protected $casts = [
+        'is_provider' => 'boolean',
+        'is_client' => 'boolean',
+        'status' => 'boolean',
+    ];
+
     protected $appends = ['formatted_name'];
 
     // se esta guardando la ruta completa por eso se comento

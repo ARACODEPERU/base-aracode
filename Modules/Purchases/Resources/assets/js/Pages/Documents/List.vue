@@ -1,7 +1,7 @@
 <script setup>
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
-    import { useForm, router, Link } from '@inertiajs/vue3';
-    import { ref } from 'vue';
+    import { useForm, router, Link, usePage } from '@inertiajs/vue3';
+    import { computed, ref } from 'vue';
     import { faXmark, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
     import Keypad from '@/Components/Keypad.vue';
     import Pagination from '@/Components/Pagination.vue';
@@ -25,6 +25,27 @@
     });
 
     const btnAll = ref(false);
+
+    const page = usePage();
+
+    const permisos = computed(() => page.props.auth?.permissions || []);
+    const puedeVerSire = computed(() => permisos.value.includes('sire_rce_compras'));
+    const puedeCrear = computed(() => permisos.value.includes('purc_documentos_nuevo'));
+    const puedeAnular = computed(() => permisos.value.includes('purc_documentos_eliminar'));
+
+    // El registro del SIRE se abre en el mes de la fecha filtrada; sin filtro,
+    // en el mes actual, para llegar al registro del mes desde los documentos.
+    const periodoRegistro = computed(() => {
+        const fecha = props.filters?.search;
+
+        if (typeof fecha === 'string' && /^\d{4}-\d{2}/.test(fecha)) {
+            return fecha.slice(0, 7);
+        }
+
+        const hoy = new Date();
+
+        return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+    });
 
     if(props.filters.search){
         btnAll.value = true
@@ -90,7 +111,15 @@
                             <div class="col-span-4 sm:col-span-2">
                                 <Keypad>
                                     <template #botones>
-                                        <Link :href="route('purc_documents_create')" class="inline-block px-6 py-2.5 bg-blue-900 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">Nuevo</Link>
+                                        <Link
+                                            v-if="puedeVerSire"
+                                            :href="route('sire_rce_compras_index', { period: periodoRegistro })"
+                                            class="inline-block px-6 py-2.5 bg-slate-700 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-slate-800 hover:shadow-lg focus:bg-slate-800 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-slate-900 active:shadow-lg transition duration-150 ease-in-out"
+                                            title="Ver el Registro de Compras del mes en el SIRE"
+                                        >
+                                            SIRE del mes
+                                        </Link>
+                                        <Link v-if="puedeCrear" :href="route('purc_documents_create')" class="inline-block px-6 py-2.5 bg-blue-900 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">Nuevo</Link>
                                     </template>
                                 </Keypad>
                             </div>
@@ -129,15 +158,16 @@
                                         <tr >
                                             <td>
                                                 <Popconfirm
+                                                    v-if="puedeAnular"
                                                     placement="right"
                                                     title="Are you sure delete this task?"
                                                     ok-text="Si"
                                                     cancel-text="No"
                                                     @confirm="CancelPurchase(document.id)"
-                                                    
                                                 >
                                                     <Button type="dashed">Anular</Button>
                                                 </Popconfirm>
+                                                <span v-else class="text-gray-400">—</span>
                                             </td>
                                             <td>
                                                 {{ document.type.description }}

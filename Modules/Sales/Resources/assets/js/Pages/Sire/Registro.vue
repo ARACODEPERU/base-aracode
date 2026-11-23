@@ -44,12 +44,20 @@
                 txt: 'sire_rvie_ventas_txt',
                 zip: 'sire_rvie_ventas_zip',
                 propuesta: 'sire_rvie_ventas_propuesta',
+                comparar: 'sire_rvie_ventas_comparar',
+                reemplazar: 'sire_rvie_ventas_reemplazar',
+                aceptar: 'sire_rvie_ventas_aceptar',
+                estado: 'sire_rvie_ventas_estado',
             }
             : {
                 index: 'sire_rce_compras_index',
                 txt: 'sire_rce_compras_txt',
                 zip: 'sire_rce_compras_zip',
                 propuesta: 'sire_rce_compras_propuesta',
+                comparar: 'sire_rce_compras_comparar',
+                reemplazar: 'sire_rce_compras_reemplazar',
+                aceptar: 'sire_rce_compras_aceptar',
+                estado: 'sire_rce_compras_estado',
             }
     );
 
@@ -124,6 +132,144 @@
             window.alertaSistema('No se pudo descargar', mensaje, 'error');
         } finally {
             consultando.value = false;
+        }
+    };
+
+    const comparacion = ref(null);
+    const reemplazando = ref(false);
+    const aceptando = ref(false);
+    const ultimoEnvio = ref(null);
+
+    // El reemplazo solo se habilita con el registro sin errores y la
+    // comparación ya hecha (o pendiente de diferencias, que se confirman aparte).
+    const puedeReemplazar = computed(
+        () =>
+            props.credentialsReady &&
+            props.canDownload &&
+            comparacion.value !== null &&
+            !comparacion.value.bloqueado &&
+            !comparacion.value.pendiente
+    );
+
+    const comparar = async () => {
+        consultando.value = true;
+
+        try {
+            const { data } = await axios.post(route(rutas.value.comparar), { period: props.period });
+            comparacion.value = data;
+            ultimoEnvio.value = null;
+
+            if (data.bloqueado) {
+                window.alertaSistema('Corrige el registro', data.message, 'error', { duration: 0 });
+            } else if (data.pendiente) {
+                window.alertaSistema('SUNAT sigue procesando', data.message, 'warning');
+            } else if (data.ok) {
+                window.alertaSistema('Coincide con SUNAT', data.message, 'success');
+            } else {
+                window.alertaSistema('Hay diferencias', data.message, 'warning', { duration: 0 });
+            }
+        } catch (error) {
+            window.alertaSistema(
+                'No se pudo comparar',
+                error?.response?.data?.message || 'Revisa la bitácora del SIRE e inténtalo de nuevo.',
+                'error',
+                { duration: 0 }
+            );
+        } finally {
+            consultando.value = false;
+        }
+    };
+
+    const reemplazar = async (conDiferencias = false) => {
+        const confirmacion = await window.alertaSistema(
+            conDiferencias ? 'Enviar con diferencias' : 'Reemplazar la propuesta de SUNAT',
+            conDiferencias
+                ? 'El registro del ERP no coincide con la propuesta de SUNAT. Se enviará igual y reemplazará lo que SUNAT tiene publicado en el período. Esta acción no se puede deshacer.'
+                : 'Se enviará el registro del período y SUNAT reemplazará su propuesta. El SIRE no tiene ambiente de pruebas: esta acción afecta el registro real.',
+            'warning',
+            {
+                duration: 0,
+                showCancelButton: true,
+                confirmButtonText: conDiferencias ? 'Enviar igual' : 'Reemplazar',
+                cancelButtonText: 'Cancelar',
+            }
+        );
+
+        if (!confirmacion?.isConfirmed) return;
+
+        reemplazando.value = true;
+
+        try {
+            const { data } = await axios.post(route(rutas.value.reemplazar), {
+                period: props.period,
+                aceptar_diferencias: conDiferencias,
+            });
+
+            ultimoEnvio.value = data;
+
+            window.alertaSistema(
+                data.procesado ? 'Reemplazo terminado' : 'Reemplazo en proceso',
+                data.message,
+                data.procesado ? 'success' : 'warning',
+                { duration: 0 }
+            );
+        } catch (error) {
+            const data = error?.response?.data;
+
+            // El servidor devuelve la comparación cuando bloquea el envío por
+            // diferencias: se muestran antes de ofrecer el envío igual.
+            if (data?.comparacion) {
+                comparacion.value = data.comparacion;
+            }
+
+            window.alertaSistema(
+                'No se pudo reemplazar',
+                data?.message || 'Revisa la bitácora del SIRE e inténtalo de nuevo.',
+                'error',
+                { duration: 0 }
+            );
+        } finally {
+            reemplazando.value = false;
+        }
+    };
+
+    const aceptar = async () => {
+        const confirmacion = await window.alertaSistema(
+            'Aceptar la propuesta de SUNAT',
+            'Se aceptará la propuesta que SUNAT tiene publicada para el período. El SIRE no tiene ambiente de pruebas: esta acción afecta el registro real y no se puede deshacer.',
+            'warning',
+            {
+                duration: 0,
+                showCancelButton: true,
+                confirmButtonText: 'Aceptar propuesta',
+                cancelButtonText: 'Cancelar',
+            }
+        );
+
+        if (!confirmacion?.isConfirmed) return;
+
+        aceptando.value = true;
+
+        try {
+            const { data } = await axios.post(route(rutas.value.aceptar), { period: props.period });
+
+            ultimoEnvio.value = data;
+
+            window.alertaSistema(
+                data.procesado ? 'Propuesta aceptada' : 'Aceptación en proceso',
+                data.message,
+                data.procesado ? 'success' : 'warning',
+                { duration: 0 }
+            );
+        } catch (error) {
+            window.alertaSistema(
+                'No se pudo aceptar',
+                error?.response?.data?.message || 'Revisa la bitácora del SIRE e inténtalo de nuevo.',
+                'error',
+                { duration: 0 }
+            );
+        } finally {
+            aceptando.value = false;
         }
     };
 
@@ -227,7 +373,7 @@
                     </button>
                 </div>
 
-                <div v-else class="flex flex-col items-start gap-1 sm:items-end">
+                <div v-else class="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
                     <button
                         type="button"
                         class="btn btn-primary"
@@ -237,7 +383,16 @@
                     >
                         {{ consultando ? 'Consultando SUNAT…' : 'Descargar propuesta de SUNAT' }}
                     </button>
-                    <p class="text-xs text-gray-400">Solo lectura: no envía ni reemplaza nada.</p>
+                    <button
+                        type="button"
+                        class="btn btn-outline-primary"
+                        :disabled="!credentialsReady || consultando"
+                        :class="{ 'cursor-not-allowed opacity-50': !credentialsReady || consultando }"
+                        :title="credentialsReady ? 'Compara el registro del ERP con la propuesta de SUNAT' : 'Carga las credenciales para comparar'"
+                        @click="comparar"
+                    >
+                        Comparar con el ERP
+                    </button>
                 </div>
             </div>
 
@@ -300,6 +455,167 @@
                             <p class="break-all font-mono text-xs text-gray-500">{{ resultado.hash }}</p>
                         </div>
                     </div>
+                </div>
+
+                <div v-if="credentialsReady" class="mt-5 border-t border-gray-200 pt-4 dark:border-gray-700">
+                    <h4 class="text-sm font-semibold text-gray-800 dark:text-white">Presentar el período</h4>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Compara antes de reemplazar: se envía el registro del ERP y SUNAT lo usa en lugar de su propuesta.
+                        El SIRE no tiene ambiente de pruebas, así que cada envío afecta el registro real.
+                    </p>
+
+                    <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                        <button
+                            v-if="!comparacion || comparacion.ok"
+                            type="button"
+                            class="btn btn-outline-primary"
+                            :disabled="!puedeReemplazar || reemplazando"
+                            :class="{ 'cursor-not-allowed opacity-50': !puedeReemplazar || reemplazando }"
+                            :title="puedeReemplazar ? 'Envía el registro del período y reemplaza la propuesta de SUNAT' : 'Compara el período para habilitar el reemplazo'"
+                            @click="reemplazar(false)"
+                        >
+                            {{ reemplazando ? 'Enviando…' : 'Reemplazar propuesta' }}
+                        </button>
+                        <button
+                            v-else
+                            type="button"
+                            class="btn btn-outline-danger"
+                            :disabled="reemplazando"
+                            :class="{ 'cursor-not-allowed opacity-50': reemplazando }"
+                            title="Envía el registro aunque no coincida con la propuesta de SUNAT"
+                            @click="reemplazar(true)"
+                        >
+                            {{ reemplazando ? 'Enviando…' : 'Enviar con diferencias' }}
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            :disabled="aceptando"
+                            :class="{ 'cursor-not-allowed opacity-50': aceptando }"
+                            title="Acepta la propuesta que SUNAT tiene publicada para el período"
+                            @click="aceptar"
+                        >
+                            {{ aceptando ? 'Aceptando…' : 'Aceptar propuesta' }}
+                        </button>
+                    </div>
+
+                    <p v-if="!comparacion" class="mt-2 text-xs text-gray-400">
+                        Compara el período para habilitar el reemplazo.
+                    </p>
+                    <p v-else-if="comparacion.bloqueado" class="mt-2 text-xs text-danger">
+                        Corrige los errores del registro antes de presentarlo.
+                    </p>
+                </div>
+
+                <div v-if="comparacion && !comparacion.bloqueado" class="mt-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span
+                            class="badge"
+                            :class="comparacion.ok ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'"
+                        >
+                            {{ comparacion.ok ? 'Coincide con SUNAT' : 'Con diferencias' }}
+                        </span>
+                        <span v-if="comparacion.archivo_sunat" class="text-xs text-gray-500">
+                            Propuesta {{ comparacion.archivo_sunat }}
+                        </span>
+                    </div>
+
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ comparacion.message }}</p>
+
+                    <div v-if="comparacion.resumen" class="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 xl:grid-cols-6">
+                        <div>
+                            <p class="text-xs uppercase text-gray-400">ERP</p>
+                            <p class="font-semibold text-gray-800 dark:text-white">{{ comparacion.resumen.erp_lineas }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase text-gray-400">SUNAT</p>
+                            <p class="font-semibold text-gray-800 dark:text-white">{{ comparacion.resumen.sunat_lineas }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase text-gray-400">Iguales</p>
+                            <p class="font-semibold text-success">{{ comparacion.resumen.iguales }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase text-gray-400">Diferencias</p>
+                            <p class="font-semibold text-warning">{{ comparacion.resumen.diferencias }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase text-gray-400">Solo en SUNAT</p>
+                            <p class="font-semibold text-danger">{{ comparacion.resumen.faltan_en_erp }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase text-gray-400">Solo en el ERP</p>
+                            <p class="font-semibold text-danger">{{ comparacion.resumen.faltan_en_sunat }}</p>
+                        </div>
+                    </div>
+
+                    <div v-if="comparacion.faltan_en_erp && comparacion.faltan_en_erp.length" class="mt-4">
+                        <h5 class="text-sm font-semibold text-gray-800 dark:text-white">SUNAT tiene y el ERP no</h5>
+                        <ul class="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                            <li v-for="item in comparacion.faltan_en_erp" :key="'erp-' + item.clave" class="flex flex-wrap gap-x-2">
+                                <span class="font-semibold">{{ item.numero }}</span>
+                                <span class="text-xs text-gray-500">{{ item.fecha }}</span>
+                                <span class="text-xs text-gray-500">{{ item.nombre }}</span>
+                                <span class="text-xs text-gray-500">{{ item.moneda }} {{ item.total }}</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div v-if="comparacion.faltan_en_sunat && comparacion.faltan_en_sunat.length" class="mt-4">
+                        <h5 class="text-sm font-semibold text-gray-800 dark:text-white">El ERP tiene y SUNAT no</h5>
+                        <ul class="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                            <li v-for="item in comparacion.faltan_en_sunat" :key="'sunat-' + item.clave" class="flex flex-wrap gap-x-2">
+                                <span class="font-semibold">{{ item.numero }}</span>
+                                <span class="text-xs text-gray-500">{{ item.fecha }}</span>
+                                <span class="text-xs text-gray-500">{{ item.nombre }}</span>
+                                <span class="text-xs text-gray-500">{{ item.moneda }} {{ item.total }}</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div v-if="comparacion.diferencias && comparacion.diferencias.length" class="mt-4">
+                        <h5 class="text-sm font-semibold text-gray-800 dark:text-white">Diferencias de datos</h5>
+                        <div class="table-responsive mt-2 max-h-72">
+                            <table class="table-hover w-full text-sm">
+                                <thead>
+                                    <tr class="border-t border-white-light text-left dark:border-dark">
+                                        <th class="px-3 py-2">Comprobante</th>
+                                        <th class="px-3 py-2">Campo</th>
+                                        <th class="px-3 py-2">SUNAT</th>
+                                        <th class="px-3 py-2">ERP</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr
+                                        v-for="(diferencia, index) in comparacion.diferencias"
+                                        :key="'dif-' + index"
+                                        class="border-t border-white-light dark:border-dark"
+                                    >
+                                        <td class="px-3 py-2 font-semibold text-gray-800 dark:text-white">{{ diferencia.numero }}</td>
+                                        <td class="px-3 py-2 text-gray-600 dark:text-gray-300">{{ diferencia.campo_etiqueta }}</td>
+                                        <td class="px-3 py-2 text-gray-500">{{ diferencia.sunat || '—' }}</td>
+                                        <td class="px-3 py-2 text-gray-500">{{ diferencia.erp || '—' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p v-if="comparacion.truncado" class="mt-2 text-xs text-gray-400">
+                            La lista se corta en las primeras diferencias; el conteo del resumen es el total.
+                        </p>
+                    </div>
+                </div>
+
+                <div v-if="ultimoEnvio" class="mt-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span
+                            class="badge"
+                            :class="ultimoEnvio.procesado ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'"
+                        >
+                            {{ ultimoEnvio.estado_etiqueta || 'En proceso' }}
+                        </span>
+                        <span class="text-xs text-gray-500">Ticket {{ ultimoEnvio.ticket }}</span>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ ultimoEnvio.message }}</p>
                 </div>
             </div>
 

@@ -446,11 +446,21 @@ const enviarSunat = async (documentData) => {
             route("saledocuments_send", [documentData.id, documentData.invoice_type_doc])
         );
 
+        if (data.manual) {
+            // Sin cola automática: el comprobante queda pendiente de reenvío
+            // manual y se muestra el error original.
+            window.alertaSistema(
+                "No se pudo enviar a SUNAT",
+                data.message,
+                "error",
+                { duration: 0 }
+            );
+            return;
+        }
+
         window.alertaSistema(
             data.success ? "Respuesta de SUNAT" : "SUNAT rechazó el comprobante",
-            data.success
-                ? `${data.message}${data.queued ? " El envío quedó en la cola de reintento." : ""}`
-                : `Código ${data.code}: ${data.message}`,
+            data.success ? data.message : `Código ${data.code}: ${data.message}`,
             data.success ? "success" : "error"
         );
     } catch (error) {

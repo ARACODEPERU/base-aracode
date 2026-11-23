@@ -667,8 +667,7 @@ class SaleDocumentController extends Controller
                 $result = $factura->create($id);
                 break;
             case '03':
-                $boleta = new Boleta;
-                // dd($boleta);
+                $boleta = app(Boleta::class);
                 $result = $boleta->create($id);
                 break;
             case '07':
@@ -688,8 +687,6 @@ class SaleDocumentController extends Controller
 
         return response()->json([
             'success' => $result['success'],
-            // Enviado a la cola de reintento por falla de red de SUNAT.
-            'queued' => $result['queued'] ?? false,
             // 1033: el comprobante posiblemente ya está registrado.
             'duplicate' => $result['duplicate'] ?? false,
             // Fallo de SUNAT: queda pendiente y se reenvía manualmente.

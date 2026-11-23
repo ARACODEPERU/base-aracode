@@ -33,6 +33,7 @@ class PersonUserPersistenceVerifierTest extends TestCase
             $table->string('number')->nullable();
             $table->string('email')->nullable();
             $table->string('full_name')->nullable();
+            $table->boolean('is_client')->nullable();
             $table->timestamps();
         });
 
@@ -41,6 +42,7 @@ class PersonUserPersistenceVerifierTest extends TestCase
             $table->string('name')->nullable();
             $table->string('email')->nullable();
             $table->unsignedBigInteger('person_id')->nullable();
+            $table->boolean('status')->nullable();
             $table->string('password')->nullable();
             $table->timestamps();
         });
@@ -99,8 +101,61 @@ class PersonUserPersistenceVerifierTest extends TestCase
         $this->assertSame((int) $person->id, (int) $userRow->person_id);
     }
 
+    public function test_acepta_booleanos_guardados_como_cero_en_la_bd(): void
+    {
+        $person = (new Person())->setConnection(self::CONNECTION)->newQuery()->create([
+            'number' => '12345678',
+            'is_client' => true,
+        ]);
+        $user = (new User())->setConnection(self::CONNECTION)->newQuery()->create([
+            'name' => 'Persona',
+            'email' => 'persona@example.com',
+        ]);
+
+        PersonUserPersistenceVerifier::verify(
+            $person,
+            $user,
+            ['is_client' => false],
+            ['name' => 'Persona', 'email' => 'persona@example.com']
+        );
+
+        $personRow = DB::connection(self::CONNECTION)->table('people')->where('id', $person->id)->first(['is_client']);
+        $this->assertSame(0, (int) $personRow->is_client);
+    }
+
+    public function test_acepta_status_verdadero_guardado_como_uno_en_usuario(): void
+    {
+        $person = (new Person())->setConnection(self::CONNECTION)->newQuery()->create([
+            'number' => '12345678',
+        ]);
+        $user = (new User())->setConnection(self::CONNECTION)->newQuery()->create([
+            'name' => 'Persona',
+            'email' => 'persona@example.com',
+        ]);
+
+        PersonUserPersistenceVerifier::verify(
+            $person,
+            $user,
+            [],
+            ['status' => true]
+        );
+
+        $userRow = DB::connection(self::CONNECTION)->table('users')->where('id', $user->id)->first(['status']);
+        $this->assertSame(1, (int) $userRow->status);
+    }
+
     public function test_falla_si_la_fila_de_usuario_no_existe(): void
     {
+        // User usa los traits de Spatie, que borran en model_has_roles y model_has_permissions al eliminar.
+        foreach (['model_has_roles', 'model_has_permissions'] as $pivot) {
+            Schema::connection(self::CONNECTION)->create($pivot, function (Blueprint $table) {
+                $table->unsignedBigInteger('role_id')->nullable();
+                $table->unsignedBigInteger('permission_id')->nullable();
+                $table->string('model_type');
+                $table->unsignedBigInteger('model_id');
+            });
+        }
+
         $person = (new Person())->setConnection(self::CONNECTION)->newQuery()->create([
             'number' => '12345678',
         ]);

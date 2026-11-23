@@ -87,10 +87,6 @@ class Kernel extends ConsoleKernel
                     ->dailyAt('07:30')
                     ->timezone('America/Lima');
 
-        // El reenvío de comprobantes con error de SUNAT es manual. El comando
-        // `php artisan sunat:retry-queue` queda disponible para ejecutarlo a mano,
-        // pero no se programa para no reenviar sin intervención del usuario.
-
         // Consulta asincrona de tickets de resumenes diarios y bajas: SUNAT
         // procesa en segundo plano, asi que el estado se resuelve aqui.
         $schedule->command('sunat:check-tickets')

@@ -111,7 +111,7 @@ class SunatResilienceTest extends TestCase
         ] as [$kind, $technical]) {
             $failure = $this->resilience()->describeFailure($this->exceptionOutcome($kind, $technical));
 
-            $this->assertSame(SunatResilience::FRIENDLY_QUEUED, $failure['friendly'], $kind);
+            $this->assertSame(SunatResilience::FRIENDLY_MANUAL, $failure['friendly'], $kind);
         }
 
         foreach ([
@@ -168,21 +168,11 @@ class SunatResilienceTest extends TestCase
 
     public function test_el_mensaje_amigable_no_expone_errores_tecnicos(): void
     {
-        $mensaje = SunatResilience::FRIENDLY_QUEUED;
+        $mensaje = SunatResilience::FRIENDLY_MANUAL;
 
         $this->assertStringContainsString('se registró correctamente', $mensaje);
         $this->assertStringContainsString('manualmente', $mensaje);
         $this->assertStringNotContainsString('cURL', $mensaje);
         $this->assertStringNotContainsString('Exception', $mensaje);
-    }
-
-    public function test_el_backoff_crece_y_se_acota(): void
-    {
-        $resilience = $this->resilience();
-
-        $this->assertSame(5, $resilience->backoffMinutes(1));
-        $this->assertSame(10, $resilience->backoffMinutes(2));
-        $this->assertSame(20, $resilience->backoffMinutes(3));
-        $this->assertSame(240, $resilience->backoffMinutes(20));
     }
 }

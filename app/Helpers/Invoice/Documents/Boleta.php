@@ -36,6 +36,8 @@ class Boleta
     protected $util;
     protected $mycompany;
 
+    /** @var \App\Helpers\Invoice\Sunat\SunatSendOutcome|null */
+    private $lastOutcome = null;
 
     public function __construct()
     {
@@ -45,15 +47,50 @@ class Boleta
 
     public function create($document_id)
     {
-
+        $this->lastOutcome = null;
         $document = SaleDocument::find($document_id);
 
+        if (! $document instanceof SaleDocument) {
+            return [
+                'success' => false,
+                'duplicate' => false,
+                'manual' => false,
+                'code' => SunatResilience::CODE_CONNECTION,
+                'message' => 'No se encontró el comprobante solicitado.',
+                'notes' => null,
+            ];
+        }
+
+        try {
+            return $this->sendDocument($document);
+        } catch (\Throwable $e) {
+            if (! $this->lastOutcome || ! $this->lastOutcome->isSuccess()) {
+                return app(SunatResilience::class)->markPreparationFailure($document, $e);
+            }
+
+            return [
+                'success' => false,
+                'duplicate' => false,
+                'manual' => false,
+                'code' => SunatResilience::CODE_CONNECTION,
+                'message' => get_class($e).': '.$e->getMessage(),
+                'notes' => null,
+            ];
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function sendDocument(SaleDocument $document): array
+    {
         $invoice = $this->setDocument($document);
 
         // Resiliencia: nunca se propaga una excepción de red a la caja.
         $resilience = app(SunatResilience::class);
         $send = $resilience->send($this->util, $invoice);
         $res = $send['outcome'];
+        $this->lastOutcome = $res;
         $failure = $res->isSuccess() ? null : $resilience->describeFailure($res);
 
         //fecha en la que se envio a sunat el documento
@@ -75,6 +112,8 @@ class Boleta
                 $status = 'Aceptada';
             } elseif ($cdr->getCode() == 2325) {
                 $status = 'Pendiente';
+            } else {
+                $status = 'Rechazada';
             }
             $document->invoice_cdr = $this->util->writeCdr($invoice, $res->getCdrZip());
         } else {
@@ -87,7 +126,6 @@ class Boleta
         }
         // Resultado no exitoso: 1033 se revisa, lo reintentable queda
         // pendiente para reenvío manual y el rechazo de negocio sale de él.
-        $queued = false;
         $duplicate = false;
         $manual = false;
 
@@ -111,7 +149,6 @@ class Boleta
             // Se muestra el error original; no se encola, el reenvío es manual.
             $messageError = $failure['technical'];
             $notes = null;
-            $queued = false;
             $manual = true;
 
             $resilience->markPendingManual($document, $failure['kind'], $failure['technical']);
@@ -124,7 +161,8 @@ class Boleta
                 'technical' => mb_substr((string) $failure['technical'], 0, 500),
             ]);
         } elseif ($res->isSuccess()) {
-            $resilience->markSent($document, (string) $codeError === '0');
+            // Un CDR con observaciones (2325) también es una aceptación.
+            $resilience->markSent($document, $status !== 'Rechazada');
         } elseif ($failure !== null && ! $failure['retryable']) {
             // Rechazo de negocio: no se reintenta solo y sale de la cola.
             $resilience->markSent($document, false);
@@ -138,8 +176,7 @@ class Boleta
         $document->save();
 
         return array(
-            'success' => $res->isSuccess() || $queued,
-            'queued' => $queued,
+            'success' => $res->isSuccess(),
             'duplicate' => $duplicate,
             'manual' => $manual,
             'code' => $codeError,
