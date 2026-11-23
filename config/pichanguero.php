@@ -16,6 +16,10 @@
 |                    esta línea mueve todos los botones «Crear cuenta» del
 |                    sitio (cabecera, portada, pie y llamada final).
 |
+|  - login_url       Inicio de sesión de la plataforma de torneos (la ruta /login
+|                    del mismo subdominio que registro_url). Lo usan los botones
+|                    «Ya tengo cuenta» de la portada.
+|
 |  - app_disponible  La app Android todavía no está publicada. Mientras sea
 |                    false, la landing oculta TODAS las opciones de descarga
 |                    (enlaces «Descargas» de la cabecera y del pie, sección de
@@ -34,6 +38,8 @@ return [
 
     // El `?:` evita que una variable vacía en el .env deje los botones sin destino.
     'registro_url' => env('PICHANGUERO_REGISTRO_URL') ?: 'https://base-aracode.test/register',
+
+    'login_url' => env('PICHANGUERO_LOGIN_URL') ?: 'https://base-aracode.test/login',
 
     'app_disponible' => (bool) env('PICHANGUERO_APP_DISPONIBLE', false),
 

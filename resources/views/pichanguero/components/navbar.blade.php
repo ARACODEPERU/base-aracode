@@ -64,6 +64,10 @@
                         Solicitar demo
                     </a>
 
+                    <a href="{{ config('pichanguero.login_url') }}" class="pg-btn pg-btn-ghost pg-btn-sm">
+                        Ya tengo cuenta
+                    </a>
+
                     @if ($appDisponible)
                         <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-primary pg-btn-sm">
                             Descargar la app
@@ -120,6 +124,10 @@
         <div class="mt-8 grid gap-3">
             <a href="{{ route('pichanguero.contacto') }}" class="pg-btn pg-btn-ghost w-full">
                 Solicitar demo
+            </a>
+
+            <a href="{{ config('pichanguero.login_url') }}" class="pg-btn pg-btn-ghost w-full">
+                Ya tengo cuenta
             </a>
 
             @if ($appDisponible)

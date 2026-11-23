@@ -10,6 +10,8 @@
         // «Crear cuenta» en la plataforma de torneos.
         $appDisponible = (bool) config('pichanguero.app_disponible', false);
         $registroUrl = config('pichanguero.registro_url');
+        // Inicio de sesión de quien ya tiene cuenta en la plataforma de torneos.
+        $loginUrl = config('pichanguero.login_url');
     @endphp
 
     @include('pichanguero.components.navbar')
@@ -66,6 +68,7 @@
                             </a>
                         @endif
                         <a href="#como-funciona" class="pg-btn pg-btn-ghost pg-btn-lg">Ver cómo funciona</a>
+                        <a href="{{ $loginUrl }}" target="_blank" rel="noopener" class="pg-btn pg-btn-ghost pg-btn-lg">Ya tengo cuenta</a>
                     </div>
 
                     <ul class="pg-hero-facts">
@@ -507,6 +510,9 @@
                         Solicitar demo
                     </a>
                 </div>
+                <p class="pg-closing-note">
+                    ¿Ya tienes una cuenta? <a href="{{ $loginUrl }}" target="_blank" rel="noopener" class="pg-link">Inicia sesión</a>
+                </p>
                 <p class="pg-closing-note">Los equipos, marcadores y estadísticas de la interfaz son de demostración.</p>
             </div>
         </div>
