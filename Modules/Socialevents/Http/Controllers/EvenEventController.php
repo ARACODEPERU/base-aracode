@@ -20,6 +20,7 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Modules\Socialevents\Entities\EvenEventExhibitor;
 use Modules\Socialevents\Entities\EvenEventLocal;
 use Modules\Socialevents\Entities\EvenTicketType;
@@ -117,6 +118,9 @@ class EvenEventController extends Controller
         $days = Carbon::parse($ds)->diffInDays(Carbon::parse($de));
         $exhibitors = $this->organizerExhibitorsForSave($sports, $request);
 
+        // Se guarda la imagen antes de crear el torneo: si falla, no queda un torneo sin imagen.
+        $imagePath = $request->get('image1') ? $this->storeEventImage($request->get('image1')) : null;
+
         $event = EvenEvent::create([
             'organization_id' => $sports->sportsMode() ? ($sports->isSuperAdmin($request->user()) ? $sports->legacyOrganizationId() : $sports->organizationId($request->user())) : null,
             'category_id' => $sports->sportsMode() ? $sports->sportsCategoryId() : $request->get('category_id'),
@@ -130,7 +134,8 @@ class EvenEventController extends Controller
             'tickets_quantity' => $request->get('tickets_quantity'),
             'status' => 'PE',
             'broadcast' => $request->get('broadcast') ? true : false,
-            'tickets_available' => $request->get('tickets_quantity')
+            'tickets_available' => $request->get('tickets_quantity'),
+            'image1' => $imagePath,
         ]);
 
 
@@ -152,42 +157,6 @@ class EvenEventController extends Controller
                     'exhibitor_id' => $exhibitor
                 ]);
             }
-        }
-
-        $path = null;
-        $destination = 'uploads/eventos/events';
-        $base64Image = $request->get('image1');
-        if ($base64Image) {
-            if (!Storage::exists($destination)) {
-                Storage::makeDirectory($destination, 0755, true);
-            }
-            try {
-                $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
-                if (PHP_OS == 'WINNT') {
-                    $tempFile = tempnam(sys_get_temp_dir(), 'img');
-                } else {
-                    $tempFile = tempnam('/var/www/html/img_temp', 'img');
-                }
-                //dd($tempFile);
-                file_put_contents($tempFile, $fileData);
-                $mime = mime_content_type($tempFile);
-
-                $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
-                $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
-
-                if ($file) {
-                    $original_name = strtolower(trim($file->getClientOriginalName()));
-                    $original_name = str_replace(" ", "_", $original_name);
-                    $extension = $file->getClientOriginalExtension();
-                    $file_name = date('YmdHis') . '.' . $extension;
-                    $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
-                }
-            } catch (\Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException $e) {
-                dd($e->getMessage());
-            }
-
-            $event->image1 = $path;
-            $event->save();
         }
 
         return to_route('even_eventos_list');
@@ -263,6 +232,9 @@ class EvenEventController extends Controller
         $days = Carbon::parse($ds)->diffInDays(Carbon::parse($de));
         $exhibitors = $this->organizerExhibitorsForSave($sports, $request);
 
+        // Si llega una imagen nueva se guarda antes de actualizar: si falla, no se cambia nada del torneo.
+        $imagePath = $request->get('image1') ? $this->storeEventImage($request->get('image1')) : null;
+
         $event->update([
             'category_id' => $sports->sportsMode() ? $sports->sportsCategoryId() : $request->get('category_id'),
             'title' => $request->get('title'),
@@ -274,8 +246,8 @@ class EvenEventController extends Controller
             'number_days'   => $days + 1,
             'tickets_quantity' => $request->get('tickets_quantity'),
             'broadcast' => $request->get('broadcast') ? true : false,
-            'tickets_available' => $request->get('tickets_quantity')
-        ]);
+            'tickets_available' => $request->get('tickets_quantity'),
+        ] + ($imagePath ? ['image1' => $imagePath] : []));
 
         EvenEventLocal::where('event_id', $event->id)->delete();
         EvenEventExhibitor::where('event_id', $event->id)->delete();
@@ -300,42 +272,46 @@ class EvenEventController extends Controller
             }
         }
 
-        $path = $request->get('image1_preview');
-        $destination = 'uploads/eventos/events';
-        $base64Image = $request->get('image1');
-        if ($base64Image) {
-            if (!Storage::exists($destination)) {
-                Storage::makeDirectory($destination, 0755, true);
-            }
-            try {
-                $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
-                if (PHP_OS == 'WINNT') {
-                    $tempFile = tempnam(sys_get_temp_dir(), 'img');
-                } else {
-                    $tempFile = tempnam('/var/www/html/img_temp', 'img');
-                }
+        return to_route('even_eventos_list');
+    }
 
-                file_put_contents($tempFile, $fileData);
-                $mime = mime_content_type($tempFile);
-
-                $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
-                $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
-
-                if ($file) {
-                    $original_name = strtolower(trim($file->getClientOriginalName()));
-                    $original_name = str_replace(" ", "_", $original_name);
-                    $extension = $file->getClientOriginalExtension();
-                    $file_name = date('YmdHis') . '.' . $extension;
-                    $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
-                }
-                $event->image1 = $path;
-                $event->save();
-            } catch (\Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException $e) {
-                dd($e->getMessage());
-            }
+    /**
+     * Guarda la imagen del torneo recibida en base64 y devuelve su ruta relativa al disco public.
+     *
+     * Usa el directorio temporal del sistema (sys_get_temp_dir), y lanza una
+     * ValidationException en 'image1' si la imagen no es válida o no se puede guardar.
+     */
+    private function storeEventImage(string $base64Image): string
+    {
+        $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image), true);
+        if ($fileData === false || $fileData === '') {
+            throw ValidationException::withMessages(['image1' => 'La imagen del torneo no es válida. Vuelve a seleccionarla.']);
         }
 
-        return to_route('even_eventos_list');
+        $tempFile = tempnam(sys_get_temp_dir(), 'img');
+        if ($tempFile === false || file_put_contents($tempFile, $fileData) === false) {
+            throw ValidationException::withMessages(['image1' => 'No se pudo preparar la imagen del torneo en el servidor. Inténtalo de nuevo.']);
+        }
+
+        try {
+            $mime = mime_content_type($tempFile);
+            if (!in_array($mime, ['image/png', 'image/jpeg', 'image/webp', 'image/gif'], true)) {
+                throw ValidationException::withMessages(['image1' => 'El archivo del torneo debe ser una imagen PNG, JPG, WEBP o GIF.']);
+            }
+
+            $destination = 'uploads/eventos/events';
+            $extension = $mime === 'image/jpeg' ? 'jpg' : substr($mime, strlen('image/'));
+            $fileName = date('YmdHis') . '-' . uniqid() . '.' . $extension;
+
+            $path = Storage::disk('public')->putFileAs($destination, new UploadedFile($tempFile, $fileName, $mime, null, true), $fileName);
+            if ($path === false) {
+                throw ValidationException::withMessages(['image1' => 'No se pudo guardar la imagen del torneo en el almacenamiento. Inténtalo de nuevo.']);
+            }
+
+            return $path;
+        } finally {
+            @unlink($tempFile);
+        }
     }
 
     /**
