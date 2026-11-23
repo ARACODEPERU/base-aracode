@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
-import { AYUDA_SISTEMA, buscarTemas, guiasDePantalla, ubicacionActual } from './catalogo';
+import { AYUDA_SISTEMA, buscarTemas, guiasDeModulo, guiasDePantalla, ubicacionActual } from './catalogo';
 
 /**
  * Aracodito — ayuda global del sistema.
@@ -19,6 +19,16 @@ import { AYUDA_SISTEMA, buscarTemas, guiasDePantalla, ubicacionActual } from './
  */
 const page = usePage();
 
+// Cuando el botón «volver arriba» del layout está visible, el botón de ayuda
+// sube para no taparlo.
+const props = defineProps({
+    elevado: { type: Boolean, default: false },
+});
+
+// Sprite del personaje de Aracodito (mismo dibujo que el widget). El widget
+// global ya está cargado desde el layout, así que se pide al montar.
+const personaje = window.Aracodito?.getSprite?.(window.Aracodito?.getStyle?.()) || '';
+
 const abierto = ref(false);
 const consulta = ref('');
 const temaActivo = ref(null);
@@ -29,7 +39,8 @@ const errorIA = ref('');
 const ruta = computed(() => String(page.url || '/').split('?')[0]);
 const permisos = computed(() => page.props.auth?.permissions || []);
 const ubicacion = computed(() => ubicacionActual(ruta.value, permisos.value));
-const guias = computed(() => guiasDePantalla(ruta.value));
+// Guías de la pantalla y del módulo en el que está la persona (p. ej. Torneos).
+const guias = computed(() => [...guiasDeModulo(ruta.value), ...guiasDePantalla(ruta.value)]);
 
 // El servidor calcula el acceso: rol habilitado por el administrador y, en
 // el rol admin, su interruptor personal del perfil.
@@ -244,26 +255,16 @@ watch(ruta, () => {
         <!-- Se monta en <body>: ninguna capa del layout (transform, overflow
              o z-index) puede tapar el panel ni bloquear sus botones. -->
         <Teleport to="body">
-        <!-- Botón flotante: presente en todas las pantallas del sistema -->
+        <!-- Botón flotante: Aracodito pequeño que espera tu pregunta -->
         <button
             type="button"
-            class="aracodito-ayuda__boton fixed bottom-6 right-6 z-[9997] flex h-14 items-center gap-2 rounded-full px-4 text-sm font-semibold text-white shadow-xl transition hover:scale-[1.03] focus:outline-none focus:ring-2 focus:ring-white/60"
+            :class="props.elevado ? 'bottom-24' : 'bottom-6'"
+            class="aracodito-ayuda__boton fixed right-6 z-[9997] h-16 w-16 p-0 focus:outline-none"
             aria-label="Abrir la ayuda de Aracodito"
             :aria-expanded="abierto"
             @click="abierto ? cerrar() : abrir()"
-        >
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-                <rect x="6" y="10" width="20" height="15" rx="5" fill="#ffffff" />
-                <rect x="6" y="10" width="20" height="15" rx="5" stroke="#0b1f3a" stroke-width="1.5" />
-                <circle cx="12.5" cy="17.5" r="2.1" fill="#0b1f3a" />
-                <circle cx="19.5" cy="17.5" r="2.1" fill="#0b1f3a" />
-                <path d="M12.5 22h7" stroke="#0b1f3a" stroke-width="1.6" stroke-linecap="round" />
-                <path d="M16 10V5" stroke="#0b1f3a" stroke-width="1.6" stroke-linecap="round" />
-                <circle cx="16" cy="4" r="2" fill="#f59e0b" />
-            </svg>
-            <span class="hidden sm:inline">Ayuda</span>
-            <span class="sm:hidden">?</span>
-        </button>
+            v-html="personaje"
+        ></button>
 
         <!-- Panel de ayuda -->
         <div
@@ -388,9 +389,10 @@ watch(ruta, () => {
 </template>
 
 <style scoped>
-/* Botón con la identidad de Aracodito (azul del asistente). */
+/* El botón es solo el personaje: sin fondo ni borde de píldora. */
 .aracodito-ayuda__boton {
-    background: linear-gradient(135deg, #2196f3 0%, #0b1f3a 100%);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: transparent;
+    border: 0;
+    filter: drop-shadow(3px 3px 0 var(--aracodito-pixel-shadow, rgba(0, 0, 0, 0.35)));
 }
 </style>

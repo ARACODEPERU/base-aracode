@@ -476,6 +476,66 @@
     animation: aracodito-float 3.2s steps(2, end) infinite;
 }
 
+/* Botón de ayuda: Aracodito pequeño que flota y espera tu pregunta.
+   Reutiliza las mismas partes del sprite (cabeza, ojos, brazos). */
+/* Movimiento continuo (sin pasos): respiración suave y flotación lenta. */
+.aracodito-ayuda__boton svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    image-rendering: pixelated;
+    transform-origin: 50% 100%;
+    animation: aracodito-espera-respira 4.2s ease-in-out infinite;
+}
+
+/* Espera: el brazo derecho se mece despacio, como diciendo «te escucho». */
+.aracodito-ayuda__boton .aracodito__arm--right {
+    animation: aracodito-arm-espera 4.2s ease-in-out infinite;
+}
+
+/* La cabeza acompaña al brazo con un giro leve y desfasado. */
+.aracodito-ayuda__boton .aracodito__head {
+    animation: aracodito-head-espera 5.1s ease-in-out infinite;
+}
+
+@keyframes aracodito-espera-respira {
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-3px) scale(1.02);
+    }
+}
+
+@keyframes aracodito-arm-espera {
+    0%,
+    100% {
+        transform: rotate(-52deg);
+    }
+    50% {
+        transform: rotate(-60deg);
+    }
+}
+
+@keyframes aracodito-head-espera {
+    0%,
+    100% {
+        transform: rotate(-1deg);
+    }
+    50% {
+        transform: rotate(2deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aracodito-ayuda__boton svg,
+    .aracodito-ayuda__boton .aracodito__arm--right,
+    .aracodito-ayuda__boton .aracodito__head {
+        animation: none;
+    }
+}
+
 .aracodito__pixel-grid {
     pointer-events: none;
 }

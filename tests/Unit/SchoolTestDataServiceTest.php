@@ -107,6 +107,7 @@ beforeEach(function () {
     Schema::create('aca_school_levels', function (Blueprint $tabla) {
         $tabla->id();
         $tabla->unsignedBigInteger('school_id');
+        $tabla->unsignedBigInteger('year_id');
         $tabla->string('code');
         $tabla->string('name');
         $tabla->unsignedSmallInteger('sort_order')->default(0);
@@ -118,6 +119,7 @@ beforeEach(function () {
     Schema::create('aca_school_grades', function (Blueprint $tabla) {
         $tabla->id();
         $tabla->unsignedBigInteger('school_id');
+        $tabla->unsignedBigInteger('year_id');
         $tabla->unsignedBigInteger('level_id');
         $tabla->string('name');
         $tabla->unsignedSmallInteger('sort_order')->default(0);
@@ -128,6 +130,7 @@ beforeEach(function () {
     Schema::create('aca_school_sections', function (Blueprint $tabla) {
         $tabla->id();
         $tabla->unsignedBigInteger('school_id');
+        $tabla->unsignedBigInteger('year_id');
         $tabla->unsignedBigInteger('grade_id');
         $tabla->string('name');
         $tabla->unsignedSmallInteger('capacity')->default(30);
@@ -343,18 +346,19 @@ it('borra lo de prueba y lo generado sin tocar los datos reales', function () {
     $servicio = servicioModoPrueba();
 
     // Datos reales del colegio (no los del modo prueba).
-    $realLevel = DB::table('aca_school_levels')->insertGetId([
-        'school_id' => 1, 'code' => 'secundaria', 'name' => 'Secundaria', 'sort_order' => 1, 'status' => true,
-    ]);
-    $realGrade = AcaSchoolGrade::create(['school_id' => 1, 'level_id' => $realLevel, 'name' => 'REAL 1°', 'sort_order' => 1, 'status' => true]);
-    $realSection = AcaSchoolSection::create(['school_id' => 1, 'grade_id' => $realGrade->id, 'name' => 'REAL A', 'capacity' => 30, 'shift' => 'manana', 'status' => true]);
-    $realPerson = Person::create(['document_type_id' => '0', 'number' => 'REAL0001', 'names' => 'Real', 'father_lastname' => 'Real', 'mother_lastname' => 'Real', 'short_name' => 'Real', 'full_name' => 'Real Real Real', 'gender' => 'M', 'status' => true, 'country_id' => 1]);
-    $realStudent = AcaSchoolStudent::create(['school_id' => 1, 'person_id' => $realPerson->id, 'student_code' => 'REAL-0001', 'status' => true]);
+    // El año real va primero: niveles, grados y secciones ahora exigen year_id.
     $realYearId = DB::table('aca_school_years')->insertGetId([
         'school_id' => 1, 'year' => (int) now()->format('Y'), 'status' => 'active',
         'created_at' => now(), 'updated_at' => now(),
     ]);
     $realYear = AcaSchoolYear::find($realYearId);
+    $realLevel = DB::table('aca_school_levels')->insertGetId([
+        'school_id' => 1, 'year_id' => $realYear->id, 'code' => 'secundaria', 'name' => 'Secundaria', 'sort_order' => 1, 'status' => true,
+    ]);
+    $realGrade = AcaSchoolGrade::create(['school_id' => 1, 'year_id' => $realYear->id, 'level_id' => $realLevel, 'name' => 'REAL 1°', 'sort_order' => 1, 'status' => true]);
+    $realSection = AcaSchoolSection::create(['school_id' => 1, 'year_id' => $realYear->id, 'grade_id' => $realGrade->id, 'name' => 'REAL A', 'capacity' => 30, 'shift' => 'manana', 'status' => true]);
+    $realPerson = Person::create(['document_type_id' => '0', 'number' => 'REAL0001', 'names' => 'Real', 'father_lastname' => 'Real', 'mother_lastname' => 'Real', 'short_name' => 'Real', 'full_name' => 'Real Real Real', 'gender' => 'M', 'status' => true, 'country_id' => 1]);
+    $realStudent = AcaSchoolStudent::create(['school_id' => 1, 'person_id' => $realPerson->id, 'student_code' => 'REAL-0001', 'status' => true]);
     $realEnrollment = DB::table('aca_school_enrollments')->insertGetId([
         'school_id' => 1, 'year_id' => $realYear->id, 'student_id' => $realStudent->id, 'section_id' => $realSection->id,
         'type' => 'nueva', 'status' => 'activo', 'enrollment_date' => now()->toDateString(), 'created_at' => now(), 'updated_at' => now(),

@@ -124,6 +124,120 @@ const SECCIONES_POR_RUTA = [
 ];
 
 /**
+ * Guías por módulo, con los pasos reales de cada pantalla importante.
+ * Cada tema indica la pantalla (ruta del menú), los pasos y el aviso que
+ * confirma que el cambio quedó guardado. Se muestran solo si la persona
+ * está dentro de ese módulo (según la ruta actual).
+ */
+const GUIAS_POR_MODULO = [
+    {
+        // Gestión deportiva: torneos, equipos, jugadores y partidos.
+        prueba: /^\/socialevents(\/|$)/,
+        temas: [
+            {
+                id: 'torneo-editar-jugador',
+                pregunta: '¿Cómo edito la información de un jugador?',
+                palabras: ['editar', 'jugador', 'cambiar', 'datos', 'jugadora', 'modificar', 'corregir'],
+                respuesta:
+                    'Ve a Ediciones, abre la edición del torneo, entra a «Equipos» y pulsa el ícono de «Jugadores» del equipo. En la fila del jugador pulsa «Editar datos». En la ventana «Editar jugador» corrige los campos y pulsa «Guardar cambios». Luego confirma con «Sí, guardar». El cambio quedó guardado cuando aparece el aviso «Enhorabuena: Jugador actualizado correctamente», y la lista se recarga sola.',
+                url: '/socialevents/editions',
+            },
+            {
+                id: 'torneo-agregar-jugador',
+                pregunta: '¿Cómo agrego un jugador a un equipo?',
+                palabras: ['agregar', 'añadir', 'inscribir', 'jugador', 'nuevo jugador', 'buscar jugador'],
+                respuesta:
+                    'Ve a Ediciones, abre la edición del torneo, entra a «Equipos» y pulsa el ícono de «Jugadores» del equipo. En la lista de jugadores pulsa «Buscar». En la ventana de búsqueda escribe el número de documento o los nombres para encontrar a la persona. Si no existe, también puedes registrar un jugador nuevo ahí mismo: completa sus datos y pulsa «Guardar»; el aviso «Enhorabuena: Se registró correctamente» confirma que la persona quedó creada. Luego pulsa «Seleccionar» y después «Agregar al equipo».',
+                url: '/socialevents/editions',
+            },
+            {
+                id: 'torneo-fotochet',
+                pregunta: '¿Cómo imprimo el fotochet de los jugadores?',
+                palabras: ['fotochet', 'credencial', 'carnet', 'imprimir jugador', 'tarjeta', 'pdf'],
+                respuesta:
+                    'Ve a Ediciones, abre la edición del torneo, entra a «Equipos» y pulsa el ícono de «Jugadores» del equipo. En la fila del jugador pulsa «Imprimir fotochet». Para varios, marca sus casillas y pulsa «Imprimir carnets seleccionados» en la parte superior.',
+                url: '/socialevents/editions',
+            },
+            {
+                id: 'torneo-crear-equipo',
+                pregunta: '¿Cómo creo un equipo?',
+                palabras: ['crear equipo', 'nuevo equipo', 'registrar equipo', 'equipo'],
+                respuesta:
+                    'Ve a Eventos → Equipos y pulsa el botón para crear uno nuevo. Escribe el nombre del equipo (es obligatorio), sube el escudo si lo tienes o usa la generación con IA, y pulsa «Guardar». Verás el aviso de confirmación cuando el equipo quede creado.',
+                url: '/socialevents/teams',
+            },
+            {
+                id: 'torneo-agregar-equipo-torneo',
+                pregunta: '¿Cómo agrego un equipo a un torneo?',
+                palabras: ['equipo', 'torneo', 'inscribir equipo', 'agregar equipo', 'edicion'],
+                respuesta:
+                    'Ve a Ediciones, abre la edición del torneo y entra a «Equipos». Elige el equipo en el selector de la parte superior y pulsa «Agregar». El equipo aparece en la tabla de la edición.',
+                url: '/socialevents/editions',
+            },
+            {
+                id: 'torneo-puntos-bonus',
+                pregunta: '¿Cómo doy puntos extra (bonus) a un equipo?',
+                palabras: ['bonus', 'bonificacion', 'puntos extra', 'puntos', 'sancion', 'tabla'],
+                respuesta:
+                    'Ve a Ediciones, abre la edición del torneo, entra a «Equipos» y pulsa «Puntos extra». Elige los equipos, escribe los puntos y el motivo, y pulsa «Asignar puntos». El registro queda en el historial de puntos extra de la misma pantalla.',
+                url: '/socialevents/editions',
+            },
+            {
+                id: 'torneo-reporte-temporada',
+                pregunta: '¿Dónde veo la tabla y el podio del torneo?',
+                palabras: ['tabla', 'podio', 'posiciones', 'ranking', 'reporte', 'temporada', 'campeon'],
+                respuesta:
+                    'Entra a Eventos → «Reporte de temporada», elige el torneo y su edición. Ahí ves la tabla de posiciones, el podio, el historial y los rankings. Para imprimirlo pulsa «Exportar PDF» arriba, marca las secciones que quieres en la ventana «Secciones para imprimir» y pulsa «Descargar PDF».',
+                url: '/socialevents/reports/season',
+            },
+            {
+                id: 'torneo-crear-partido',
+                pregunta: '¿Cómo registro un partido?',
+                palabras: ['partido', 'match', 'fixture', 'programar', 'resultado', 'marcador'],
+                respuesta:
+                    'Ve a Ediciones, abre la edición del torneo y entra a «Partidos». Pulsa «Nuevo» para crear el partido. Para cargar el marcador, pulsa el botón de resultado del partido, completa los datos y pulsa «Guardar resultados»; el aviso «Enhorabuena» confirma que quedó registrado.',
+                url: '/socialevents/editions',
+            },
+            {
+                id: 'torneo-crear-evento',
+                pregunta: '¿Cómo creo un torneo nuevo?',
+                palabras: ['crear torneo', 'nuevo torneo', 'evento', 'torneo', 'nueva edicion', 'edicion'],
+                respuesta:
+                    'Ve a Eventos → Torneos (en el menú general esta sección se llama Eventos) y pulsa «Nuevo torneo». Completa nombre, categoría y fechas, y pulsa «Crear torneo».',
+                url: '/socialevents/events',
+            },
+            {
+                id: 'torneo-categorias',
+                pregunta: '¿Dónde configuro las categorías?',
+                palabras: ['categoria', 'categorías', 'categorias', 'disciplina', 'deporte'],
+                respuesta:
+                    'Entra a Eventos → Categorías (esta sección aparece en el menú del modo general; en modo deportivo está oculta). Ahí creas o editas las categorías que usarán tus torneos y guardas cada cambio con «Guardar».',
+                url: '/socialevents/categories',
+            },
+            {
+                id: 'torneo-locales',
+                pregunta: '¿Dónde registro el complejo o las canchas?',
+                palabras: ['local', 'complejo', 'cancha', 'sede', 'lugar'],
+                respuesta:
+                    'Entra a Eventos → Complejo deportivo (en el menú general se llama Locales). Completa los datos del complejo y pulsa «Guardar».',
+                url: '/socialevents/locales',
+            },
+        ],
+    },
+];
+
+/**
+ * Guías del módulo en el que está la persona según la ruta actual.
+ */
+export function guiasDeModulo(url) {
+    const ruta = rutaNormalizada(url);
+
+    return GUIAS_POR_MODULO.filter((modulo) => modulo.prueba.test(ruta)).flatMap((modulo) =>
+        modulo.temas.map((tema) => ({ ...tema, seccion: 'modulo' }))
+    );
+}
+
+/**
  * Normaliza una dirección para compararla con el menú.
  */
 function rutaNormalizada(url) {
@@ -286,6 +400,7 @@ export function buscarTemas({ permisos = [], ruta = '/', consulta = '', limite =
     }));
 
     const temas = [
+        ...guiasDeModulo(ruta),
         ...AYUDA_SISTEMA,
         ...AYUDA_SALUD_GENERAL,
         ...guiasDePantalla(ruta),

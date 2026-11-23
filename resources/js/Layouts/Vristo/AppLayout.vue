@@ -227,7 +227,7 @@
             </div>
         </div>
         <TreasuryGuide />
-        <AracoditoAyuda />
+        <AracoditoAyuda :elevado="showTopButton" />
         <ChatBox />
         <ForcePinChange />
         <OrganizationAccessAlert />

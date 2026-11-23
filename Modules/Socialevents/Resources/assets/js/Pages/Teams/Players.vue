@@ -11,9 +11,13 @@
     import InlineEditable from '@/Components/InlineEditable.vue';
     import InputError from '@/Components/InputError.vue';
     import IconTrashLines from '@/Components/vristo/icon/icon-trash-lines.vue';
+    import IconPencilPaper from '@/Components/vristo/icon/icon-pencil-paper.vue';
+    import IconPrinter from '@/Components/vristo/icon/icon-printer.vue';
     import { Empty } from 'ant-design-vue';
     import ModalSmall from '@/Components/ModalSmall.vue';
+    import ModalLargeX from '@/Components/ModalLargeX.vue';
     import CropperImage from '@/Components/CropperImage.vue';
+    import ImageCompressorjs from '@/Components/ImageCompressorjs.vue';
 
     const props = defineProps({
         equipo: {
@@ -115,6 +119,117 @@
 
     const onCropImage = (base64) => {
         formImage.image = base64;
+    }
+
+    // Edición de los datos personales del jugador (nombres, documento, etc.)
+    const formEdit = useForm({
+        edition_id: props.edicion.id,
+        team_id: props.equipo.id,
+        player_id: null,
+        names: '',
+        father_lastname: '',
+        mother_lastname: '',
+        document_type_id: null,
+        number: '',
+        birthdate: '',
+        image: '',
+    });
+
+    const displayModalEdit = ref(false);
+
+    const openModalEdit = (player) => {
+        formEdit.clearErrors();
+        formEdit.player_id = player.person_id;
+        formEdit.names = player.person.names ?? '';
+        formEdit.father_lastname = player.person.father_lastname ?? '';
+        formEdit.mother_lastname = player.person.mother_lastname ?? '';
+        formEdit.document_type_id = player.person.document_type_id ?? null;
+        formEdit.number = player.person.number ?? '';
+        formEdit.birthdate = player.person.birthdate ?? '';
+        formEdit.image = '';
+        displayModalEdit.value = true;
+    }
+
+    // Abre el PDF del fotochet del jugador en una pestaña nueva.
+    const printPlayerCard = async (player) => {
+        try {
+            const response = await axios.get(route('even_ediciones_equipos_player_pdf_card', [props.edicion.id, props.equipo.id, player.person_id]));
+            if (response.data.url) {
+                window.open(response.data.url, '_blank');
+            }
+        } catch (error) {
+            window.alertaSistema('Error', 'No se pudo generar el fotochet.', 'error');
+        }
+    }
+
+    // Jugadores marcados para imprimir sus carnets en un solo PDF A4.
+    const jugadoresSeleccionados = ref([]);
+    const todosSeleccionados = computed(() => props.players.length > 0 && jugadoresSeleccionados.value.length === props.players.length);
+
+    // Marca o desmarca a todos los jugadores de la tabla.
+    const toggleSeleccionarTodos = () => {
+        jugadoresSeleccionados.value = todosSeleccionados.value ? [] : props.players.map((p) => p.person_id);
+    }
+
+    // Genera un PDF A4 con los carnets de los jugadores marcados y lo abre en una pestaña nueva.
+    const printPlayerCardsA4 = async () => {
+        if (jugadoresSeleccionados.value.length === 0) {
+            window.alertaSistema('Atención', 'Selecciona al menos un jugador.', 'warning');
+            return;
+        }
+        try {
+            const response = await axios.post(
+                route('even_ediciones_equipos_players_pdf_cards', [props.edicion.id, props.equipo.id]),
+                { player_ids: jugadoresSeleccionados.value }
+            );
+            if (response.data.url) {
+                window.open(response.data.url, '_blank');
+            }
+        } catch (error) {
+            const mensaje = error.response?.data?.message || 'No se pudieron generar los carnets.';
+            window.alertaSistema('Error', mensaje, 'error');
+        }
+    }
+
+    const closeModalEdit = () => {
+        displayModalEdit.value = false;
+        formEdit.reset();
+        formEdit.clearErrors();
+    }
+
+    // La foto es opcional: solo se envía si el usuario recorta una nueva.
+    const onCropEditImage = (base64) => {
+        formEdit.image = base64;
+    }
+
+    const saveEdit = () => {
+        // Confirmación antes de guardar; el envío al servidor ocurre dentro del mismo diálogo.
+        window.alertaSistema('Editar jugador', '¿Deseas guardar los cambios de este jugador?', 'question', {
+            duration: 0,
+            showCancelButton: true,
+            confirmButtonText: 'Sí, guardar',
+            cancelButtonText: 'Cancelar',
+            showLoaderOnConfirm: true,
+            preConfirm: () => new Promise((resolve, reject) => {
+                formEdit.post(route('even_team_player_person_update'), {
+                    forceFormData: true,
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        resolve(true);
+                    },
+                    onError: () => {
+                        reject(new Error('Revisa los datos del formulario.'));
+                    },
+                });
+            }),
+        }).then((result) => {
+            if (result?.isConfirmed) {
+                closeModalEdit();
+                window.alertaSistema('Enhorabuena', 'Jugador actualizado correctamente', 'success');
+                // Recargar la lista de jugadores
+                router.reload({ only: ['players'] });
+            }
+        });
     }
 
     const saveImage = () => {
@@ -294,6 +409,9 @@
                     </div>
                 </div>
                 <div class="flex items-center justify-end gap-6">
+                    <button @click="printPlayerCardsA4" :disabled="jugadoresSeleccionados.length === 0" class="btn btn-success uppercase text-xs disabled:opacity-50">
+                        Imprimir carnets seleccionados ({{ jugadoresSeleccionados.length }})
+                    </button>
                     <button @click="exportImage" class="btn btn-danger uppercase text-xs">
                         Exportar imagen
                     </button>
@@ -310,6 +428,9 @@
                             <thead class="text-sm text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800">
                                 <tr>
                                     <th class="px-6 py-4 font-medium text-left no-export w-16"></th>
+                                    <th scope="col" class="px-6 py-4 font-medium text-left no-export w-12">
+                                        <input type="checkbox" class="form-checkbox" :checked="todosSeleccionados" @change="toggleSeleccionarTodos" title="Seleccionar todos" />
+                                    </th>
                                     <th scope="col" class="px-6 py-4 font-medium text-left">
                                         Nombres
                                     </th>
@@ -331,16 +452,27 @@
                                 <template v-if="players.length > 0">
                                     <tr v-for="(player, index) in players" :class="index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800'">
                                         <td class="px-6 py-4 no-export">
+                                            <button @click="openModalEdit(player)" v-tippy="{content: 'Editar datos', placement: 'bottom'}" class="text-primary hover:text-primary/80 mr-2">
+                                                <IconPencilPaper class="w-5 h-5" />
+                                            </button>
+                                            <button @click="printPlayerCard(player)" v-tippy="{content: 'Imprimir fotochet', placement: 'bottom'}" class="text-primary hover:text-primary/80 mr-2">
+                                                <IconPrinter class="w-5 h-5" />
+                                            </button>
                                             <button @click="destroyPlayer(player)" v-tippy="{content: 'Eliminar', placement: 'bottom'}" class="text-red-500 hover:text-red-700">
                                                 <IconTrashLines class="w-5 h-5" />
                                             </button>
                                         </td>
-                                        <td scope="row" class="flex items-center px-6 py-4 text-gray-900 dark:text-white whitespace-nowrap">
-                                            <img v-if="player.person.image" class="w-12 h-12 rounded-full cursor-pointer hover:opacity-80 transition" :src="xhttp + 'storage/' + player.person.image" alt="Imagen del jugador" @click="openModalImage(player)">
-                                            <img v-else class="w-12 h-12 rounded-full cursor-pointer hover:opacity-80 transition" src="/img/icon-user.png" alt="Sin imagen" @click="openModalImage(player)">
-                                            <div class="ps-3">
-                                                <div class="text-base font-semibold">{{ player.person.full_name }}</div>
-                                                <div class="font-normal text-gray-500 dark:text-gray-400">{{ player.person.number }}</div>
+                                        <td class="px-6 py-4 no-export">
+                                            <input type="checkbox" class="form-checkbox" :value="player.person_id" v-model="jugadoresSeleccionados" />
+                                        </td>
+                                        <td scope="row" class="px-6 py-4 text-gray-900 dark:text-white whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <img v-if="player.person.image" class="w-12 h-12 rounded-full cursor-pointer hover:opacity-80 transition" :src="xhttp + 'storage/' + player.person.image" alt="Imagen del jugador" @click="openModalImage(player)">
+                                                <img v-else class="w-12 h-12 rounded-full cursor-pointer hover:opacity-80 transition" src="/img/icon-user.png" alt="Sin imagen" @click="openModalImage(player)">
+                                                <div class="ps-3">
+                                                    <div class="text-base font-semibold">{{ player.person.full_name }}</div>
+                                                    <div class="font-normal text-gray-500 dark:text-gray-400">{{ player.person.number }}</div>
+                                                </div>
                                             </div>
                                         </td>
                                         <td class="px-6 py-2">
@@ -405,7 +537,7 @@
                                 </template>
                                 <template v-else>
                                     <tr>
-                                        <td colspan="6" ><Empty :description="'Sin jugadores'" /></td>
+                                        <td colspan="7" ><Empty :description="'Sin jugadores'" /></td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -436,5 +568,66 @@
                 </button>
             </template>
         </ModalSmall>
+
+        <ModalLargeX :show="displayModalEdit" :onClose="closeModalEdit" :icon="'/img/atencion.png'">
+            <template #title>Editar jugador</template>
+            <template #content>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Datos personales: columna izquierda -->
+                    <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 content-start">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold uppercase mb-1">Nombres</label>
+                            <input v-model="formEdit.names" type="text" class="form-input" maxlength="255" />
+                            <InputError :message="formEdit.errors.names" class="mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase mb-1">Apellido paterno</label>
+                            <input v-model="formEdit.father_lastname" type="text" class="form-input" maxlength="255" />
+                            <InputError :message="formEdit.errors.father_lastname" class="mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase mb-1">Apellido materno</label>
+                            <input v-model="formEdit.mother_lastname" type="text" class="form-input" maxlength="255" />
+                            <InputError :message="formEdit.errors.mother_lastname" class="mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase mb-1">Tipo de documento</label>
+                            <select v-model="formEdit.document_type_id" class="form-select">
+                                <option :value="null">Seleccione</option>
+                                <option v-for="documentType in documentTypes" :key="documentType.id" :value="documentType.id">
+                                    {{ documentType.description }}
+                                </option>
+                            </select>
+                            <InputError :message="formEdit.errors.document_type_id" class="mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase mb-1">Número de documento</label>
+                            <input v-model="formEdit.number" type="text" class="form-input" maxlength="20" />
+                            <InputError :message="formEdit.errors.number" class="mt-1" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold uppercase mb-1">Fecha de nacimiento (opcional)</label>
+                            <input v-model="formEdit.birthdate" type="date" class="form-input" />
+                            <InputError :message="formEdit.errors.birthdate" class="mt-1" />
+                        </div>
+                    </div>
+                    <!-- Foto: columna derecha, comprimida en el navegador antes de subir -->
+                    <div class="md:col-span-1">
+                        <label class="block text-xs font-semibold uppercase mb-1">Foto (opcional)</label>
+                        <ImageCompressorjs :onImageCompressed="onCropEditImage" />
+                        <InputError :message="formEdit.errors.image" class="mt-2" />
+                    </div>
+                </div>
+            </template>
+            <template #buttons>
+                <button @click="closeModalEdit" class="btn btn-outline-danger text-xs uppercase" :disabled="formEdit.processing">
+                    Cancelar
+                </button>
+                <button @click="saveEdit" class="btn btn-primary text-xs uppercase" :disabled="formEdit.processing">
+                    <IconBallSoccer v-if="formEdit.processing" class="w-4 h-4 animate-bounce-ball mr-1" />
+                    Guardar cambios
+                </button>
+            </template>
+        </ModalLargeX>
     </AppLayout>
 </template>

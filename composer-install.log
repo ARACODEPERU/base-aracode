@@ -1,0 +1,178 @@
+
+Warning: Module "pdo_sqlite" is already loaded in Unknown on line 0
+Installing dependencies from lock file (including require-dev)
+Verifying lock file contents can be installed on current platform.
+Package operations: 2 installs, 41 updates, 0 removals
+  - Downloading symfony/deprecation-contracts (v3.8.1)
+  - Downloading symfony/routing (v8.1.11)
+  - Downloading symfony/polyfill-php85 (v1.44.0)
+  - Downloading symfony/service-contracts (v3.8.1)
+  - Downloading symfony/event-dispatcher-contracts (v3.8.1)
+  - Downloading symfony/http-foundation (v8.1.11)
+  - Downloading symfony/http-kernel (v8.1.11)
+  - Downloading symfony/finder (v8.1.11)
+  - Downloading symfony/console (v8.1.11)
+  - Downloading ramsey/uuid (4.10.0)
+  - Downloading nunomaduro/termwind (v2.4.1)
+  - Downloading symfony/translation-contracts (v3.8.1)
+  - Downloading symfony/translation (v8.1.11)
+  - Downloading league/uri-interfaces (7.10.0)
+  - Downloading league/uri (7.10.0)
+  - Downloading laravel/serializable-closure (v2.2.0)
+  - Downloading laravel/prompts (v0.3.27)
+  - Downloading guzzlehttp/psr7 (2.13.3)
+  - Downloading laravel/framework (v13.42.0)
+  - Downloading sebastian/version (6.0.2)
+  - Downloading symfony/validator (v6.4.50)
+  - Downloading nelexa/zip (4.1.0)
+  - Downloading greenter/greenter (v5.4.0)
+  - Downloading laravel/mcp (v1.2.1)
+  - Downloading laravel/pint (v1.32.3)
+  - Downloading symfony/yaml (v8.1.11)
+  - Downloading laravel/sail (v1.70.0)
+  - Downloading laravel/sanctum (v4.4.0)
+  - Downloading laravel/tinker (v3.1.0)
+  - Downloading filp/whoops (2.19.3)
+  - Downloading nunomaduro/collision (v8.9.6)
+  - Downloading webmozart/assert (2.5.1)
+  - Downloading doctrine/deprecations (1.2.0)
+  - Downloading phpoffice/wmf (0.2.1)
+  - Downloading phpoffice/phpspreadsheet (5.11.0)
+  - Downloading spatie/browsershot (5.5.0)
+  - Downloading spatie/flare-client-php (1.11.2)
+  - Downloading spatie/image-optimizer (1.10.1)
+  - Downloading spatie/image (3.9.10)
+  - Downloading spatie/laravel-ignition (2.13.0)
+  - Downloading tightenco/ziggy (v2.7.0)
+  - Downloading laminas/laminas-diactoros (3.10.0)
+  0/42 [>---------------------------]   0%
+  5/42 [===>------------------------]  11%
+ 10/42 [======>---------------------]  23%
+ 14/42 [=========>------------------]  33%
+ 19/42 [============>---------------]  45%
+ 21/42 [==============>-------------]  50%
+ 29/42 [===================>--------]  69%
+ 33/42 [======================>-----]  78%
+ 34/42 [======================>-----]  80%
+ 42/42 [============================] 100%
+  - Upgrading symfony/deprecation-contracts (v3.7.1 => v3.8.1): Extracting archive
+  - Upgrading symfony/routing (v8.1.10 => v8.1.11): Extracting archive
+  - Upgrading symfony/polyfill-php85 (v1.43.0 => v1.44.0): Extracting archive
+  - Upgrading symfony/service-contracts (v3.7.3 => v3.8.1): Extracting archive
+  - Upgrading symfony/event-dispatcher-contracts (v3.7.1 => v3.8.1): Extracting archive
+  - Upgrading symfony/http-foundation (v8.1.10 => v8.1.11): Extracting archive
+  - Upgrading symfony/http-kernel (v8.1.10 => v8.1.11): Extracting archive
+  - Upgrading symfony/finder (v8.1.10 => v8.1.11): Extracting archive
+  - Upgrading symfony/console (v8.1.10 => v8.1.11): Extracting archive
+  - Upgrading ramsey/uuid (4.9.4 => 4.10.0): Extracting archive
+  - Upgrading nunomaduro/termwind (v2.4.0 => v2.4.1): Extracting archive
+  - Upgrading symfony/translation-contracts (v3.7.1 => v3.8.1): Extracting archive
+  - Upgrading symfony/translation (v8.1.10 => v8.1.11): Extracting archive
+  - Upgrading league/uri-interfaces (7.9.1 => 7.10.0): Extracting archive
+  - Upgrading league/uri (7.9.1 => 7.10.0): Extracting archive
+  - Upgrading laravel/serializable-closure (v2.1.0 => v2.2.0): Extracting archive
+  - Upgrading laravel/prompts (v0.3.26 => v0.3.27): Extracting archive
+  - Upgrading guzzlehttp/psr7 (2.13.2 => 2.13.3): Extracting archive
+  - Upgrading laravel/framework (v13.39.0 => v13.42.0): Extracting archive
+  - Upgrading sebastian/version (6.0.1 => 6.0.2): Extracting archive
+  - Upgrading symfony/validator (v6.4.49 => v6.4.50): Extracting archive
+  - Upgrading nelexa/zip (4.0.2 => 4.1.0): Extracting archive
+  - Upgrading greenter/greenter (v5.3.0 => v5.4.0): Extracting archive
+  - Installing laravel/mcp (v1.2.1): Extracting archive
+  - Upgrading laravel/pint (v1.32.1 => v1.32.3): Extracting archive
+  - Upgrading symfony/yaml (v8.1.10 => v8.1.11): Extracting archive
+  - Upgrading laravel/sail (v1.69.0 => v1.70.0): Extracting archive
+  - Upgrading laravel/sanctum (v4.3.3 => v4.4.0): Extracting archive
+  - Upgrading laravel/tinker (v3.0.2 => v3.1.0): Extracting archive
+  - Upgrading filp/whoops (2.19.1 => 2.19.3): Extracting archive
+  - Upgrading nunomaduro/collision (v8.9.5 => v8.9.6): Extracting archive
+  - Upgrading webmozart/assert (2.5.0 => 2.5.1): Extracting archive
+  - Upgrading doctrine/deprecations (1.1.6 => 1.2.0): Extracting archive
+  - Installing phpoffice/wmf (0.2.1): Extracting archive
+  - Upgrading phpoffice/phpspreadsheet (5.10.0 => 5.11.0): Extracting archive
+  - Upgrading spatie/browsershot (5.4.2 => 5.5.0): Extracting archive
+  - Upgrading spatie/flare-client-php (1.11.1 => 1.11.2): Extracting archive
+  - Upgrading spatie/image-optimizer (1.10.0 => 1.10.1): Extracting archive
+  - Upgrading spatie/image (3.9.9 => 3.9.10): Extracting archive
+  - Upgrading spatie/laravel-ignition (2.12.1 => 2.13.0): Extracting archive
+  - Upgrading tightenco/ziggy (v2.6.5 => v2.7.0): Extracting archive
+  - Upgrading vonage/nexmo-bridge (0.1.2 => 0.1.2): Extracting archive
+  - Upgrading laminas/laminas-diactoros (3.9.0 => 3.10.0): Extracting archive
+  0/43 [>---------------------------]   0%
+  6/43 [===>------------------------]  13%
+ 10/43 [======>---------------------]  23%
+ 14/43 [=========>------------------]  32%
+ 18/43 [===========>----------------]  41%
+ 23/43 [==============>-------------]  53%
+ 28/43 [==================>---------]  65%
+ 30/43 [===================>--------]  69%
+ 32/43 [====================>-------]  74%
+ 35/43 [======================>-----]  81%
+ 40/43 [==========================>-]  93%
+ 42/43 [===========================>]  97%
+ 43/43 [============================] 100%
+Package vonage/nexmo-bridge is abandoned, you should avoid using it. No replacement was suggested.
+Generating optimized autoload files
+Class Modules\CRM\Emails\ClientHelpEmail located in ./Modules/CRM/Emails_tetetete/ClientHelpEmail.php does not comply with psr-4 autoloading standard (rule: Modules\ => ./Modules). Skipping.
+Class Modules\CRM\Emails\MailwithUserAccount located in ./Modules/CRM/Emails_tetetete/MailwithUserAccount.php does not comply with psr-4 autoloading standard (rule: Modules\ => ./Modules). Skipping.
+Class Modules\CRM\Emails\PersonalizedEmailStudent located in ./Modules/CRM/Emails_tetetete/PersonalizedEmailStudent.php does not comply with psr-4 autoloading standard (rule: Modules\ => ./Modules). Skipping.
+Class QRcode located in ./app/Helpers/Invoice/Vendor/phpqrcode/bindings/tcpdf/qrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class qrstr located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRtools located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRspec located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRimage located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRinputItem located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRinput located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRbitstream located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRsplit located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRrsItem located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRrs located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRmask located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRrsblock located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRrawcode located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRcode located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class FrameFiller located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRencode located in ./app/Helpers/Invoice/Vendor/phpqrcode/phpqrcode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRbitstream located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrbitstream.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class qrstr located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrconst.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRrsblock located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrencode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRrawcode located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrencode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRcode located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrencode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class FrameFiller located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrencode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRencode located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrencode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRimage located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrimage.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRinputItem located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrinput.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRinput located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrinput.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRmask located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrmask.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRrsItem located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrrscode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRrs located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrrscode.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRspec located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrspec.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRsplit located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrsplit.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+Class QRtools located in ./app/Helpers/Invoice/Vendor/phpqrcode/qrtools.php does not comply with psr-4 autoloading standard (rule: App\ => ./app). Skipping.
+> Illuminate\Foundation\ComposerScripts::postAutoloadDump
+> @php artisan package:discover --ansi
+
+  [37;44m INFO [39;49m Discovering packages.  
+
+  barryvdh/laravel-dompdf [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  inertiajs/inertia-laravel [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  intervention/image [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  laravel/breeze [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  laravel/mcp [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  laravel/sail [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  laravel/sanctum [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  laravel/tinker [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  laraveles/spanish [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  nesbot/carbon [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  nunomaduro/collision [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  nunomaduro/termwind [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  nwidart/laravel-modules [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  pestphp/pest-plugin-laravel [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  spatie/laravel-ignition [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  spatie/laravel-permission [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  tightenco/ziggy [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+  yajra/laravel-datatables-oracle [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+
+114 packages you are using are looking for funding.
+Use the `composer fund` command to find out more!
+EXIT=0
