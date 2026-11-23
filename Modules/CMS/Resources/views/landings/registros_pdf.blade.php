@@ -60,8 +60,9 @@
                     <th style="width: 20%">Email</th>
                     <th style="width: 12%">Teléfono</th>
                     <th style="width: 12%">Origen</th>
-                    <th style="width: 20%">UTM</th>
-                    <th style="width: 6%">Asunto</th>
+                    <th style="width: 18%">UTM</th>
+                    <th style="width: 8%">Curso(s) gratis</th>
+                    <th style="width: 16%">Temas de interés</th>
                 </tr>
             </thead>
             <tbody>
@@ -78,6 +79,7 @@
                             @if ($registro->utm_campaign) <br>{{ $registro->utm_campaign }} @endif
                         </td>
                         <td>{{ $registro->subject ?: '—' }}</td>
+                        <td>{{ implode(', ', \Modules\CMS\Support\FreeCourseTopics::etiquetas($registro->interests ?? [])) ?: '—' }}</td>
                     </tr>
                 @endforeach
             </tbody>

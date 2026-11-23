@@ -16,6 +16,7 @@ use Modules\Academic\Entities\AcaCourse;
 use Modules\CMS\Entities\CmsLanding;
 use Modules\CMS\Entities\CmsSubscriber;
 use Modules\CMS\Http\Requests\CmsLandingRequest;
+use Modules\CMS\Support\FreeCourseTopics;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -40,6 +41,11 @@ class OneFreeCourseController extends Controller
             'courses' => $courses,
             'tinykey' => $this->P000010,
             'landingPage' => $landingPage,
+            // Enlace publico del landing: se muestra en el panel para copiarlo y
+            // es la base de todos los enlaces UTM.
+            'publicUrl' => route('cms_free_course_landing', $id),
+            // Vista previa del mismo landing desde el panel: no guarda nada.
+            'previewUrl' => route('cms_landing_course_free_preview', $id),
             // Atribucion de los leads del formulario para los enlaces UTM del landing.
             'utmStats' => $this->getUtmStatsData($landingPage)
         ]);
@@ -333,7 +339,7 @@ class OneFreeCourseController extends Controller
     private function registroColumns(): array
     {
         return [
-            'id', 'created_at', 'full_name', 'email', 'phone', 'subject',
+            'id', 'created_at', 'full_name', 'email', 'phone', 'subject', 'interests',
             'utm_source', 'utm_medium', 'utm_campaign', 'traffic_source', 'landing_url',
         ];
     }
@@ -363,6 +369,8 @@ class OneFreeCourseController extends Controller
                 'email' => $r->email,
                 'telefono' => $r->phone,
                 'asunto' => $r->subject,
+                // Temas de interes elegidos en el paso 2, con su etiqueta visible.
+                'temas' => implode(', ', FreeCourseTopics::etiquetas($r->interests ?? [])),
                 'utm_source' => $r->utm_source,
                 'utm_medium' => $r->utm_medium,
                 'utm_campaign' => $r->utm_campaign,
@@ -398,13 +406,13 @@ class OneFreeCourseController extends Controller
         $sheet->setTitle('Registros');
 
         $cabeceras = [
-            'Fecha', 'Nombre', 'Email', 'Teléfono', 'Asunto',
+            'Fecha', 'Nombre', 'Email', 'Teléfono', 'Curso(s) gratis', 'Temas de interés',
             'Origen', 'UTM source', 'UTM medium', 'UTM campaign', 'URL del landing',
         ];
 
         $sheet->fromArray($cabeceras, null, 'A1');
-        $sheet->getStyle('A1:J1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:J1')->getFill()
+        $sheet->getStyle('A1:K1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:K1')->getFill()
             ->setFillType(Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE9EEF5');
 
@@ -417,6 +425,7 @@ class OneFreeCourseController extends Controller
                 $registro->email,
                 $registro->phone,
                 $registro->subject,
+                implode(', ', FreeCourseTopics::etiquetas($registro->interests ?? [])),
                 $registro->traffic_source,
                 $registro->utm_source,
                 $registro->utm_medium,
@@ -427,7 +436,7 @@ class OneFreeCourseController extends Controller
             $fila++;
         }
 
-        foreach (['A' => 18, 'B' => 30, 'C' => 32, 'D' => 18, 'E' => 28, 'F' => 16, 'G' => 16, 'H' => 16, 'I' => 26, 'J' => 45] as $columna => $ancho) {
+        foreach (['A' => 18, 'B' => 30, 'C' => 32, 'D' => 18, 'E' => 28, 'F' => 45, 'G' => 16, 'H' => 16, 'I' => 16, 'J' => 26, 'K' => 45] as $columna => $ancho) {
             $sheet->getColumnDimension($columna)->setWidth($ancho);
         }
 

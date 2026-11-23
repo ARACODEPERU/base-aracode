@@ -10,9 +10,17 @@ class CmsSubscriber extends Model
     use HasFactory;
 
     protected $fillable = [
-        'full_name', 'email', 'phone', 'client_ip', 'read', 'subject', 'message',
+        'full_name', 'email', 'phone', 'client_ip', 'read', 'subject', 'interests', 'message',
         'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
         'fbclid', 'gclid', 'referer', 'landing_url', 'traffic_source'
+    ];
+
+    /**
+     * Los temas de interés se guardan como lista de claves del catálogo
+     * Modules\CMS\Support\FreeCourseTopics.
+     */
+    protected $casts = [
+        'interests' => 'array',
     ];
 
     protected static function newFactory()

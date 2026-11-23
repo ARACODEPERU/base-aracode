@@ -9,16 +9,33 @@
     const props = defineProps({
         landing: { type: Object, default: () => ({}) },
         utmStats: { type: Object, default: () => ({ subscribers: [], social_detail: [], referrer_detail: [] }) },
+        // Enlace publico del landing; lo envia el servidor desde OneFreeCourseController.
+        publicUrl: { type: String, default: '' },
     });
 
-    const baseUrl = assetUrl;
     const menuId = computed(() => props.landing?.menu_id || '01');
     const slug = computed(() => (props.landing?.slug || '').trim());
 
-    // URL base sugerida: la del slug del landing. Es editable porque el landing
-    // puede publicarse en otra ruta del sitio.
-    const suggestedBaseUrl = computed(() => `${baseUrl}${slug.value}`);
+    // Enlace público real del landing: la ruta /landing/{menu_id}, no el
+    // slug. Es el enlace que se comparte y la base de los enlaces UTM.
+    const landingPublicUrl = computed(() => {
+        if (props.publicUrl) {
+            return props.publicUrl;
+        }
+
+        // Respaldo por si la vista se renderiza sin el prop del servidor.
+        return typeof route === 'function' ? route('cms_free_course_landing', menuId.value) : '';
+    });
+
+    const suggestedBaseUrl = computed(() => landingPublicUrl.value);
     const defaultCampaign = computed(() => `landing_${slug.value.replace(/-/g, '_') || 'curso_gratis'}`);
+
+    // Si la URL base guardada no es la del landing (configuraciones viejas
+    // armadas con el slug), se avisa y se ofrece corregirla en un clic.
+    const sinBarraFinal = (url) => (url || '').replace(/\/+$/, '');
+    const baseUrlDesactualizada = computed(
+        () => sinBarraFinal(config.base_url) !== '' && sinBarraFinal(config.base_url) !== sinBarraFinal(landingPublicUrl.value)
+    );
 
     // Canales alineados con el clasificador de trafico (traffic_source).
     const baseChannels = [
@@ -91,6 +108,19 @@
     );
 
     const landingUrl = computed(() => (config.base_url || suggestedBaseUrl.value || '').replace(/\/+$/, ''));
+
+    // Vuelve a dejar la URL base en el enlace público del landing.
+    const usarEnlaceDelLanding = () => {
+        config.base_url = landingPublicUrl.value;
+        saveConfig(true).then(() => {
+            window.alertaSistema(
+                'Enlace actualizado',
+                'La URL base ahora es el enlace del landing y los enlaces UTM apuntan ahí.',
+                'success',
+                { duration: 2200 }
+            );
+        });
+    };
 
     const savingConfig = ref(false);
     const saveConfig = (silent = false) => {
@@ -317,10 +347,35 @@
 
 <template>
     <div>
-        <!-- Aviso si falta el slug -->
-        <div v-if="!slug" class="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400 text-sm">
-            <i class="fa-solid fa-triangle-exclamation mr-1"></i>
-            El landing aún no tiene url amigable (slug). Guarda primero la configuración general para generar los enlaces UTM.
+        <!-- Enlace público del landing: el que se comparte y la base de los UTM -->
+        <div class="mb-6 p-4 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">
+                        Enlace del landing
+                        <HelpTip text="Es el enlace público que se comparte. Cada enlace UTM de abajo es este mismo enlace con los parámetros de su canal." />
+                    </h3>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Compártelo tal cual, o usa un enlace UTM por canal para saber de dónde llegó cada persona.
+                    </p>
+                    <code class="mt-2 block text-sm font-mono text-blue-700 dark:text-blue-300 break-all">{{ landingPublicUrl }}</code>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button @click="copyUrl(landingPublicUrl)" class="btn btn-primary text-xs uppercase">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        Copiar enlace
+                    </button>
+                    <a :href="landingPublicUrl" target="_blank" rel="noopener" class="btn btn-outline-primary text-xs uppercase">Abrir</a>
+                </div>
+            </div>
+
+            <p v-if="baseUrlDesactualizada" class="mt-3 text-xs text-amber-700 dark:text-amber-400 flex flex-wrap items-center gap-1">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                La URL base guardada no es el enlace del landing.
+                <button type="button" @click="usarEnlaceDelLanding" class="underline font-semibold">Usar el enlace del landing</button>
+            </p>
         </div>
 
         <!-- RESUMEN DE LEADS -->
