@@ -129,6 +129,17 @@ Route::get('/suscripciones', [\Modules\Academic\Http\Controllers\AcaSubscription
 // Ruta amigable por slug; si llega un id numerico antiguo redirige a su slug.
 Route::get('/curso-descripcion/{slug}', [WebPageController::class, 'cursodescripcion'])->name('web_curso_descripcion');
 
+// Landing publica de cursos gratis: el formulario de dos pasos (datos y curso
+// gratis en el paso 1, temas de interes en el paso 2) que capta a los nuevos
+// usuarios. El contenido y los cursos los configura el administrador en
+// /cms/one/free/course/{menu_id}.
+Route::get('/landing/{menu_id}', [\Modules\CMS\Http\Controllers\OneFreeCoursePublicController::class, 'show'])
+    ->middleware('throttle:60,1')
+    ->name('cms_free_course_landing');
+Route::post('/landing/{menu_id}', [\Modules\CMS\Http\Controllers\OneFreeCoursePublicController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('cms_free_course_landing_store');
+
 // Landing publica por slug del curso (usada por catalogo, carrito y panel del alumno).
 // TODO: requiere resources/views/pages/course-landing.blade.php (vista que aun
 // no existe en este proyecto; se creara despues).

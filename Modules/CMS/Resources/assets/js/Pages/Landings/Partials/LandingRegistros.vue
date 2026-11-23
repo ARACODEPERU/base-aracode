@@ -172,6 +172,8 @@
                             <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Nombre</th>
                             <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Email</th>
                             <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Teléfono</th>
+                            <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Curso(s) gratis</th>
+                            <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Temas de interés</th>
                             <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Origen</th>
                             <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">UTM</th>
                         </tr>
@@ -182,6 +184,8 @@
                             <td class="px-3 py-2 text-gray-800 dark:text-gray-200">{{ registro.nombre || '—' }}</td>
                             <td class="px-3 py-2 text-gray-600 dark:text-gray-300 break-all">{{ registro.email }}</td>
                             <td class="px-3 py-2 whitespace-nowrap text-gray-600 dark:text-gray-300">{{ registro.telefono || '—' }}</td>
+                            <td class="px-3 py-2 text-gray-600 dark:text-gray-300">{{ registro.asunto || '—' }}</td>
+                            <td class="px-3 py-2 text-gray-600 dark:text-gray-300">{{ registro.temas || '—' }}</td>
                             <td class="px-3 py-2 text-gray-600 dark:text-gray-300">{{ registro.traffic_source || '—' }}</td>
                             <td class="px-3 py-2 text-gray-500 dark:text-gray-400">
                                 <span v-if="registro.utm_source || registro.utm_campaign" class="font-mono text-xs">
@@ -192,7 +196,7 @@
                             </td>
                         </tr>
                         <tr v-if="!loading && registros.length === 0">
-                            <td colspan="6" class="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                            <td colspan="8" class="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
                                 Todavía no hay registros para este landing con los filtros aplicados.
                             </td>
                         </tr>

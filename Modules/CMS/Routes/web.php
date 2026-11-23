@@ -22,6 +22,7 @@ use Modules\CMS\Http\Controllers\CmsSectionItemController;
 use Modules\CMS\Http\Controllers\CmsSubscriberController;
 use Modules\CMS\Http\Controllers\CmsTestimonyController;
 use Modules\CMS\Http\Controllers\OneFreeCourseController;
+use Modules\CMS\Http\Controllers\OneFreeCoursePublicController;
 use Modules\CMS\Http\Controllers\CmsContactMessageController;
 use Modules\CMS\Http\Controllers\CmsBlogSubscribersController;
 
@@ -102,6 +103,11 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('cms')->gro
     Route::middleware(['permission:cms_landing_curso_gratis'])
         ->post('one/free/course/store', [OneFreeCourseController::class, 'store'])
         ->name('cms_landing_course_free_store');
+
+    // Vista previa del landing publico: mismo diseno, sin guardar formularios.
+    Route::middleware(['permission:cms_landing_curso_gratis'])
+        ->get('one/free/course/{menu_id}/preview', [OneFreeCoursePublicController::class, 'preview'])
+        ->name('cms_landing_course_free_preview');
 
     // Enlaces UTM del landing y atribucion de los leads del formulario.
     Route::middleware(['permission:cms_landing_curso_gratis'])

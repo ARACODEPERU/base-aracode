@@ -67,7 +67,7 @@
         image_preview: ImagePreview ? getImage(ImagePreview) : '/img/icons8-img-750.png',
         title: props.landingPage?.title,
         slug: props.landingPage?.slug,
-        // Cantidad de cursos gratis que muestra el landing (1 a 3).
+        // Maximo de cursos gratis que puede elegir cada persona (1 a 3).
         free_courses_count: props.landingPage?.free_courses_count || 1,
         description_short: props.landingPage?.description_short,
         description_long: props.landingPage?.description_long,
@@ -121,48 +121,12 @@
         if (props.landingPage?.data_related) {
             inputCourses.value = props.landingPage.data_related.items.map(i => parseInt(i, 10));
         }
-
-        // Nunca mostrar mas cursos gratis que los configurados.
-        const limite = Number(form.free_courses_count) || 1;
-
-        if (inputCourses.value.length > limite) {
-            inputCourses.value = inputCourses.value.slice(0, limite);
-        }
     });
 
-    // Al cambiar la cantidad se recorta la seleccion para respetar el limite.
-    const onCountChange = () => {
-        const limite = Number(form.free_courses_count) || 1;
-
-        if (inputCourses.value.length > limite) {
-            inputCourses.value = inputCourses.value.slice(0, limite);
-
-            window.alertaSistema(
-                'Cursos ajustados',
-                `El landing mostrará ${limite} curso(s) gratis. Se quitaron de la selección los cursos que sobraban.`,
-                'info',
-                { duration: 3500 }
-            );
-        }
-    };
-
-    // El selector multiple no permite pasar de la cantidad configurada.
+    // Se muestran todos los cursos que elige el administrador. La cantidad de
+    // cursos gratis es el maximo que puede escoger cada visitante, no un tope
+    // de la lista.
     const onCoursesChange = (values) => {
-        const limite = Number(form.free_courses_count) || 1;
-
-        if (values.length > limite) {
-            inputCourses.value = values.slice(0, limite);
-
-            window.alertaSistema(
-                'Límite de cursos',
-                `Este landing solo muestra ${limite} curso(s) gratis. Cambia la cantidad de cursos gratis si necesitas agregar más.`,
-                'warning',
-                { duration: 4000 }
-            );
-
-            return;
-        }
-
         inputCourses.value = values;
     };
 
@@ -373,26 +337,28 @@
         </div>
         <div class="flex sm:flex-row flex-col">
             <label for="freeCoursesCount" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">
-                Cursos gratis a mostrar
-                <HelpTip text="Elige cuántos cursos gratis muestra este landing: 1, 2 o 3. El selector de cursos se limita a esa cantidad." />
+                Cursos gratis por persona
+                <HelpTip text="En la landing se muestran todos los cursos que elijas abajo. Este valor es el máximo de cursos gratis que cada visitante puede escoger: 1, 2 o 3." />
             </label>
             <div class="flex-1">
                 <select
                     id="freeCoursesCount"
                     v-model.number="form.free_courses_count"
                     class="form-select"
-                    @change="onCountChange"
                 >
-                    <option :value="1">1 curso gratis</option>
-                    <option :value="2">2 cursos gratis</option>
-                    <option :value="3">3 cursos gratis</option>
+                    <option :value="1">1 curso por persona</option>
+                    <option :value="2">2 cursos por persona</option>
+                    <option :value="3">3 cursos por persona</option>
                 </select>
                 <InputError :message="form.errors.free_courses_count" class="mt-2" />
             </div>
         </div>
 
         <div class="flex sm:flex-row flex-col">
-            <label for="horizontalEmail" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">Cursos disponibles que se visualizan en la landing (*)</label>
+            <label for="horizontalEmail" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">
+                Cursos que se muestran en la landing (*)
+                <HelpTip text="Se muestran todos los cursos que marques aquí. Cada visitante podrá elegir hasta la cantidad de cursos gratis configurada arriba." />
+            </label>
             <div class="flex-1">
                 <Select
                     :value="inputCourses"
@@ -411,7 +377,7 @@
                 </Select>
                 <InputError :message="form.errors.data_related" class="mt-2" />
                 <p class="mt-1 text-xs text-gray-400">
-                    Puedes elegir hasta {{ form.free_courses_count }} curso(s) gratis, según la cantidad configurada.
+                    Se muestran todos los cursos marcados · cada persona podrá elegir hasta {{ form.free_courses_count }} curso(s) gratis.
                 </p>
             </div>
         </div>

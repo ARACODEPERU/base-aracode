@@ -25,6 +25,16 @@
         utmStats: {
             type: Object,
             default: () => ({ subscribers: [], social_detail: [], referrer_detail: [] })
+        },
+        // Enlace publico del landing, generado por el servidor.
+        publicUrl: {
+            type: String,
+            default: '',
+        },
+        // Vista previa del mismo landing (no guarda formularios).
+        previewUrl: {
+            type: String,
+            default: '',
         }
     });
 
@@ -38,6 +48,36 @@
             </li>
         </Navigation>
         <div class="mt-5">
+            <!-- Ruta final del landing y acceso a la vista previa -->
+            <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+                <div class="min-w-0">
+                    <span class="text-xs font-semibold uppercase text-gray-400">Ruta final del landing</span>
+                    <p class="mt-0.5 break-all font-mono text-sm text-primary">{{ publicUrl || 'Guarda la configuración para generarla' }}</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <a
+                        v-if="previewUrl && landingPage?.id"
+                        :href="previewUrl"
+                        target="_blank"
+                        rel="noopener"
+                        class="btn btn-outline-primary text-xs uppercase"
+                        title="Abre el landing tal como lo verá el visitante, sin guardar formularios"
+                    >
+                        Vista previa
+                    </a>
+                    <a
+                        v-if="publicUrl && landingPage?.id"
+                        :href="publicUrl"
+                        target="_blank"
+                        rel="noopener"
+                        class="btn btn-primary text-xs uppercase"
+                    >
+                        Abrir landing
+                    </a>
+                    <span v-if="!landingPage?.id" class="text-xs text-gray-400">Guarda primero la configuración general.</span>
+                </div>
+            </div>
+
             <div class="mb-5 flex flex-wrap items-center gap-2">
                 <button
                     type="button"
@@ -85,7 +125,7 @@
             </div>
             <div class="panel">
                 <FormConfCourses v-if="activeTab === 'general'" :courses="courses" :tinykey="tinykey" :landingPage="landingPage" />
-                <LandingUtmLinks v-else-if="activeTab === 'utm'" :landing="landingPage" :utmStats="utmStats" />
+                <LandingUtmLinks v-else-if="activeTab === 'utm'" :landing="landingPage" :utmStats="utmStats" :publicUrl="publicUrl" />
                 <LandingRegistros v-else :landing="landingPage" />
             </div>
         </div>
