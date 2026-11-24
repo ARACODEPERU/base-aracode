@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Modules\Integrationhub\Entities\IntegrationError;
+use Modules\Integrationhub\Support\IntegrationAlert;
 use Modules\Integrationhub\Http\Controllers\IntegrationhubController;
 use Modules\Integrationhub\Support\TrafficSourceResolver;
 
@@ -70,10 +70,7 @@ class ProcessWhatsappFlow implements ShouldQueue
                 'contact_id' => ltrim($this->phone, '+'),
             ]);
         } catch (\Throwable $th) {
-            IntegrationError::create([
-                'message' => 'ProcessWhatsappFlow: ' . $th->getMessage(),
-                'source'  => 'ProcessWhatsappFlow',
-            ]);
+            IntegrationAlert::notify('ProcessWhatsappFlow: ' . $th->getMessage(), 'ProcessWhatsappFlow');
         }
     }
 }

@@ -11,7 +11,7 @@ use App\Models\PettyCash;
 use App\Models\Sale;
 use App\Models\SaleProduct;
 use App\Models\User;
-use App\Support\PersonUserPersistenceVerifier;
+use App\Support\PersonRegistrationGuard;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\RedirectResponse;
@@ -309,21 +309,20 @@ class OnliSaleController extends Controller
             ]);
         }
 
-        PersonUserPersistenceVerifier::verify(
-            $person,
-            $user,
-            [
-                'document_type_id' => $request->get('document_type'),
-                'number' => $request->get('number'),
-                ...$personData,
-            ],
-            [
-                'name' => $request->get('names'),
-                'email' => $request->get('email'),
-                'person_id' => $person->id,
-                'local_id' => 1,
-            ]
-        );
+        // Verificacion final: persona y usuario registrados con los datos recientes
+        // del formulario (crea o refresca lo que haya quedado incompleto).
+        $registration = app(PersonRegistrationGuard::class)->ensure($person, [
+            'document_type_id' => $request->get('document_type'),
+            'number' => $request->get('number'),
+            ...$personData,
+        ], [
+            'name' => $request->get('names'),
+            'email' => $request->get('email'),
+            'person_id' => $person->id,
+            'local_id' => 1,
+        ], $user);
+
+        $user = $registration['user'];
 
         return to_route('web_pagar', [
             'sale'     => $sale->id

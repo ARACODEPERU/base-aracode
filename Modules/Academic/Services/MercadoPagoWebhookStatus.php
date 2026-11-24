@@ -2,6 +2,7 @@
 
 namespace Modules\Academic\Services;
 
+use Illuminate\Support\Facades\Route;
 use Modules\Integrationhub\Entities\Integration;
 
 /**
@@ -43,7 +44,11 @@ class MercadoPagoWebhookStatus
                 ? route('integrationhub_editar', $integration->id)
                 : route('integrationhub_listado'),
             'has_secret_field' => $auth !== null,
-            'webhook_url' => route('aca_mercadopago_subscription_webhook'),
+            // La ruta existe solo cuando el cobro recurrente esta habilitado: en
+            // un proyecto sin esa funcion el panel debe seguir cargando.
+            'webhook_url' => Route::has('aca_mercadopago_subscription_webhook')
+                ? route('aca_mercadopago_subscription_webhook')
+                : null,
             'document_id' => null,
         ];
     }

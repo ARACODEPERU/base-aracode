@@ -2,14 +2,16 @@
 
 namespace Modules\Onlineshop\Jobs;
 
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Modules\Integrationhub\Entities\IntegrationError;
+use Modules\Integrationhub\Support\IntegrationAlert;
 use Modules\Integrationhub\Http\Controllers\IntegrationhubController;
+use Modules\Integrationhub\Jobs\SendPurchaseToN8n;
 use Modules\Onlineshop\Entities\OnliSale;
 
 class ProcessCompra implements ShouldQueue
@@ -135,11 +137,23 @@ class ProcessCompra implements ShouldQueue
             ];
 
             $hub->runEndpoint('n8n_post_compra', [], ['body' => $payload], true);
+
+            // Si la cuenta ya existia (completo su perfil), ademas de la compra
+            // se envia al mismo endpoint que una negociacion, con su forma. Si la
+            // cuenta es nueva (updated_information=false) se espera a que llene su
+            // perfil, que es otro flujo.
+            $user = User::where('person_id', $person?->id)->first();
+
+            if ($user?->updated_information) {
+                SendPurchaseToN8n::dispatch($this->onliSaleId);
+            }
         } catch (\Throwable $e) {
-            IntegrationError::create([
-                'message' => 'ProcessCompra (sale_id=' . $this->onliSaleId . '): ' . $e->getMessage(),
-                'source'  => 'ProcessCompra',
-            ]);
+            // El error queda en las alertas; la venta y el pedido siguen su
+            // curso aunque el aviso a n8n haya fallado.
+            IntegrationAlert::notify(
+                'ProcessCompra (sale_id=' . $this->onliSaleId . '): ' . $e->getMessage(),
+                'ProcessCompra'
+            );
         }
     }
 }

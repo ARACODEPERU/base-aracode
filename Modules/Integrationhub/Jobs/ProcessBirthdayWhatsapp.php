@@ -9,7 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use Modules\Integrationhub\Emails\BirthdayGreetingMail;
-use Modules\Integrationhub\Entities\IntegrationError;
+use Modules\Integrationhub\Support\IntegrationAlert;
 use Modules\Integrationhub\Http\Controllers\IntegrationhubController;
 use Modules\Integrationhub\Entities\IntegrationFlowId;
 
@@ -78,10 +78,7 @@ class ProcessBirthdayWhatsapp implements ShouldQueue
             //     'contact_id' => ltrim($this->phone, '+'),
             // ], [], false);
         } catch (\Throwable $th) {
-            IntegrationError::create([
-                'message' => 'ProcessBirthdayWhatsapp: ' . $th->getMessage(),
-                'source' => 'ProcessBirthdayWhatsapp',
-            ]);
+            IntegrationAlert::notify('ProcessBirthdayWhatsapp: ' . $th->getMessage(), 'ProcessBirthdayWhatsapp');
         }
     }
 }

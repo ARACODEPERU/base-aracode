@@ -11,7 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
-use Modules\Integrationhub\Entities\IntegrationError;
+use Modules\Integrationhub\Support\IntegrationAlert;
 use Modules\Integrationhub\Entities\IntegrationSchedule;
 use Modules\Integrationhub\Http\Controllers\IntegrationhubController;
 
@@ -117,10 +117,12 @@ class RunIntegrationSchedule implements ShouldQueue, ShouldBeUnique
             $schedule->update(['last_status' => 'failed', 'last_error' => $message]);
         }
 
-        IntegrationError::create([
-            'message' => 'Programación #' . $this->scheduleId . ' falló tras los reintentos: ' . $message,
-            'source' => 'integrationhub_schedule',
-        ]);
+        // La alerta tampoco puede tumbar el job: si no se puede guardar, queda
+        // en los logs (IntegrationAlert la protege).
+        IntegrationAlert::notify(
+            'Programación #' . $this->scheduleId . ' falló tras los reintentos: ' . $message,
+            'integrationhub_schedule'
+        );
     }
 
     /**

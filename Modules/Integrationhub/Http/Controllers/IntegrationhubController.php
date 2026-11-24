@@ -19,6 +19,7 @@ use Modules\Integrationhub\Entities\IntegrationQuery;
 use Modules\Integrationhub\Entities\IntegrationError;
 use Modules\Integrationhub\Entities\IntegrationExecLog;
 use Modules\Integrationhub\Entities\IntegrationFlowId;
+use Modules\Integrationhub\Support\IntegrationAlert;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
@@ -892,7 +893,38 @@ class IntegrationhubController extends Controller
 
         $request = Request::create('/', 'POST', $requestData);
 
-        return $this->executeByEndpointName($request, $endpoint);
+        try {
+            $response = $this->executeByEndpointName($request, $endpoint);
+        } catch (\Throwable $e) {
+            // El codigo de la aplicacion que llama a un endpoint no puede
+            // detenerse porque la integracion falle: se avisa y se devuelve el
+            // mismo contrato de error de siempre.
+            IntegrationAlert::notify(
+                'El endpoint "' . $endpoint . '" no se pudo ejecutar: ' . $this->sanitizedErrorText($e->getMessage()),
+                IntegrationAlert::SOURCE_ENDPOINT
+            );
+
+            return response()->json([
+                'message' => 'Error al ejecutar la integración: ' . $e->getMessage(),
+                'status_code' => 500,
+                'executed_at' => now(),
+            ], 500);
+        }
+
+        $statusCode = (int) $response->getStatusCode();
+
+        if ($statusCode >= 400) {
+            $payload = method_exists($response, 'getData') ? (array) $response->getData(true) : [];
+            $detail = $payload['message'] ?? 'sin detalle';
+
+            IntegrationAlert::notify(
+                'El endpoint "' . $endpoint . '" respondió HTTP ' . $statusCode . ': '
+                    . (is_scalar($detail) ? $detail : json_encode($detail)),
+                IntegrationAlert::SOURCE_ENDPOINT
+            );
+        }
+
+        return $response;
     }
 
     public function logs(Request $request, int $id)
