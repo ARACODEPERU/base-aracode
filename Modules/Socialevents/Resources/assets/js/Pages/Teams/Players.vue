@@ -210,15 +210,19 @@
             confirmButtonText: 'Sí, guardar',
             cancelButtonText: 'Cancelar',
             showLoaderOnConfirm: true,
-            preConfirm: () => new Promise((resolve, reject) => {
+            preConfirm: () => new Promise((resolve) => {
                 formEdit.post(route('even_team_player_person_update'), {
                     forceFormData: true,
                     preserveScroll: true,
                     onSuccess: () => {
                         resolve(true);
                     },
-                    onError: () => {
-                        reject(new Error('Revisa los datos del formulario.'));
+                    onError: (errors) => {
+                        // Muestra el error dentro del mismo diálogo y lo deja abierto para corregir.
+                        // Resolver sin valor mantiene el modal abierto y quita el loader.
+                        const mensaje = Object.values(errors || {})[0] || 'Revisa los datos del formulario.';
+                        Swal2.showValidationMessage(mensaje);
+                        resolve(false);
                     },
                 });
             }),
@@ -393,7 +397,7 @@
                             />
                         </div>
                         <div class="flex sm:col-span-2 gap-6 items-center">
-                            <button @click="openModalClientSearch" class="btn btn-info uppercase text-xs">Buscar</button>
+                            <button @click="openModalClientSearch" class="btn btn-info uppercase text-xs">Buscar y Registrar</button>
                             <button @click="savePlayer" class="btn btn-primary uppercase text-xs">Agregar al equipo</button>
                         </div>
                     </div>

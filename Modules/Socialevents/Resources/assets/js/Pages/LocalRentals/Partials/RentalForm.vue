@@ -232,6 +232,15 @@ const lineExtras = (line) => {
 // Modal largo para agregar o editar las áreas del local seleccionado.
 const displayModalAreas = ref(false);
 
+// Modal para registrar un campo deportivo desde el torneo; al guardar queda seleccionado.
+const displayModalSportsField = ref(false);
+
+const savingSportsField = ref(false);
+
+const sportsFieldErrors = ref({});
+
+const sportsFieldForm = ref({ name: '', capacity: '' });
+
 const displayModalClientSearch = ref(false);
 
 const displayModalRate = ref(false);
@@ -531,6 +540,44 @@ const openModalRate = (line) => {
 
 
 // Cierra el modal de áreas.
+const openModalSportsField = () => {
+    sportsFieldForm.value = { name: '', capacity: '' };
+    sportsFieldErrors.value = {};
+    displayModalSportsField.value = true;
+};
+
+const closeModalSportsField = () => {
+    displayModalSportsField.value = false;
+};
+
+// Guarda el campo deportivo en el local y, al terminar, lo deja seleccionado en el torneo.
+const saveSportsField = async () => {
+    savingSportsField.value = true;
+    sportsFieldErrors.value = {};
+    try {
+        const { data } = await axios.post(route('even_alquiler_local_areas_store'), {
+            local_id: Number(form.local_id),
+            name: sportsFieldForm.value.name,
+            area_type: 'sports_field',
+            capacity: sportsFieldForm.value.capacity || null,
+        });
+        displayModalSportsField.value = false;
+        await fetchAreasForLocal(form.local_id);
+        tournamentForm.value.area_id = data.area.id;
+        window.alertaSistema('Enhorabuena', 'Campo deportivo guardado y seleccionado en el torneo', 'success');
+    } catch (error) {
+        const respuesta = error.response?.data?.errors || {};
+        sportsFieldErrors.value = Object.fromEntries(
+            Object.entries(respuesta).map(([campo, mensajes]) => [campo, mensajes[0]])
+        );
+        if (!Object.keys(respuesta).length) {
+            window.alertaSistema('Error', 'No se pudo guardar el campo deportivo', 'error');
+        }
+    } finally {
+        savingSportsField.value = false;
+    }
+};
+
 const closeModalAreas = () => {
     displayModalAreas.value = false;
 
@@ -937,7 +984,7 @@ const submit = () => {
 
 
             <!-- Torneo: solo para campos deportivos. Serie de fechas con un monto total. -->
-            <div v-if="sportsFieldAreas.length > 0" class="col-span-6">
+            <div v-if="form.local_id" class="col-span-6">
 
                 <label class="inline-flex items-center gap-2 text-sm">
                     <input v-model="tournamentMode" type="checkbox" class="form-checkbox" />
@@ -954,6 +1001,9 @@ const submit = () => {
                             </option>
                         </select>
                         <InputError :message="form.errors['tournament.area_id']" class="mt-2" />
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-2" @click="openModalSportsField">
+                            Registrar campo deportivo
+                        </button>
                     </div>
 
                     <div class="col-span-6 sm:col-span-3">
@@ -1358,6 +1408,31 @@ const submit = () => {
         </template>
         <template #buttons>
             <button type="button" class="btn btn-primary" @click="closeModalAreas">Cerrar</button>
+        </template>
+    </ModalLarge>
+
+    <ModalLarge :show="displayModalSportsField" :on-close="closeModalSportsField" :icon="'/img/caja-registradora.png'">
+        <template #title>Registrar campo deportivo</template>
+        <template #message>Se guardará en el local seleccionado y quedará elegido en el torneo.</template>
+        <template #content>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <InputLabel value="Nombre del campo *" />
+                    <TextInput v-model="sportsFieldForm.name" type="text" class="w-full" placeholder="Ej. Campo 1" />
+                    <InputError :message="sportsFieldErrors.name" class="mt-2" />
+                </div>
+                <div>
+                    <InputLabel value="Aforo (opcional)" />
+                    <TextInput v-model="sportsFieldForm.capacity" type="number" min="1" class="w-full" />
+                    <InputError :message="sportsFieldErrors.capacity" class="mt-2" />
+                </div>
+            </div>
+        </template>
+        <template #buttons>
+            <button type="button" class="btn btn-outline-danger" @click="closeModalSportsField">Cancelar</button>
+            <button type="button" class="btn btn-primary" :disabled="savingSportsField" @click="saveSportsField">
+                {{ savingSportsField ? 'Guardando…' : 'Guardar campo' }}
+            </button>
         </template>
     </ModalLarge>
 

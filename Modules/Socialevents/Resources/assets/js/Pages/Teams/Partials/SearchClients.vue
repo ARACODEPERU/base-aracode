@@ -148,6 +148,11 @@
 
     const saveNewSearchClient = () => {
         form.processing = true;
+        // full_name se guarda en people como "apellido paterno apellido materno nombres" (mismo criterio del servidor).
+        form.full_name = [form.father_lastname, form.mother_lastname, form.names]
+            .map((parte) => (parte ?? '').toString().trim())
+            .filter(Boolean)
+            .join(' ');
         axios.post(route('save_person_update_create'), form).then((res) => {
             disabledBtnSelect.value = false;
             Swal2.fire({
@@ -320,10 +325,10 @@
                         <InputError :message="form.errors.number" class="mt-2" />
                     </div>
                     <div class="col-span-6 sm:col-span-2">
-                        <InputLabel for="full_name" value="Nombres" />
+                        <InputLabel for="names" value="Nombres" />
                         <div class="w-full relative">
                             <div class="flex">
-                                <input id="full_name" v-model="form.full_name" type="text" placeholder="Buscar por nombres" class="form-input ltr:rounded-r-none rtl:rounded-l-none" />
+                                <input id="names" v-model="form.names" type="text" placeholder="Buscar por nombres" class="form-input ltr:rounded-r-none rtl:rounded-l-none" />
                                 <div
                                     class="bg-[#f1f2f3] dark:bg-[#1b2e4b] flex justify-center items-center ltr:rounded-r-md rtl:rounded-l-md px-3 font-semibold border ltr:border-l-0 rtl:border-r-0 border-[#e0e6ed] dark:border-[#17263c]"
                                     v-tippy="{ content: 'Activa busqueda por nombres', placement: 'bottom' }"
@@ -349,6 +354,17 @@
                             </div>
                         </div>
                         <InputError :message="form.errors.full_name" class="mt-2" />
+                        <InputError :message="form.errors.names" class="mt-2" />
+                    </div>
+                    <div class="col-span-6 sm:col-span-1">
+                        <InputLabel for="father_lastname" value="Apellido paterno" />
+                        <TextInput id="father_lastname" v-model="form.father_lastname" type="text" />
+                        <InputError :message="form.errors.father_lastname" class="mt-2" />
+                    </div>
+                    <div class="col-span-6 sm:col-span-1">
+                        <InputLabel for="mother_lastname" value="Apellido materno" />
+                        <TextInput id="mother_lastname" v-model="form.mother_lastname" type="text" />
+                        <InputError :message="form.errors.mother_lastname" class="mt-2" />
                     </div>
                     <div class="col-span-6 sm:col-span-1">
                         <InputLabel for="telephone" value="Teléfono" />
