@@ -58,49 +58,23 @@
 
     const disabledBtnSelect = ref(true);
     const persona = ref({});
-    const searchResults = ref([]);
     const loadingSearch = ref(false);
 
+    // La búsqueda es solo por tipo y número de documento; el nombre se usa únicamente para registrar.
     const modalNewSearchClient = () => {
         form.clearErrors();
-        searchResults.value = [];
         loadingSearch.value = true;
         axios.post(route('search_person_number'), form).then((res) => {
-            if (form.searchBy == 1) {
-                if (res.data.status) {
-                    fillForm(res.data.person, res.data.ubigeo);
-                    form.ubigeo = {
-                        district_id: res.data.person.ubigeo,
-                        ubigeo_description: res.data.person.ubigeo_description
-                    };
-
-                } else {
-                    showNoResults(res.data);
-                }
-                loadingSearch.value = false;
-                return;
-            }
-
-            // Si búsqueda por NOMBRES (2)
-            if (form.searchBy == 2) {
-                loadingSearch.value = false;
-                // Si vienen múltiples
-                if (Array.isArray(res.data.person) && res.data.person.length > 1) {
-                    searchResults.value = res.data.person;
-                    disabledBtnSelect.value = true;
-                    return;
-                }
-
-                // Si solo viene uno
-                if (Array.isArray(res.data.person) && res.data.person.length === 1) {
-                    fillForm(res.data.person[0], res.data.ubigeo);
-                    return;
-                }
-
-                // Si no existe nada
+            if (res.data.status) {
+                fillForm(res.data.person, res.data.ubigeo);
+                form.ubigeo = {
+                    district_id: res.data.person.ubigeo,
+                    ubigeo_description: res.data.person.ubigeo_description
+                };
+            } else {
                 showNoResults(res.data);
             }
-
+            loadingSearch.value = false;
         }).catch(error => {
             setErrorFormSearch(error.response.data.errors);
             loadingSearch.value = false;
@@ -125,7 +99,6 @@
         form.gender = person.gender;
         persona.value = person;
         disabledBtnSelect.value = false;
-        searchResults.value = []; // cerrar dropdown
     };
 
 
@@ -140,7 +113,6 @@
         });
 
         disabledBtnSelect.value = true;
-        searchResults.value = [];
     };
 
 
@@ -245,8 +217,8 @@
                     form.estado = res.data.person['estado'];
                     form.condicion = res.data.person['condicion'];
                 }else{
-                    // RENIEC (migo.pe) devuelve el nombre completo en un solo campo:
-                    // names / apellidos pueden venir null, se conservan los ya escritos.
+                    // El backend separa el nombre completo de migo.pe en nombres y apellidos;
+                    // si algún campo llega null se conserva lo ya escrito.
                     form.full_name = res.data.person['razon_social'];
                     if (res.data.person['names']) {
                         form.names = res.data.person['names'];
@@ -296,7 +268,7 @@
                 Persona
             </template>
             <template #message>
-                Registrar nuevo o editar buscando por su numero de documento
+                Registrar nuevo o editar buscando por tipo y número de documento
             </template>
             <template #content>
                 <div class="grid grid-cols-4 gap-4">
@@ -313,46 +285,12 @@
                     </div>
                     <div class="col-span-6 sm:col-span-1">
                         <InputLabel for="number" value="Número de Doc." />
-                        <div class="flex">
-                            <div
-                                class="bg-[#f1f2f3] dark:bg-[#1b2e4b] flex justify-center items-center ltr:rounded-l-md rtl:rounded-r-md px-3 font-semibold border ltr:border-r-0 rtl:border-l-0 border-[#e0e6ed] dark:border-[#17263c]"
-                                v-tippy="{ content: 'Activa busqueda por numero', placement: 'bottom' }"
-                            >
-                                <input v-model="form.searchBy" :value="1" name="searchBy" type="radio" class="form-radio border-[#e0e6ed] dark:border-white-dark ltr:mr-0 rtl:ml-0" />
-                            </div>
-                            <input id="number" v-model="form.number" type="text" placeholder="Buscar por dni" class="form-input ltr:rounded-l-none rtl:rounded-r-none" autofocus />
-                        </div>
+                        <input id="number" v-model="form.number" type="text" placeholder="Buscar por número de documento" class="form-input" autofocus />
                         <InputError :message="form.errors.number" class="mt-2" />
                     </div>
                     <div class="col-span-6 sm:col-span-2">
                         <InputLabel for="names" value="Nombres" />
-                        <div class="w-full relative">
-                            <div class="flex">
-                                <input id="names" v-model="form.names" type="text" placeholder="Buscar por nombres" class="form-input ltr:rounded-r-none rtl:rounded-l-none" />
-                                <div
-                                    class="bg-[#f1f2f3] dark:bg-[#1b2e4b] flex justify-center items-center ltr:rounded-r-md rtl:rounded-l-md px-3 font-semibold border ltr:border-l-0 rtl:border-r-0 border-[#e0e6ed] dark:border-[#17263c]"
-                                    v-tippy="{ content: 'Activa busqueda por nombres', placement: 'bottom' }"
-                                >
-                                    <input v-model="form.searchBy" :value="2" name="searchBy" type="radio" class="form-radio text-warning border-[#e0e6ed] dark:border-white-dark ltr:mr-0 rtl:ml-0" />
-                                </div>
-                            </div>
-                            <div v-if="searchResults.length"
-                                class="mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto
-                                        transition-all duration-200 ease-out animate-fadeIn absolute z-40 w-full">
-
-                                <div v-for="(item, index) in searchResults" :key="index"
-                                    @click="fillForm(item, { district_id: item.district_id, city_name: item.city })"
-                                    class="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ">
-
-                                    <p class="font-semibold text-gray-700 dark:text-gray-200">
-                                        {{ item.full_name }}
-                                    </p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                                        DNI: {{ item.number }} — {{ item.city }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                        <TextInput id="names" v-model="form.names" type="text" placeholder="Nombres completos" />
                         <InputError :message="form.errors.full_name" class="mt-2" />
                         <InputError :message="form.errors.names" class="mt-2" />
                     </div>

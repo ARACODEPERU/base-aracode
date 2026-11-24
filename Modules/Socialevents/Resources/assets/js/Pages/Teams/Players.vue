@@ -397,7 +397,7 @@
                             />
                         </div>
                         <div class="flex sm:col-span-2 gap-6 items-center">
-                            <button @click="openModalClientSearch" class="btn btn-info uppercase text-xs">Buscar y Registrar</button>
+                            <button @click="openModalClientSearch" class="btn btn-info uppercase text-xs">Buscar / Registrar</button>
                             <button @click="savePlayer" class="btn btn-primary uppercase text-xs">Agregar al equipo</button>
                         </div>
                     </div>

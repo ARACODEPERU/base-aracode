@@ -244,7 +244,46 @@ class ApisnetPeController extends Controller
         }
     }
 
-    public function consultaDNImigo($dni){
+        /**
+     * Separa "APELLIDO_PATERNO APELLIDO_MATERNO NOMBRES" en sus partes.
+     * Los apellidos compuestos con partícula (DE LA CRUZ, DEL SOLAR, VAN OORDT)
+     * se conservan unidos; el resto de palabras quedan en names.
+     */
+    private function separarNombreCompleto($nombreCompleto)
+    {
+        $particulas = ['DE', 'DEL', 'LA', 'LAS', 'LOS', 'Y', 'VAN', 'VON', 'DA', 'DI', 'DU', 'SAN', 'SANTA', 'SANTO', 'MC', 'MAC', 'LE'];
+        $tokens = array_values(array_filter(preg_split('/\s+/u', trim($nombreCompleto)), fn ($token) => $token !== ''));
+        $total = count($tokens);
+        $indice = 0;
+        $grupos = [];
+
+        while ($indice < $total && count($grupos) < 2) {
+            // Si solo queda una palabra, ya no hay segundo apellido: el resto es el nombre.
+            if ($total - $indice <= 1) {
+                break;
+            }
+
+            $grupo = [];
+            while ($indice < $total && in_array(mb_strtoupper($tokens[$indice]), $particulas, true)) {
+                $grupo[] = $tokens[$indice];
+                $indice++;
+            }
+            if ($indice < $total) {
+                $grupo[] = $tokens[$indice];
+                $indice++;
+            }
+            $grupos[] = implode(' ', $grupo);
+        }
+
+        return [
+            'father_lastname' => $grupos[0] ?? null,
+            'mother_lastname' => $grupos[1] ?? null,
+            'names' => $indice < $total ? implode(' ', array_slice($tokens, $indice)) : null,
+        ];
+    }
+
+    public function consultaDNImigo($dni)
+    {
         $client = new Client();
 
         try {
@@ -271,13 +310,18 @@ class ApisnetPeController extends Controller
                 ];
             }
 
+            // migo.pe devuelve un solo campo 'nombre' ("APELLIDO_PATERNO APELLIDO_MATERNO NOMBRES"),
+            // se separa para llenar los campos individuales del formulario.
+            $nombreCompleto = trim($data['nombre']);
+            $partes = $this->separarNombreCompleto($nombreCompleto);
+
             return [
                 'success' => true,
                 'person' => [
-                    'razon_social' => $data['nombre'],
-                    'names' => null,
-                    'father_lastname' => null,
-                    'mother_lastname' => null,
+                    'razon_social' => $nombreCompleto,
+                    'names' => $partes['names'],
+                    'father_lastname' => $partes['father_lastname'],
+                    'mother_lastname' => $partes['mother_lastname'],
                     'document_number' => $data['dni'] ?? $dni,
                 ]
             ];
