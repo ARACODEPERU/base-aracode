@@ -771,6 +771,52 @@ class AccountsReceivableController extends Controller
         return "{$label} - {$list}.";
     }
 
+    /**
+     * Determina si el pago en curso liquida todas las cuotas de la venta.
+     *
+     * Se agrupan los montos enviados por id de cuota y se comparan contra el
+     * saldo pendiente (remaining_amount) de cada cuota de la venta, de modo
+     * que no se depende del flag is_last_installment que envía el navegador.
+     */
+    private function saleWillBeFullyPaid($saleId, $items)
+    {
+        if (! is_array($items) || count($items) === 0) {
+            return false;
+        }
+
+        // Monto que se aplicará a cada cuota en este comprobante
+        $appliedBySchedule = [];
+
+        foreach ($items as $item) {
+            $scheduleId = $item['id'] ?? null;
+
+            if ($scheduleId === null) {
+                continue;
+            }
+
+            $applied = (float) ($item['amount'] ?? 0);
+            $appliedBySchedule[$scheduleId] = ($appliedBySchedule[$scheduleId] ?? 0) + $applied;
+        }
+
+        $schedules = SalePaymentSchedule::where('sale_id', $saleId)->get();
+
+        if ($schedules->isEmpty()) {
+            return false;
+        }
+
+        foreach ($schedules as $schedule) {
+            $applied = $appliedBySchedule[$schedule->id] ?? 0;
+            $remaining = round((float) ($schedule->remaining_amount ?? 0) - $applied, 2);
+
+            // Si alguna cuota queda con saldo, no es la última cuota
+            if ($remaining > 0.01) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public function storeSpacePayments(Request $request, $id)
     {
         // /se validan los campos requeridos
@@ -901,7 +947,11 @@ class AccountsReceivableController extends Controller
                 $forceUnlimited = $request->get('force_unlimited') ?? false;
                 $nextPaymentDate = $request->get('next_payment_date');
 
-                $registrationResult = $this->updateRegistrosEstudiante($sale, $student_id, $request->get('total'), $document, $forceUnlimited, $nextPaymentDate);
+                // Se calcula en el servidor si este pago liquida la venta completa,
+                // sin confiar en el flag is_last_installment del navegador.
+                $isLastInstallment = $this->saleWillBeFullyPaid($sale->id, $request->get('items'));
+
+                $registrationResult = $this->updateRegistrosEstudiante($sale, $student_id, $request->get('total'), $document, $forceUnlimited, $nextPaymentDate, $isLastInstallment);
 
                 if ($registrationResult['needs_registration']) {
                     // Eliminar el documento creado ya que no se puede completar
@@ -912,7 +962,7 @@ class AccountsReceivableController extends Controller
                             'missing_registrations' => $registrationResult['missing_registrations'],
                             'student_id' => $student_id,
                             'sale_id' => $sale->id,
-                            'is_last_installment' => $request->get('is_last_installment', false),
+                            'is_last_installment' => $isLastInstallment,
                             'next_payment_date' => $nextPaymentDate,
                         ])
                     );
@@ -1154,7 +1204,7 @@ class AccountsReceivableController extends Controller
         ]);
     }
 
-    public function updateRegistrosEstudiante($sale, $student_id, $price_sale, $document, $forceUnlimited = false, $nextPaymentDate = null)
+    public function updateRegistrosEstudiante($sale, $student_id, $price_sale, $document, $forceUnlimited = false, $nextPaymentDate = null, bool $isLastInstallment = false)
     {
         $products = $sale->saleProduct;
         $total = $price_sale;
@@ -1183,7 +1233,7 @@ class AccountsReceivableController extends Controller
 
                 $toPay = $registration->amount_paid - ($registration->advancement ?? 0);
 
-                if ($forceUnlimited || $total >= $toPay) {
+                if ($forceUnlimited || $isLastInstallment || $total >= $toPay) {
                     $registration->advancement = $registration->amount_paid;
                     $total -= $toPay;
                     $registration->unlimited = true;
